@@ -1,5 +1,7 @@
 # DCC
 
+[![build](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml) [![tests](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml)
+
 <img src="data/images/logo.gif" align="right"/>
 
 DCC is an acronym for [Digital Command Control](https://en.wikipedia.org/wiki/Digital_Command_Control), a standardized protocol for controlling digital model railways. This C++ library of the same name contains platform-independent code to either decode (decoder) or generate (command station) a DCC signal on the track. For both cases, a typical microcontroller timer with microsecond precision is sufficient for implementing a receiver or transmitter class. Also included, but not platform-independent, is an encoder for the [ESP32 RMT](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) peripherals.
@@ -29,7 +31,7 @@ The implementation provided here is used in the following products:
 </details>
 
 ## Protocol
-The DCC protocol is defined by various standards published by the [National Model Railroad Association (NMRA)](https://www.nmra.org/) and the [RailCommunity](https://www.vhdm.at/). The standards are mostly consistent and I have tried to match the English and German standards in the table below, but if you can read German I would recommend sticking to the RCN standards as these are updated more frequently.
+The DCC protocol is defined by various standards published by the [National Model Railroad Association (NMRA)](https://www.nmra.org/) and the [RailCommunity](https://www.vhdm.at/). The standards are mostly consistent and we have attempted to match the English and German standards in the table below. However, if you can read German, we recommend that you stick to the RCN standards as they are updated more frequently.
 
 | NMRA (English)                                                                                                                                                                          | RailCommunity (German)                                                                                                  |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -122,7 +124,7 @@ FetchContent_Declare(
 target_link_libraries(YourTarget PRIVATE DCC::DCC)
 ```
 
-A number of [options](CMakeLists.txt) are provided to configure various sizes such as the receiver queue length or the maximum packet length. When RAM becomes scarce, queue lengths can be reduced. On the other hand, if the processing of the commands is too slow and cannot be done every few milliseconds, it can make sense to lengthen the queues and batch process several commands at once. Otherwise, I would recommend sticking with the defaults.
+A number of [options](CMakeLists.txt) are provided to configure various sizes such as the receiver queue length or the maximum packet length. When RAM becomes scarce, queue lengths can be reduced. On the other hand, if the processing of the commands is too slow and cannot be done every few milliseconds, it can make sense to lengthen the queues and batch process several commands at once. Otherwise, we recommend sticking with the defaults.
 ```cmake
 set(DCC_RX_QUEUE_SIZE
     8

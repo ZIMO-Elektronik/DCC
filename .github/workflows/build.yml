@@ -1,0 +1,13 @@
+name: build
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  x86_64-pc-linux-gnu-gcc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: cmake -Bbuild
+      - run: cmake --build build

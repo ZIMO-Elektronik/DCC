@@ -1,0 +1,16 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  x86_64-pc-linux-gnu-gcc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: cmake -Bbuild
+      - run: cmake --build build --target DCCTests
+      - run: ctest --test-dir build --schedule-random
