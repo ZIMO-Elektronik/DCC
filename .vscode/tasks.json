@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CMake DCCTests Clang",
+      "type": "shell",
+      "isBackground": true,
+      "command": "cmake -Bbuild -GNinja -DCMAKE_TOOLCHAIN_FILE=CMakeModules/toolchains/clang.cmake -DCMAKE_BUILD_TYPE=Debug"
+    },
+    {
+      "label": "CMake DCCTests",
+      "type": "shell",
+      "isBackground": true,
+      "command": "cmake -Bbuild -GNinja -DCMAKE_BUILD_TYPE=Debug"
+    },
+    {
+      "label": "Ninja DCCTests",
+      "type": "shell",
+      "isBackground": true,
+      "command": "ninja -C build DCCTests"
+    },
+    {
+      "label": "Run DCCTests",
+      "type": "shell",
+      "isBackground": true,
+      "command": "./build/tests/DCCTests"
+    },
+    {
+      "label": "Ninja DCCReplExample",
+      "type": "shell",
+      "isBackground": true,
+      "command": "ninja -C build DCCReplExample"
+    },
+  ]
+}

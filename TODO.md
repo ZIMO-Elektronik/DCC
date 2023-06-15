@@ -1,0 +1,4 @@
+- Consist address is never used, although it should be sent in channel 1 in case it's active
+- Use std::span instead of raw pointers
+- Literal for converting CV number to index? The "- 1u" everything is fucking ugly
+- dcc::tx::CrtpBase currently pops it's queue at a bad time. Although the design or circular_array guarantees that it's not UB it looks funky.
