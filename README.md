@@ -124,6 +124,14 @@ FetchContent_Declare(
 target_link_libraries(YourTarget PRIVATE DCC::DCC)
 ```
 
+For the ESP32 there is also the possibility to integrate the library via the [IDF Component Manager](https://docs.espressif.com/projects/idf-component-manager/en/latest/) by adding it to a `idf_component.yml` file.
+```yaml
+dependencies:
+  dcc:
+    version: v0.27.0
+    git: https://github.com/ZIMO-Elektronik/DCC.git
+```
+
 A number of [options](CMakeLists.txt) are provided to configure various sizes such as the receiver queue length or the maximum packet length. When RAM becomes scarce, queue lengths can be reduced. On the other hand, if the processing of the commands is too slow and cannot be done every few milliseconds, it can make sense to lengthen the queues and batch process several commands at once. Otherwise, we recommend sticking with the defaults.
 ```cmake
 set(DCC_RX_QUEUE_SIZE
