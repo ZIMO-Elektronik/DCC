@@ -6,13 +6,14 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
   FetchContent_Declare(
     CMakeModules
     GIT_REPOSITORY https://github.com/ZIMO-Elektronik/CMakeModules
-    GIT_TAG v0.0.5
+    GIT_TAG v0.0.7
     SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
   FetchContent_MakeAvailable(CMakeModules)
 
+  version_from_git()
   project(
     DCC
-    VERSION 0.27.0
+    VERSION ${VERSION_FROM_GIT}
     LANGUAGES C CXX)
 endif()
 
