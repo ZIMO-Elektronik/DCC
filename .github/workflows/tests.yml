@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: git fetch --unshallow --tags
       - run: cmake -Bbuild
       - run: cmake --build build --target DCCTests
       - run: ctest --test-dir build --schedule-random
