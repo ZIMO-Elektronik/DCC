@@ -132,7 +132,7 @@ set(DCC_RX_QUEUE_SIZE
 ```
 
 ### Build
-If the library is built locally then the tests and a REPL example will be generated.
+If the build is running as a top-level CMake project then tests and a REPL example will be generated.
 ```sh
 cmake -Bbuild
 cmake --build build --target DCCReplExample
