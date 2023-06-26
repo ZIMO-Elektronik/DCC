@@ -1,5 +1,8 @@
 # Changelog
 
+# 0.27.1
+- Dependencies can be provided externally
+
 # 0.27.0
 - API change to transmitBiDi
 

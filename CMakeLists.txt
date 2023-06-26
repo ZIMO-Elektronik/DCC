@@ -1,21 +1,27 @@
 cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 include(FetchContent)
 
-if(NOT CMAKE_BUILD_EARLY_EXPANSION)
-  set(FETCHCONTENT_QUIET FALSE)
-  FetchContent_Declare(
-    CMakeModules
-    GIT_REPOSITORY https://github.com/ZIMO-Elektronik/CMakeModules
-    GIT_TAG v0.0.7
-    SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
-  FetchContent_MakeAvailable(CMakeModules)
-
-  version_from_git()
-  project(
-    DCC
-    VERSION ${VERSION_FROM_GIT}
-    LANGUAGES C CXX)
+if(ESP_PLATFORM)
+  file(GLOB_RECURSE SRC src/*.c)
+  idf_component_register(SRCS ${SRC} INCLUDE_DIRS include REQUIRES driver)
+  idf_build_get_property(TGT IDF_TARGET)
+  string(TOUPPER ${TGT} TGT)
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE CONFIG_IDF_TARGET_${TGT})
+  target_link_libraries(${COMPONENT_LIB} PUBLIC DCC)
 endif()
+
+FetchContent_Declare(
+  CMakeModules
+  GIT_REPOSITORY https://github.com/ZIMO-Elektronik/CMakeModules
+  GIT_TAG v0.0.7
+  SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
+FetchContent_MakeAvailable(CMakeModules)
+
+version_from_git()
+project(
+  DCC
+  VERSION ${VERSION_FROM_GIT}
+  LANGUAGES C CXX)
 
 set(DCC_MAX_PACKET_SIZE
     18uz
@@ -35,15 +41,6 @@ set(DCC_TX_MIN_PREAMBLE_BITS
 set(DCC_TX_QUEUE_SIZE
     4uz-1uz
     CACHE STRING "Size of the transmitter queue of command station")
-
-if(ESP_PLATFORM)
-  file(GLOB_RECURSE SRC src/*.c)
-  idf_component_register(SRCS ${SRC} INCLUDE_DIRS include REQUIRES driver)
-  idf_build_get_property(TGT IDF_TARGET)
-  string(TOUPPER ${TGT} TGT)
-  target_compile_definitions(${COMPONENT_LIB} PRIVATE CONFIG_IDF_TARGET_${TGT})
-  target_link_libraries(${COMPONENT_LIB} PUBLIC DCC)
-endif()
 
 add_library(DCC INTERFACE)
 add_library(DCC::DCC ALIAS DCC)
@@ -65,18 +62,23 @@ else()
   target_include_directories(DCC SYSTEM INTERFACE include)
 endif()
 
-cpmaddpackage(
-  NAME
-  static_math
-  GITHUB_REPOSITORY
-  Morwenn/static_math
-  GIT_TAG
-  master
-  SYSTEM
-  YES
-  OPTIONS
-  "STATIC_MATH_BUILD_TESTS OFF")
-cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.16.2")
+if(NOT TARGET static_math)
+  cpmaddpackage(
+    NAME
+    static_math
+    GITHUB_REPOSITORY
+    Morwenn/static_math
+    GIT_TAG
+    master
+    SYSTEM
+    YES
+    OPTIONS
+    "STATIC_MATH_BUILD_TESTS OFF")
+endif()
+
+if(NOT TARGET ZTL::ZTL)
+  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.16.2")
+endif()
 
 target_link_libraries(DCC INTERFACE static_math ZTL::ZTL)
 
