@@ -75,15 +75,15 @@ enum class Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
 template<Bits I, std::unsigned_integral T>
 constexpr auto make_datagram(uint32_t id, T data) {
   constexpr size_t bytes_to_send{(std::to_underlying(I) + 4uz) / 6uz};
-  std::array<uint8_t, bytes_to_send> retval{};
+  std::array<uint8_t, bytes_to_send> datagram{};
   // Data must be smaller than the number of bits (-4 for ID)
   assert(data < smath::pow<uint64_t>(2u, bytes_to_send * 6uz - 4uz));
-  for (auto i{size(retval) - 1u}; i > 0u; --i) {
-    retval[i] = data & 0x3Fu;
+  for (auto i{size(datagram) - 1u}; i > 0u; --i) {
+    datagram[i] = data & 0x3Fu;
     data >>= 6u;
   }
-  retval.front() = static_cast<uint8_t>(id << 2u | (data & 0x03u));
-  return retval;
+  datagram.front() = static_cast<uint8_t>(id << 2u | (data & 0x03u));
+  return datagram;
 }
 
 /// Make datagram without ID
@@ -95,14 +95,14 @@ constexpr auto make_datagram(uint32_t id, T data) {
 template<Bits I, std::unsigned_integral T>
 constexpr auto make_datagram(T data) {
   constexpr size_t bytes_to_send{(std::to_underlying(I) + 4uz) / 6uz};
-  std::array<uint8_t, bytes_to_send> retval{};
+  std::array<uint8_t, bytes_to_send> datagram{};
   // Data must be smaller than the number of bits
   assert(data < smath::pow<uint64_t>(2u, bytes_to_send * 6u));
-  for (auto i{size(retval)}; i-- > 0u;) {
-    retval[i] = data & 0x3Fu;
+  for (auto i{size(datagram)}; i-- > 0u;) {
+    datagram[i] = data & 0x3Fu;
     data >>= 6u;
   }
-  return retval;
+  return datagram;
 }
 
 /// Encode datagram

@@ -71,7 +71,7 @@ constexpr Timings raw2timings(std::span<uint8_t const> chunk, Config cfg = {}) {
 /// \param  cfg     Configuration
 /// \return Timings
 constexpr Timings packet2timings(Packet const& packet, Config cfg = {}) {
-  return raw2timings({data(packet.data), packet.size}, cfg);
+  return raw2timings({cbegin(packet), size(packet)}, cfg);
 }
 
 }  // namespace dcc::tx

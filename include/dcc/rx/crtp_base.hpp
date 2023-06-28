@@ -89,12 +89,12 @@ struct CrtpBase : bidi::CrtpBase<T> {
         break;
 
       case State::Data: {
-        auto& data{end(queue_)->data[byte_count_]};
-        data = static_cast<uint8_t>((data << 1u) | bit);
+        auto data{end(queue_)->data()};
+        data[byte_count_] =
+          static_cast<uint8_t>((data[byte_count_] << 1u) | bit);
         if (++bit_count_ < 8uz) return;
         bit_count_ = 0uz;
-        checksum_ =
-          static_cast<uint8_t>(checksum_ ^ end(queue_)->data[byte_count_++]);
+        checksum_ = static_cast<uint8_t>(checksum_ ^ data[byte_count_++]);
         state_ = State::Endbit;
         break;
       }
@@ -103,7 +103,7 @@ struct CrtpBase : bidi::CrtpBase<T> {
         if (!bit) state_ = State::Data;
         else if (checksum_) return reset();
         else {
-          end(queue_)->size = byte_count_;
+          end(queue_)->size() = byte_count_;
           checksum_ = bit_count_ = byte_count_ = 0uz;
           ++packet_count_;  // Count received packets
           queue_.push_back();
@@ -217,11 +217,10 @@ private:
 
   /// Execute in handler mode (interrupt context)
   void executeHandlerMode() {
-    auto const addr{decode_address(&queue_.front().data[0uz])};
+    auto const addr{decode_address(queue_.front().data())};
     addrs_.received = addr;
     if (addr.type != Address::ExtendedPacket) return;
-    auto const& data{queue_.front().data};
-    auto const size{queue_.front().size};
+    auto const& [data, size]{queue_.front()};
     if (size <= 7uz || !crc8({&data[0uz], size - 1uz}))
       executeExtendedPacket(addr, {&data[1uz], size});
     queue_.pop_front();
@@ -233,12 +232,9 @@ private:
   /// \return false Command to other address
   bool executeOperations() {
     bool retval{};
-    auto const& data{queue_.front().data};
-    auto const size{queue_.front().size};
+    auto const& [data, size]{queue_.front()};
     switch (auto const addr{decode_address(&data[0uz])}; addr.type) {
-      case Address::IdleSystem:
-        executeOperationsSystem(&data[1uz]);
-        break;  // TODO span
+      case Address::IdleSystem: executeOperationsSystem(&data[1uz]); break;
       case Address::Broadcast: [[fallthrough]];
       case Address::Short:
         retval = executeOperationsAddressed(addr, &data[1uz]);  // TODO span
@@ -750,7 +746,7 @@ private:
   /// \param  data  Pointer to data
   void time(uint8_t const* data) const {
     // TODO
-    auto const n{queue_.front().size - 3u};
+    auto const n{queue_.front().size() - 3u};
     for (auto i{0u}; i < n; ++i) {
       switch (auto byte{*++data}; byte & 0b1100'0000u) {
         case 0b0000'0000u: break;

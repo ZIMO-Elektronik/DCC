@@ -41,7 +41,7 @@ struct CrtpBase {
   ///
   /// \param  packet  Packet
   void packet(Packet const& packet) {
-    return raw({cbegin(packet.data), packet.size});
+    return raw({cbegin(packet), size(packet)});
   }
 
   /// Transmit raw data
