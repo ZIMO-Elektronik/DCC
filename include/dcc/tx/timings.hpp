@@ -22,7 +22,7 @@ namespace dcc::tx {
 
 struct Timings {
   using value_type = uint16_t;
-  constexpr bool operator==(Timings const&) const = default;
+  friend constexpr bool operator==(Timings const&, Timings const&) = default;
   std::array<value_type,
              (std::numeric_limits<uint8_t>::max() +    // Preamble
               1uz +                                    // Startbit
