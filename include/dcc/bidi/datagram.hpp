@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include "bundled_channels.hpp"
 
 namespace dcc::bidi {
 
@@ -55,6 +56,9 @@ inline constexpr std::array<uint8_t, 256uz> decode_lut{
 
 }  // namespace detail
 
+template<size_t I = bundled_channels_size>
+using Datagram = std::array<uint8_t, I>;
+
 enum class Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
 
 /// Make datagram with ID
@@ -75,7 +79,7 @@ enum class Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
 template<Bits I, std::unsigned_integral T>
 constexpr auto make_datagram(uint32_t id, T data) {
   constexpr size_t bytes_to_send{(std::to_underlying(I) + 4uz) / 6uz};
-  std::array<uint8_t, bytes_to_send> datagram{};
+  Datagram<bytes_to_send> datagram{};
   // Data must be smaller than the number of bits (-4 for ID)
   assert(data < smath::pow<uint64_t>(2u, bytes_to_send * 6uz - 4uz));
   for (auto i{size(datagram) - 1u}; i > 0u; --i) {
@@ -95,7 +99,7 @@ constexpr auto make_datagram(uint32_t id, T data) {
 template<Bits I, std::unsigned_integral T>
 constexpr auto make_datagram(T data) {
   constexpr size_t bytes_to_send{(std::to_underlying(I) + 4uz) / 6uz};
-  std::array<uint8_t, bytes_to_send> datagram{};
+  Datagram<bytes_to_send> datagram{};
   // Data must be smaller than the number of bits
   assert(data < smath::pow<uint64_t>(2u, bytes_to_send * 6u));
   for (auto i{size(datagram)}; i-- > 0u;) {
@@ -111,8 +115,8 @@ constexpr auto make_datagram(T data) {
 /// \param  datagram  Datagram
 /// \return Encoded datagram
 template<size_t I>
-constexpr auto encode_datagram(std::array<uint8_t, I> const& datagram) {
-  std::array<uint8_t, I> encoded_datagram;
+constexpr auto encode_datagram(Datagram<I> const& datagram) {
+  Datagram<I> encoded_datagram;
   std::ranges::transform(datagram, begin(encoded_datagram), [](uint8_t b) {
     return detail::encode_lut[b];
   });
@@ -125,8 +129,8 @@ constexpr auto encode_datagram(std::array<uint8_t, I> const& datagram) {
 /// \param  encoded_datagram  Encoded datagram
 /// \return Datagram
 template<size_t I>
-constexpr auto decode_datagram(std::array<uint8_t, I> const& encoded_datagram) {
-  std::array<uint8_t, I> datagram{};
+constexpr auto decode_datagram(Datagram<I> const& encoded_datagram) {
+  Datagram<I> datagram{};
   std::ranges::transform(encoded_datagram, begin(datagram), [](uint8_t b) {
     return detail::decode_lut[b];
   });
