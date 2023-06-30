@@ -18,8 +18,8 @@ namespace dcc::bidi {
 struct Dyn {
   using value_type = int16_t;
 
-  constexpr operator value_type&() & { return d; }
-  constexpr operator value_type const&() const& { return d; }
+  constexpr operator value_type&() { return d; }
+  constexpr operator value_type const&() const { return d; }
 
   value_type d;  ///< DV (dynamic CV)
   uint8_t x;     ///< Subindex

@@ -7,9 +7,9 @@
   std::cout << std::flush
 
 Decoder::Decoder() {
-  cvs_[29uz - 1uz] = 0b10u;  // Decoder configuration
-  cvs_[1uz - 1uz] = 3u;      // Primary address
-  cvs_[8uz - 1uz] = 145u;    // ZIMO manufacturer ID
+  _cvs[29uz - 1uz] = 0b10u;  // Decoder configuration
+  _cvs[1uz - 1uz] = 3u;      // Primary address
+  _cvs[8uz - 1uz] = 145u;    // ZIMO manufacturer ID
 };
 
 void Decoder::direction(uint32_t addr, int32_t dir) {
@@ -45,27 +45,27 @@ void Decoder::transmitBiDi(std::span<uint8_t const>) {}
 
 uint8_t Decoder::readCv(uint32_t cv_addr, uint8_t byte) {
   cli::Cli::cout() << "Read CV byte " << cv_addr
-                   << "==" << static_cast<uint32_t>(cvs_[cv_addr])
+                   << "==" << static_cast<uint32_t>(_cvs[cv_addr])
                    << PROMPTENDL;
-  return cvs_[cv_addr];
+  return _cvs[cv_addr];
 }
 
 uint8_t Decoder::writeCv(uint32_t cv_addr, uint8_t byte) {
   cli::Cli::cout() << "Write CV byte " << cv_addr << "="
                    << static_cast<uint32_t>(byte) << PROMPTENDL;
-  return cvs_[cv_addr] = byte;
+  return _cvs[cv_addr] = byte;
 }
 
 bool Decoder::readCv(uint32_t cv_addr, bool bit, uint32_t pos) {
-  auto const red_bit{static_cast<bool>(cvs_[cv_addr] & (1u << pos))};
+  auto const red_bit{static_cast<bool>(_cvs[cv_addr] & (1u << pos))};
   cli::Cli::cout() << "Read CV bit " << cv_addr << ":" << pos << "==" << red_bit
                    << PROMPTENDL;
   return red_bit;
 }
 
 bool Decoder::writeCv(uint32_t cv_addr, bool bit, uint32_t pos) {
-  cvs_[cv_addr] = (cvs_[cv_addr] & ~(1u << pos)) | (bit << pos);
-  auto const red_bit{static_cast<bool>(cvs_[cv_addr] & (1u << pos))};
+  _cvs[cv_addr] = (_cvs[cv_addr] & ~(1u << pos)) | (bit << pos);
+  auto const red_bit{static_cast<bool>(_cvs[cv_addr] & (1u << pos))};
   cli::Cli::cout() << "Write CV bit " << cv_addr << ":" << pos << "=" << red_bit
                    << PROMPTENDL;
   return red_bit;

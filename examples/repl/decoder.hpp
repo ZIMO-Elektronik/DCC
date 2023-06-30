@@ -42,5 +42,5 @@ private:
   // Write CV bit
   bool writeCv(uint32_t cv_addr, bool bit, uint32_t pos);
 
-  std::array<uint8_t, 1024uz> cvs_{};
+  std::array<uint8_t, 1024uz> _cvs{};
 };

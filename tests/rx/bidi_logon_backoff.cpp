@@ -10,7 +10,7 @@ TEST_F(BiDiLogonBackoffTest, repeated_values_stay_below_max_range) {
   EXPECT_LT(countTillFalse(CHAR_BIT << 4), CHAR_BIT << 3);
 
   // Range can be reset
-  logon_backoff_ = {};
+  _logon_backoff = {};
   EXPECT_LT(countTillFalse(CHAR_BIT), CHAR_BIT);
 }
 
@@ -24,6 +24,6 @@ TEST_F(BiDiLogonBackoffTest, reset) {
   EXPECT_LT(countTillFalse(CHAR_BIT << 4), CHAR_BIT << 3);
 
   // Range can be reset
-  logon_backoff_ = {};
+  _logon_backoff = {};
   EXPECT_LT(countTillFalse(CHAR_BIT), CHAR_BIT);
 }

@@ -20,32 +20,32 @@ namespace dcc::rx::bidi {
 /// Implements O(2^n) logon backoff logic
 struct LogonBackoff {
   constexpr operator bool() {
-    if (count_) {
-      --count_;
+    if (_count) {
+      --_count;
       return true;
     } else {
-      count_ = randomCount();
-      range_ = std::min<decltype(range_)>(range_ + 1, 3);
+      _count = randomCount();
+      _range = std::min<decltype(_range)>(_range + 1, 3);
       return false;
     }
   }
 
   /// Don't backoff next time
-  void now() { count_ = 0u; }
+  void now() { _count = 0u; }
 
   /// Reset
   void reset() {
-    range_ = 0;
-    count_ = randomCount();
+    _range = 0;
+    _count = randomCount();
   }
 
 private:
   uint8_t randomCount() const {
-    return static_cast<decltype(count_)>(rand() % (CHAR_BIT << range_));
+    return static_cast<decltype(_count)>(rand() % (CHAR_BIT << _range));
   }
 
-  int8_t range_{};
-  uint8_t count_{randomCount()};
+  int8_t _range{};
+  uint8_t _count{randomCount()};
 };
 
 }  // namespace dcc::rx::bidi
