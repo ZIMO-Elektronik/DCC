@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <numeric>
 #include <span>
+#include "packet.hpp"
 
 namespace dcc {
 
@@ -64,6 +65,15 @@ constexpr uint8_t crc8(std::span<uint8_t const> chunk) {
     cend(chunk),
     static_cast<uint8_t>(0u),
     [](uint8_t a, uint8_t b) { return crc8(static_cast<uint8_t>(a ^ b)); });
+}
+
+/// This function calculates CRC8 (Dallas/Maxim). The polynomial representations
+/// is 0x31.
+///
+/// \param  chunk Chunk to calculate CRC8 for
+/// \return CRC8
+constexpr uint8_t crc8(Packet const& packet) {
+  return crc8({cbegin(packet), size(packet)});
 }
 
 }  // namespace dcc

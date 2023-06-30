@@ -217,11 +217,12 @@ private:
 
   /// Execute in handler mode (interrupt context)
   void executeHandlerMode() {
-    auto const addr{decode_address(queue_.front().data())};
+    auto const& packet{queue_.front()};
+    auto const addr{decode_address(data(packet))};
     addrs_.received = addr;
     if (addr.type != Address::ExtendedPacket) return;
     auto const& [data, size]{queue_.front()};
-    if (size <= 7uz || !crc8({&data[0uz], size - 1uz}))
+    if (size <= 7uz || !crc8(packet))
       executeExtendedPacket(addr, {&data[1uz], size});
     queue_.pop_front();
   }
