@@ -73,7 +73,8 @@ constexpr uint8_t crc8(std::span<uint8_t const> chunk) {
 /// \param  chunk Chunk to calculate CRC8 for
 /// \return CRC8
 constexpr uint8_t crc8(Packet const& packet) {
-  return crc8({cbegin(packet), size(packet)});
+  // Packet checksum is not part of CRC
+  return crc8({cbegin(packet), size(packet) - 1uz});
 }
 
 }  // namespace dcc
