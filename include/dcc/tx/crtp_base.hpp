@@ -58,7 +58,7 @@ struct CrtpBase {
   /// \return Bit duration in µs
   Timings::value_type transmit() {
     // As long as there are packet timings
-    if (_packet_count < _packet->size) return packetTiming();
+    if (_packet_count < _packet->size()) return packetTiming();
     // or BiDi timings
     else if (_cfg.bidi && _bidi_count <= 4uz) return bidiTiming();
 
@@ -92,7 +92,7 @@ private:
   ///
   /// \return Next timings from current packet
   Timings::value_type packetTiming() {
-    auto const retval{_packet->values[_packet_count]};
+    auto const retval{(*_packet)[_packet_count]};
     if (_packet_count++ % 2uz) impl().setTrackOutputs(false, true);
     else impl().setTrackOutputs(true, false);
     return retval;

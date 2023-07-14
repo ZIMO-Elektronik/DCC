@@ -48,8 +48,8 @@ void RxTest::Receive(dcc::Packet const& packet) {
 }
 
 void RxTest::Receive(dcc::tx::Timings const& timings) {
-  std::ranges::for_each_n(cbegin(timings.values),
-                          timings.size,
+  std::ranges::for_each_n(cbegin(timings),
+                          size(timings),
                           [this](uint32_t time) { _mock.receive(time); });
 }
 
