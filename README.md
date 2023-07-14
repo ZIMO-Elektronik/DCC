@@ -132,9 +132,9 @@ dependencies:
     git: https://github.com/ZIMO-Elektronik/DCC.git
 ```
 
-A number of [options](CMakeLists.txt) are provided to configure various sizes such as the receiver queue length or the maximum packet length. When RAM becomes scarce, queue lengths can be reduced. On the other hand, if the processing of the commands is too slow and cannot be done every few milliseconds, it can make sense to lengthen the queues and batch process several commands at once. Otherwise, we recommend sticking with the defaults.
+A number of [options](CMakeLists.txt) are provided to configure various sizes such as the receiver deque length or the maximum packet length. When RAM becomes scarce, deque lengths can be reduced. On the other hand, if the processing of the commands is too slow and cannot be done every few milliseconds, it can make sense to lengthen the deques and batch process several commands at once. Otherwise, we recommend sticking with the defaults.
 ```cmake
-set(DCC_RX_QUEUE_SIZE
+set(DCC_RX_DEQUE_SIZE
     8
     CACHE STRING "" FORCE)
 ```

@@ -66,8 +66,7 @@ struct CrtpBase : bidi::CrtpBase<T> {
     // Alternate halfbit <-> bit
     if (_state != State::Preamble && (_is_halfbit = !_is_halfbit)) return;
 
-    // If queue is full return
-    if (full(_queue)) return reset();  // TODO task full error counter?
+    if (full(_deque)) return reset();  // TODO task full error counter?
 
     // Successfully received a bit -> enter state machine
     switch (_state) {
@@ -89,7 +88,7 @@ struct CrtpBase : bidi::CrtpBase<T> {
         break;
 
       case State::Data: {
-        auto data{end(_queue)->data()};
+        auto data{end(_deque)->data()};
         data[_byte_count] =
           static_cast<uint8_t>((data[_byte_count] << 1u) | bit);
         if (++_bit_count < 8uz) return;
@@ -103,10 +102,10 @@ struct CrtpBase : bidi::CrtpBase<T> {
         if (!bit) _state = State::Data;
         else if (_checksum) return reset();
         else {
-          end(_queue)->resize(_byte_count);
+          end(_deque)->resize(_byte_count);
           _checksum = _bit_count = _byte_count = 0uz;
           ++_packet_count;  // Count received packets
-          _queue.push_back();
+          _deque.push_back();
           _packet_end = true;
           executeHandlerMode();
           return reset();
@@ -125,7 +124,7 @@ struct CrtpBase : bidi::CrtpBase<T> {
   template<std::derived_from<bidi::Dyn>... Dyns>
   bool execute(Dyns&&... dyns)
     requires((sizeof...(Dyns) <
-              DCC_RX_BIDI_QUEUE_SIZE))  // TODO remove double braces, currently
+              DCC_RX_BIDI_DEQUE_SIZE))  // TODO remove double braces, currently
                                         // fucks with VSCode highlighting
   {
     BiDi::execute(std::forward<Dyns>(dyns)...);
@@ -207,23 +206,23 @@ private:
   /// \return true  Command to own address
   /// \return false Command to other address
   bool executeThreadMode() {
-    if (empty(_queue)) return false;
+    if (empty(_deque)) return false;
     auto const retval{_mode == Mode::Operations ? executeOperations()
                                                 : executeService()};
-    _queue.pop_front();
+    _deque.pop_front();
     BiDi::executeThreadMode();
     return retval;
   }
 
   /// Execute in handler mode (interrupt context)
   void executeHandlerMode() {
-    auto const& packet{_queue.front()};
+    auto const& packet{_deque.front()};
     auto const addr{decode_address(data(packet))};
     _addrs.received = addr;
     if (addr.type != Address::ExtendedPacket) return;
     if (size(packet) <= 7uz || !crc8(packet))
       executeExtendedPacket(addr, {&packet[1uz], size(packet)});
-    _queue.pop_front();
+    _deque.pop_front();
   }
 
   /// Execute commands in operations mode
@@ -232,7 +231,7 @@ private:
   /// \return false Command to other address
   bool executeOperations() {
     bool retval{};
-    auto const& packet{_queue.front()};
+    auto const& packet{_deque.front()};
     switch (auto const addr{decode_address(&packet[0uz])}; addr.type) {
       case Address::IdleSystem: executeOperationsSystem(&packet[1uz]); break;
       case Address::Broadcast: [[fallthrough]];
@@ -256,7 +255,7 @@ private:
   bool executeService() {
     countOwnEqualPackets();
     // Reset
-    if (auto const& packet{_queue.front()}; !packet[0uz])
+    if (auto const& packet{_deque.front()}; !packet[0uz])
       ;
     // Exit
     else if ((packet[0uz] & 0xF0u) != 0b0111'0000u) serviceMode(false);
@@ -746,7 +745,7 @@ private:
   /// \param  data  Pointer to data
   void time(uint8_t const* data) const {
     // TODO
-    auto const n{_queue.front().size() - 3u};
+    auto const n{_deque.front().size() - 3u};
     for (auto i{0u}; i < n; ++i) {
       switch (auto byte{*++data}; byte & 0b1100'0000u) {
         case 0b0000'0000u: break;
@@ -788,15 +787,15 @@ private:
 
   /// Count own equal packets
   void countOwnEqualPackets() {
-    if (_queue.front() == _last_own_packet) ++_own_equal_packets_count;
+    if (_deque.front() == _last_own_packet) ++_own_equal_packets_count;
     else {
       _own_equal_packets_count = 1uz;
-      _last_own_packet = _queue.front();
+      _last_own_packet = _deque.front();
     }
   }
 
   /// Flush the current packet
-  void flush() { *end(_queue) = {}; }
+  void flush() { *end(_deque) = {}; }
 
   /// Reset
   void reset() {
@@ -819,7 +818,7 @@ private:
     }
   }
 
-  ztl::inplace_deque<Packet, DCC_RX_QUEUE_SIZE> _queue{};  ///< Task queue
+  ztl::inplace_deque<Packet, DCC_RX_DEQUE_SIZE> _deque{};
   Packet _last_own_packet{};  ///< Copy of last packet for own address
   size_t _bit_count{};
   size_t _byte_count{};

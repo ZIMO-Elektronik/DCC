@@ -46,18 +46,18 @@ protected:
   Decoder auto& impl() { return static_cast<T&>(*this); }
   Decoder auto const& impl() const { return static_cast<T const&>(*this); }
 
-  /// Execute adds dyn (ID7) datagrams to queue
+  /// Execute adds dyn (ID7) datagrams to deque
   ///
   /// \tparam Dyns... Types of dyn datagrams
   /// \param  dyns... Messages
   template<std::derived_from<Dyn>... Dyns>
   void execute(Dyns&&... dyns)
     requires((sizeof...(Dyns) <
-              DCC_RX_BIDI_QUEUE_SIZE))  // TODO remove double braces, currently
+              DCC_RX_BIDI_DEQUE_SIZE))  // TODO remove double braces, currently
                                         // fucks with VSCode highlighting
   {
     if (!sizeof...(Dyns) ||
-        (DCC_RX_BIDI_QUEUE_SIZE - size(_dyn_queue) < sizeof...(Dyns) + 1uz))
+        (DCC_RX_BIDI_DEQUE_SIZE - size(_dyn_deque) < sizeof...(Dyns) + 1uz))
       return;
     (dyn(std::forward<Dyns>(dyns)), ...);
     dyn(_qos, 7u);
@@ -124,23 +124,23 @@ protected:
   /// \param  qos Quality of service
   void qos(uint8_t qos) { _qos = qos; }
 
-  /// Add to pom queue
+  /// Add to pom deque
   ///
   /// \param  value CV value
   void pom(uint8_t value) {
-    if (full(_pom_queue)) return;
-    _pom_queue.push_back(encode_datagram(make_datagram<Bits::_12>(0u, value)));
+    if (full(_pom_deque)) return;
+    _pom_deque.push_back(encode_datagram(make_datagram<Bits::_12>(0u, value)));
   }
 
   /// Tip-off search
   void tipOffSearch() {
     if (constexpr auto six_pct{static_cast<decltype(rand())>(RAND_MAX * 0.06)};
-        !empty(_tos_queue) || rand() > six_pct)
+        !empty(_tos_deque) || rand() > six_pct)
       return;
     auto const sec{std::chrono::duration_cast<std::chrono::seconds>(
       _last_packet_tp - _tos_tp)};
     if (sec >= 30s) return;
-    auto& packet{*end(_tos_queue)};
+    auto& packet{*end(_tos_deque)};
     auto const adr_high{adrHigh()};
     auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(packet))};
     auto const adr_low{adrLow()};
@@ -148,7 +148,7 @@ protected:
     auto const time{encode_datagram(
       make_datagram<Bits::_12>(0u, static_cast<uint32_t>(sec.count())))};
     std::copy(cbegin(time), cend(time), it);
-    _tos_queue.push_back();
+    _tos_deque.push_back();
   }
 
   /// Logon enable
@@ -180,7 +180,7 @@ protected:
     }
 
     if (_logon_backoff) return;
-    _logon_queue.push_back(encode_datagram(make_datagram<Bits::_48>(
+    _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
       15u,
       static_cast<uint64_t>(zimo_id) << 32u | _did[0uz] << 24u |
         _did[1uz] << 16u | _did[2uz] << 8u | _did[3uz])));
@@ -198,7 +198,7 @@ protected:
       0u,
       0u,
       0u};
-    _logon_queue.push_back(encode_datagram(make_datagram<Bits::_48>(
+    _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
       static_cast<uint64_t>(data[0uz]) << 40uz |
       static_cast<uint64_t>(data[1uz]) << 32uz | data[2uz] << 24uz |
       data[3uz] << 16uz | data[4uz] << 8uz | crc8(data))));
@@ -215,7 +215,7 @@ protected:
     _addrs.primary = _addrs.logon = addr;
     static constexpr std::array<uint8_t, 5uz> data{
       13u << 4u | 0u, 0u, 0u, 0u, 0u};
-    _logon_queue.push_back(encode_datagram(make_datagram<Bits::_48>(
+    _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
       static_cast<uint64_t>(data[0uz]) << 40uz |
       static_cast<uint64_t>(data[1uz]) << 32uz | data[2uz] << 24uz |
       data[3uz] << 16uz | data[4uz] << 8uz | crc8(data))));
@@ -265,9 +265,9 @@ private:
   void dyn(uint8_t d, uint8_t x) {
     auto const dyn{encode_datagram(
       make_datagram<Bits::_18>(7u, static_cast<uint32_t>(d << 6u | x)))};
-    std::copy(begin(dyn), end(dyn), begin(end(_dyn_queue)->data));
-    end(_dyn_queue)->size = size(dyn);
-    _dyn_queue.push_back();
+    std::copy(begin(dyn), end(dyn), begin(end(_dyn_deque)->data));
+    end(_dyn_deque)->size = size(dyn);
+    _dyn_deque.push_back();
   }
 
   /// Handle app:adr_low and app:adr_high datagrams
@@ -281,51 +281,51 @@ private:
   /// Handle app:pom, app:ext, app:dyn and app:subID datagrams
   void appPomExtDynSubId() {
     // Send either pom only (no fucking thanks ESU)
-    if (!empty(_pom_queue)) appPom();
+    if (!empty(_pom_deque)) appPom();
     // Or whatever fits into channel2
     else appExtDynSubId();
   }
 
   /// Handle app::pom
   void appPom() {
-    auto const& packet{_pom_queue.front()};
+    auto const& packet{_pom_deque.front()};
     std::copy(cbegin(packet), cend(packet), begin(_ch2));
     impl().transmitBiDi({cbegin(_ch2), size(packet)});
-    _pom_queue.pop_front();
+    _pom_deque.pop_front();
   }
 
   /// Handle app:ext, app:dyn and app:subID datagrams
   void appExtDynSubId() {
-    if (empty(_dyn_queue)) return;
+    if (empty(_dyn_deque)) return;
     auto first{begin(_ch2)};
     auto const last{cend(_ch2)};
     do {
-      auto const& packet{_dyn_queue.front()};
+      auto const& packet{_dyn_deque.front()};
       first = std::copy_n(cbegin(packet.data), packet.size, first);
-      _dyn_queue.pop_front();
-    } while (!empty(_dyn_queue) && last - first >= _dyn_queue.front().size);
+      _dyn_deque.pop_front();
+    } while (!empty(_dyn_deque) && last - first >= _dyn_deque.front().size);
     impl().transmitBiDi({cbegin(_ch2), first});
   }
 
   /// Handle app:tos
   void appTos() {
-    if (empty(_tos_queue)) return;
-    auto const& packet{_tos_queue.front()};
+    if (empty(_tos_deque)) return;
+    auto const& packet{_tos_deque.front()};
     std::ranges::copy(packet, begin(_ch2));
     impl().transmitBiDi({begin(_ch2), size(packet)});
-    _tos_queue.pop_front();
+    _tos_deque.pop_front();
   }
 
   /// Handle app::logon
   void appLogon(uint32_t ch) {
-    if (empty(_logon_queue)) return;
-    if (auto const& packet{_logon_queue.front()}; ch == 1u) {
+    if (empty(_logon_deque)) return;
+    if (auto const& packet{_logon_deque.front()}; ch == 1u) {
       std::copy(begin(packet), begin(packet) + 2, begin(_ch1));
       impl().transmitBiDi({cbegin(_ch1), size(_ch1)});
     } else {
       std::copy(begin(packet) + 2, end(packet), begin(_ch2));
       impl().transmitBiDi({cbegin(_ch2), size(_ch2)});
-      _logon_queue.pop_front();
+      _logon_deque.pop_front();
     }
   }
 
@@ -382,10 +382,10 @@ private:
   std::array<uint8_t, 4uz> _did{};
   Channel1 _ch1{};
   Channel2 _ch2{};
-  ztl::inplace_deque<Packet, DCC_RX_BIDI_QUEUE_SIZE> _dyn_queue{};
-  ztl::inplace_deque<Channel1, DCC_RX_BIDI_QUEUE_SIZE> _pom_queue{};
-  ztl::inplace_deque<Channel2, 2uz> _tos_queue{};
-  ztl::inplace_deque<BundledChannels, 2uz> _logon_queue{};
+  ztl::inplace_deque<Packet, DCC_RX_BIDI_DEQUE_SIZE> _dyn_deque{};
+  ztl::inplace_deque<Channel1, DCC_RX_BIDI_DEQUE_SIZE> _pom_deque{};
+  ztl::inplace_deque<Channel2, 2uz> _tos_deque{};
+  ztl::inplace_deque<BundledChannels, 2uz> _logon_deque{};
   LogonBackoff _logon_backoff{};
   uint16_t _cid{};        ///< Central ID
   uint8_t _session_id{};  ///< Session ID
