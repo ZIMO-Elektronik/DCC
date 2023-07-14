@@ -10,7 +10,7 @@
 - API changes to bytewise CV read
 
 # 0.26.1
-- Bugfix QoS message not written to queue
+- Bugfix QoS message not written to deque
 
 # 0.26.0
 - API changes to bitwise CV read
@@ -89,7 +89,7 @@
 - Receive must clear packet_end_ immediately
 
 # 0.12
-- Increase queue size to 31
+- Increase deque size to 31
 
 # 0.11
 - Non-linear scaling for 14 and 28 speed steps (minimum speed is equal with 126 speed steps)

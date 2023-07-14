@@ -48,9 +48,9 @@ struct CrtpBase {
   ///
   /// \param  chunk Raw data
   void raw(std::span<uint8_t const> chunk) {
-    if (full(_queue)) return;
+    if (full(_deque)) return;
     assert(size(chunk) <= DCC_MAX_PACKET_SIZE);
-    _queue.push_back(raw2timings(chunk, _cfg));
+    _deque.push_back(raw2timings(chunk, _cfg));
   }
 
   /// Get next bit duration to transmit in µs
@@ -62,19 +62,19 @@ struct CrtpBase {
     // or BiDi timings
     else if (_cfg.bidi && _bidi_count <= 4uz) return bidiTiming();
 
-    // TODO theoretically queue could be popped here safely?
+    // TODO theoretically deque could be popped here safely?
     // we'd just need to check whether packet doesn't point to idle_packet and
-    // queue ain't empty?
+    // deque ain't empty?
 
-    // Queue is empty, send idle packet
-    if (empty(_queue)) _packet = &_idle_packet;
-    // Queue contains packet, send it
+    // Deque is empty, send idle packet
+    if (empty(_deque)) _packet = &_idle_packet;
+    // Deque contains packet, send it
     else {
-      _packet = &_queue.front();
+      _packet = &_deque.front();
       // Careful! This only works because of the design of ztl::inplace_deque.
       // The slot _packet currently points to will stay valid until the next
       // call of pop_front().
-      _queue.pop_front();
+      _deque.pop_front();
     }
     _packet_count = _bidi_count = 0uz;
 
@@ -137,7 +137,7 @@ private:
 
   static constexpr Timings _idle_packet{packet2timings(make_idle_packet())};
 
-  ztl::inplace_deque<Timings, DCC_TX_QUEUE_SIZE> _queue{};  ///< Task queue
+  ztl::inplace_deque<Timings, DCC_TX_DEQUE_SIZE> _deque{};
   Timings const* _packet{&_idle_packet};
   size_t _packet_count{};
   size_t _bidi_count{};

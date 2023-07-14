@@ -29,18 +29,18 @@ set(DCC_MAX_PACKET_SIZE
 set(DCC_RX_PREAMBLE_BITS
     10uz
     CACHE STRING "Number of preambel bits of decoder")
-set(DCC_RX_QUEUE_SIZE
+set(DCC_RX_DEQUE_SIZE
     32uz-1uz
-    CACHE STRING "Size of the receiver queue of decoder")
-set(DCC_RX_BIDI_QUEUE_SIZE
+    CACHE STRING "Size of the receiver deque of decoder")
+set(DCC_RX_BIDI_DEQUE_SIZE
     8uz-1uz
-    CACHE STRING "Size of the sender queue of decoder")
+    CACHE STRING "Size of the sender deque of decoder")
 set(DCC_TX_MIN_PREAMBLE_BITS
     17uz
     CACHE STRING "Minimum number of preambel bits of command station")
-set(DCC_TX_QUEUE_SIZE
+set(DCC_TX_DEQUE_SIZE
     4uz-1uz
-    CACHE STRING "Size of the transmitter queue of command station")
+    CACHE STRING "Size of the transmitter deque of command station")
 
 add_library(DCC INTERFACE)
 add_library(DCC::DCC ALIAS DCC)
@@ -51,10 +51,10 @@ target_compile_definitions(
   DCC
   INTERFACE DCC_MAX_PACKET_SIZE=${DCC_MAX_PACKET_SIZE}
             DCC_RX_PREAMBLE_BITS=${DCC_RX_PREAMBLE_BITS}
-            DCC_RX_QUEUE_SIZE=${DCC_RX_QUEUE_SIZE}
-            DCC_RX_BIDI_QUEUE_SIZE=${DCC_RX_BIDI_QUEUE_SIZE}
+            DCC_RX_DEQUE_SIZE=${DCC_RX_DEQUE_SIZE}
+            DCC_RX_BIDI_DEQUE_SIZE=${DCC_RX_BIDI_DEQUE_SIZE}
             DCC_TX_MIN_PREAMBLE_BITS=${DCC_TX_MIN_PREAMBLE_BITS}
-            DCC_TX_QUEUE_SIZE=${DCC_TX_QUEUE_SIZE})
+            DCC_TX_DEQUE_SIZE=${DCC_TX_DEQUE_SIZE})
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   target_include_directories(DCC INTERFACE include)
