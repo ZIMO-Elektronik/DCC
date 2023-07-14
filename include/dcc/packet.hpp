@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <ztl/inplace_vector.hpp>
 #include "exor.hpp"

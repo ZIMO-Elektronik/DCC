@@ -25,10 +25,10 @@
 #include "../decoder.hpp"
 #include "high_current.hpp"
 #include "logon_backoff.hpp"
-#include "packet.hpp"
 
 namespace dcc::rx::bidi {
 
+using namespace ::dcc::bidi;
 using namespace std::chrono_literals;
 
 /// CRTP base for transmitting BiDi
@@ -263,11 +263,8 @@ private:
   /// \param  d DV (dynamic CV)
   /// \param  x Subindex
   void dyn(uint8_t d, uint8_t x) {
-    auto const dyn{encode_datagram(
-      make_datagram<Bits::_18>(7u, static_cast<uint32_t>(d << 6u | x)))};
-    std::copy(begin(dyn), end(dyn), begin(end(_dyn_deque)->data));
-    end(_dyn_deque)->size = size(dyn);
-    _dyn_deque.push_back();
+    _dyn_deque.push_back(encode_datagram(
+      make_datagram<Bits::_18>(7u, static_cast<uint32_t>(d << 6u | x))));
   }
 
   /// Handle app:adr_low and app:adr_high datagrams
@@ -301,9 +298,9 @@ private:
     auto const last{cend(_ch2)};
     do {
       auto const& packet{_dyn_deque.front()};
-      first = std::copy_n(cbegin(packet.data), packet.size, first);
+      first = std::copy_n(cbegin(packet), size(packet), first);
       _dyn_deque.pop_front();
-    } while (!empty(_dyn_deque) && last - first >= _dyn_deque.front().size);
+    } while (!empty(_dyn_deque) && last - first >= size(_dyn_deque.front()));
     impl().transmitBiDi({cbegin(_ch2), first});
   }
 
@@ -382,7 +379,9 @@ private:
   std::array<uint8_t, 4uz> _did{};
   Channel1 _ch1{};
   Channel2 _ch2{};
-  ztl::inplace_deque<Packet, DCC_RX_BIDI_DEQUE_SIZE> _dyn_deque{};
+  ztl::inplace_deque<std::array<uint8_t, datagram_size<Bits::_18>>,
+                     DCC_RX_BIDI_DEQUE_SIZE>
+    _dyn_deque{};
   ztl::inplace_deque<Channel1, DCC_RX_BIDI_DEQUE_SIZE> _pom_deque{};
   ztl::inplace_deque<Channel2, 2uz> _tos_deque{};
   ztl::inplace_deque<BundledChannels, 2uz> _logon_deque{};

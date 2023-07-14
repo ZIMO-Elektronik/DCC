@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include "bundled_channels.hpp"
 
 namespace dcc::bidi {
 
@@ -56,10 +55,17 @@ inline constexpr std::array<uint8_t, 256uz> decode_lut{
 
 }  // namespace detail
 
-template<size_t I = bundled_channels_size>
-using Datagram = std::array<uint8_t, I>;
-
+/// Enumeration to specify datagram bits
 enum class Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
+
+/// Convert datagram bits to size
+///
+/// \tparam I Datagram bits
+template<Bits I>
+inline constexpr auto datagram_size{(std::to_underlying(I) + 4uz) / 6uz};
+
+template<size_t I = datagram_size<Bits::_48>>
+using Datagram = std::array<uint8_t, I>;
 
 /// Make datagram with ID
 ///
@@ -71,17 +77,16 @@ enum class Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
 /// 48bit: ID[3-0]D[43-42]+D[41-36]+D[35-30]+D[29-24]+D[23-18]+D[17-12]+D[11-6]
 ///        +D[5-0]
 ///
-/// \tparam I     Datagram size
+/// \tparam I     Datagram size in bits
 /// \tparam T     Type of data
 /// \param  id    ID
 /// \param  data  Data
 /// \return 12, 18, 24, 36 or 48bit datagram
 template<Bits I, std::unsigned_integral T>
 constexpr auto make_datagram(uint32_t id, T data) {
-  constexpr size_t bytes_to_send{(std::to_underlying(I) + 4uz) / 6uz};
-  Datagram<bytes_to_send> datagram{};
+  Datagram<datagram_size<I>> datagram{};
   // Data must be smaller than the number of bits (-4 for ID)
-  assert(data < smath::pow<uint64_t>(2u, bytes_to_send * 6uz - 4uz));
+  assert(data < smath::pow<uint64_t>(2u, datagram_size<I> * 6uz - 4uz));
   for (auto i{size(datagram) - 1u}; i > 0u; --i) {
     datagram[i] = data & 0x3Fu;
     data >>= 6u;
@@ -92,16 +97,15 @@ constexpr auto make_datagram(uint32_t id, T data) {
 
 /// Make datagram without ID
 ///
-/// \tparam I     Datagram size
+/// \tparam I     Datagram size in bits
 /// \tparam T     Type of data
 /// \param  data  Data
 /// \return 12, 18, 24, 36 or 48bit datagram
 template<Bits I, std::unsigned_integral T>
 constexpr auto make_datagram(T data) {
-  constexpr size_t bytes_to_send{(std::to_underlying(I) + 4uz) / 6uz};
-  Datagram<bytes_to_send> datagram{};
+  Datagram<datagram_size<I>> datagram{};
   // Data must be smaller than the number of bits
-  assert(data < smath::pow<uint64_t>(2u, bytes_to_send * 6u));
+  assert(data < smath::pow<uint64_t>(2u, datagram_size<I> * 6u));
   for (auto i{size(datagram)}; i-- > 0u;) {
     datagram[i] = data & 0x3Fu;
     data >>= 6u;
