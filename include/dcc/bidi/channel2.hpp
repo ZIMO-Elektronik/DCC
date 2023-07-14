@@ -10,13 +10,11 @@
 
 #pragma once
 
-#include <array>
-#include <cstddef>
-#include <cstdint>
+#include "datagram.hpp"
 
 namespace dcc::bidi {
 
-inline constexpr auto channel2_size{6uz};
+inline constexpr auto channel2_size{datagram_size<Bits::_36>};
 using Channel2 = std::array<uint8_t, channel2_size>;
 
 }  // namespace dcc::bidi
