@@ -221,9 +221,8 @@ private:
     auto const addr{decode_address(data(packet))};
     _addrs.received = addr;
     if (addr.type != Address::ExtendedPacket) return;
-    auto const& [data, size]{_queue.front()};
-    if (size <= 7uz || !crc8(packet))
-      executeExtendedPacket(addr, {&data[1uz], size});
+    if (size(packet) <= 7uz || !crc8(packet))
+      executeExtendedPacket(addr, {&packet[1uz], size(packet)});
     _queue.pop_front();
   }
 
@@ -233,18 +232,18 @@ private:
   /// \return false Command to other address
   bool executeOperations() {
     bool retval{};
-    auto const& [data, size]{_queue.front()};
-    switch (auto const addr{decode_address(&data[0uz])}; addr.type) {
-      case Address::IdleSystem: executeOperationsSystem(&data[1uz]); break;
+    auto const& packet{_queue.front()};
+    switch (auto const addr{decode_address(&packet[0uz])}; addr.type) {
+      case Address::IdleSystem: executeOperationsSystem(&packet[1uz]); break;
       case Address::Broadcast: [[fallthrough]];
       case Address::Short:
-        retval = executeOperationsAddressed(addr, &data[1uz]);  // TODO span
+        retval = executeOperationsAddressed(addr, &packet[1uz]);  // TODO span
         break;
       case Address::Long:
-        retval = executeOperationsAddressed(addr, &data[2uz]);  // TODO span
+        retval = executeOperationsAddressed(addr, &packet[2uz]);  // TODO span
         break;
       case Address::TipOffSearch:
-        retval = executeOperationsTipOffSearch(addr, &data[1uz]);
+        retval = executeOperationsTipOffSearch(addr, &packet[1uz]);
       default: break;
     }
     qos();
@@ -257,15 +256,15 @@ private:
   bool executeService() {
     countOwnEqualPackets();
     // Reset
-    if (auto const& [data, size]{_queue.front()}; !data[0uz])
+    if (auto const& packet{_queue.front()}; !packet[0uz])
       ;
     // Exit
-    else if ((data[0uz] & 0xF0u) != 0b0111'0000u) serviceMode(false);
+    else if ((packet[0uz] & 0xF0u) != 0b0111'0000u) serviceMode(false);
     // Register mode
-    else if (size == 3uz) registerMode(begin(data));
+    else if (size(packet) == 3uz) registerMode(data(packet));
     // CvLong
-    else if (size == 4uz && _own_equal_packets_count == 2uz)
-      cvLong(begin(data));
+    else if (size(packet) == 4uz && _own_equal_packets_count == 2uz)
+      cvLong(data(packet));
     return true;
   }
 

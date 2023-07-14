@@ -90,30 +90,6 @@ struct Packet {
   // Modifiers
   constexpr void clear() { size() = 0uz; }
 
-  template<size_t I>
-  constexpr auto& get() & {
-    if constexpr (I == 0uz) return _data;
-    else if constexpr (I == 1uz) return _size;
-  }
-
-  template<size_t I>
-  constexpr auto const& get() const& {
-    if constexpr (I == 0uz) return _data;
-    else if constexpr (I == 1uz) return _size;
-  }
-
-  template<size_t I>
-  constexpr auto&& get() && {
-    if constexpr (I == 0uz) return std::move(_data);
-    else if constexpr (I == 1uz) return std::move(_size);
-  }
-
-  template<size_t I>
-  constexpr auto const&& get() const&& {
-    if constexpr (I == 0uz) return std::move(_data);
-    else if constexpr (I == 1uz) return std::move(_size);
-  }
-
   // Non-member functions
   friend constexpr bool operator==(Packet const&, Packet const&) = default;
 
@@ -458,17 +434,3 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
 }
 
 }  // namespace dcc
-
-namespace std {
-
-template<>
-struct tuple_size<::dcc::Packet> : std::integral_constant<size_t, 2uz> {};
-
-template<size_t I>
-struct tuple_element<I, ::dcc::Packet> {
-  using type = std::conditional_t<I == 0uz,
-                                  std::array<uint8_t, DCC_MAX_PACKET_SIZE>,
-                                  ::dcc::Packet::size_type>;
-};
-
-}  // namespace std
