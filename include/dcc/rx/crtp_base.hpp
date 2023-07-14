@@ -67,7 +67,7 @@ struct CrtpBase : bidi::CrtpBase<T> {
     if (_state != State::Preamble && (_is_halfbit = !_is_halfbit)) return;
 
     // If queue is full return
-    if (_queue.full()) return reset();  // TODO task full error counter?
+    if (full(_queue)) return reset();  // TODO task full error counter?
 
     // Successfully received a bit -> enter state machine
     switch (_state) {
@@ -103,7 +103,7 @@ struct CrtpBase : bidi::CrtpBase<T> {
         if (!bit) _state = State::Data;
         else if (_checksum) return reset();
         else {
-          end(_queue)->size() = _byte_count;
+          end(_queue)->resize(_byte_count);
           _checksum = _bit_count = _byte_count = 0uz;
           ++_packet_count;  // Count received packets
           _queue.push_back();

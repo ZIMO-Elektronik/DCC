@@ -128,7 +128,7 @@ protected:
   ///
   /// \param  value CV value
   void pom(uint8_t value) {
-    if (_pom_queue.full()) return;
+    if (full(_pom_queue)) return;
     _pom_queue.push_back(encode_datagram(make_datagram<Bits::_12>(0u, value)));
   }
 
