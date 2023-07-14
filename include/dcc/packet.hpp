@@ -181,8 +181,8 @@ constexpr auto make_advanced_operations_speed_packet(Address::value_type addr,
                            first)};
   *last++ = 0b0011'1111u;
   *last++ = (dir > 0) << 7u | (speed & 0x7Fu);
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -218,8 +218,8 @@ constexpr auto make_function_group_f4_f0_packet(Address::value_type addr,
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
   *last++ = 0b1000'0000u | (state & 0b1u) << 4u | (state & 0x1Fu) >> 1u;
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -235,8 +235,8 @@ constexpr auto make_function_group_f8_f5_packet(Address::value_type addr,
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
   *last++ = 0b1011'0000u | (state & 0xFu);
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -252,8 +252,8 @@ constexpr auto make_function_group_f12_f9_packet(Address::value_type addr,
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
   *last++ = 0b1010'0000u | (state & 0xFu);
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -270,8 +270,8 @@ constexpr auto make_feature_expansion_f20_f13_packet(Address::value_type addr,
                            first)};
   *last++ = 0b1101'1110u;
   *last++ = state;
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -288,8 +288,8 @@ constexpr auto make_feature_expansion_f28_f21_packet(Address::value_type addr,
                            first)};
   *last++ = 0b1101'1111u;
   *last++ = state;
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -309,8 +309,8 @@ constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
   *last++ = 0b1110'0100u | (cv_addr & 0x3FFu) >> 8u;
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -330,8 +330,8 @@ constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
   *last++ = 0b1110'1100u | (cv_addr & 0x3FFu) >> 8u;
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -353,8 +353,8 @@ constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
   *last++ = 0b1110'1000u | (cv_addr & 0x3FFu) >> 8u;
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = 0b1110'0000u | bit << 3u | (pos & 0b111u);
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -376,8 +376,8 @@ constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
   *last++ = 0b1110'1000u | (cv_addr & 0x3FFu) >> 8u;
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = 0b1111'0000u | bit << 3u | (pos & 0b111u);
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -394,8 +394,8 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
   *last++ = 0b0111'0100u | (cv_addr & 0x3FFu) >> 8u;
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -412,8 +412,8 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   *last++ = 0b0111'1100u | (cv_addr & 0x3FFu) >> 8u;
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -432,8 +432,8 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
   *last++ = 0b0111'1000u | (cv_addr & 0x3FFu) >> 8u;
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = 0b1110'0000u | bit << 3u | (pos & 0b111u);
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 
@@ -452,8 +452,8 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   *last++ = 0b0111'1000u | (cv_addr & 0x3FFu) >> 8u;
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = 0b1111'0000u | bit << 3u | (pos & 0b111u);
-  *last++ = exor({first, last});
-  packet.size() = last - first;
+  *last = exor({first, last});
+  packet.size() = ++last - first;
   return packet;
 }
 

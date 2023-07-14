@@ -5,7 +5,7 @@ add_executable(DCCTests ${SRC})
 
 sanatize("address,undefined")
 
-target_common_warnings(DCCTests)
+target_common_warnings(DCCTests PRIVATE)
 
 cpmaddpackage("gh:google/googletest#main")
 

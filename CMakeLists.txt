@@ -13,7 +13,7 @@ endif()
 FetchContent_Declare(
   CMakeModules
   GIT_REPOSITORY https://github.com/ZIMO-Elektronik/CMakeModules
-  GIT_TAG v0.0.7
+  GIT_TAG v0.1.0
   SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
 FetchContent_MakeAvailable(CMakeModules)
 
@@ -62,6 +62,8 @@ else()
   target_include_directories(DCC SYSTEM INTERFACE include)
 endif()
 
+target_common_warnings(DCC INTERFACE)
+
 if(NOT TARGET static_math)
   cpmaddpackage(
     NAME
@@ -77,7 +79,7 @@ if(NOT TARGET static_math)
 endif()
 
 if(NOT TARGET ZTL::ZTL)
-  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.16.2")
+  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.17.0")
 endif()
 
 target_link_libraries(DCC INTERFACE static_math ZTL::ZTL)

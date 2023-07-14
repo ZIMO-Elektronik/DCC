@@ -12,7 +12,7 @@
 
 #include <chrono>
 #include <concepts>
-#include <ztl/circular_array.hpp>
+#include <ztl/inplace_deque.hpp>
 #include "../../addresses.hpp"
 #include "../../bidi/bundled_channels.hpp"
 #include "../../bidi/datagram.hpp"
@@ -382,10 +382,10 @@ private:
   std::array<uint8_t, 4uz> _did{};
   Channel1 _ch1{};
   Channel2 _ch2{};
-  ztl::circular_array<Packet, DCC_RX_BIDI_QUEUE_SIZE> _dyn_queue{};
-  ztl::circular_array<Channel1, DCC_RX_BIDI_QUEUE_SIZE> _pom_queue{};
-  ztl::circular_array<Channel2, 2uz> _tos_queue{};
-  ztl::circular_array<BundledChannels, 2uz> _logon_queue{};
+  ztl::inplace_deque<Packet, DCC_RX_BIDI_QUEUE_SIZE> _dyn_queue{};
+  ztl::inplace_deque<Channel1, DCC_RX_BIDI_QUEUE_SIZE> _pom_queue{};
+  ztl::inplace_deque<Channel2, 2uz> _tos_queue{};
+  ztl::inplace_deque<BundledChannels, 2uz> _logon_queue{};
   LogonBackoff _logon_backoff{};
   uint16_t _cid{};        ///< Central ID
   uint8_t _session_id{};  ///< Session ID

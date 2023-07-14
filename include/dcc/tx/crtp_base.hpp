@@ -12,7 +12,7 @@
 
 #include <concepts>
 #include <span>
-#include <ztl/circular_array.hpp>
+#include <ztl/inplace_deque.hpp>
 #include "../bidi/datagram.hpp"
 #include "command_station.hpp"
 #include "config.hpp"
@@ -71,7 +71,7 @@ struct CrtpBase {
     // Queue contains packet, send it
     else {
       _packet = &_queue.front();
-      // Careful! This only works because of the design of ztl::circular_array.
+      // Careful! This only works because of the design of ztl::inplace_deque.
       // The slot _packet currently points to will stay valid until the next
       // call of pop_front().
       _queue.pop_front();
@@ -137,7 +137,7 @@ private:
 
   static constexpr Timings _idle_packet{packet2timings(make_idle_packet())};
 
-  ztl::circular_array<Timings, DCC_TX_QUEUE_SIZE> _queue{};  ///< Task queue
+  ztl::inplace_deque<Timings, DCC_TX_QUEUE_SIZE> _queue{};  ///< Task queue
   Timings const* _packet{&_idle_packet};
   size_t _packet_count{};
   size_t _bidi_count{};

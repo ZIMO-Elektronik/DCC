@@ -820,7 +820,7 @@ private:
     }
   }
 
-  ztl::circular_array<Packet, DCC_RX_QUEUE_SIZE> _queue{};  ///< Task queue
+  ztl::inplace_deque<Packet, DCC_RX_QUEUE_SIZE> _queue{};  ///< Task queue
   Packet _last_own_packet{};  ///< Copy of last packet for own address
   size_t _bit_count{};
   size_t _byte_count{};
