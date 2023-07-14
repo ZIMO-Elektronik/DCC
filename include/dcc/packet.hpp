@@ -12,125 +12,12 @@
 
 #include <array>
 #include <cstdint>
-#include <ztl/limits.hpp>
+#include <ztl/inplace_vector.hpp>
 #include "exor.hpp"
 
 namespace dcc {
 
-struct Packet {
-  using value_type = uint8_t;
-  using size_type = ztl::smallest_unsigned_t<DCC_MAX_PACKET_SIZE>;
-  using difference_type = std::ptrdiff_t;
-  using reference = value_type&;
-  using const_reference = value_type const&;
-  using pointer = value_type*;
-  using const_pointer = value_type const*;
-  using iterator = std::array<value_type, DCC_MAX_PACKET_SIZE>::iterator;
-  using const_iterator =
-    std::array<value_type, DCC_MAX_PACKET_SIZE>::const_iterator;
-  using reverse_iterator = std::reverse_iterator<iterator>;
-  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-
-  // Implicitly-defined member functions
-  constexpr Packet() = default;
-
-  template<std::unsigned_integral... Ts>
-  constexpr Packet(Ts&&... ts) requires(sizeof...(Ts) <= DCC_MAX_PACKET_SIZE)
-    : _data{static_cast<value_type>(ts)...}, _size{sizeof...(Ts)} {}
-
-  // Element access
-  constexpr reference at(size_type pos) { return _data.at(pos); }
-  constexpr const_reference at(size_type pos) const { return at(pos); }
-
-  constexpr reference operator[](size_type pos) { return _data[pos]; }
-  constexpr const_reference operator[](size_type pos) const {
-    return _data[pos];
-  }
-
-  constexpr reference front() { return _data[0uz]; }
-  constexpr const_reference front() const { return _data[0uz]; }
-
-  constexpr reference back() { return size() ? _data[_size - 1uz] : front(); }
-  constexpr const_reference back() const {
-    return size() ? _data[_size - 1uz] : front();
-  }
-
-  constexpr pointer data() { return std::data(_data); }
-  constexpr const_pointer data() const { return std::data(_data); }
-
-  // Iterators
-  constexpr iterator begin() { return std::begin(_data); }
-  constexpr const_iterator begin() const { return std::begin(_data); }
-  constexpr const_iterator cbegin() const { return begin(); }
-
-  constexpr iterator end() { return std::begin(_data) + size(); }
-  constexpr const_iterator end() const { return std::begin(_data) + size(); }
-  constexpr const_iterator cend() const { return end(); }
-
-  constexpr reverse_iterator rbegin() { return reverse_iterator{end()}; }
-  constexpr const_reverse_iterator rbegin() const {
-    return const_reverse_iterator{end()};
-  }
-  constexpr const_reverse_iterator crbegin() const { return rbegin(); }
-
-  constexpr reverse_iterator rend() { return reverse_iterator{begin()}; }
-  constexpr const_reverse_iterator rend() const {
-    return const_reverse_iterator{begin()};
-  }
-  constexpr const_reverse_iterator crend() const { return rend(); }
-
-  // Capacity
-  constexpr bool empty() const { return size() == 0uz; }
-
-  constexpr size_type& size() { return _size; }
-  constexpr size_type const& size() const { return _size; }
-
-  constexpr size_type max_size() const { return DCC_MAX_PACKET_SIZE; }
-
-  // Modifiers
-  constexpr void clear() { size() = 0uz; }
-
-  // Non-member functions
-  friend constexpr bool operator==(Packet const&, Packet const&) = default;
-
-private:
-  std::array<value_type, DCC_MAX_PACKET_SIZE> _data{};
-  ztl::smallest_unsigned_t<DCC_MAX_PACKET_SIZE> _size{};
-};
-
-constexpr auto data(Packet& p) -> decltype(p.data()) { return p.data(); }
-constexpr auto data(Packet const& p) -> decltype(p.data()) { return p.data(); }
-
-[[nodiscard]] constexpr auto empty(Packet const& p) -> decltype(p.empty()) {
-  return p.empty();
-}
-
-constexpr auto size(Packet& p) -> decltype(p.size()) { return p.size(); }
-constexpr auto size(Packet const& p) -> decltype(p.size()) { return p.size(); }
-
-constexpr auto begin(Packet& p) -> decltype(p.begin()) { return p.begin(); }
-constexpr auto begin(Packet const& p) -> decltype(p.begin()) {
-  return p.begin();
-}
-constexpr auto cbegin(Packet const& p) -> decltype(p.begin()) {
-  return p.begin();
-}
-
-constexpr auto end(Packet& p) -> decltype(p.end()) { return p.end(); }
-constexpr auto end(Packet const& p) -> decltype(p.end()) { return p.end(); }
-constexpr auto cend(Packet const& p) -> decltype(p.end()) { return p.end(); }
-
-constexpr auto rbegin(Packet& p) -> decltype(p.rbegin()) { return p.rbegin(); }
-constexpr auto rbegin(Packet const& p) -> decltype(p.rbegin()) {
-  return p.rbegin();
-}
-constexpr auto crbegin(Packet const& p) -> decltype(p.rbegin()) {
-  return p.rbegin();
-}
-
-constexpr auto rend(Packet& p) -> decltype(p.rend()) { return p.rend(); }
-constexpr auto rend(Packet const& p) -> decltype(p.rend()) { return p.rend(); }
-constexpr auto crend(Packet const& p) -> decltype(p.rend()) { return p.rend(); }
+using Packet = ztl::inplace_vector<uint8_t, DCC_MAX_PACKET_SIZE>;
 
 /// Make an idle packet
 ///
@@ -158,7 +45,7 @@ constexpr auto make_advanced_operations_speed_packet(Address::value_type addr,
   *last++ = 0b0011'1111u;
   *last++ = (dir > 0) << 7u | (speed & 0x7Fu);
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -195,7 +82,7 @@ constexpr auto make_function_group_f4_f0_packet(Address::value_type addr,
                            first)};
   *last++ = 0b1000'0000u | (state & 0b1u) << 4u | (state & 0x1Fu) >> 1u;
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -212,7 +99,7 @@ constexpr auto make_function_group_f8_f5_packet(Address::value_type addr,
                            first)};
   *last++ = 0b1011'0000u | (state & 0xFu);
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -229,7 +116,7 @@ constexpr auto make_function_group_f12_f9_packet(Address::value_type addr,
                            first)};
   *last++ = 0b1010'0000u | (state & 0xFu);
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -247,7 +134,7 @@ constexpr auto make_feature_expansion_f20_f13_packet(Address::value_type addr,
   *last++ = 0b1101'1110u;
   *last++ = state;
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -265,7 +152,7 @@ constexpr auto make_feature_expansion_f28_f21_packet(Address::value_type addr,
   *last++ = 0b1101'1111u;
   *last++ = state;
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -286,7 +173,7 @@ constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -307,7 +194,7 @@ constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -330,7 +217,7 @@ constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = 0b1110'0000u | bit << 3u | (pos & 0b111u);
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -353,7 +240,7 @@ constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = 0b1111'0000u | bit << 3u | (pos & 0b111u);
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -371,7 +258,7 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -389,7 +276,7 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -409,7 +296,7 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = 0b1110'0000u | bit << 3u | (pos & 0b111u);
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 
@@ -429,7 +316,7 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = 0b1111'0000u | bit << 3u | (pos & 0b111u);
   *last = exor({first, last});
-  packet.size() = ++last - first;
+  packet.resize(++last - first);
   return packet;
 }
 

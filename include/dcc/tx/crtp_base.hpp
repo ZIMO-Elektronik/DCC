@@ -48,7 +48,7 @@ struct CrtpBase {
   ///
   /// \param  chunk Raw data
   void raw(std::span<uint8_t const> chunk) {
-    if (_queue.full()) return;
+    if (full(_queue)) return;
     assert(size(chunk) <= DCC_MAX_PACKET_SIZE);
     _queue.push_back(raw2timings(chunk, _cfg));
   }
