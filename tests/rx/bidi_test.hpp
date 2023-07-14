@@ -11,7 +11,7 @@ struct BiDiTest : ::testing::Test, RxMock {
   virtual ~BiDiTest();
 
 private:
-  std::array<uint8_t, smath::pow(2uz, 16uz)> cvs_{};
+  std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
 };
 
 MATCHER_P(DatagramMatcher, datagram, "") {

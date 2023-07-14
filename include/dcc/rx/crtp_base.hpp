@@ -43,14 +43,14 @@ struct CrtpBase : bidi::CrtpBase<T> {
 
   /// Enable
   void enable() {
-    if (enabled_) return;
-    enabled_ = true;
+    if (_enabled) return;
+    _enabled = true;
   }
 
   /// Disable
   void disable() {
-    if (!enabled_) return;
-    enabled_ = false;
+    if (!_enabled) return;
+    _enabled = false;
     reset();
   }
 
@@ -58,56 +58,56 @@ struct CrtpBase : bidi::CrtpBase<T> {
   ///
   /// \param  time  Time in µs
   void receive(uint32_t time) {
-    packet_end_ = false;  // Whatever we got, its not packet end anymore
+    _packet_end = false;  // Whatever we got, its not packet end anymore
 
     auto const bit{time2bit(time)};
     if (bit == Invalid) return;
 
     // Alternate halfbit <-> bit
-    if (state_ != State::Preamble && (is_halfbit_ = !is_halfbit_)) return;
+    if (_state != State::Preamble && (_is_halfbit = !_is_halfbit)) return;
 
     // If queue is full return
-    if (queue_.full()) return reset();  // TODO task full error counter?
+    if (full(_queue)) return reset();  // TODO task full error counter?
 
     // Successfully received a bit -> enter state machine
-    switch (state_) {
+    switch (_state) {
       case State::Preamble:
         // Is bit a preamble "one"
-        if (bit) ++bit_count_;
+        if (bit) ++_bit_count;
         // In case it's not, and we have less than enough preamble bits
-        else if (bit_count_ < DCC_RX_PREAMBLE_BITS * 2uz) return reset();
+        else if (_bit_count < DCC_RX_PREAMBLE_BITS * 2uz) return reset();
         // In case it's not and we have enough preamble bits but this is only
         // the first half of the packet startbit
-        else if (!byte_count_) ++byte_count_;
+        else if (!_byte_count) ++_byte_count;
         else {
-          bit_count_ = byte_count_ = 0uz;
-          is_halfbit_ = false;
-          ++preamble_count_;  // Count received preambles
+          _bit_count = _byte_count = 0uz;
+          _is_halfbit = false;
+          ++_preamble_count;  // Count received preambles
           flush();            // Flush since new command is replacing old one
-          state_ = State::Data;
+          _state = State::Data;
         }
         break;
 
       case State::Data: {
-        auto& data{end(queue_)->data[byte_count_]};
-        data = static_cast<uint8_t>((data << 1u) | bit);
-        if (++bit_count_ < 8uz) return;
-        bit_count_ = 0uz;
-        checksum_ =
-          static_cast<uint8_t>(checksum_ ^ end(queue_)->data[byte_count_++]);
-        state_ = State::Endbit;
+        auto data{end(_queue)->data()};
+        data[_byte_count] =
+          static_cast<uint8_t>((data[_byte_count] << 1u) | bit);
+        if (++_bit_count < 8uz) return;
+        _bit_count = 0uz;
+        _checksum = static_cast<uint8_t>(_checksum ^ data[_byte_count++]);
+        _state = State::Endbit;
         break;
       }
 
       case State::Endbit:
-        if (!bit) state_ = State::Data;
-        else if (checksum_) return reset();
+        if (!bit) _state = State::Data;
+        else if (_checksum) return reset();
         else {
-          end(queue_)->size = byte_count_;
-          checksum_ = bit_count_ = byte_count_ = 0uz;
-          ++packet_count_;  // Count received packets
-          queue_.push_back();
-          packet_end_ = true;
+          end(_queue)->resize(_byte_count);
+          _checksum = _bit_count = _byte_count = 0uz;
+          ++_packet_count;  // Count received packets
+          _queue.push_back();
+          _packet_end = true;
           executeHandlerMode();
           return reset();
         }
@@ -136,19 +136,19 @@ struct CrtpBase : bidi::CrtpBase<T> {
   ///
   /// \return true  Service mode active
   /// \return false Operations mode active
-  bool serviceMode() const { return mode_ == Mode::Service; }
+  bool serviceMode() const { return _mode == Mode::Service; }
 
   /// MAN function
   ///
   /// \return true  MAN function active
   /// \return false MAN function inactive
-  bool man() const { return man_; }
+  bool man() const { return _man; }
 
   /// Check if last received bit was a packet end
   ///
   /// \return true  Last received bit was packet end
   /// \return false Last received bit wasn't packet end
-  bool packetEnd() const { return packet_end_; }
+  bool packetEnd() const { return _packet_end; }
 
   /// Start channel1 (12 bit payload)
   void cutoutChannel1() { BiDi::cutoutChannel1(); }
@@ -157,7 +157,7 @@ struct CrtpBase : bidi::CrtpBase<T> {
   void cutoutChannel2() { BiDi::cutoutChannel2(); }
 
 protected:
-  using BiDi::addrs_;
+  using BiDi::_addrs;
   using BiDi::impl;
 
 private:
@@ -169,19 +169,19 @@ private:
     if (cv29 & ztl::make_mask(5u)) {
       std::array const cv17_18{impl().readCv(17u - 1u),
                                impl().readCv(18u - 1u)};
-      addrs_.primary = decode_address(begin(cv17_18));
+      _addrs.primary = decode_address(begin(cv17_18));
     } else {
       auto const cv1{impl().readCv(1u - 1u)};
-      addrs_.primary = decode_address(&cv1);
+      _addrs.primary = decode_address(&cv1);
     }
     auto const cv19{impl().readCv(19u - 1u)};
     auto const cv20{impl().readCv(20u - 1u)};
     auto const addr{100u * (cv20 & 0b0111'1111u) + (cv19 & 0b0111'1111u)};
-    addrs_.consist = {static_cast<Address::value_type>(addr), Address::Long};
-    f0_exception_ = !(cv29 & ztl::make_mask(1u));
+    _addrs.consist = {static_cast<Address::value_type>(addr), Address::Long};
+    _f0_exception = !(cv29 & ztl::make_mask(1u));
     auto const cv15{impl().readCv(15u - 1u)};
     auto const cv16{impl().readCv(16u - 1u)};
-    cvs_locked_ = cv15 != cv16 && cv15 && cv16;
+    _cvs_locked = cv15 != cv16 && cv15 && cv16;
     BiDi::config(cv29 & ztl::make_mask(3u), cv20 & ztl::make_mask(7u));
   }
 
@@ -207,24 +207,23 @@ private:
   /// \return true  Command to own address
   /// \return false Command to other address
   bool executeThreadMode() {
-    if (empty(queue_)) return false;
-    auto const retval{mode_ == Mode::Operations ? executeOperations()
+    if (empty(_queue)) return false;
+    auto const retval{_mode == Mode::Operations ? executeOperations()
                                                 : executeService()};
-    queue_.pop_front();
+    _queue.pop_front();
     BiDi::executeThreadMode();
     return retval;
   }
 
   /// Execute in handler mode (interrupt context)
   void executeHandlerMode() {
-    auto const addr{decode_address(&queue_.front().data[0uz])};
-    addrs_.received = addr;
+    auto const& packet{_queue.front()};
+    auto const addr{decode_address(data(packet))};
+    _addrs.received = addr;
     if (addr.type != Address::ExtendedPacket) return;
-    auto const& data{queue_.front().data};
-    auto const size{queue_.front().size};
-    if (size <= 7uz || !crc8({&data[0uz], size - 1uz}))
-      executeExtendedPacket(addr, {&data[1uz], size});
-    queue_.pop_front();
+    if (size(packet) <= 7uz || !crc8(packet))
+      executeExtendedPacket(addr, {&packet[1uz], size(packet)});
+    _queue.pop_front();
   }
 
   /// Execute commands in operations mode
@@ -233,21 +232,18 @@ private:
   /// \return false Command to other address
   bool executeOperations() {
     bool retval{};
-    auto const& data{queue_.front().data};
-    auto const size{queue_.front().size};
-    switch (auto const addr{decode_address(&data[0uz])}; addr.type) {
-      case Address::IdleSystem:
-        executeOperationsSystem(&data[1uz]);
-        break;  // TODO span
+    auto const& packet{_queue.front()};
+    switch (auto const addr{decode_address(&packet[0uz])}; addr.type) {
+      case Address::IdleSystem: executeOperationsSystem(&packet[1uz]); break;
       case Address::Broadcast: [[fallthrough]];
       case Address::Short:
-        retval = executeOperationsAddressed(addr, &data[1uz]);  // TODO span
+        retval = executeOperationsAddressed(addr, &packet[1uz]);  // TODO span
         break;
       case Address::Long:
-        retval = executeOperationsAddressed(addr, &data[2uz]);  // TODO span
+        retval = executeOperationsAddressed(addr, &packet[2uz]);  // TODO span
         break;
       case Address::TipOffSearch:
-        retval = executeOperationsTipOffSearch(addr, &data[1uz]);
+        retval = executeOperationsTipOffSearch(addr, &packet[1uz]);
       default: break;
     }
     qos();
@@ -260,15 +256,15 @@ private:
   bool executeService() {
     countOwnEqualPackets();
     // Reset
-    if (auto const& [data, size]{queue_.front()}; !data[0uz])
+    if (auto const& packet{_queue.front()}; !packet[0uz])
       ;
     // Exit
-    else if ((data[0uz] & 0xF0u) != 0b0111'0000u) serviceMode(false);
+    else if ((packet[0uz] & 0xF0u) != 0b0111'0000u) serviceMode(false);
     // Register mode
-    else if (size == 3uz) registerMode(begin(data));
+    else if (size(packet) == 3uz) registerMode(data(packet));
     // CvLong
-    else if (size == 4uz && own_equal_packets_count_ == 2uz)
-      cvLong(begin(data));
+    else if (size(packet) == 4uz && _own_equal_packets_count == 2uz)
+      cvLong(data(packet));
     return true;
   }
 
@@ -277,7 +273,7 @@ private:
   /// \param  data  Pointer to data
   void executeOperationsSystem(uint8_t const* data) {
     switch (data[0uz]) {
-      case 0x01u: zimo_ = data[1uz] == zimo_id; break;
+      case 0x01u: _zimo = data[1uz] == zimo_id; break;
       case 0x02u:
         // Decoder search
         break;
@@ -298,7 +294,7 @@ private:
   /// \return false Command to other address
   bool executeOperationsAddressed(Address addr, uint8_t const* data) {
     bool const broadcast{addr.type == Address::Broadcast};
-    if (!broadcast && addr != addrs_.primary && addr != addrs_.consist)
+    if (!broadcast && addr != _addrs.primary && addr != _addrs.consist)
       return false;
 
     countOwnEqualPackets();
@@ -421,7 +417,7 @@ private:
       // MAN
       case 0b0011'1110u:
         if constexpr (EastWestMan<T>) {
-          man_ = data[1uz] & ztl::make_mask(7u);
+          _man = data[1uz] & ztl::make_mask(7u);
           if (auto const dir{data[1uz] & ztl::make_mask(6u)   ? 1   // East
                              : data[1uz] & ztl::make_mask(5u) ? -1  // West
                                                               : 0})
@@ -452,7 +448,7 @@ private:
     else notch = (data[0uz] & 0b0000'1111) - 1;
 
     // 14 speed steps and F0
-    if (f0_exception_) {
+    if (_f0_exception) {
       notch = scale_notch<14>(notch);
       auto const mask{ztl::make_mask(0u)};
       auto const state{data[0uz] & ztl::make_mask(4u) ? ztl::make_mask(0u)
@@ -484,7 +480,7 @@ private:
       case 0b1000'0000u: [[fallthrough]];
       case 0b1001'0000u:
         // x-x-x-F0-F4-F3-F2-F1
-        mask = f0_exception_ ? ztl::make_mask(4u, 3u, 2u, 1u)
+        mask = _f0_exception ? ztl::make_mask(4u, 3u, 2u, 1u)
                              : ztl::make_mask(4u, 3u, 2u, 1u, 0u);
         state =
           (data[0uz] & 0xFu) << 1u | (data[0uz] & ztl::make_mask(4u)) >> 4u;
@@ -590,8 +586,8 @@ private:
 
       // Write byte
       case 0b11u:
-        if (own_equal_packets_count_ < 2uz) return;
-        else if (own_equal_packets_count_ == 2uz) write(cv_addr, data[2uz]);
+        if (_own_equal_packets_count < 2uz) return;
+        else if (_own_equal_packets_count == 2uz) write(cv_addr, data[2uz]);
         else verify(cv_addr, data[2uz]);
         break;
 
@@ -600,7 +596,7 @@ private:
         auto const pos{data[2uz] & 0b111u};
         auto const bit{static_cast<bool>(data[2uz] & ztl::make_mask(3u))};
         if (!(data[2uz] & ztl::make_mask(4u))) verify(cv_addr, bit, pos);
-        else if (own_equal_packets_count_ == 2uz) write(cv_addr, bit, pos);
+        else if (_own_equal_packets_count == 2uz) write(cv_addr, bit, pos);
         break;
       }
     }
@@ -626,7 +622,7 @@ private:
 
       // Extended address 0 and 1 (CV17 and CV18)
       case 0b0100u:
-        if (own_equal_packets_count_ != 2uz) return;
+        if (_own_equal_packets_count != 2uz) return;
         write(17u - 1u, static_cast<uint8_t>(0b1100'0000u | data[1uz]));
         write(18u - 1u, data[2uz]);
         write(29u - 1u, true, 5u);
@@ -634,7 +630,7 @@ private:
 
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
-        if (own_equal_packets_count_ != 2uz) return;
+        if (_own_equal_packets_count != 2uz) return;
         write(31u - 1u, data[1uz]);
         write(32u - 1u, data[2uz]);
         break;
@@ -648,7 +644,7 @@ private:
   /// \param  cv_addr CV address
   /// \param  ts...   CV value or bit and bit position
   void verify(uint32_t cv_addr, auto... ts) {
-    if (cvs_locked_) return;
+    if (_cvs_locked) return;
     verifyImpl(cv_addr, ts...);
   }
 
@@ -658,7 +654,7 @@ private:
   /// \param  byte    CV value
   void verifyImpl(uint32_t cv_addr, uint8_t byte) {
     auto cb{[this, byte](uint8_t red_byte) {
-      if (mode_ == Mode::Operations) BiDi::pom(red_byte);
+      if (_mode == Mode::Operations) BiDi::pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
     if constexpr (AsyncReadable<T>) impl().readCv(cv_addr, byte, cb);
@@ -672,7 +668,7 @@ private:
   /// \param  pos     CV bit position
   void verifyImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
     auto cb{[this, bit](bool red_bit) {
-      if (mode_ == Mode::Operations) BiDi::pom(red_bit);
+      if (_mode == Mode::Operations) BiDi::pom(red_bit);
       else if (bit == red_bit) impl().serviceAck();
     }};
     if constexpr (AsyncReadable<T>) impl().readCv(cv_addr, bit, pos, cb);
@@ -684,7 +680,7 @@ private:
   /// \param  cv_addr CV address
   /// \param  ts...   CV value or bit and bit position
   void write(uint32_t cv_addr, auto... ts) {
-    if (cvs_locked_ && cv_addr != 15u - 1u) return;
+    if (_cvs_locked && cv_addr != 15u - 1u) return;
     writeImpl(cv_addr, ts...);
     updateConfig(cv_addr);
   }
@@ -695,7 +691,7 @@ private:
   /// \param  byte    CV value
   void writeImpl(uint32_t cv_addr, uint8_t byte) {
     auto cb{[this, byte](uint8_t red_byte) {
-      if (mode_ == Mode::Operations) BiDi::pom(red_byte);
+      if (_mode == Mode::Operations) BiDi::pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
     if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, byte, cb);
@@ -709,7 +705,7 @@ private:
   /// \param  pos     CV bit position
   void writeImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
     auto cb{[this, bit](bool red_bit) {
-      if (mode_ == Mode::Operations) BiDi::pom(red_bit);
+      if (_mode == Mode::Operations) BiDi::pom(red_bit);
       else if (red_bit == bit) impl().serviceAck();
     }};
     if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, bit, pos, cb);
@@ -725,7 +721,7 @@ private:
       case 1u: [[fallthrough]];
       case 2u: [[fallthrough]];
       case 3u: {
-        auto const i{index_reg_ * 4u - (4u - reg)};
+        auto const i{_index_reg * 4u - (4u - reg)};
         w ? write(i, data[1uz]) : verify(i, data[1uz]);
         break;
       }
@@ -735,8 +731,8 @@ private:
         break;
       // Index register
       case 5u:
-        if (w) index_reg_ = data[1uz];
-        else if (index_reg_ == data[1uz]) impl().serviceAck();
+        if (w) _index_reg = data[1uz];
+        else if (_index_reg == data[1uz]) impl().serviceAck();
         break;
       // CV7
       case 6u: [[fallthrough]];
@@ -750,7 +746,7 @@ private:
   /// \param  data  Pointer to data
   void time(uint8_t const* data) const {
     // TODO
-    auto const n{queue_.front().size - 3u};
+    auto const n{_queue.front().size() - 3u};
     for (auto i{0u}; i < n; ++i) {
       switch (auto byte{*++data}; byte & 0b1100'0000u) {
         case 0b0000'0000u: break;
@@ -773,7 +769,7 @@ private:
   /// \param  dir   Direction
   /// \param  notch Notch
   void directionNotch(uint32_t addr, int32_t dir, int32_t notch) {
-    auto const reverse{addr == addrs_.primary
+    auto const reverse{addr == _addrs.primary
                          ? impl().readCv(29u - 1u) & ztl::make_mask(0u)
                          : impl().readCv(19u - 1u) & ztl::make_mask(7u)};
     impl().direction(addr, reverse ? dir * -1 : dir);
@@ -784,29 +780,29 @@ private:
   ///
   /// \return Quality of service
   void qos() {
-    if (preamble_count_ < 100u) return;
+    if (_preamble_count < 100u) return;
     BiDi::qos(
-      static_cast<uint8_t>(100u - (packet_count_ * 100u) / preamble_count_));
-    packet_count_ = preamble_count_ = 0u;
+      static_cast<uint8_t>(100u - (_packet_count * 100u) / _preamble_count));
+    _packet_count = _preamble_count = 0u;
   }
 
   /// Count own equal packets
   void countOwnEqualPackets() {
-    if (queue_.front() == last_own_packet_) ++own_equal_packets_count_;
+    if (_queue.front() == _last_own_packet) ++_own_equal_packets_count;
     else {
-      own_equal_packets_count_ = 1uz;
-      last_own_packet_ = queue_.front();
+      _own_equal_packets_count = 1uz;
+      _last_own_packet = _queue.front();
     }
   }
 
   /// Flush the current packet
-  void flush() { *end(queue_) = {}; }
+  void flush() { *end(_queue) = {}; }
 
   /// Reset
   void reset() {
     flush();
-    checksum_ = bit_count_ = byte_count_ = 0u;
-    state_ = State::Preamble;
+    _checksum = _bit_count = _byte_count = 0u;
+    _state = State::Preamble;
   }
 
   /// Enter or exit service mode
@@ -816,34 +812,34 @@ private:
     // Disable other peripherals which might interfere
     if (enter) {
       impl().serviceModeHook(true);
-      mode_ = Mode::Service;
+      _mode = Mode::Service;
     } else {
       impl().serviceModeHook(false);
-      mode_ = Mode::Operations;
+      _mode = Mode::Operations;
     }
   }
 
-  ztl::circular_array<Packet, DCC_RX_QUEUE_SIZE> queue_{};  ///< Task queue
-  Packet last_own_packet_{};  ///< Copy of last packet for own address
-  size_t bit_count_{};
-  size_t byte_count_{};
-  size_t own_equal_packets_count_{1uz};
-  size_t packet_count_{};
-  size_t preamble_count_{};
-  uint8_t checksum_{};     ///< On-the-fly calculated checksum
-  uint8_t index_reg_{1u};  ///< Paged mode index register
-  enum class State : uint8_t { Preamble, Data, Endbit } state_{};
-  enum class Mode : uint8_t { Operations, Service } mode_{};
+  ztl::inplace_deque<Packet, DCC_RX_QUEUE_SIZE> _queue{};  ///< Task queue
+  Packet _last_own_packet{};  ///< Copy of last packet for own address
+  size_t _bit_count{};
+  size_t _byte_count{};
+  size_t _own_equal_packets_count{1uz};
+  size_t _packet_count{};
+  size_t _preamble_count{};
+  uint8_t _checksum{};     ///< On-the-fly calculated checksum
+  uint8_t _index_reg{1u};  ///< Paged mode index register
+  enum class State : uint8_t { Preamble, Data, Endbit } _state{};
+  enum class Mode : uint8_t { Operations, Service } _mode{};
 
   // Not bitfields as those are most likely mutated in interrupt context
-  bool is_halfbit_{};
-  bool packet_end_{};
+  bool _is_halfbit{};
+  bool _packet_end{};
 
-  bool enabled_ : 1 {};
-  bool cvs_locked_ : 1 {};
-  bool f0_exception_ : 1 {};
-  bool man_ : 1 {};
-  bool zimo_ : 1 {};
+  bool _enabled : 1 {};
+  bool _cvs_locked : 1 {};
+  bool _f0_exception : 1 {};
+  bool _man : 1 {};
+  bool _zimo : 1 {};
 };
 
 }  // namespace dcc::rx

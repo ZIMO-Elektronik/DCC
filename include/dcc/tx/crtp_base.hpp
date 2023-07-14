@@ -12,7 +12,7 @@
 
 #include <concepts>
 #include <span>
-#include <ztl/circular_array.hpp>
+#include <ztl/inplace_deque.hpp>
 #include "../bidi/datagram.hpp"
 #include "command_station.hpp"
 #include "config.hpp"
@@ -34,23 +34,23 @@ struct CrtpBase {
     assert(cfg.preamble_bits >= 17u && cfg.preamble_bits <= 100u &&
            cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max &&
            cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);
-    cfg_ = cfg;
+    _cfg = cfg;
   }
 
   /// Transmit packet
   ///
   /// \param  packet  Packet
   void packet(Packet const& packet) {
-    return raw({cbegin(packet.data), packet.size});
+    return raw({cbegin(packet), size(packet)});
   }
 
   /// Transmit raw data
   ///
   /// \param  chunk Raw data
   void raw(std::span<uint8_t const> chunk) {
-    if (queue_.full()) return;
+    if (full(_queue)) return;
     assert(size(chunk) <= DCC_MAX_PACKET_SIZE);
-    queue_.push_back(raw2timings(chunk, cfg_));
+    _queue.push_back(raw2timings(chunk, _cfg));
   }
 
   /// Get next bit duration to transmit in µs
@@ -58,25 +58,25 @@ struct CrtpBase {
   /// \return Bit duration in µs
   Timings::value_type transmit() {
     // As long as there are packet timings
-    if (packet_count_ < packet_->size) return packetTiming();
+    if (_packet_count < _packet->size()) return packetTiming();
     // or BiDi timings
-    else if (cfg_.bidi && bidi_count_ <= 4uz) return bidiTiming();
+    else if (_cfg.bidi && _bidi_count <= 4uz) return bidiTiming();
 
     // TODO theoretically queue could be popped here safely?
     // we'd just need to check whether packet doesn't point to idle_packet and
     // queue ain't empty?
 
     // Queue is empty, send idle packet
-    if (empty(queue_)) packet_ = &idle_packet_;
+    if (empty(_queue)) _packet = &_idle_packet;
     // Queue contains packet, send it
     else {
-      packet_ = &queue_.front();
-      // Careful! This only works because of the design of ztl::circular_array.
-      // The slot packet_ currently points to will stay valid until the next
+      _packet = &_queue.front();
+      // Careful! This only works because of the design of ztl::inplace_deque.
+      // The slot _packet currently points to will stay valid until the next
       // call of pop_front().
-      queue_.pop_front();
+      _queue.pop_front();
     }
-    packet_count_ = bidi_count_ = 0uz;
+    _packet_count = _bidi_count = 0uz;
 
     return packetTiming();
   }
@@ -92,8 +92,8 @@ private:
   ///
   /// \return Next timings from current packet
   Timings::value_type packetTiming() {
-    auto const retval{packet_->values[packet_count_]};
-    if (packet_count_++ % 2uz) impl().setTrackOutputs(false, true);
+    auto const retval{(*_packet)[_packet_count]};
+    if (_packet_count++ % 2uz) impl().setTrackOutputs(false, true);
     else impl().setTrackOutputs(true, false);
     return retval;
   }
@@ -102,7 +102,7 @@ private:
   ///
   /// \return Next BiDi timing
   Timings::value_type bidiTiming() {
-    switch (bidi_count_++) {
+    switch (_bidi_count++) {
       // Send half a 1 bit
       case 0uz:
         impl().setTrackOutputs(true, false);
@@ -135,13 +135,13 @@ private:
     }
   }
 
-  static constexpr Timings idle_packet_{packet2timings(make_idle_packet())};
+  static constexpr Timings _idle_packet{packet2timings(make_idle_packet())};
 
-  ztl::circular_array<Timings, DCC_TX_QUEUE_SIZE> queue_{};  ///< Task queue
-  Timings const* packet_{&idle_packet_};
-  size_t packet_count_{};
-  size_t bidi_count_{};
-  Config cfg_{};
+  ztl::inplace_deque<Timings, DCC_TX_QUEUE_SIZE> _queue{};  ///< Task queue
+  Timings const* _packet{&_idle_packet};
+  size_t _packet_count{};
+  size_t _bidi_count{};
+  Config _cfg{};
 };
 
 }  // namespace dcc::tx

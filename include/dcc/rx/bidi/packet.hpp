@@ -19,7 +19,7 @@ using namespace ::dcc::bidi;
 
 struct Packet {
   Channel2 data{};
-  constexpr bool operator==(Packet const&) const = default;
+  friend bool operator==(Packet const&, Packet const&) = default;
   uint8_t size{};
 };
 

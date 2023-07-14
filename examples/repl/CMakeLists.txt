@@ -1,7 +1,7 @@
 file(GLOB_RECURSE SRC *.cpp)
 add_executable(DCCReplExample ${SRC})
 
-target_common_warnings(DCCReplExample)
+target_common_warnings(DCCReplExample PRIVATE)
 
 cpmaddpackage("gh:daniele77/cli@2.0.2")
 

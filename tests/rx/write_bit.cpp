@@ -5,7 +5,7 @@ TEST_F(RxTest, write_bit_operations_mode) {
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto bit{RandomInterval(0u, 1u)};
   auto position{RandomInterval(0u, 7u)};
-  Expectation write_cv{EXPECT_CALL(mock_, writeCv(cv_addr, bit, position))};
+  Expectation write_cv{EXPECT_CALL(_mock, writeCv(cv_addr, bit, position))};
   auto packet{
     dcc::make_cv_access_long_write_packet(3u, cv_addr, bit, position)};
 
@@ -23,7 +23,7 @@ TEST_F(RxTest, write_bit_service_mode) {
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto bit{RandomInterval(0u, 1u)};
   auto position{RandomInterval(0u, 7u)};
-  Expectation write_cv{EXPECT_CALL(mock_, writeCv(cv_addr, bit, position))};
+  Expectation write_cv{EXPECT_CALL(_mock, writeCv(cv_addr, bit, position))};
   auto packet{
     dcc::make_cv_access_long_write_service_packet(cv_addr, bit, position)};
 

@@ -13,6 +13,6 @@ BiDiLogonBackoffTest::~BiDiLogonBackoffTest() {}
 int BiDiLogonBackoffTest::countTillFalse(int max) {
   int i{};
   for (; i < max; ++i)
-    if (!logon_backoff_) break;
+    if (!_logon_backoff) break;
   return i;
 }

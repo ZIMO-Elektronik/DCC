@@ -32,8 +32,8 @@ struct Address {
              : lhs.value == rhs.value && lhs.type == rhs.type;
   }
 
-  constexpr operator value_type&() & { return value; }
-  constexpr operator value_type const&() const& { return value; }
+  constexpr operator value_type&() { return value; }
+  constexpr operator value_type const&() const { return value; }
 
   value_type value{};
 

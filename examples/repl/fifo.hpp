@@ -6,27 +6,27 @@
 // (Very very) minimalistic FIFO with internal locking
 template<typename T>
 struct FiFo {
-  T front() const { return deque_.front(); }
+  T front() const { return _deque.front(); }
 
-  T back() const { return deque_.back(); }
+  T back() const { return _deque.back(); }
 
   void push_back(T value) {
-    std::scoped_lock lk{m_};
-    deque_.push_back(value);
+    std::scoped_lock lk{_m};
+    _deque.push_back(value);
   }
 
   void pop_front() {
-    std::scoped_lock lk{m_};
-    deque_.pop_front();
+    std::scoped_lock lk{_m};
+    _deque.pop_front();
   }
 
-  bool empty() const { return std::empty(deque_); }
+  bool empty() const { return std::empty(_deque); }
 
-  size_t size() const { return std::size(deque_); }
+  size_t size() const { return std::size(_deque); }
 
 private:
-  std::mutex m_{};
-  std::deque<T> deque_;
+  std::mutex _m{};
+  std::deque<T> _deque;
 };
 
 template<typename T>

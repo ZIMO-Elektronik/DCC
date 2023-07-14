@@ -15,22 +15,17 @@
 #include <climits>
 #include <cstdint>
 #include <span>
-#include <ztl/limits.hpp>
+#include <ztl/inplace_vector.hpp>
 #include "config.hpp"
 
 namespace dcc::tx {
 
-struct Timings {
-  using value_type = uint16_t;
-  constexpr bool operator==(Timings const&) const = default;
-  std::array<value_type,
-             (std::numeric_limits<uint8_t>::max() +    // Preamble
-              1uz +                                    // Startbit
-              DCC_MAX_PACKET_SIZE * (CHAR_BIT + 1uz))  // Data
-               * 2uz>                                  // Halfbit
-    values{};
-  ztl::smallest_unsigned_t<std::tuple_size_v<decltype(values)>> size{};
-};
+using Timings =
+  ztl::inplace_vector<uint16_t,
+                      (std::numeric_limits<uint8_t>::max() +    // Preamble
+                       1uz +                                    // Startbit
+                       DCC_MAX_PACKET_SIZE * (CHAR_BIT + 1uz))  // Data
+                        * 2uz>;                                 // Halfbit
 
 /// Convert raw data into timings
 ///
@@ -39,7 +34,7 @@ struct Timings {
 /// \return Timings
 constexpr Timings raw2timings(std::span<uint8_t const> chunk, Config cfg = {}) {
   Timings timings{};
-  auto first{begin(timings.values)};
+  auto first{begin(timings)};
 
   // Preamble
   auto const preamble_count{cfg.preamble_bits * 2uz};
@@ -59,8 +54,7 @@ constexpr Timings raw2timings(std::span<uint8_t const> chunk, Config cfg = {}) {
   first = std::ranges::fill_n(first, 2uz, cfg.bit1_duration);
 
   // Size
-  timings.size = static_cast<decltype(timings.size)>(
-    std::ranges::distance(cbegin(timings.values), first));
+  timings.resize(std::ranges::distance(cbegin(timings), first));
 
   return timings;
 }
@@ -71,7 +65,7 @@ constexpr Timings raw2timings(std::span<uint8_t const> chunk, Config cfg = {}) {
 /// \param  cfg     Configuration
 /// \return Timings
 constexpr Timings packet2timings(Packet const& packet, Config cfg = {}) {
-  return raw2timings({data(packet.data), packet.size}, cfg);
+  return raw2timings({cbegin(packet), size(packet)}, cfg);
 }
 
 }  // namespace dcc::tx
