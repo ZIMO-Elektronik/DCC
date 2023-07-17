@@ -207,7 +207,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
         state |= RMT_ENCODING_MEM_FULL;
         goto out;
       }
-      // [[fallthrough]];
+      // fallthrough
 
     case Start:
     start:
@@ -217,7 +217,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
         state |= RMT_ENCODING_MEM_FULL;
         goto out;
       }
-      // [[fallthrough]];
+      // fallthrough
 
     case Data:
       encoded_symbols += rmt_encode_dcc_data(
@@ -227,7 +227,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
         goto out;
       }
       if (dcc_encoder->state < End) goto start;
-      // [[fallthrough]];
+      // fallthrough
 
     case End:
       encoded_symbols +=
@@ -236,7 +236,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
         state |= RMT_ENCODING_MEM_FULL;
         goto out;
       }
-      // [[fallthrough]];
+      // fallthrough
 
     case BiDi:
       encoded_symbols +=
@@ -250,7 +250,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
         state |= RMT_ENCODING_MEM_FULL;
         goto out;
       }
-      // [[fallthrough]];
+      // fallthrough
   }
 
 out:
