@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.28.0
+- More sophisticated packet
+- `// [[fallthrough]];` not recognized by GCC
+
 # 0.27.1
 - Dependencies can be provided externally
 
