@@ -8,11 +8,14 @@
 /// \author Vincent Hamp
 /// \date   08/01/2023
 
-#if !CONFIG_IDF_TARGET_LINUX
-#  include "rmt_dcc_encoder.h"
-#  include <esp_attr.h>
-#  include <esp_check.h>
-#  include <limits.h>
+#include "rmt_dcc_encoder.h"
+#include <esp_attr.h>
+#include <esp_check.h>
+#include <limits.h>
+
+#if __has_include(<esp_linux_helper.h>)
+#  include <esp_linux_helper.h>
+#endif
 
 static char const* TAG = "rmt";
 
@@ -374,4 +377,3 @@ err:
   }
   return ret;
 }
-#endif
