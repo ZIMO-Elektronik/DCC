@@ -313,7 +313,7 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
   rmt_dcc_encoder_t* dcc_encoder = NULL;
   ESP_GOTO_ON_FALSE(
     config && ret_encoder &&                                           //
-      config->num_preamble >= 17u && config->num_preamble <= 100u &&   //
+      config->num_preamble >= 17u &&                                   //
       config->bit1_duration >= 52u && config->bit1_duration <= 64u &&  //
       config->bit0_duration >= 90u && config->bit0_duration <= 119u,   //
     ESP_ERR_INVALID_ARG,

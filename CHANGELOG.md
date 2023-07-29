@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.28.1
+- Remove arbitrary RMT preamble limit
+
 ## 0.28.0
 - More sophisticated packet
 - `// [[fallthrough]];` not recognized by GCC

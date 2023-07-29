@@ -18,14 +18,14 @@ extern "C" {
 
 /// DCC encoder configuration
 typedef struct {
-  /// Number of preamble bits [17-100]
+  /// Number of preamble bits [17, 255]
   /// (will get rounded to multiple of 2)
   uint8_t num_preamble;
 
-  /// Duration of 1 bit [52-64]
+  /// Duration of 1 bit [52, 64]
   uint8_t bit1_duration;
 
-  /// Duration of 0 bit [90-119]
+  /// Duration of 0 bit [90, 119]
   uint8_t bit0_duration;
 
   /// Enable BiDi
