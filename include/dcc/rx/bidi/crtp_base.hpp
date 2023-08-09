@@ -38,9 +38,6 @@ template<typename T>
 struct CrtpBase {
   friend T;
 
-  /// Initialize
-  void init() { _logon_backoff.reset(); }
-
 protected:
   constexpr CrtpBase() = default;
   Decoder auto& impl() { return static_cast<T&>(*this); }

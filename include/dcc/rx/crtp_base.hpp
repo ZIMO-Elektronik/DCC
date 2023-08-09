@@ -36,10 +36,7 @@ struct CrtpBase : bidi::CrtpBase<T> {
   using BiDi = bidi::CrtpBase<T>;
 
   /// Initialize
-  void init() {
-    BiDi::init();
-    config();
-  }
+  void init() { config(); }
 
   /// Enable
   void enable() {
