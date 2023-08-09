@@ -219,9 +219,9 @@ private:
     auto const& packet{_deque.front()};
     auto const addr{decode_address(data(packet))};
     _addrs.received = addr;
-    if (addr.type != Address::ExtendedPacket) return;
+    if (addr.type != Address::AutomaticLogon) return;
     if (size(packet) <= 7uz || !crc8(packet))
-      executeExtendedPacket(addr, {&packet[1uz], size(packet)});
+      executeAutomaticLogon(addr, {&packet[1uz], size(packet)});
     _deque.pop_front();
   }
 
@@ -241,8 +241,6 @@ private:
       case Address::Long:
         retval = executeOperationsAddressed(addr, &packet[2uz]);  // TODO span
         break;
-      case Address::TipOffSearch:
-        retval = executeOperationsTipOffSearch(addr, &packet[1uz]);
       default: break;
     }
     qos();
@@ -319,23 +317,13 @@ private:
     return true;
   }
 
-  /// Execute tip-off search
-  ///
-  /// \param  addr  Address
-  /// \param  data  Pointer to data
-  /// \return true
-  bool executeOperationsTipOffSearch(Address addr, uint8_t const* data) {
-    if (data[0uz] == 0x0Fu) BiDi::tipOffSearch();
-    return true;
-  }
-
-  /// Execute extended packet
+  /// Execute automatic logon
   ///
   /// \param  addr  Address
   /// \param  data  Pointer to data
   /// \return true  Command to own address or 0
   /// \return false Command to other address
-  bool executeExtendedPacket(Address addr, std::span<uint8_t const> data) {
+  bool executeAutomaticLogon(Address addr, std::span<uint8_t const> data) {
     if (addr != 254u) return false;
 
     switch (data[0uz] & 0xF0u) {
@@ -760,7 +748,15 @@ private:
   ///
   /// \param  xf    Number of binary state
   /// \param  state Binary state
-  void binaryState(uint32_t /*xf*/, bool /*state*/) {}
+  void binaryState(uint32_t xf, bool state) {
+    switch (xf) {
+      case 2u:
+        if (!state) BiDi::tipOffSearch();
+        break;
+      case 4u: break;
+      case 5u: break;
+    }
+  }
 
   /// Set direction and notch
   ///

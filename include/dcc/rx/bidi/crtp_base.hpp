@@ -97,26 +97,30 @@ protected:
     // Only send in channel1 if last valid address was broadcast, short or long
     if (_addrs.received.type == Address::Broadcast ||
         _addrs.received.type == Address::Short ||
-        _addrs.received.type == Address::Long)
+        _addrs.received.type == Address::Long) [[likely]]
       appAdr();
-    // or extended packet
-    else if (_addrs.received.type == Address::ExtendedPacket) appLogon(1u);
+    // or automatic logon
+    else if (_addrs.received.type == Address::AutomaticLogon) [[unlikely]]
+      appLogon(1u);
   }
 
   /// Start channel2 (36 bit payload)
   void cutoutChannel2() {
     if (!_ch2_enabled) return;
-    // Only send in channel2 if last valid address was own
-    if (_addrs.received == _addrs.primary ||
-        (_logon_assigned && _addrs.received == _addrs.logon))
+    // Only send in channel2 if last valid address was broadcast
+    if (_addrs.received.type == Address::Broadcast) [[unlikely]]
+      appTos();
+    // or own
+    else if (_addrs.received == _addrs.primary ||
+             (_logon_assigned && _addrs.received == _addrs.logon)) [[likely]]
       appPomExtDynSubId();
     // or consist
     else if (_ch2_consist_enabled && _addrs.received == _addrs.consist)
+      [[unlikely]]
       appExtDynSubId();
-    // or tip-off search
-    else if (_addrs.received.type == Address::TipOffSearch) appTos();
-    // or extended packet
-    else if (_addrs.received.type == Address::ExtendedPacket) appLogon(2u);
+    // or automatic logon
+    else if (_addrs.received.type == Address::AutomaticLogon) [[unlikely]]
+      appLogon(2u);
   }
 
   /// Quality of service
@@ -146,7 +150,7 @@ protected:
     auto const adr_low{adrLow()};
     it = std::copy(cbegin(adr_low), cend(adr_low), it);
     auto const time{encode_datagram(
-      make_datagram<Bits::_12>(0u, static_cast<uint32_t>(sec.count())))};
+      make_datagram<Bits::_12>(14u, static_cast<uint32_t>(sec.count())))};
     std::copy(cbegin(time), cend(time), it);
     _tos_deque.push_back();
   }
