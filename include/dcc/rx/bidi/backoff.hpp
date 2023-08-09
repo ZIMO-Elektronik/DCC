@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// Logon backoff logic
+/// Backoff logic
 ///
-/// \file   dcc/rx/bidi/logon_backoff.hpp
+/// \file   dcc/rx/bidi/backoff.hpp
 /// \author Vincent Hamp
-/// \date   04/01/2022
+/// \date   09/08/2023
 
 #pragma once
 
@@ -17,8 +17,8 @@
 
 namespace dcc::rx::bidi {
 
-/// Implements O(2^n) logon backoff logic
-struct LogonBackoff {
+/// Implements O(2^n) backoff logic
+struct Backoff {
   constexpr operator bool() {
     if (_count) {
       --_count;

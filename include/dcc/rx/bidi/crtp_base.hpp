@@ -23,8 +23,8 @@
 #include "../../bidi/track_voltage.hpp"
 #include "../../zimo_id.hpp"
 #include "../decoder.hpp"
+#include "backoff.hpp"
 #include "high_current.hpp"
-#include "logon_backoff.hpp"
 
 namespace dcc::rx::bidi {
 
@@ -138,9 +138,7 @@ protected:
 
   /// Tip-off search
   void tipOffSearch() {
-    if (constexpr auto six_pct{static_cast<decltype(rand())>(RAND_MAX * 0.06)};
-        !empty(_tos_deque) || rand() > six_pct)
-      return;
+    if (_tos_backoff || !empty(_tos_deque)) return;
     auto const sec{std::chrono::duration_cast<std::chrono::seconds>(
       _last_packet_tp - _tos_tp)};
     if (sec >= 30s) return;
@@ -374,7 +372,10 @@ private:
   /// In case time between two packets is >=2s allow tip-off search again.
   void updateTimepoints() {
     auto const packet_tp{std::chrono::system_clock::now()};
-    if (packet_tp - _last_packet_tp >= 2s) _tos_tp = packet_tp;
+    if (packet_tp - _last_packet_tp >= 2s) {
+      _tos_backoff.reset();
+      _tos_tp = packet_tp;
+    }
     _last_packet_tp = packet_tp;
   }
 
@@ -389,7 +390,8 @@ private:
   ztl::inplace_deque<Channel1, DCC_RX_BIDI_DEQUE_SIZE> _pom_deque{};
   ztl::inplace_deque<Channel2, 2uz> _tos_deque{};
   ztl::inplace_deque<BundledChannels, 2uz> _logon_deque{};
-  LogonBackoff _logon_backoff{};
+  Backoff _logon_backoff{};
+  Backoff _tos_backoff{};
   uint16_t _cid{};        ///< Central ID
   uint8_t _session_id{};  ///< Session ID
   uint8_t _qos{};         ///< Quality of service
