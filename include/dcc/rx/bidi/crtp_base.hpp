@@ -254,7 +254,9 @@ private:
   ///
   /// \param  track_voltage Track voltage dyn datagram
   void dyn(TrackVoltage track_voltage) {
-    dyn(static_cast<uint8_t>(track_voltage / 100), 46u);
+    auto const track_voltage_with_dc_component{
+      std::max<Dyn::value_type>(0, track_voltage - 5000)};
+    dyn(static_cast<uint8_t>(track_voltage_with_dc_component / 100), 46u);
   }
 
   /// Handle app:dyn datagrams
