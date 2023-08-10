@@ -29,10 +29,12 @@ enum class Instruction : uint8_t {
 
 /// Decode instruction
 ///
-/// \param  data  Pointer to instruction data
+/// \tparam InputIt std::input_iterator
+/// \param  first   Beginning of the range to decode from
 /// \return Instruction
-constexpr Instruction decode_instruction(uint8_t const* data) {
-  switch (*data & 0xF0u) {
+template<std::input_iterator InputIt>
+constexpr Instruction decode_instruction(InputIt first) {
+  switch (*first & 0xF0u) {
     case 0b0000'0000u: return Instruction::DecoderControl;
     case 0b0001'0000u: return Instruction::ConsistControl;
     case 0b0010'0000u: [[fallthrough]];
@@ -51,7 +53,7 @@ constexpr Instruction decode_instruction(uint8_t const* data) {
     case 0b1111'0000u: return Instruction::CvShort;
     default: break;
   }
-  if (*data == 0b1111'1110u) return Instruction::Logon;
+  if (*first == 0b1111'1110u) return Instruction::Logon;
   return Instruction::UnknownService;
 }
 
