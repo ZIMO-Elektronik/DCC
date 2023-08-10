@@ -94,30 +94,26 @@ protected:
     // Only send in channel1 if last valid address was broadcast, short or long
     if (_addrs.received.type == Address::Broadcast ||
         _addrs.received.type == Address::Short ||
-        _addrs.received.type == Address::Long) [[likely]]
+        _addrs.received.type == Address::Long)
       appAdr();
     // or automatic logon
-    else if (_addrs.received.type == Address::AutomaticLogon) [[unlikely]]
-      appLogon(1u);
+    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(1u);
   }
 
   /// Start channel2 (36 bit payload)
   void cutoutChannel2() {
     if (!_ch2_enabled) return;
-    // Only send in channel2 if last valid address was broadcast
-    if (_addrs.received.type == Address::Broadcast) [[unlikely]]
-      appTos();
-    // or own
-    else if (_addrs.received == _addrs.primary ||
-             (_logon_assigned && _addrs.received == _addrs.logon)) [[likely]]
+    // Only send in channel2 if last valid address was own
+    if (_addrs.received == _addrs.primary ||
+        (_logon_assigned && _addrs.received == _addrs.logon))
       appPomExtDynSubId();
     // or consist
     else if (_ch2_consist_enabled && _addrs.received == _addrs.consist)
-      [[unlikely]]
       appExtDynSubId();
     // or automatic logon
-    else if (_addrs.received.type == Address::AutomaticLogon) [[unlikely]]
-      appLogon(2u);
+    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(2u);
+    // or broadcast
+    else if (_addrs.received.type == Address::Broadcast) appTos();
   }
 
   /// Quality of service
