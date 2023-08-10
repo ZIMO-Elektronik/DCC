@@ -23,15 +23,10 @@ struct RxTest : ::testing::Test {
 
   template<std::unsigned_integral T>
   static T RandomInterval(T min, T max) {
-    auto const r{static_cast<double>(_dis(_gen))};
-    auto const r_max{static_cast<double>(std::numeric_limits<T>::max())};
-    return static_cast<T>(ztl::lerp<double>(
-      r, 0, r_max, static_cast<double>(min), static_cast<double>(max)));
+    std::mt19937 gen{std::random_device{}()};
+    std::uniform_int_distribution<T> dis{min, max};
+    return dis(gen);
   }
-
-  static inline std::mt19937 _gen{std::random_device{}()};
-  static inline std::uniform_int_distribution<uint32_t> _dis{
-    0u, std::numeric_limits<uint32_t>::max()};
 
   RxMock _mock;
   std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};

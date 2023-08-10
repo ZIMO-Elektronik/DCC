@@ -99,8 +99,8 @@ struct CrtpBase : bidi::CrtpBase<T> {
         if (!bit) _state = State::Data;
         else if (_checksum) return reset();
         else {
-          end(_deque)->resize(_byte_count);
-          _checksum = _bit_count = _byte_count = 0uz;
+          end(_deque)->resize(static_cast<Packet::size_type>(_byte_count));
+          _bit_count = _byte_count = _checksum = 0u;
           ++_packet_count;  // Count received packets
           _deque.push_back();
           _packet_end = true;
@@ -165,7 +165,7 @@ private:
     if (cv29 & ztl::make_mask(5u)) {
       std::array const cv17_18{impl().readCv(17u - 1u),
                                impl().readCv(18u - 1u)};
-      _addrs.primary = decode_address(begin(cv17_18));
+      _addrs.primary = decode_address(cbegin(cv17_18));
     } else {
       auto const cv1{impl().readCv(1u - 1u)};
       _addrs.primary = decode_address(&cv1);
@@ -214,7 +214,7 @@ private:
   /// Execute in handler mode (interrupt context)
   void executeHandlerMode() {
     auto const& packet{_deque.front()};
-    auto const addr{decode_address(data(packet))};
+    auto const addr{decode_address(cbegin(packet))};
     _addrs.received = addr;
     if (addr.type != Address::AutomaticLogon) return;
     if (size(packet) <= 7uz || !crc8(packet))
@@ -229,7 +229,7 @@ private:
   bool executeOperations() {
     bool retval{};
     auto const& packet{_deque.front()};
-    switch (auto const addr{decode_address(&packet[0uz])}; addr.type) {
+    switch (auto const addr{decode_address(cbegin(packet))}; addr.type) {
       case Address::IdleSystem: executeOperationsSystem(&packet[1uz]); break;
       case Address::Broadcast: [[fallthrough]];
       case Address::Short:
@@ -309,6 +309,7 @@ private:
       case Instruction::FeatureExpansion: featureExpansion(addr, data); break;
       case Instruction::CvLong: cvLong(data, broadcast); break;
       case Instruction::CvShort: cvShort(data); break;
+      default: break;
     }
 
     return true;
@@ -349,10 +350,10 @@ private:
 
       // LOGON_ENABLE
       case 0b1111'0000u: {
-        auto const gg{data[0uz] & 0b11u};
+        auto const g{static_cast<uint8_t>(data[0uz] & 0b11u)};
         auto const cid{data2uint16(&data[1uz])};
         auto const session_id{data[3uz]};
-        BiDi::logonEnable(gg, cid, session_id);
+        BiDi::logonEnable(g, cid, session_id);
         break;
       }
     }
@@ -793,7 +794,7 @@ private:
   /// Reset
   void reset() {
     flush();
-    _checksum = _bit_count = _byte_count = 0u;
+    _bit_count = _byte_count = _checksum = 0u;
     _state = State::Preamble;
   }
 

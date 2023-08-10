@@ -55,6 +55,8 @@ target_compile_definitions(
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   target_include_directories(DCC INTERFACE include)
+  target_compile_options(DCC
+                         INTERFACE -Werror;-Wno-error=deprecated-declarations)
 else()
   target_include_directories(DCC SYSTEM INTERFACE include)
 endif()

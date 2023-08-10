@@ -76,7 +76,7 @@ protected:
             impl().readCv(253u - 1u)};
     std::array const cv65297_65298{impl().readCv(65297u - 1u),
                                    impl().readCv(65298u - 1u)};
-    _addrs.logon = decode_address(begin(cv65297_65298));
+    _addrs.logon = decode_address(cbegin(cv65297_65298));
     _cid = static_cast<decltype(_cid)>((impl().readCv(65299u - 1u) << 8u) |
                                        impl().readCv(65300u - 1u));
     _session_id = impl().readCv(65301u - 1u);
@@ -163,7 +163,8 @@ protected:
     // - Either skip logon if diff between session IDs is <=4
     // - Or force new logon if diff is >4
     if (_cidequal && !session_id_equal) {
-      _logon_selected = _logon_assigned = session_id - _session_id <= 4u;
+      auto const skip{static_cast<uint32_t>(session_id - _session_id) <= 4u};
+      _logon_selected = _logon_assigned = skip;
       _logon_backoff.reset();
     }
 
@@ -179,10 +180,13 @@ protected:
     }
 
     if (_logon_backoff) return;
-    _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
-      15u,
-      static_cast<uint64_t>(zimo_id) << 32u | _did[0uz] << 24u |
-        _did[1uz] << 16u | _did[2uz] << 8u | _did[3uz])));
+    _logon_deque.push_back(encode_datagram(
+      make_datagram<Bits::_48>(15u,
+                               static_cast<uint64_t>(zimo_id) << 32u |
+                                 static_cast<uint32_t>(_did[0uz]) << 24u |
+                                 static_cast<uint32_t>(_did[1uz]) << 16u |
+                                 static_cast<uint32_t>(_did[2uz]) << 8u |
+                                 static_cast<uint32_t>(_did[3uz]))));
   }
 
   /// Logon select
@@ -198,9 +202,11 @@ protected:
       0u,
       0u};
     _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
-      static_cast<uint64_t>(data[0uz]) << 40uz |
-      static_cast<uint64_t>(data[1uz]) << 32uz | data[2uz] << 24uz |
-      data[3uz] << 16uz | data[4uz] << 8uz | crc8(data))));
+      static_cast<uint64_t>(data[0uz]) << 40u |
+      static_cast<uint64_t>(data[1uz]) << 32u |
+      static_cast<uint32_t>(data[2uz]) << 24u |
+      static_cast<uint32_t>(data[3uz]) << 16u |
+      static_cast<uint32_t>(data[4uz]) << 8u | crc8(data))));
   }
 
   /// Logon assign
@@ -301,7 +307,7 @@ private:
       auto const& packet{_dyn_deque.front()};
       first = std::copy_n(cbegin(packet), size(packet), first);
       _dyn_deque.pop_front();
-    } while (!empty(_dyn_deque) && last - first >= size(_dyn_deque.front()));
+    } while (!empty(_dyn_deque) && last - first >= ssize(_dyn_deque.front()));
     impl().transmitBiDi({cbegin(_ch2), first});
   }
 

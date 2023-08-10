@@ -38,7 +38,10 @@ constexpr Timings raw2timings(std::span<uint8_t const> chunk, Config cfg = {}) {
 
   // Preamble
   auto const preamble_count{cfg.preamble_bits * 2uz};
-  first = std::ranges::fill_n(first, preamble_count, cfg.bit1_duration);
+  first =
+    std::ranges::fill_n(first,
+                        static_cast<Timings::difference_type>(preamble_count),
+                        cfg.bit1_duration);
 
   // Data
   for (auto const byte : chunk) {
@@ -54,7 +57,8 @@ constexpr Timings raw2timings(std::span<uint8_t const> chunk, Config cfg = {}) {
   first = std::ranges::fill_n(first, 2uz, cfg.bit1_duration);
 
   // Size
-  timings.resize(std::ranges::distance(cbegin(timings), first));
+  timings.resize(static_cast<Timings::size_type>(
+    std::ranges::distance(cbegin(timings), first)));
 
   return timings;
 }
