@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.29.0
+- Standardize tip-off search (use broadcast XF2 instead of reserved address 253)
+- Standardize track voltage datagram (5V offset)
+
 ## 0.28.1
 - Remove arbitrary RMT preamble limit
 

@@ -44,66 +44,69 @@ struct Address {
     Accessory,       ///< Address is accessory decoder
     Long,            ///< Address is long
     Reserved,        ///< Address is reserved
-    TipOffSearch,    ///< Address for tip-off search
-    ExtendedPacket,  ///< Address is extended packet
+    DataTransfer,    ///< Address for data transfer
+    AutomaticLogon,  ///< Address is automatic logon
     IdleSystem       ///< Address for system commands
   } type{};
 };
 
 /// Decode address
 ///
-/// \param  data  Pointer to data
+/// \tparam InputIt std::input_iterator
+/// \param  first   Beginning of the range to decode from
 /// \return Address
-constexpr Address decode_address(uint8_t const* data) {
+template<std::input_iterator InputIt>
+constexpr Address decode_address(InputIt first) {
   // 0
-  if (data[0uz] < 1u) return {data[0uz], Address::Broadcast};
+  if (*first < 1u) return {*first, Address::Broadcast};
   // 1-127
-  else if (data[0uz] < 128u) return {data[0uz], Address::Short};
+  else if (*first < 128u) return {*first, Address::Short};
   // 128-191
-  else if (data[0uz] < 192u)
-    return {data[0uz], Address::Accessory};  // TODO most likely wrong?
+  else if (*first < 192u)
+    return {*first, Address::Accessory};  // TODO most likely wrong?
   // 192-231
-  else if (data[0uz] < 232u) {
-    auto const addr{(static_cast<uint32_t>(data[0uz] << 8u) | data[1uz]) &
-                    0x3FFFu};
-    return {static_cast<Address::value_type>(addr), Address::Long};
+  else if (*first < 232u) {
+    auto const a13_8{*first++};
+    auto const a7_0{*first};
+    return {static_cast<Address::value_type>(((a13_8 << 8u) | a7_0) & 0x3FFFu),
+            Address::Long};
   }
   // 232-252
-  else if (data[0uz] < 253u)
-    return {data[0uz], Address::Reserved};
+  else if (*first < 253u)
+    return {*first, Address::Reserved};
   // 253
-  else if (data[0uz] < 254u) return {data[0uz], Address::TipOffSearch};
+  else if (*first < 254u) return {*first, Address::DataTransfer};
   // 254
-  else if (data[0uz] < 255u) return {data[0uz], Address::ExtendedPacket};
+  else if (*first < 255u) return {*first, Address::AutomaticLogon};
   // 255
-  else return {data[0uz], Address::IdleSystem};
+  else return {*first, Address::IdleSystem};
 }
 
 /// Encode address
 ///
-/// \tparam OutputIt
-/// \param  addr
-/// \param  data
-/// \return Address
+/// \tparam OutputIt  std::output_iterator<uint8_t>
+/// \param  addr      Address
+/// \param  first     Beginning of the range to encode to
+/// \return Iterator to the element that follows the last element encoded
 template<std::output_iterator<uint8_t> OutputIt>
-constexpr OutputIt encode_address(Address addr, OutputIt data) {
+constexpr OutputIt encode_address(Address addr, OutputIt first) {
   switch (addr.type) {
     case Address::UnknownService: break;
-    case Address::Broadcast: *data++ = 0u; break;
-    case Address::Short: *data++ = static_cast<uint8_t>(addr); break;
+    case Address::Broadcast: *first++ = 0u; break;
+    case Address::Short: *first++ = static_cast<uint8_t>(addr); break;
     case Address::Accessory:
       // TODO (see decode_address)
       break;
     case Address::Long:
-      *data++ = 0b1100'0000u | addr >> 8u;
-      *data++ = static_cast<uint8_t>(addr);
+      *first++ = static_cast<uint8_t>(0b1100'0000u | addr >> 8u);
+      *first++ = static_cast<uint8_t>(addr);
       break;
     case Address::Reserved: assert(false); break;
-    case Address::TipOffSearch: *data++ = 253u; break;
-    case Address::ExtendedPacket: *data++ = 254u; break;
-    case Address::IdleSystem: *data++ = 255u; break;
+    case Address::DataTransfer: *first++ = 253u; break;
+    case Address::AutomaticLogon: *first++ = 254u; break;
+    case Address::IdleSystem: *first++ = 255u; break;
   }
-  return data;
+  return first;
 }
 
 }  // namespace dcc

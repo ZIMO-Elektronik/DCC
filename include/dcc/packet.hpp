@@ -42,28 +42,30 @@ constexpr auto make_advanced_operations_speed_packet(Address::value_type addr,
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
   *last++ = 0b0011'1111u;
-  *last++ = (dir > 0) << 7u | (speed & 0x7Fu);
+  auto const r{static_cast<uint32_t>(dir > 0) << 7u};
+  auto const g{speed & 0x7Fu};
+  *last++ = static_cast<uint8_t>(r | g);
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
 /// TODO
 constexpr auto
-make_advanced_operations_restricted_speed_packet(Address::value_type addr) {
+make_advanced_operations_restricted_speed_packet(Address::value_type) {
   Packet packet{};
   return packet;
 }
 
 /// TODO
-constexpr auto make_advanced_operations_analog_function_group_packet(
-  Address::value_type addr) {
+constexpr auto
+make_advanced_operations_analog_function_group_packet(Address::value_type) {
   Packet packet{};
   return packet;
 }
 
 /// TODO
-constexpr auto make_speed_and_direction_packet(Address::value_type addr) {
+constexpr auto make_speed_and_direction_packet(Address::value_type) {
   Packet packet{};
   return packet;
 }
@@ -79,9 +81,10 @@ constexpr auto make_function_group_f4_f0_packet(Address::value_type addr,
   auto first{begin(packet)};
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
-  *last++ = 0b1000'0000u | (state & 0b1u) << 4u | (state & 0x1Fu) >> 1u;
+  *last++ = static_cast<uint8_t>(0b1000'0000u | (state & 0b1u) << 4u |
+                                 (state & 0x1Fu) >> 1u);
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -98,7 +101,7 @@ constexpr auto make_function_group_f8_f5_packet(Address::value_type addr,
                            first)};
   *last++ = 0b1011'0000u | (state & 0xFu);
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -115,7 +118,7 @@ constexpr auto make_function_group_f12_f9_packet(Address::value_type addr,
                            first)};
   *last++ = 0b1010'0000u | (state & 0xFu);
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -133,7 +136,7 @@ constexpr auto make_feature_expansion_f20_f13_packet(Address::value_type addr,
   *last++ = 0b1101'1110u;
   *last++ = state;
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -151,7 +154,7 @@ constexpr auto make_feature_expansion_f28_f21_packet(Address::value_type addr,
   *last++ = 0b1101'1111u;
   *last++ = state;
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -168,11 +171,11 @@ constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
   auto first{begin(packet)};
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
-  *last++ = 0b1110'0100u | (cv_addr & 0x3FFu) >> 8u;
+  *last++ = static_cast<uint8_t>(0b1110'0100u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -189,11 +192,11 @@ constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
   auto first{begin(packet)};
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
-  *last++ = 0b1110'1100u | (cv_addr & 0x3FFu) >> 8u;
+  *last++ = static_cast<uint8_t>(0b1110'1100u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -212,11 +215,12 @@ constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
   auto first{begin(packet)};
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
-  *last++ = 0b1110'1000u | (cv_addr & 0x3FFu) >> 8u;
+  *last++ = static_cast<uint8_t>(0b1110'1000u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
-  *last++ = 0b1110'0000u | bit << 3u | (pos & 0b111u);
+  auto const d{static_cast<uint32_t>(bit << 3u)};
+  *last++ = static_cast<uint8_t>(0b1110'0000u | d | (pos & 0b111u));
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -235,11 +239,12 @@ constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
   auto first{begin(packet)};
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
-  *last++ = 0b1110'1000u | (cv_addr & 0x3FFu) >> 8u;
+  *last++ = static_cast<uint8_t>(0b1110'1000u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
-  *last++ = 0b1111'0000u | bit << 3u | (pos & 0b111u);
+  auto const d{static_cast<uint32_t>(bit << 3u)};
+  *last++ = static_cast<uint8_t>(0b1111'0000u | d | (pos & 0b111u));
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -253,11 +258,11 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
   Packet packet{};
   auto first{begin(packet)};
   auto last{first};
-  *last++ = 0b0111'0100u | (cv_addr & 0x3FFu) >> 8u;
+  *last++ = static_cast<uint8_t>(0b0111'0100u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -271,11 +276,11 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   Packet packet{};
   auto first{begin(packet)};
   auto last{first};
-  *last++ = 0b0111'1100u | (cv_addr & 0x3FFu) >> 8u;
+  *last++ = static_cast<uint8_t>(0b0111'1100u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
   *last++ = byte;
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -291,11 +296,12 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
   Packet packet{};
   auto first{begin(packet)};
   auto last{first};
-  *last++ = 0b0111'1000u | (cv_addr & 0x3FFu) >> 8u;
+  *last++ = static_cast<uint8_t>(0b0111'1000u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
-  *last++ = 0b1110'0000u | bit << 3u | (pos & 0b111u);
+  auto const d{static_cast<uint32_t>(bit << 3u)};
+  *last++ = static_cast<uint8_t>(0b1110'0000u | d | (pos & 0b111u));
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -311,11 +317,12 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   Packet packet{};
   auto first{begin(packet)};
   auto last{first};
-  *last++ = 0b0111'1000u | (cv_addr & 0x3FFu) >> 8u;
+  *last++ = static_cast<uint8_t>(0b0111'1000u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
-  *last++ = 0b1111'0000u | bit << 3u | (pos & 0b111u);
+  auto const d{static_cast<uint32_t>(bit << 3u)};
+  *last++ = static_cast<uint8_t>(0b1111'0000u | d | (pos & 0b111u));
   *last = exor({first, last});
-  packet.resize(++last - first);
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 

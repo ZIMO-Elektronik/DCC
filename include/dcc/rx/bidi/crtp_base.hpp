@@ -23,8 +23,8 @@
 #include "../../bidi/track_voltage.hpp"
 #include "../../zimo_id.hpp"
 #include "../decoder.hpp"
+#include "backoff.hpp"
 #include "high_current.hpp"
-#include "logon_backoff.hpp"
 
 namespace dcc::rx::bidi {
 
@@ -37,9 +37,6 @@ using namespace std::chrono_literals;
 template<typename T>
 struct CrtpBase {
   friend T;
-
-  /// Initialize
-  void init() { _logon_backoff.reset(); }
 
 protected:
   constexpr CrtpBase() = default;
@@ -79,7 +76,7 @@ protected:
             impl().readCv(253u - 1u)};
     std::array const cv65297_65298{impl().readCv(65297u - 1u),
                                    impl().readCv(65298u - 1u)};
-    _addrs.logon = decode_address(begin(cv65297_65298));
+    _addrs.logon = decode_address(cbegin(cv65297_65298));
     _cid = static_cast<decltype(_cid)>((impl().readCv(65299u - 1u) << 8u) |
                                        impl().readCv(65300u - 1u));
     _session_id = impl().readCv(65301u - 1u);
@@ -99,8 +96,8 @@ protected:
         _addrs.received.type == Address::Short ||
         _addrs.received.type == Address::Long)
       appAdr();
-    // or extended packet
-    else if (_addrs.received.type == Address::ExtendedPacket) appLogon(1u);
+    // or automatic logon
+    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(1u);
   }
 
   /// Start channel2 (36 bit payload)
@@ -113,10 +110,10 @@ protected:
     // or consist
     else if (_ch2_consist_enabled && _addrs.received == _addrs.consist)
       appExtDynSubId();
-    // or tip-off search
-    else if (_addrs.received.type == Address::TipOffSearch) appTos();
-    // or extended packet
-    else if (_addrs.received.type == Address::ExtendedPacket) appLogon(2u);
+    // or automatic logon
+    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(2u);
+    // or broadcast
+    else if (_addrs.received.type == Address::Broadcast) appTos();
   }
 
   /// Quality of service
@@ -134,9 +131,7 @@ protected:
 
   /// Tip-off search
   void tipOffSearch() {
-    if (constexpr auto six_pct{static_cast<decltype(rand())>(RAND_MAX * 0.06)};
-        !empty(_tos_deque) || rand() > six_pct)
-      return;
+    if (_tos_backoff || !empty(_tos_deque)) return;
     auto const sec{std::chrono::duration_cast<std::chrono::seconds>(
       _last_packet_tp - _tos_tp)};
     if (sec >= 30s) return;
@@ -146,7 +141,7 @@ protected:
     auto const adr_low{adrLow()};
     it = std::copy(cbegin(adr_low), cend(adr_low), it);
     auto const time{encode_datagram(
-      make_datagram<Bits::_12>(0u, static_cast<uint32_t>(sec.count())))};
+      make_datagram<Bits::_12>(14u, static_cast<uint32_t>(sec.count())))};
     std::copy(cbegin(time), cend(time), it);
     _tos_deque.push_back();
   }
@@ -164,7 +159,8 @@ protected:
     // - Either skip logon if diff between session IDs is <=4
     // - Or force new logon if diff is >4
     if (_cidequal && !session_id_equal) {
-      _logon_selected = _logon_assigned = session_id - _session_id <= 4u;
+      auto const skip{static_cast<uint32_t>(session_id - _session_id) <= 4u};
+      _logon_selected = _logon_assigned = skip;
       _logon_backoff.reset();
     }
 
@@ -180,10 +176,13 @@ protected:
     }
 
     if (_logon_backoff) return;
-    _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
-      15u,
-      static_cast<uint64_t>(zimo_id) << 32u | _did[0uz] << 24u |
-        _did[1uz] << 16u | _did[2uz] << 8u | _did[3uz])));
+    _logon_deque.push_back(encode_datagram(
+      make_datagram<Bits::_48>(15u,
+                               static_cast<uint64_t>(zimo_id) << 32u |
+                                 static_cast<uint32_t>(_did[0uz]) << 24u |
+                                 static_cast<uint32_t>(_did[1uz]) << 16u |
+                                 static_cast<uint32_t>(_did[2uz]) << 8u |
+                                 static_cast<uint32_t>(_did[3uz]))));
   }
 
   /// Logon select
@@ -199,9 +198,11 @@ protected:
       0u,
       0u};
     _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
-      static_cast<uint64_t>(data[0uz]) << 40uz |
-      static_cast<uint64_t>(data[1uz]) << 32uz | data[2uz] << 24uz |
-      data[3uz] << 16uz | data[4uz] << 8uz | crc8(data))));
+      static_cast<uint64_t>(data[0uz]) << 40u |
+      static_cast<uint64_t>(data[1uz]) << 32u |
+      static_cast<uint32_t>(data[2uz]) << 24u |
+      static_cast<uint32_t>(data[3uz]) << 16u |
+      static_cast<uint32_t>(data[4uz]) << 8u | crc8(data))));
   }
 
   /// Logon assign
@@ -255,7 +256,9 @@ private:
   ///
   /// \param  track_voltage Track voltage dyn datagram
   void dyn(TrackVoltage track_voltage) {
-    dyn(static_cast<uint8_t>(track_voltage / 100), 46u);
+    auto const track_voltage_with_dc_component{
+      std::max<Dyn::value_type>(0, track_voltage - 5000)};
+    dyn(static_cast<uint8_t>(track_voltage_with_dc_component / 100), 46u);
   }
 
   /// Handle app:dyn datagrams
@@ -300,7 +303,7 @@ private:
       auto const& packet{_dyn_deque.front()};
       first = std::copy_n(cbegin(packet), size(packet), first);
       _dyn_deque.pop_front();
-    } while (!empty(_dyn_deque) && last - first >= size(_dyn_deque.front()));
+    } while (!empty(_dyn_deque) && last - first >= ssize(_dyn_deque.front()));
     impl().transmitBiDi({cbegin(_ch2), first});
   }
 
@@ -370,7 +373,10 @@ private:
   /// In case time between two packets is >=2s allow tip-off search again.
   void updateTimepoints() {
     auto const packet_tp{std::chrono::system_clock::now()};
-    if (packet_tp - _last_packet_tp >= 2s) _tos_tp = packet_tp;
+    if (packet_tp - _last_packet_tp >= 2s) {
+      _tos_backoff.reset();
+      _tos_tp = packet_tp;
+    }
     _last_packet_tp = packet_tp;
   }
 
@@ -385,7 +391,8 @@ private:
   ztl::inplace_deque<Channel1, DCC_RX_BIDI_DEQUE_SIZE> _pom_deque{};
   ztl::inplace_deque<Channel2, 2uz> _tos_deque{};
   ztl::inplace_deque<BundledChannels, 2uz> _logon_deque{};
-  LogonBackoff _logon_backoff{};
+  Backoff _logon_backoff{};
+  Backoff _tos_backoff{};
   uint16_t _cid{};        ///< Central ID
   uint8_t _session_id{};  ///< Session ID
   uint8_t _qos{};         ///< Quality of service

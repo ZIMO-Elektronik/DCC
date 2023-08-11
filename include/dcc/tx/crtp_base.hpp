@@ -92,7 +92,8 @@ private:
   ///
   /// \return Next timings from current packet
   Timings::value_type packetTiming() {
-    auto const retval{(*_packet)[_packet_count]};
+    auto const retval{
+      (*_packet)[static_cast<Timings::size_type>(_packet_count)]};
     if (_packet_count++ % 2uz) impl().setTrackOutputs(false, true);
     else impl().setTrackOutputs(true, false);
     return retval;
