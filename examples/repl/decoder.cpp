@@ -26,6 +26,8 @@ void Decoder::emergencyStop(uint32_t addr) {
   cli::Cli::cout() << "Address " << addr << ": e-stop" << PROMPTENDL;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
 void Decoder::function(uint32_t addr, uint32_t mask, uint32_t state) {
   auto const f_high{std::bit_width(mask) - 1};
   auto const f_low{std::countr_zero(mask)};
@@ -36,6 +38,7 @@ void Decoder::function(uint32_t addr, uint32_t mask, uint32_t state) {
     cli::Cli::cout() << static_cast<bool>(state & (1u << i));
   cli::Cli::cout() << PROMPTENDL;
 }
+#pragma GCC diagnostic pop
 
 void Decoder::serviceModeHook(bool) {}
 
