@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.29.1
+- Don't receive packets <=3 bytes
+
 ## 0.29.0
 - Standardize tip-off search (use broadcast XF2 instead of reserved address 253)
 - Standardize track voltage datagram (5V offset)

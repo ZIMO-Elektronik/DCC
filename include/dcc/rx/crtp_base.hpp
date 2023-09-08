@@ -96,18 +96,19 @@ struct CrtpBase : bidi::CrtpBase<T> {
       }
 
       case State::Endbit:
-        if (!bit) _state = State::Data;
-        else if (_checksum) return reset();
-        else {
+        if (!bit) {
+          _state = State::Data;
+          return;
+        }
+        // Valid packets contain at least 3 bytes
+        else if (!_checksum && _byte_count >= 3uz) {
           end(_deque)->resize(static_cast<Packet::size_type>(_byte_count));
-          _bit_count = _byte_count = _checksum = 0u;
           ++_packet_count;  // Count received packets
           _deque.push_back();
           _packet_end = true;
           executeHandlerMode();
-          return reset();
         }
-        break;
+        return reset();
     }
   }
 
