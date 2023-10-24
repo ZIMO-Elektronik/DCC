@@ -12,8 +12,8 @@ private:
   // Set direction (1 forward, -1 backward)
   void direction(uint32_t addr, int32_t dir);
 
-  // Set notch (0-255)
-  void notch(uint32_t addr, int32_t notch);
+  // Set speed (0-255)
+  void speed(uint32_t addr, int32_t speed);
 
   // Emergency stop
   void emergencyStop(uint32_t addr);

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.30.0
+- Use 'speed' instead of 'notch'
+- Update to ZTL 0.18.0
+
 ## 0.29.1
 - Don't receive packets <=3 bytes
 

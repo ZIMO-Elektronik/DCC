@@ -17,8 +17,8 @@ void Decoder::direction(uint32_t addr, int32_t dir) {
                    << (dir == 1 ? "forward" : "backward") << PROMPTENDL;
 }
 
-void Decoder::notch(uint32_t addr, int32_t notch) {
-  cli::Cli::cout() << "Address " << addr << ": set speed " << notch
+void Decoder::speed(uint32_t addr, int32_t speed) {
+  cli::Cli::cout() << "Address " << addr << ": set speed " << speed
                    << PROMPTENDL;
 }
 

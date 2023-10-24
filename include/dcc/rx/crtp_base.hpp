@@ -393,12 +393,12 @@ private:
       case 0b0011'1111u: {
         auto const dir{chunk[1uz] & ztl::make_mask(7u) ? 1 : -1};
         // Halt
-        if (!(chunk[1uz] & 0b0111'1111u)) directionNotch(addr, dir, 0);
+        if (!(chunk[1uz] & 0b0111'1111u)) directionSpeed(addr, dir, 0);
         // Emergency stop
         else if (!(chunk[1uz] & 0b0111'1110u)) impl().emergencyStop(addr);
         else {
-          auto const notch{scale_notch<126>((chunk[1uz] & 0b0111'1111) - 1)};
-          directionNotch(addr, dir, notch);
+          auto const speed{scale_speed<126>((chunk[1uz] & 0b0111'1111) - 1)};
+          directionSpeed(addr, dir, speed);
         }
         break;
       }
@@ -428,17 +428,17 @@ private:
   /// \param  chunk Raw data
   void speedAndDirection(uint32_t addr, std::span<uint8_t const> chunk) {
     auto const dir{chunk[0uz] & ztl::make_mask(5u) ? 1 : -1};
-    int32_t notch{};
+    int32_t speed{};
 
     // Halt
-    if (!(chunk[0uz] & 0b0000'1111u)) notch = 0;
+    if (!(chunk[0uz] & 0b0000'1111u)) speed = 0;
     // Emergency stop
     else if (!(chunk[0uz] & 0b0000'1110u)) return impl().emergencyStop(addr);
-    else notch = (chunk[0uz] & 0b0000'1111) - 1;
+    else speed = (chunk[0uz] & 0b0000'1111) - 1;
 
     // 14 speed steps and F0
     if (_f0_exception) {
-      notch = scale_notch<14>(notch);
+      speed = scale_speed<14>(speed);
       auto const mask{ztl::make_mask(0u)};
       auto const state{chunk[0uz] & ztl::make_mask(4u) ? ztl::make_mask(0u)
                                                        : 0u};
@@ -446,12 +446,12 @@ private:
     }
     // 28 speed steps
     else {
-      notch <<= 1u;
-      if (notch && !(chunk[0uz] & ztl::make_mask(4u))) --notch;
-      notch = scale_notch<28>(notch);
+      speed <<= 1u;
+      if (speed && !(chunk[0uz] & ztl::make_mask(4u))) --speed;
+      speed = scale_speed<28>(speed);
     }
 
-    directionNotch(addr, dir, notch);
+    directionSpeed(addr, dir, speed);
   }
 
   /// Execute function group
@@ -750,17 +750,17 @@ private:
     }
   }
 
-  /// Set direction and notch
+  /// Set direction and speed
   ///
   /// \param  addr  Address
   /// \param  dir   Direction
-  /// \param  notch Notch
-  void directionNotch(uint32_t addr, int32_t dir, int32_t notch) {
+  /// \param  speed Speed
+  void directionSpeed(uint32_t addr, int32_t dir, int32_t speed) {
     auto const reverse{addr == _addrs.primary
                          ? impl().readCv(29u - 1u) & ztl::make_mask(0u)
                          : impl().readCv(19u - 1u) & ztl::make_mask(7u)};
     impl().direction(addr, reverse ? dir * -1 : dir);
-    impl().notch(addr, notch);
+    impl().speed(addr, speed);
   }
 
   /// Update quality of service (roughly every second)

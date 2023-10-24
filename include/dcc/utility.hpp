@@ -34,24 +34,24 @@ constexpr auto data2uint32(uint8_t const* data) {
                                data[2uz] << 8u | data[3uz] << 0u);
 }
 
-/// Scale notch from 14, 28 or 126 steps to 255
+/// Scale speed from 14, 28 or 126 steps to 255
 ///
 /// \tparam Scale Scaling
-/// \param  notch Notch
-/// \raturn Scaled notch
+/// \param  speed Speed
+/// \raturn Scaled speed
 template<int32_t Scale>
-constexpr int32_t scale_notch(int32_t notch)
+constexpr int32_t scale_speed(int32_t speed)
   requires(Scale == 14 || Scale == 28 || Scale == 126)
 {
   // Zero stays zero
-  if (!notch) return 0;
+  if (!speed) return 0;
   // One shares the same internal minimum across all scales
   constexpr int32_t max{255}, min{ztl::lerp<int32_t>(1, 0, 126, 0, max)};
-  if (notch == 1) return min;
+  if (speed == 1) return min;
   if constexpr (Scale == 14 || Scale == 28)
-    return ztl::lerp<int32_t>(notch, 1, Scale, min, max);
+    return ztl::lerp<int32_t>(speed, 1, Scale, min, max);
   else if constexpr (Scale == 126)
-    return ztl::lerp<int32_t>(notch, 0, Scale, 0, max);
+    return ztl::lerp<int32_t>(speed, 0, Scale, 0, max);
 }
 
 }  // namespace dcc

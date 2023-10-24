@@ -20,13 +20,13 @@ concept Decoder = Readable<T> && Writable<T> &&
                   requires(T t,
                            uint32_t addr,
                            int32_t dir,
-                           int32_t notch,
+                           int32_t speed,
                            uint32_t mask,
                            uint32_t state,
                            bool service_mode,
                            std::span<uint8_t const> chunk) {
                     { t.direction(addr, dir) } -> std::same_as<void>;
-                    { t.notch(addr, notch) } -> std::same_as<void>;
+                    { t.speed(addr, speed) } -> std::same_as<void>;
                     { t.emergencyStop(addr) } -> std::same_as<void>;
                     { t.function(addr, mask, state) } -> std::same_as<void>;
                     { t.serviceModeHook(service_mode) } -> std::same_as<void>;
