@@ -1,5 +1,10 @@
 # Changelog
 
+##
+- Changes to namespace dcc::tx
+  - Rename raw2timings to bytes2timings
+  - Rename CrtpBase::raw to CrtpBase::bytes
+
 ## 0.30.0
 - Use 'speed' instead of 'notch'
 - Update to ZTL 0.18.0

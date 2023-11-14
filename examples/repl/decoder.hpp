@@ -12,7 +12,7 @@ private:
   // Set direction (1 forward, -1 backward)
   void direction(uint32_t addr, int32_t dir);
 
-  // Set speed (0-255)
+  // Set speed (regardless of CV settings scaled to 0-255)
   void speed(uint32_t addr, int32_t speed);
 
   // Emergency stop
@@ -28,7 +28,7 @@ private:
   void serviceAck();
 
   // Transmit BiDi
-  void transmitBiDi(std::span<uint8_t const> chunk);
+  void transmitBiDi(std::span<uint8_t const> bytes);
 
   // Read CV
   uint8_t readCv(uint32_t cv_addr, uint8_t byte = 0u);

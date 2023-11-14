@@ -27,12 +27,13 @@ using Timings =
                        DCC_MAX_PACKET_SIZE * (CHAR_BIT + 1uz))  // Data
                         * 2uz>;                                 // Halfbit
 
-/// Convert raw data into timings
+/// Convert bytes into timings
 ///
-/// \param  chunk Raw data
+/// \param  bytes Bytes
 /// \param  cfg   Configuration
 /// \return Timings
-constexpr Timings raw2timings(std::span<uint8_t const> chunk, Config cfg = {}) {
+constexpr Timings bytes2timings(std::span<uint8_t const> bytes,
+                                Config cfg = {}) {
   Timings timings{};
   auto first{begin(timings)};
 
@@ -44,7 +45,7 @@ constexpr Timings raw2timings(std::span<uint8_t const> chunk, Config cfg = {}) {
                         cfg.bit1_duration);
 
   // Data
-  for (auto const byte : chunk) {
+  for (auto const byte : bytes) {
     // Startbit
     first = std::ranges::fill_n(first, 2uz, cfg.bit0_duration);
     for (auto i{CHAR_BIT}; i-- > 0;) {
@@ -69,7 +70,7 @@ constexpr Timings raw2timings(std::span<uint8_t const> chunk, Config cfg = {}) {
 /// \param  cfg     Configuration
 /// \return Timings
 constexpr Timings packet2timings(Packet const& packet, Config cfg = {}) {
-  return raw2timings({cbegin(packet), size(packet)}, cfg);
+  return bytes2timings({cbegin(packet), size(packet)}, cfg);
 }
 
 }  // namespace dcc::tx

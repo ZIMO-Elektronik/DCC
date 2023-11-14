@@ -41,16 +41,16 @@ struct CrtpBase {
   ///
   /// \param  packet  Packet
   void packet(Packet const& packet) {
-    return raw({cbegin(packet), size(packet)});
+    return bytes({cbegin(packet), size(packet)});
   }
 
-  /// Transmit raw data
+  /// Transmit bytes
   ///
-  /// \param  chunk Raw data
-  void raw(std::span<uint8_t const> chunk) {
+  /// \param  bytes Bytes
+  void bytes(std::span<uint8_t const> bytes) {
     if (full(_deque)) return;
-    assert(size(chunk) <= DCC_MAX_PACKET_SIZE);
-    _deque.push_back(raw2timings(chunk, _cfg));
+    assert(size(bytes) <= DCC_MAX_PACKET_SIZE);
+    _deque.push_back(bytes2timings(bytes, _cfg));
   }
 
   /// Get next bit duration to transmit in µs
