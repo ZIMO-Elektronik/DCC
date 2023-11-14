@@ -16,7 +16,7 @@ namespace dcc::rx::bidi {
 
 template<typename T>
 concept HighCurrent = requires(T t, bool high_current) {
-                        { t.highCurrent(high_current) } -> std::same_as<void>;
-                      };
+  { t.highCurrent(high_current) } -> std::same_as<void>;
+};
 
 }  // namespace dcc::rx::bidi

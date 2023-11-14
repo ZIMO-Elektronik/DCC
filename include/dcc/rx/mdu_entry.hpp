@@ -17,7 +17,7 @@ namespace dcc::rx {
 
 template<typename T>
 concept MduEntry = requires(T t, uint32_t addr, uint8_t byte) {
-                     { t.mduEntry(addr, byte) } -> std::same_as<void>;
-                   };
+  { t.mduEntry(addr, byte) } -> std::same_as<void>;
+};
 
 }  // namespace dcc::rx

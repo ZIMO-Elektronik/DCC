@@ -18,11 +18,11 @@ namespace dcc {
 
 /// Exclusive disjunction (ex-or)
 ///
-/// \param  chunk Chunk to calculate ex-or for
+/// \param  bytes Bytes to calculate ex-or for
 /// \return Ex-or
-constexpr uint8_t exor(std::span<uint8_t const> chunk) {
-  return std::accumulate(cbegin(chunk),
-                         cend(chunk),
+constexpr uint8_t exor(std::span<uint8_t const> bytes) {
+  return std::accumulate(cbegin(bytes),
+                         cend(bytes),
                          static_cast<uint8_t>(0u),
                          [](uint8_t a, uint8_t b) { return a ^ b; });
 }

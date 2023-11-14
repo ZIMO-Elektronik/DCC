@@ -2,8 +2,7 @@
 #include "bidi_test.hpp"
 
 TEST_F(BiDiTest, app_tos) {
-  for (auto i{0u}; i < 30.0 / 10E-3; ++i)
-    tipOffSearch();
+  for (auto i{0u}; i < 30.0 / 10E-3; ++i) tipOffSearch();
   _addrs.received = {0u, dcc::Address::Broadcast};
 
   // Make datagram

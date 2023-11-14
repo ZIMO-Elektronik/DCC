@@ -35,7 +35,6 @@ TEST(crc8, crc8) {
   EXPECT_EQ(dcc::crc8(packet), 0x4Cu);
 
   uint8_t crc{};
-  for (auto b : data)
-    crc = dcc::crc8(b ^ crc);
+  for (auto b : data) crc = dcc::crc8(b ^ crc);
   EXPECT_EQ(crc, 0x4Cu);
 }

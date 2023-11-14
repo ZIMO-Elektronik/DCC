@@ -24,12 +24,8 @@ concept AsyncReadable = requires(T t,
                                  uint32_t pos,
                                  std::function<void(uint8_t)> byte_cb,
                                  std::function<void(bool)> bit_cb) {
-                          {
-                            t.readCv(cv_addr, byte, byte_cb)
-                            } -> std::same_as<void>;
-                          {
-                            t.readCv(cv_addr, bit, pos, bit_cb)
-                            } -> std::same_as<void>;
-                        };
+  { t.readCv(cv_addr, byte, byte_cb) } -> std::same_as<void>;
+  { t.readCv(cv_addr, bit, pos, bit_cb) } -> std::same_as<void>;
+};
 
 }  // namespace dcc::rx

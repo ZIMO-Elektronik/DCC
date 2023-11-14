@@ -57,12 +57,12 @@ constexpr uint8_t crc8(uint8_t byte) { return detail::crc8_lut[byte]; }
 /// This function calculates CRC8 (Dallas/Maxim). The polynomial representations
 /// is 0x31.
 ///
-/// \param  chunk Chunk to calculate CRC8 for
+/// \param  bytes Bytes to calculate CRC8 for
 /// \return CRC8
-constexpr uint8_t crc8(std::span<uint8_t const> chunk) {
+constexpr uint8_t crc8(std::span<uint8_t const> bytes) {
   return std::accumulate(
-    cbegin(chunk),
-    cend(chunk),
+    cbegin(bytes),
+    cend(bytes),
     static_cast<uint8_t>(0u),
     [](uint8_t a, uint8_t b) { return crc8(static_cast<uint8_t>(a ^ b)); });
 }
@@ -70,7 +70,7 @@ constexpr uint8_t crc8(std::span<uint8_t const> chunk) {
 /// This function calculates CRC8 (Dallas/Maxim). The polynomial representations
 /// is 0x31.
 ///
-/// \param  chunk Chunk to calculate CRC8 for
+/// \param  bytes Bytes to calculate CRC8 for
 /// \return CRC8
 constexpr uint8_t crc8(Packet const& packet) {
   // Packet checksum is not part of CRC

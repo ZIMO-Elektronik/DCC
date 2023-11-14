@@ -269,10 +269,10 @@ private:
 
   /// Execute system commands
   ///
-  /// \param  chunk Raw data
-  void executeOperationsSystem(std::span<uint8_t const> chunk) {
-    switch (chunk[0uz]) {
-      case 0x01u: _zimo = chunk[1uz] == zimo_id; break;
+  /// \param  bytes Raw bytes
+  void executeOperationsSystem(std::span<uint8_t const> bytes) {
+    switch (bytes[0uz]) {
+      case 0x01u: _zimo = bytes[1uz] == zimo_id; break;
       case 0x02u:
         // Decoder search
         break;
@@ -288,33 +288,33 @@ private:
   /// Execute addressed commands
   ///
   /// \param  addr  Address
-  /// \param  chunk Raw data
+  /// \param  bytes Raw bytes
   /// \return true  Command to own address or 0
   /// \return false Command to other address
   bool executeOperationsAddressed(Address addr,
-                                  std::span<uint8_t const> chunk) {
+                                  std::span<uint8_t const> bytes) {
     bool const broadcast{addr.type == Address::Broadcast};
     if (!broadcast && addr != _addrs.primary && addr != _addrs.consist)
       return false;
 
     countOwnEqualPackets();
 
-    switch (decode_instruction(cbegin(chunk))) {
+    switch (decode_instruction(cbegin(bytes))) {
       case Instruction::UnknownService:  // TODO
         break;
       case Instruction::DecoderControl:
-        if (broadcast && !chunk[0uz]) serviceMode(true);
-        else decoderControl(chunk);
+        if (broadcast && !bytes[0uz]) serviceMode(true);
+        else decoderControl(bytes);
         break;
-      case Instruction::ConsistControl: consistControl(chunk); break;
+      case Instruction::ConsistControl: consistControl(bytes); break;
       case Instruction::AdvancedOperations:
-        advancedOperations(addr, chunk);
+        advancedOperations(addr, bytes);
         break;
-      case Instruction::SpeedDirection: speedAndDirection(addr, chunk); break;
-      case Instruction::FunctionGroup: functionGroup(addr, chunk); break;
-      case Instruction::FeatureExpansion: featureExpansion(addr, chunk); break;
-      case Instruction::CvLong: cvLong(chunk, broadcast); break;
-      case Instruction::CvShort: cvShort(chunk); break;
+      case Instruction::SpeedDirection: speedAndDirection(addr, bytes); break;
+      case Instruction::FunctionGroup: functionGroup(addr, bytes); break;
+      case Instruction::FeatureExpansion: featureExpansion(addr, bytes); break;
+      case Instruction::CvLong: cvLong(bytes, broadcast); break;
+      case Instruction::CvShort: cvShort(bytes); break;
       default: break;
     }
 
@@ -324,30 +324,30 @@ private:
   /// Execute automatic logon
   ///
   /// \param  addr  Address
-  /// \param  chunk Raw data
+  /// \param  bytes Raw bytes
   /// \return true  Command to own address or 0
   /// \return false Command to other address
-  bool executeAutomaticLogon(Address addr, std::span<uint8_t const> chunk) {
+  bool executeAutomaticLogon(Address addr, std::span<uint8_t const> bytes) {
     if (addr != 254u) return false;
 
-    switch (chunk[0uz] & 0xF0u) {
+    switch (bytes[0uz] & 0xF0u) {
       // SELECT
       case 0b1101'0000u:
-        BiDi::logonSelect(chunk.subspan<2uz, sizeof(uint32_t)>());
+        BiDi::logonSelect(bytes.subspan<2uz, sizeof(uint32_t)>());
         break;
 
       // LOGON_ASSIGN
       case 0b1110'0000u:
         // Multi-function decoders (long address)
-        if (auto const a13_8{chunk[6uz] & 0x3Fu}; a13_8 < 0x28u)
-          BiDi::logonAssign(chunk.subspan<2uz, sizeof(uint32_t)>(),
-                            decode_address(&chunk[6uz]));
+        if (auto const a13_8{bytes[6uz] & 0x3Fu}; a13_8 < 0x28u)
+          BiDi::logonAssign(bytes.subspan<2uz, sizeof(uint32_t)>(),
+                            decode_address(&bytes[6uz]));
         // Accessory decoder
         else if (a13_8 < 0x38u) break;
         // Multi-function decoders (short address)
         else if (a13_8 < 0x39u)
-          BiDi::logonAssign(chunk.subspan<2u, sizeof(uint32_t)>(),
-                            decode_address(&chunk[7u]));
+          BiDi::logonAssign(bytes.subspan<2u, sizeof(uint32_t)>(),
+                            decode_address(&bytes[7u]));
         // Reserved
         else if (a13_8 < 0x3Fu) break;
         // FW update
@@ -356,9 +356,9 @@ private:
 
       // LOGON_ENABLE
       case 0b1111'0000u: {
-        auto const g{static_cast<uint8_t>(chunk[0uz] & 0b11u)};
-        auto const cid{data2uint16(&chunk[1uz])};
-        auto const session_id{chunk[3uz]};
+        auto const g{static_cast<uint8_t>(bytes[0uz] & 0b11u)};
+        auto const cid{data2uint16(&bytes[1uz])};
+        auto const session_id{bytes[3uz]};
         BiDi::logonEnable(g, cid, session_id);
         break;
       }
@@ -374,30 +374,30 @@ private:
 
   /// Execute consist control
   ///
-  /// \param  chunk Raw data
-  void consistControl(std::span<uint8_t const> chunk) {
-    write(19u - 1u, static_cast<uint8_t>(chunk[0uz] << 7u | chunk[1uz]));
+  /// \param  bytes Raw bytes
+  void consistControl(std::span<uint8_t const> bytes) {
+    write(19u - 1u, static_cast<uint8_t>(bytes[0uz] << 7u | bytes[1uz]));
   }
 
   /// Execute advanced operations
   ///
   /// \param  addr  Address
-  /// \param  chunk Raw data
-  void advancedOperations(uint32_t addr, std::span<uint8_t const> chunk) {
-    switch (chunk[0uz]) {
+  /// \param  bytes Raw bytes
+  void advancedOperations(uint32_t addr, std::span<uint8_t const> bytes) {
+    switch (bytes[0uz]) {
       // Speed, direction and function (currently only mentioned in RCN-212)
       case 0b0011'1100u:  // TODO
         break;
 
       // 126 speed steps (plus 0)
       case 0b0011'1111u: {
-        auto const dir{chunk[1uz] & ztl::make_mask(7u) ? 1 : -1};
+        auto const dir{bytes[1uz] & ztl::make_mask(7u) ? 1 : -1};
         // Halt
-        if (!(chunk[1uz] & 0b0111'1111u)) directionSpeed(addr, dir, 0);
+        if (!(bytes[1uz] & 0b0111'1111u)) directionSpeed(addr, dir, 0);
         // Emergency stop
-        else if (!(chunk[1uz] & 0b0111'1110u)) impl().emergencyStop(addr);
+        else if (!(bytes[1uz] & 0b0111'1110u)) impl().emergencyStop(addr);
         else {
-          auto const speed{scale_speed<126>((chunk[1uz] & 0b0111'1111) - 1)};
+          auto const speed{scale_speed<126>((bytes[1uz] & 0b0111'1111) - 1)};
           directionSpeed(addr, dir, speed);
         }
         break;
@@ -406,9 +406,9 @@ private:
       // MAN
       case 0b0011'1110u:
         if constexpr (EastWestMan<T>) {
-          _man = chunk[1uz] & ztl::make_mask(7u);
-          if (auto const dir{chunk[1uz] & ztl::make_mask(6u)   ? 1   // East
-                             : chunk[1uz] & ztl::make_mask(5u) ? -1  // West
+          _man = bytes[1uz] & ztl::make_mask(7u);
+          if (auto const dir{bytes[1uz] & ztl::make_mask(6u)   ? 1   // East
+                             : bytes[1uz] & ztl::make_mask(5u) ? -1  // West
                                                                : 0})
             impl().eastWestMan(addr, dir);
           else impl().eastWestMan(addr, {});
@@ -425,29 +425,29 @@ private:
   /// Execute speed and direction
   ///
   /// \param  addr  Address
-  /// \param  chunk Raw data
-  void speedAndDirection(uint32_t addr, std::span<uint8_t const> chunk) {
-    auto const dir{chunk[0uz] & ztl::make_mask(5u) ? 1 : -1};
+  /// \param  bytes Raw bytes
+  void speedAndDirection(uint32_t addr, std::span<uint8_t const> bytes) {
+    auto const dir{bytes[0uz] & ztl::make_mask(5u) ? 1 : -1};
     int32_t speed{};
 
     // Halt
-    if (!(chunk[0uz] & 0b0000'1111u)) speed = 0;
+    if (!(bytes[0uz] & 0b0000'1111u)) speed = 0;
     // Emergency stop
-    else if (!(chunk[0uz] & 0b0000'1110u)) return impl().emergencyStop(addr);
-    else speed = (chunk[0uz] & 0b0000'1111) - 1;
+    else if (!(bytes[0uz] & 0b0000'1110u)) return impl().emergencyStop(addr);
+    else speed = (bytes[0uz] & 0b0000'1111) - 1;
 
     // 14 speed steps and F0
     if (_f0_exception) {
       speed = scale_speed<14>(speed);
       auto const mask{ztl::make_mask(0u)};
-      auto const state{chunk[0uz] & ztl::make_mask(4u) ? ztl::make_mask(0u)
+      auto const state{bytes[0uz] & ztl::make_mask(4u) ? ztl::make_mask(0u)
                                                        : 0u};
       impl().function(addr, mask, state);
     }
     // 28 speed steps
     else {
       speed <<= 1u;
-      if (speed && !(chunk[0uz] & ztl::make_mask(4u))) --speed;
+      if (speed && !(bytes[0uz] & ztl::make_mask(4u))) --speed;
       speed = scale_speed<28>(speed);
     }
 
@@ -460,31 +460,31 @@ private:
   /// different sets. The command is one byte long.
   ///
   /// \param  addr  Address
-  /// \param  chunk Raw data
-  void functionGroup(uint32_t addr, std::span<uint8_t const> chunk) {
+  /// \param  bytes Raw bytes
+  void functionGroup(uint32_t addr, std::span<uint8_t const> bytes) {
     uint32_t mask{};
     uint32_t state{};
 
-    switch (chunk[0uz] & 0xF0u) {
+    switch (bytes[0uz] & 0xF0u) {
       case 0b1000'0000u: [[fallthrough]];
       case 0b1001'0000u:
         // x-x-x-F0-F4-F3-F2-F1
         mask = _f0_exception ? ztl::make_mask(4u, 3u, 2u, 1u)
                              : ztl::make_mask(4u, 3u, 2u, 1u, 0u);
         state =
-          (chunk[0uz] & 0xFu) << 1u | (chunk[0uz] & ztl::make_mask(4u)) >> 4u;
+          (bytes[0uz] & 0xFu) << 1u | (bytes[0uz] & ztl::make_mask(4u)) >> 4u;
         break;
 
       case 0b1011'0000u:
         // x-x-x-x-F8-F7-F6-F5
         mask = ztl::make_mask(8u, 7u, 6u, 5u);
-        state = (chunk[0uz] & 0x0Fu) << 5u;
+        state = (bytes[0uz] & 0x0Fu) << 5u;
         break;
 
       case 0b1010'0000u:
         // x-x-x-x-F12-F11-F10-F9
         mask = ztl::make_mask(12u, 11u, 10u, 9u);
-        state = (chunk[0uz] & 0x0Fu) << 9u;
+        state = (bytes[0uz] & 0x0Fu) << 9u;
         break;
     }
 
@@ -497,24 +497,24 @@ private:
   /// rest of the function outputs (F13-28) and the time commands.
   ///
   /// \param  addr  Address
-  /// \param  chunk Raw data
-  void featureExpansion(uint32_t addr, std::span<uint8_t const> chunk) {
-    switch (chunk[0uz]) {
+  /// \param  bytes Raw bytes
+  void featureExpansion(uint32_t addr, std::span<uint8_t const> bytes) {
+    switch (bytes[0uz]) {
       // Binary state control instruction long form (3 bytes)
       case 0b1100'0000u:
-        binaryState((static_cast<uint32_t>(chunk[2uz]) << 7u) |
-                      (chunk[1uz] & 0b0111'1111u),
-                    chunk[1uz] & ztl::make_mask(7u));
+        binaryState((static_cast<uint32_t>(bytes[2uz]) << 7u) |
+                      (bytes[1uz] & 0b0111'1111u),
+                    bytes[1uz] & ztl::make_mask(7u));
         break;
 
       // Binary state control instruction short form (2 bytes)
       case 0b1101'1101u:
-        binaryState((chunk[1uz] & 0b0111'1111u),
-                    chunk[1uz] & ztl::make_mask(7u));
+        binaryState((bytes[1uz] & 0b0111'1111u),
+                    bytes[1uz] & ztl::make_mask(7u));
         break;
 
       // Time (4 bytes)
-      case 0b1100'0001u: time(chunk); break;
+      case 0b1100'0001u: time(bytes); break;
 
       // System time (3 bytes)
       case 0b1100'0010u:
@@ -530,14 +530,14 @@ private:
       case 0b1101'1110u:
         impl().function(addr,
                         ztl::make_mask(20u, 19u, 18u, 17u, 16u, 15u, 14u, 13u),
-                        static_cast<uint32_t>(chunk[1uz] << 13u));
+                        static_cast<uint32_t>(bytes[1uz] << 13u));
         break;
 
       // F28-F27-F26-F25-F24-F23-F22-F21
       case 0b1101'1111u:
         impl().function(addr,
                         ztl::make_mask(28u, 27u, 26u, 25u, 24u, 23u, 22u, 21u),
-                        static_cast<uint32_t>(chunk[1uz] << 21u));
+                        static_cast<uint32_t>(bytes[1uz] << 21u));
         break;
 
       // F36-F35-F34-F33-F32-F31-F30-F29
@@ -559,33 +559,33 @@ private:
 
   /// Execute configuration variable access - long form
   ///
-  /// \param  chunk     Raw data
+  /// \param  bytes     Raw bytes
   /// \param  broadcast Indicate whether packet is broadcast
-  void cvLong(std::span<uint8_t const> chunk, bool broadcast = false) {
-    switch (uint32_t const cv_addr{(chunk[0uz] & 0b11u) << 8u | chunk[1uz]};
-            static_cast<uint32_t>(chunk[0uz]) >> 2u & 0b11u) {
+  void cvLong(std::span<uint8_t const> bytes, bool broadcast = false) {
+    switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
+            static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
       // Reserved
       case 0b00u: break;
 
       // Verify byte
       case 0b01u:
         if constexpr (MduEntry<T>)
-          if (broadcast) impl().mduEntry(cv_addr, chunk[2uz]);
-        verify(cv_addr, chunk[2uz]);
+          if (broadcast) impl().mduEntry(cv_addr, bytes[2uz]);
+        verify(cv_addr, bytes[2uz]);
         break;
 
       // Write byte
       case 0b11u:
         if (_own_equal_packets_count < 2uz) return;
-        else if (_own_equal_packets_count == 2uz) write(cv_addr, chunk[2uz]);
-        else verify(cv_addr, chunk[2uz]);
+        else if (_own_equal_packets_count == 2uz) write(cv_addr, bytes[2uz]);
+        else verify(cv_addr, bytes[2uz]);
         break;
 
       // Bit manipulation
       case 0b10u: {
-        auto const pos{chunk[2uz] & 0b111u};
-        auto const bit{static_cast<bool>(chunk[2uz] & ztl::make_mask(3u))};
-        if (!(chunk[2uz] & ztl::make_mask(4u))) verify(cv_addr, bit, pos);
+        auto const pos{bytes[2uz] & 0b111u};
+        auto const bit{static_cast<bool>(bytes[2uz] & ztl::make_mask(3u))};
+        if (!(bytes[2uz] & ztl::make_mask(4u))) verify(cv_addr, bit, pos);
         else if (_own_equal_packets_count == 2uz) write(cv_addr, bit, pos);
         break;
       }
@@ -594,35 +594,35 @@ private:
 
   /// Execute configuration variable access - short form
   ///
-  /// \param  chunk Raw data
-  void cvShort(std::span<uint8_t const> chunk) {
-    switch (chunk[0uz] & 0x0Fu) {
+  /// \param  bytes Raw bytes
+  void cvShort(std::span<uint8_t const> bytes) {
+    switch (bytes[0uz] & 0x0Fu) {
       // Not available for use
       case 0b0000u: break;
 
       // Acceleration adjustment (CV23)
       case 0b0010u:
-        write(23u - 1u, chunk[1uz]);  // Fine if written at once
+        write(23u - 1u, bytes[1uz]);  // Fine if written at once
         break;
 
       // Deceleration adjustment (CV24)
       case 0b0011u:
-        write(24u - 1u, chunk[1uz]);  // Fine if written at once
+        write(24u - 1u, bytes[1uz]);  // Fine if written at once
         break;
 
       // Extended address 0 and 1 (CV17 and CV18)
       case 0b0100u:
         if (_own_equal_packets_count != 2uz) return;
-        write(17u - 1u, static_cast<uint8_t>(0b1100'0000u | chunk[1uz]));
-        write(18u - 1u, chunk[2uz]);
+        write(17u - 1u, static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
+        write(18u - 1u, bytes[2uz]);
         write(29u - 1u, true, 5u);
         break;
 
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
         if (_own_equal_packets_count != 2uz) return;
-        write(31u - 1u, chunk[1uz]);
-        write(32u - 1u, chunk[2uz]);
+        write(31u - 1u, bytes[1uz]);
+        write(32u - 1u, bytes[2uz]);
         break;
 
       case 0b1001u: break;
@@ -704,30 +704,30 @@ private:
 
   /// Register mode
   ///
-  /// \param  chunk Raw data
-  void registerMode(std::span<uint8_t const> chunk) {
-    switch (auto const w{chunk[0uz] & 0b1000u}, reg{chunk[0uz] & 0b111u}; reg) {
+  /// \param  bytes Raw bytes
+  void registerMode(std::span<uint8_t const> bytes) {
+    switch (auto const w{bytes[0uz] & 0b1000u}, reg{bytes[0uz] & 0b111u}; reg) {
       case 0u: [[fallthrough]];
       case 1u: [[fallthrough]];
       case 2u: [[fallthrough]];
       case 3u: {
         auto const i{_index_reg * 4u - (4u - reg)};
-        w ? write(i, chunk[1uz]) : verify(i, chunk[1uz]);
+        w ? write(i, bytes[1uz]) : verify(i, bytes[1uz]);
         break;
       }
       // CV29
       case 4u:
-        w ? write(29u - 1u, chunk[1uz]) : verify(29u - 1u, chunk[1uz]);
+        w ? write(29u - 1u, bytes[1uz]) : verify(29u - 1u, bytes[1uz]);
         break;
       // Index register
       case 5u:
-        if (w) _index_reg = chunk[1uz];
-        else if (_index_reg == chunk[1uz]) impl().serviceAck();
+        if (w) _index_reg = bytes[1uz];
+        else if (_index_reg == bytes[1uz]) impl().serviceAck();
         break;
       // CV7
       case 6u: [[fallthrough]];
       // CV8
-      case 7u: w ? write(reg, chunk[1uz]) : verify(reg, chunk[1uz]); break;
+      case 7u: w ? write(reg, bytes[1uz]) : verify(reg, bytes[1uz]); break;
     }
   }
 

@@ -95,11 +95,11 @@ The DCC protocol is defined by various standards published by the [National Mode
 
 ### Transmitter
 - Configurable preamble, bit durations and BiDi cutout
-- Supports user-defined packets and transmission of raw data
+- Supports user-defined packets and transmission of raw bytes
 
 ### ESP32 RMT encoder
 - Configurable preamble, bit durations and BiDi cutout
-- Only supports transmission of raw data
+- Only supports transmission of raw bytes
 
 ## Getting started
 ### Prerequisites
@@ -191,7 +191,7 @@ private:
   // Set direction (1 forward, -1 backward)
   void direction(uint32_t addr, int32_t dir);
 
-  // Set speed (0-255)
+  // Set speed (regardless of CV settings scaled to 0-255)
   void speed(uint32_t addr, int32_t speed);
 
   // Emergency stop
@@ -207,7 +207,7 @@ private:
   void serviceAck();
 
   // Transmit BiDi
-  void transmitBiDi(std::span<uint8_t const> chunk);
+  void transmitBiDi(std::span<uint8_t const> bytes);
 
   // Read CV
   uint8_t readCv(uint32_t cv_addr, uint8_t byte = 0u);
