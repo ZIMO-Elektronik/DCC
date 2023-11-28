@@ -5,13 +5,5 @@ on:
     branches: [master]
 
 jobs:
-  x86_64-pc-linux-gnu-gcc:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: git fetch --unshallow --tags
-      - run: cmake -Bbuild
-        env:
-          CC:   gcc-13
-          CXX:  g++-13
-      - run: cmake --build build
+  x86_64-linux-gnu-gcc:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.0.1

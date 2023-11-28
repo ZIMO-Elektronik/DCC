@@ -7,14 +7,5 @@ on:
     branches: [master]
 
 jobs:
-  x86_64-pc-linux-gnu-gcc:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: git fetch --unshallow --tags
-      - run: cmake -Bbuild
-        env:
-          CC:   gcc-13
-          CXX:  g++-13
-      - run: cmake --build build --target DCCTests
-      - run: ctest --test-dir build --schedule-random
+  tests:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/ctest.yml@v0.0.1
