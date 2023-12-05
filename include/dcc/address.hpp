@@ -50,6 +50,8 @@ struct Address {
   } type{};
 };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
 /// Decode address
 ///
 /// \tparam InputIt std::input_iterator
@@ -81,6 +83,7 @@ constexpr Address decode_address(InputIt first) {
   // 255
   else return {*first, Address::IdleSystem};
 }
+#pragma GCC diagnostic pop
 
 /// Encode address
 ///

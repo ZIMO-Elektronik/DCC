@@ -1,6 +1,6 @@
 # Changelog
 
-##
+## 0.31.0
 - Changes to namespace dcc::tx
   - Rename raw2timings to bytes2timings
   - Rename CrtpBase::raw to CrtpBase::bytes
