@@ -8,4 +8,6 @@ on:
 
 jobs:
   tests:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/ctest.yml@v0.0.1
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/ctest.yml@v0.0.2
+    with:
+      target: DCCTests
