@@ -10,7 +10,7 @@ endif()
 FetchContent_Declare(
   CMakeModules
   GIT_REPOSITORY https://github.com/ZIMO-Elektronik/CMakeModules
-  GIT_TAG v0.6.1
+  GIT_TAG v0.7.0
   SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
 FetchContent_MakeAvailable(CMakeModules)
 
@@ -63,7 +63,6 @@ endif()
 
 target_common_warnings(DCC INTERFACE)
 
-get_cpm()
 if(NOT TARGET static_math)
   cpmaddpackage(
     NAME
