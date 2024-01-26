@@ -1,0 +1,11 @@
+description: PA1010D I2C GPS driver
+url: http://zimo.at
+documentation: https://github.com/ZIMO-Elektronik/DCC/blob/master/README.md
+repository: https://github.com/ZIMO-Elektronik/DCC.git
+issues: https://github.com/ZIMO-Elektronik/DCC/issues
+
+maintainers:
+  - "Vincent Hamp <hamp@zimo.at>"
+
+dependencies:
+  idf: ">=5.0.0"

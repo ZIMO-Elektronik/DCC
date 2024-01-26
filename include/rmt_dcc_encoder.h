@@ -22,14 +22,25 @@ typedef struct {
   /// (will get rounded to multiple of 2)
   uint8_t num_preamble;
 
-  /// Duration of 1 bit [52, 64]
+  /// Duration of 1 bit [56, 60]
   uint8_t bit1_duration;
 
-  /// Duration of 0 bit [90, 119]
+  /// Duration of 0 bit [97, 114]
   uint8_t bit0_duration;
 
-  /// Enable BiDi
-  bool bidi;
+  /// Duration of end bit [0, 60]
+  uint8_t endbit_duration;
+
+  struct {
+    /// Invert
+    bool invert : 1;
+
+    /// Cutout
+    bool cutout : 1;
+
+    /// ZIMO 0
+    bool zimo0 : 1;
+  } flags;
 } dcc_encoder_config_t;
 
 /// Create RMT DCC encoder which encodes DCC byte stream into RMT symbols

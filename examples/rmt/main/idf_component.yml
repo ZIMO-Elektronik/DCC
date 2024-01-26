@@ -1,0 +1,4 @@
+dependencies:
+  ZIMO-Elektronik/DCC:
+    version: "*"
+    override_path: '../../../'
