@@ -1,4 +1,4 @@
-description: PA1010D I2C GPS driver
+description: DCC protocol for controlling digital model railways
 url: http://zimo.at
 documentation: https://github.com/ZIMO-Elektronik/DCC/blob/master/README.md
 repository: https://github.com/ZIMO-Elektronik/DCC.git
@@ -6,6 +6,9 @@ issues: https://github.com/ZIMO-Elektronik/DCC/issues
 
 maintainers:
   - "Vincent Hamp <hamp@zimo.at>"
+
+examples:
+  - path: ./examples/rmt
 
 dependencies:
   idf: ">=5.0.0"

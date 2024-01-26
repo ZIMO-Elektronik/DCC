@@ -34,6 +34,7 @@ typedef struct {
   rmt_encoder_t base;
   rmt_encoder_t* copy_encoder;
   rmt_encoder_t* bytes_encoder;
+  rmt_symbol_word_t cutout_symbol;
   rmt_symbol_word_t one_symbol;
   rmt_symbol_word_t zero_symbol;
   rmt_symbol_word_t end_symbol;
@@ -41,7 +42,6 @@ typedef struct {
   size_t num_symbols;
   enum { Cutout, Zimo0, Preamble, Start, Data, End } state;
   struct {
-    bool cutout : 1;
     bool zimo0 : 1;
   } flags;
 } rmt_dcc_encoder_t;
@@ -79,12 +79,12 @@ static size_t IRAM_ATTR rmt_encode_dcc_cutout(rmt_dcc_encoder_t* dcc_encoder,
   rmt_encode_state_t state = 0;
   rmt_encoder_handle_t copy_encoder = dcc_encoder->copy_encoder;
 
-  if (!dcc_encoder->flags.cutout) state |= RMT_ENCODING_COMPLETE;
+  if (!dcc_encoder->cutout_symbol.duration0) state |= RMT_ENCODING_COMPLETE;
   else
     while (dcc_encoder->state == Cutout) {
       size_t const tmp = copy_encoder->encode(copy_encoder,
                                               channel,
-                                              &dcc_encoder->one_symbol,
+                                              &dcc_encoder->cutout_symbol,
                                               sizeof(rmt_symbol_word_t),
                                               &state);
       encoded_symbols += tmp;
@@ -374,6 +374,8 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
   ESP_GOTO_ON_FALSE(
     config && ret_encoder &&                                            //
       config->num_preamble >= 17u &&                                    //
+      config->cutoutbit_duration >= 57u &&                              //
+      config->cutoutbit_duration <= 61u &&                              //
       config->bit1_duration >= 56u && config->bit1_duration <= 60u &&   //
       config->bit0_duration >= 97u && config->bit0_duration <= 114u &&  //
       config->endbit_duration <= 60u,                                   //
@@ -397,15 +399,17 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
     TAG,
     "create copy encoder failed");
 
-  // Minimal cutout length is 454 (56*8 is only 448)
-  uint16_t const one_symbol_duration0 =
-    config->flags.cutout && config->bit1_duration < 57u ? 57u
-                                                        : config->bit1_duration;
-
+  if (config->cutoutbit_duration)
+    dcc_encoder->cutout_symbol = (rmt_symbol_word_t){
+      .duration0 = config->cutoutbit_duration,
+      .level0 = 0u ^ config->flags.invert,
+      .duration1 = config->cutoutbit_duration,
+      .level1 = 1u ^ config->flags.invert,
+    };
   dcc_encoder->one_symbol = (rmt_symbol_word_t){
-    .duration0 = one_symbol_duration0,
+    .duration0 = config->bit1_duration,
     .level0 = 0u ^ config->flags.invert,
-    .duration1 = one_symbol_duration0,
+    .duration1 = config->bit1_duration,
     .level1 = 1u ^ config->flags.invert,
   };
   dcc_encoder->zero_symbol = (rmt_symbol_word_t){
@@ -429,7 +433,6 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
   dcc_encoder->state = Zimo0;
 
   // Flags
-  dcc_encoder->flags.cutout = config->flags.cutout;
   dcc_encoder->flags.zimo0 = config->flags.zimo0;
 
   rmt_bytes_encoder_config_t bytes_encoder_config = {

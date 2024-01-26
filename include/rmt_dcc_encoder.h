@@ -22,6 +22,9 @@ typedef struct {
   /// (will get rounded to multiple of 2)
   uint8_t num_preamble;
 
+  /// Duration of cutout bit [57, 61]
+  uint16_t cutoutbit_duration;
+
   /// Duration of 1 bit [56, 60]
   uint8_t bit1_duration;
 
@@ -34,9 +37,6 @@ typedef struct {
   struct {
     /// Invert
     bool invert : 1;
-
-    /// Cutout
-    bool cutout : 1;
 
     /// ZIMO 0
     bool zimo0 : 1;
