@@ -4,6 +4,10 @@ include(FetchContent)
 if(ESP_PLATFORM)
   file(GLOB_RECURSE SRC src/*.c)
   idf_component_register(SRCS ${SRC} INCLUDE_DIRS include REQUIRES driver)
+  set_target_properties(${COMPONENT_LIB} PROPERTIES PREFIX "")
+  set_target_properties(
+    ${COMPONENT_LIB} PROPERTIES OUTPUT_NAME
+                                ${CMAKE_STATIC_LIBRARY_PREFIX}${COMPONENT_LIB})
   target_link_libraries(${COMPONENT_LIB} PUBLIC DCC)
 endif()
 
