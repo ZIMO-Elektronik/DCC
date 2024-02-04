@@ -22,7 +22,7 @@ typedef struct {
   /// (will get rounded to multiple of 2)
   uint8_t num_preamble;
 
-  /// Duration of cutout bit [57, 61]
+  /// Optional duration of cutout bit [0 | 57, 61]
   uint16_t cutoutbit_duration;
 
   /// Duration of 1 bit [56, 60]
