@@ -31,9 +31,9 @@ struct CrtpBase {
   ///
   /// \param  cfg Configuration
   void init(Config cfg) {
-    assert(cfg.preamble_bits >= 17u && cfg.preamble_bits <= 100u &&
-           cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max &&
-           cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);
+    assert(cfg.preamble_bits >= 17u &&                                      //
+           cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max &&  //
+           cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);   //
     _cfg = cfg;
   }
 

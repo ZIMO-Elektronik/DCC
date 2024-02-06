@@ -15,14 +15,14 @@
 namespace dcc::tx {
 
 struct Config {
-  /// Number of preamble bits [17-100]
+  /// Number of preamble bits [17-255]
   uint8_t preamble_bits{DCC_TX_MIN_PREAMBLE_BITS};
 
   /// Duration of 1 bit [52-64]
-  uint8_t bit1_duration{Bit1Norm};
+  uint8_t bit1_duration{Bit1};
 
   /// Duration of 0 bit [90-119]
-  uint8_t bit0_duration{Bit0Norm};
+  uint8_t bit0_duration{Bit0};
 
   /// Enable BiDi
   bool bidi{true};

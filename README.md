@@ -2,7 +2,7 @@
 
 [![build](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml) [![tests](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml)
 
-<img src="data/images/logo.gif" align="right"/>
+<img src="https://raw.githubusercontent.com/ZIMO-Elektronik/DCC/master/data/images/logo.gif" align="right"/>
 
 DCC is an acronym for [Digital Command Control](https://en.wikipedia.org/wiki/Digital_Command_Control), a standardized protocol for controlling digital model railways. This C++ library of the same name contains platform-independent code to either decode (decoder) or generate (command station) a DCC signal on the track. For both cases, a typical microcontroller timer with microsecond precision is sufficient for implementing a receiver or transmitter class. Also included, but not platform-independent, is an encoder for the [ESP32 RMT](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) peripherals.
 
@@ -328,14 +328,16 @@ Again implementing the [CommandStation](include/dcc/tx/command_station.hpp) conc
     ```
 
 ### ESP32 RMT encoder
-Similar to the other encoders of the [ESP-IDF](https://github.com/espressif/esp-idf) framework, the RMT encoder has only one function to create a new instance. For more information on how to use the encoder please refer to the [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html)
+Similar to the other encoders of the [ESP-IDF](https://github.com/espressif/esp-idf) framework, the RMT encoder has only one function to create a new instance. For more information on how to use the encoder please refer to the [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) or the RMT example.
 ```c
 #include <rmt_dcc_encoder.h>
 
-dcc_encoder_config_t encoder_config = {.num_preamble = 17u,
-                                       .bit1_duration = 58u,
-                                       .bit0_duration = 100u,
-                                       .bidi = true};
+dcc_encoder_config_t encoder_config{.num_preamble = 17u,
+                                    .cutoutbit_duration = 60u,
+                                    .bit1_duration = 58u,
+                                    .bit0_duration = 100u,
+                                    .endbit_duration = 58u - 24u,
+                                    .flags{.zimo0 = true}};
 rmt_encoder_handle_t* encoder;
 ESP_ERROR_CHECK(rmt_new_dcc_encoder(&encoder_config, &encoder));
 ```
