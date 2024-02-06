@@ -14,6 +14,7 @@
 #include <span>
 #include <ztl/inplace_deque.hpp>
 #include "../bidi/datagram.hpp"
+#include "../bidi/timing.hpp"
 #include "command_station.hpp"
 #include "config.hpp"
 #include "timings.hpp"
@@ -107,32 +108,32 @@ private:
       // Send half a 1 bit
       case 0uz:
         impl().setTrackOutputs(true, false);
-        return static_cast<Timings::value_type>(Timing::BiDiTCS);
+        return static_cast<Timings::value_type>(bidi::Timing::TCS);
 
       // Cutout start
       case 1uz:
         impl().setTrackOutputs(false, false);
         impl().biDiStart();
-        return static_cast<Timings::value_type>(Timing::BiDiTTS1 -
-                                                Timing::BiDiTCS);
+        return static_cast<Timings::value_type>(bidi::Timing::TTS1 -
+                                                bidi::Timing::TCS);
 
       // Channel1 start
       case 2uz:
         impl().biDiChannel1();
-        return static_cast<Timings::value_type>(Timing::BiDiTTS2 -
-                                                Timing::BiDiTTS1);
+        return static_cast<Timings::value_type>(bidi::Timing::TTS2 -
+                                                bidi::Timing::TTS1);
 
       // Channel2 start
       case 3uz:
         impl().biDiChannel2();
-        return static_cast<Timings::value_type>(Timing::BiDiTTC2 -
-                                                Timing::BiDiTTS2);
+        return static_cast<Timings::value_type>(bidi::Timing::TTC2 -
+                                                bidi::Timing::TTS2);
 
       // Cutout end
       default:
         impl().biDiEnd();
-        return static_cast<Timings::value_type>(Timing::BiDiTCE -
-                                                Timing::BiDiTTC2);
+        return static_cast<Timings::value_type>(bidi::Timing::TCE -
+                                                bidi::Timing::TTC2);
     }
   }
 

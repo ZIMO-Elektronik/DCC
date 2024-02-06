@@ -13,7 +13,6 @@
 #include <span>
 #include <ztl/bits.hpp>
 #include "../addresses.hpp"
-#include "../bit.hpp"
 #include "../crc8.hpp"
 #include "../instruction.hpp"
 #include "../packet.hpp"
@@ -24,6 +23,7 @@
 #include "decoder.hpp"
 #include "east_west_man.hpp"
 #include "mdu_entry.hpp"
+#include "timing.hpp"
 
 namespace dcc::rx {
 

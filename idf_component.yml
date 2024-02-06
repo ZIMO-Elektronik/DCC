@@ -7,8 +7,5 @@ issues: https://github.com/ZIMO-Elektronik/DCC/issues
 maintainers:
   - "Vincent Hamp <hamp@zimo.at>"
 
-examples:
-  - path: ./examples/rmt
-
 dependencies:
   idf: ">=5.0.0"

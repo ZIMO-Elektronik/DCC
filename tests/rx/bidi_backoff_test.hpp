@@ -12,5 +12,6 @@ struct BiDiBackoffTest : ::testing::Test {
 
   int countTillFalse(int max);
 
+protected:
   Backoff _backoff{};
 };
