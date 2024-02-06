@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.32.0
+- Individual timings for namespace dcc::rx and dcc::tx
+- Move time2bit to namespace dcc::rx
+- Bugfix RMT encoder [#13032](https://github.com/espressif/esp-idf/issues/13032)
+
 ## 0.31.0
 - Changes to namespace dcc::tx
   - Rename raw2timings to bytes2timings
