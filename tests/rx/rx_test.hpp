@@ -28,6 +28,7 @@ struct RxTest : ::testing::Test {
     return dis(gen);
   }
 
+protected:
   RxMock _mock;
   std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
 };

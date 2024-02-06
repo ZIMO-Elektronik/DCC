@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../timing.hpp"
+#include "timing.hpp"
 
 namespace dcc::tx {
 
