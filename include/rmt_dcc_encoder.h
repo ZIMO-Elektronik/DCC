@@ -19,7 +19,6 @@ extern "C" {
 /// DCC encoder configuration
 typedef struct {
   /// Number of preamble bits [17, 255]
-  /// (will get rounded to multiple of 2)
   uint8_t num_preamble;
 
   /// Optional duration of cutout bit [0 | 57, 61]

@@ -401,6 +401,10 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
     TAG,
     "create copy encoder failed");
 
+  // Number of preamble symbols
+  dcc_encoder->num_preamble_symbols = config->num_preamble;
+
+  // Setup RMT symbols
   if (config->cutoutbit_duration)
     dcc_encoder->cutout_symbol = (rmt_symbol_word_t){
       .duration0 = config->cutoutbit_duration,
@@ -427,9 +431,6 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
       config->endbit_duration ? config->endbit_duration : config->bit1_duration,
     .level1 = 1u ^ config->flags.invert,
   };
-
-  // We can only transmit multiples of 2
-  dcc_encoder->num_preamble_symbols = (config->num_preamble + 1u) / 2u;
 
   // Initial state
   dcc_encoder->state = Zimo0;

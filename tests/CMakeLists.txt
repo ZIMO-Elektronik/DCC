@@ -9,6 +9,6 @@ target_common_warnings(DCCTests PRIVATE)
 
 cpmaddpackage("gh:google/googletest#main")
 
-target_link_libraries(DCCTests PRIVATE DCC::DCC GTest::gtest GTest::gmock)
+target_link_libraries(DCCTests PRIVATE DCC::DCC GTest::gtest_main GTest::gmock)
 
 gtest_discover_tests(DCCTests)
