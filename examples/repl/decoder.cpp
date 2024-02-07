@@ -9,8 +9,8 @@
 Decoder::Decoder() {
   _cvs[29uz - 1uz] = 0b10u;  // Decoder configuration
   _cvs[1uz - 1uz] = 3u;      // Primary address
-  _cvs[8uz - 1uz] = 145u;    // ZIMO manufacturer ID
-};
+  _cvs[8uz - 1uz] = 13u;     // Temporary manufacturer ID (S-9.2.2 Appendix A)
+}
 
 void Decoder::direction(uint32_t addr, int32_t dir) {
   cli::Cli::cout() << "Address " << addr << ": set direction "
