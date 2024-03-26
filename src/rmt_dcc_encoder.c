@@ -34,13 +34,13 @@ typedef struct {
   rmt_encoder_t base;
   rmt_encoder_t* copy_encoder;
   rmt_encoder_t* bytes_encoder;
-  rmt_symbol_word_t cutout_symbol;
+  rmt_symbol_word_t bidi_symbol;
   rmt_symbol_word_t one_symbol;
   rmt_symbol_word_t zero_symbol;
   rmt_symbol_word_t end_symbol;
   size_t num_preamble_symbols;
   size_t num_symbols;
-  enum { Cutout, Zimo0, Preamble, Start, Data, End } state;
+  enum { BiDi, Zimo0, Preamble, Start, Data, End } state;
   struct {
     bool zimo0 : 1;
   } flags;
@@ -58,7 +58,7 @@ static size_t IRAM_ATTR rmt_encode_dcc_bit(rmt_dcc_encoder_t* dcc_encoder,
                                            rmt_encode_state_t* ret_state,
                                            rmt_symbol_word_t const* symbol) {
   size_t encoded_symbols = 0u;
-  rmt_encode_state_t state = 0;
+  rmt_encode_state_t state = RMT_ENCODING_RESET;
   rmt_encoder_handle_t copy_encoder = dcc_encoder->copy_encoder;
   encoded_symbols += copy_encoder->encode(
     copy_encoder, channel, symbol, sizeof(rmt_symbol_word_t), &state);
@@ -66,25 +66,30 @@ static size_t IRAM_ATTR rmt_encode_dcc_bit(rmt_dcc_encoder_t* dcc_encoder,
   return encoded_symbols;
 }
 
-/// Encode cutout
+/// Encode BiDi cutout
 ///
 /// \param  dcc_encoder   DCC encoder handle
 /// \param  channel       RMT TX channel handle
 /// \param  ret_state     Returned current encoder state
 /// \return Number of RMT symbols that the primary data has been encoded into
-static size_t IRAM_ATTR rmt_encode_dcc_cutout(rmt_dcc_encoder_t* dcc_encoder,
-                                              rmt_channel_handle_t channel,
-                                              rmt_encode_state_t* ret_state) {
+static size_t IRAM_ATTR rmt_encode_dcc_bidi(rmt_dcc_encoder_t* dcc_encoder,
+                                            rmt_channel_handle_t channel,
+                                            rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0u;
-  rmt_encode_state_t state = 0;
+  rmt_encode_state_t state = RMT_ENCODING_RESET;
   rmt_encoder_handle_t copy_encoder = dcc_encoder->copy_encoder;
 
-  if (!dcc_encoder->cutout_symbol.duration0) state |= RMT_ENCODING_COMPLETE;
+  // Skip
+  if (!dcc_encoder->bidi_symbol.duration0) {
+    state |= RMT_ENCODING_COMPLETE;
+    dcc_encoder->state = Zimo0;
+  }
+  // Encode 4 BiDi cutout symbols
   else
-    while (dcc_encoder->state == Cutout) {
+    while (dcc_encoder->state == BiDi) {
       size_t const tmp = copy_encoder->encode(copy_encoder,
                                               channel,
-                                              &dcc_encoder->cutout_symbol,
+                                              &dcc_encoder->bidi_symbol,
                                               sizeof(rmt_symbol_word_t),
                                               &state);
       encoded_symbols += tmp;
@@ -94,13 +99,9 @@ static size_t IRAM_ATTR rmt_encode_dcc_cutout(rmt_dcc_encoder_t* dcc_encoder,
         dcc_encoder->num_symbols = 0u;
         dcc_encoder->state = Zimo0;
       }
-      if (state & RMT_ENCODING_MEM_FULL) {
-        state |= RMT_ENCODING_MEM_FULL;
-        goto out;
-      }
+      if (state & RMT_ENCODING_MEM_FULL) break;
     }
 
-out:
   *ret_state = state;
   return encoded_symbols;
 }
@@ -115,12 +116,20 @@ static size_t IRAM_ATTR rmt_encode_dcc_zimo0(rmt_dcc_encoder_t* dcc_encoder,
                                              rmt_channel_handle_t channel,
                                              rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0u;
-  rmt_encode_state_t state = 0;
-  if (!dcc_encoder->flags.zimo0) state |= RMT_ENCODING_COMPLETE;
-  else
+  rmt_encode_state_t state = RMT_ENCODING_RESET;
+
+  // Skip
+  if (!dcc_encoder->flags.zimo0) {
+    state |= RMT_ENCODING_COMPLETE;
+    dcc_encoder->state = Preamble;
+  }
+  // Encode ZIMO 0
+  else {
     encoded_symbols += rmt_encode_dcc_bit(
       dcc_encoder, channel, &state, &dcc_encoder->zero_symbol);
-  if (state & RMT_ENCODING_COMPLETE) dcc_encoder->state = Preamble;
+    if (state & RMT_ENCODING_COMPLETE) dcc_encoder->state = Preamble;
+  }
+
   *ret_state = state;
   return encoded_symbols;
 }
@@ -135,7 +144,7 @@ static size_t IRAM_ATTR rmt_encode_dcc_preamble(rmt_dcc_encoder_t* dcc_encoder,
                                                 rmt_channel_handle_t channel,
                                                 rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0u;
-  rmt_encode_state_t state = 0;
+  rmt_encode_state_t state = RMT_ENCODING_RESET;
   rmt_encoder_handle_t copy_encoder = dcc_encoder->copy_encoder;
 
   while (dcc_encoder->state == Preamble) {
@@ -151,13 +160,9 @@ static size_t IRAM_ATTR rmt_encode_dcc_preamble(rmt_dcc_encoder_t* dcc_encoder,
       dcc_encoder->num_symbols = 0u;
       dcc_encoder->state = Start;
     }
-    if (state & RMT_ENCODING_MEM_FULL) {
-      state |= RMT_ENCODING_MEM_FULL;
-      goto out;
-    }
+    if (state & RMT_ENCODING_MEM_FULL) break;
   }
 
-out:
   *ret_state = state;
   return encoded_symbols;
 }
@@ -172,7 +177,7 @@ static size_t IRAM_ATTR rmt_encode_dcc_start(rmt_dcc_encoder_t* dcc_encoder,
                                              rmt_channel_handle_t channel,
                                              rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0u;
-  rmt_encode_state_t state = 0;
+  rmt_encode_state_t state = RMT_ENCODING_RESET;
   encoded_symbols +=
     rmt_encode_dcc_bit(dcc_encoder, channel, &state, &dcc_encoder->zero_symbol);
   if (state & RMT_ENCODING_COMPLETE) dcc_encoder->state = Data;
@@ -194,7 +199,7 @@ static size_t IRAM_ATTR rmt_encode_dcc_data(rmt_dcc_encoder_t* dcc_encoder,
                                             size_t data_size,
                                             rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0u;
-  rmt_encode_state_t state = 0;
+  rmt_encode_state_t state = RMT_ENCODING_RESET;
   rmt_encoder_handle_t bytes_encoder = dcc_encoder->bytes_encoder;
   uint8_t const* data = (uint8_t const*)primary_data;
 
@@ -211,7 +216,6 @@ static size_t IRAM_ATTR rmt_encode_dcc_data(rmt_dcc_encoder_t* dcc_encoder,
     dcc_encoder->num_symbols = 0u;
     dcc_encoder->state = End;
   }
-  if (state & RMT_ENCODING_MEM_FULL) state |= RMT_ENCODING_MEM_FULL;
 
   *ret_state = state;
   return encoded_symbols;
@@ -227,12 +231,12 @@ static size_t IRAM_ATTR rmt_encode_dcc_end(rmt_dcc_encoder_t* dcc_encoder,
                                            rmt_channel_handle_t channel,
                                            rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0u;
-  rmt_encode_state_t state = 0;
+  rmt_encode_state_t state = RMT_ENCODING_RESET;
   encoded_symbols +=
     rmt_encode_dcc_bit(dcc_encoder, channel, &state, &dcc_encoder->end_symbol);
   if (state & RMT_ENCODING_COMPLETE) {
     dcc_encoder->num_symbols = 0u;
-    dcc_encoder->state = Cutout;
+    dcc_encoder->state = BiDi;
   }
   *ret_state = state;
   return encoded_symbols;
@@ -252,18 +256,18 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
                                        size_t data_size,
                                        rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0;
-  rmt_encode_state_t state = 0;
+  rmt_encode_state_t state = RMT_ENCODING_RESET;
   rmt_encode_state_t session_state = 0;
   rmt_dcc_encoder_t* dcc_encoder =
     __containerof(encoder, rmt_dcc_encoder_t, base);
 
   switch (dcc_encoder->state) {
-    case Cutout:
+    case BiDi:
       encoded_symbols +=
-        rmt_encode_dcc_cutout(dcc_encoder, channel, &session_state);
+        rmt_encode_dcc_bidi(dcc_encoder, channel, &session_state);
       if (session_state & RMT_ENCODING_MEM_FULL) {
         state |= RMT_ENCODING_MEM_FULL;
-        goto out;
+        break;
       }
       // fallthrough
 
@@ -272,7 +276,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
         rmt_encode_dcc_zimo0(dcc_encoder, channel, &session_state);
       if (session_state & RMT_ENCODING_MEM_FULL) {
         state |= RMT_ENCODING_MEM_FULL;
-        goto out;
+        break;
       }
       // fallthrough
 
@@ -281,7 +285,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
         rmt_encode_dcc_preamble(dcc_encoder, channel, &session_state);
       if (session_state & RMT_ENCODING_MEM_FULL) {
         state |= RMT_ENCODING_MEM_FULL;
-        goto out;
+        break;
       }
       // fallthrough
 
@@ -291,7 +295,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
         rmt_encode_dcc_start(dcc_encoder, channel, &session_state);
       if (session_state & RMT_ENCODING_MEM_FULL) {
         state |= RMT_ENCODING_MEM_FULL;
-        goto out;
+        break;
       }
       // fallthrough
 
@@ -300,7 +304,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
         dcc_encoder, channel, primary_data, data_size, &session_state);
       if (session_state & RMT_ENCODING_MEM_FULL) {
         state |= RMT_ENCODING_MEM_FULL;
-        goto out;
+        break;
       }
       if (dcc_encoder->state < End) goto start;
       // fallthrough
@@ -311,12 +315,11 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
       if (session_state & RMT_ENCODING_COMPLETE) state |= RMT_ENCODING_COMPLETE;
       if (session_state & RMT_ENCODING_MEM_FULL) {
         state |= RMT_ENCODING_MEM_FULL;
-        goto out;
+        break;
       }
       // fallthrough
   }
 
-out:
   *ret_state = state;
   return encoded_symbols;
 }
@@ -371,16 +374,17 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
                               rmt_encoder_handle_t* ret_encoder) {
   esp_err_t ret = ESP_OK;
   rmt_dcc_encoder_t* dcc_encoder = NULL;
-  ESP_GOTO_ON_FALSE(config && ret_encoder &&                    //
-                      config->num_preamble >= 17u &&            //
-                      (!config->cutoutbit_duration ||           //
-                       (config->cutoutbit_duration >= 57u &&    //
-                        config->cutoutbit_duration <= 61u)) &&  //
-                      config->bit1_duration >= 56u &&           //
-                      config->bit1_duration <= 60u &&           //
-                      config->bit0_duration >= 97u &&           //
-                      config->bit0_duration <= 114u &&          //
-                      config->endbit_duration <= 60u,           //
+  ESP_GOTO_ON_FALSE(config && ret_encoder &&                  //
+                      config->num_preamble >= 17u &&          //
+                      config->num_preamble <= 30u &&          //
+                      (!config->bidibit_duration ||           //
+                       (config->bidibit_duration >= 57u &&    //
+                        config->bidibit_duration <= 61u)) &&  //
+                      config->bit1_duration >= 56u &&         //
+                      config->bit1_duration <= 60u &&         //
+                      config->bit0_duration >= 97u &&         //
+                      config->bit0_duration <= 114u &&        //
+                      config->endbit_duration <= 60u,         //
                     ESP_ERR_INVALID_ARG,
                     err,
                     TAG,
@@ -405,11 +409,11 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
   dcc_encoder->num_preamble_symbols = config->num_preamble;
 
   // Setup RMT symbols
-  if (config->cutoutbit_duration)
-    dcc_encoder->cutout_symbol = (rmt_symbol_word_t){
-      .duration0 = config->cutoutbit_duration,
+  if (config->bidibit_duration)
+    dcc_encoder->bidi_symbol = (rmt_symbol_word_t){
+      .duration0 = config->bidibit_duration,
       .level0 = 0u ^ config->flags.invert,
-      .duration1 = config->cutoutbit_duration,
+      .duration1 = config->bidibit_duration,
       .level1 = 1u ^ config->flags.invert,
     };
   dcc_encoder->one_symbol = (rmt_symbol_word_t){

@@ -18,11 +18,11 @@ extern "C" {
 
 /// DCC encoder configuration
 typedef struct {
-  /// Number of preamble bits [17, 255]
+  /// Number of preamble bits [17, 30]
   uint8_t num_preamble;
 
-  /// Optional duration of cutout bit [0 | 57, 61]
-  uint16_t cutoutbit_duration;
+  /// Optional duration of BiDi cutout bit 0 || [57, 61]
+  uint8_t bidibit_duration;
 
   /// Duration of 1 bit [56, 60]
   uint8_t bit1_duration;
@@ -31,10 +31,15 @@ typedef struct {
   uint8_t bit0_duration;
 
   /// Duration of end bit [0, 60]
+  ///
+  /// This is mostly to work around the limitations of
+  /// https://github.com/espressif/esp-idf/issues/13003
   uint8_t endbit_duration;
 
   struct {
-    /// Invert
+    /// Invert RMT symbol level
+    ///
+    /// This boolean value corresponds to the level of the first half bit.
     bool invert : 1;
 
     /// ZIMO 0
