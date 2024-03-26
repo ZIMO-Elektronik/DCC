@@ -87,13 +87,18 @@ endif()
 
 target_link_libraries(DCC INTERFACE static_math ZTL::ZTL)
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+if(PROJECT_IS_TOP_LEVEL)
   include(CTest)
+  add_subdirectory(examples)
+  file(
+    DOWNLOAD
+    https://raw.githubusercontent.com/ZIMO-Elektronik/.clang-format/master/.clang-format
+    ${CMAKE_CURRENT_LIST_DIR}/.clang-format)
+  file(GLOB_RECURSE SRC examples/*.[ch]pp include/*.[ch]pp src/*.[ch]pp
+       tests/*.[ch]pp)
+  add_clang_format_target(DCCFormat OPTIONS -i FILES ${SRC})
 endif()
 
-if(BUILD_TESTING
-   AND CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME
-   AND CMAKE_SYSTEM_NAME STREQUAL CMAKE_HOST_SYSTEM_NAME)
-  add_subdirectory(examples)
+if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()

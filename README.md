@@ -251,7 +251,7 @@ Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enou
     ```
 
 #### Optional
-There are various optional methods that can be implemented if required. One of them are asynchronous CV methods that contain a callback as the last parameter. These methods allow to return immediately and execute the callback at a later point in time. Another addition can enable or disable high-current BiDi if the corresponding bit is set in CV29. Further extensions are things specific to [ZIMO](http://zimo.at/), such as east-west direction or the entry into the [MDU protocol](https://github.com/ZIMO-Elektronik/MDU).
+There are various optional methods that can be implemented if required. One of them are asynchronous CV methods that contain a callback as the last parameter. These methods allow to return immediately and execute the callback at a later point in time. Another addition can enable or disable high-current BiDi if the corresponding bit is set in CV29. Further extensions are things specific to [ZIMO](http://zimo.at/), e.g. east-west direction.
 ```cpp
   // Read CV asynchronously
   void readCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
@@ -277,9 +277,6 @@ There are various optional methods that can be implemented if required. One of t
 
   // Set east-west MAN
   void eastWestMan(uint32_t cv_addr, std::optional<int32_t> dir);
-
-  // MDU entry with CV verify
-  void mduEntry(uint32_t cv_addr, uint8_t byte);
 ```
 
 ### Transmitter

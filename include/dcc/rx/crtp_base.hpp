@@ -22,7 +22,6 @@
 #include "bidi/crtp_base.hpp"
 #include "decoder.hpp"
 #include "east_west_man.hpp"
-#include "mdu_entry.hpp"
 #include "timing.hpp"
 
 namespace dcc::rx {
@@ -313,7 +312,7 @@ private:
       case Instruction::SpeedDirection: speedAndDirection(addr, bytes); break;
       case Instruction::FunctionGroup: functionGroup(addr, bytes); break;
       case Instruction::FeatureExpansion: featureExpansion(addr, bytes); break;
-      case Instruction::CvLong: cvLong(bytes, broadcast); break;
+      case Instruction::CvLong: cvLong(bytes); break;
       case Instruction::CvShort: cvShort(bytes); break;
       default: break;
     }
@@ -559,20 +558,15 @@ private:
 
   /// Execute configuration variable access - long form
   ///
-  /// \param  bytes     Raw bytes
-  /// \param  broadcast Indicate whether packet is broadcast
-  void cvLong(std::span<uint8_t const> bytes, bool broadcast = false) {
+  /// \param  bytes Raw bytes
+  void cvLong(std::span<uint8_t const> bytes) {
     switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
             static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
       // Reserved
       case 0b00u: break;
 
       // Verify byte
-      case 0b01u:
-        if constexpr (MduEntry<T>)
-          if (broadcast) impl().mduEntry(cv_addr, bytes[2uz]);
-        verify(cv_addr, bytes[2uz]);
-        break;
+      case 0b01u: verify(cv_addr, bytes[2uz]); break;
 
       // Write byte
       case 0b11u:
