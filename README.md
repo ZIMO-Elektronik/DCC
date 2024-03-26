@@ -2,7 +2,7 @@
 
 [![build](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml) [![tests](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml)
 
-<img src="https://raw.githubusercontent.com/ZIMO-Elektronik/DCC/master/data/images/logo.gif" align="right"/>
+<img src="https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/logo.gif" align="right"/>
 
 DCC is an acronym for [Digital Command Control](https://en.wikipedia.org/wiki/Digital_Command_Control), a standardized protocol for controlling digital model railways. This C++ library of the same name contains platform-independent code to either decode (decoder) or generate (command station) a DCC signal on the track. For both cases, a typical microcontroller timer with microsecond precision is sufficient for implementing a receiver or transmitter class. Also included, but not platform-independent, is an encoder for the [ESP32 RMT](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) peripherals.
 
@@ -343,7 +343,7 @@ The following members of `dcc_encoder_config_t` may require some explanation.
 
 #### BiDi bit duration
 This duration may be set to values between 57-61 to enable the generation of BiDi cutout bits prior to the next preamble. These four cutout bits would be sent in the background if the cutout was not active. The following graphic from [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) visualizes these bits with a dashed line.
-![](https://raw.githubusercontent.com/ZIMO-Elektronik/DCC/rmt/data/images/bidibit_duration.png)
+![BiDi cutout](https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/bidibit_duration.png)
 
 #### End bit duration
 Mainly due to a workaround of [esp-idf #13003](https://github.com/espressif/esp-idf/issues/13003) the end bit duration can adjusted independently of the bit1 duration. This allows the RMT transmission complete callback to be executed at the right time.
