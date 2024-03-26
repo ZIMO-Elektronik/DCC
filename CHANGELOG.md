@@ -3,6 +3,7 @@
 ##
 - Limit number of preamble bits of RMT encoder to 30
 - Rename dcc_encoder_config_t::cutoutbit_duration to bidibit_duration
+- Remove optional mduEntry
 
 ## 0.32.0
 - Individual timings for namespace dcc::rx and dcc::tx
