@@ -21,11 +21,11 @@ extern "C" void app_main() {
 
   // New DCC encoder
   dcc_encoder_config_t encoder_config{.num_preamble = 17u,
-                                      .cutoutbit_duration = 60u,
+                                      .bidibit_duration = 60u,
                                       .bit1_duration = 58u,
                                       .bit0_duration = 100u,
                                       .endbit_duration = 58u - 24u,
-                                      .flags{.zimo0 = true}};
+                                      .flags{.invert = false, .zimo0 = true}};
   rmt_encoder_handle_t rmt_encoder{};
   ESP_ERROR_CHECK(rmt_new_dcc_encoder(&encoder_config, &rmt_encoder));
 

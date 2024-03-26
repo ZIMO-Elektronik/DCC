@@ -333,11 +333,27 @@ Similar to the other encoders of the [ESP-IDF](https://github.com/espressif/esp-
 #include <rmt_dcc_encoder.h>
 
 dcc_encoder_config_t encoder_config{.num_preamble = 17u,
-                                    .cutoutbit_duration = 60u,
+                                    .bidibit_duration = 60u,
                                     .bit1_duration = 58u,
                                     .bit0_duration = 100u,
                                     .endbit_duration = 58u - 24u,
-                                    .flags{.zimo0 = true}};
+                                    .flags{.invert = false, .zimo0 = true}};
 rmt_encoder_handle_t* encoder;
 ESP_ERROR_CHECK(rmt_new_dcc_encoder(&encoder_config, &encoder));
 ```
+
+The following members of `dcc_encoder_config_t` may require some explanation.
+
+#### BiDi bit duration
+This duration may be set to values between 57-61 to enable the generation of BiDi cutout bits prior to the next preamble. These four cutout bits would be sent in the background if the cutout was not active. The following graphic from [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) visualizes these bits with a dashed line.
+![](https://raw.githubusercontent.com/ZIMO-Elektronik/DCC/rmt/data/images/bidibit_duration.png)
+
+#### End bit duration
+Mainly due to a workaround of [esp-idf #13003](https://github.com/espressif/esp-idf/issues/13003) the end bit duration can adjusted independently of the bit1 duration. This allows the RMT transmission complete callback to be executed at the right time.
+
+#### Flags
+- invert  
+  Boolean value which corresponds to the level of the first half bit.
+
+- zimo0  
+  Transmit 0-bit prior to preamble.
