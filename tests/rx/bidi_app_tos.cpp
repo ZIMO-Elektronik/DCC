@@ -5,10 +5,14 @@ TEST_F(BiDiTest, app_tos) {
   for (auto i{0u}; i < 30.0 / 10E-3; ++i) tipOffSearch();
   _addrs.received = {0u, dcc::Address::Broadcast};
 
+  // Encode address
+  std::array<uint8_t, 2uz> adr;
+  encode_address(_addrs.primary, begin(adr));
+
   // Make datagram
-  auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0u))};
-  auto adr_low{
-    encode_datagram(make_datagram<Bits::_12>(2u, _addrs.primary & 0xFFu))};
+  auto adr_high{
+    encode_datagram(make_datagram<Bits::_12>(1u, adr[0uz] & 0b1011'1111u))};
+  auto adr_low{encode_datagram(make_datagram<Bits::_12>(2u, adr[1uz]))};
   auto time{encode_datagram(make_datagram<Bits::_12>(14u, 0u))};
   std::array<uint8_t, size(adr_high) + size(adr_low) + size(time)> datagram{};
   auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(datagram))};
