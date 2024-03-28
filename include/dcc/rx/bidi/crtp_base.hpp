@@ -40,7 +40,6 @@ struct CrtpBase {
 
   /// Start channel1 (12 bit payload)
   void cutoutChannel1() {
-    if (!_ch1_enabled) return;
     // Only send in channel1 if last valid address was broadcast, short or long
     if (_addrs.received.type == Address::Broadcast ||
         _addrs.received.type == Address::Short ||
@@ -52,11 +51,10 @@ struct CrtpBase {
 
   /// Start channel2 (36 bit payload)
   void cutoutChannel2() {
-    if (!_ch2_enabled) return;
     // Only send in channel2 if last valid address was own
     if (_addrs.received == _addrs.primary ||
         (_logon_assigned && _addrs.received == _addrs.logon))
-      appPomExtDynSubId();
+      empty(_pom_deque) ? appExtDynSubId() : appPom();
     // or consist
     else if (_ch2_consist_enabled && _addrs.received == _addrs.consist)
       appExtDynSubId();
@@ -81,11 +79,14 @@ protected:
               DCC_RX_BIDI_DEQUE_SIZE))  // TODO remove double braces, currently
                                         // fucks with VSCode highlighting
   {
-    if (!sizeof...(Dyns) ||
-        (DCC_RX_BIDI_DEQUE_SIZE - size(_dyn_deque) < sizeof...(Dyns) + 1uz))
-      return;
-    (dyn(std::forward<Dyns>(dyns)), ...);
-    dyn(_qos, 7u);
+    if (_ch1_addr_enabled) {
+      // TODO ADD ADR STUFF HERE!
+    }
+    if (_ch2_primary_enabled && (sizeof...(Dyns) > 0uz) &&
+        (DCC_RX_BIDI_DEQUE_SIZE - size(_dyn_deque) >= sizeof...(Dyns) + 1uz)) {
+      (dyn(std::forward<Dyns>(dyns)), ...);
+      dyn(_qos, 7u);
+    }
   }
 
   /// Configure
@@ -94,8 +95,9 @@ protected:
   /// \param  ch2_consist_enabled CH2 is used by consist address as well
   void config(bool enabled, bool ch2_consist_enabled) {
     auto const cv28{impl().readCv(28u - 1u)};
-    _ch1_enabled = enabled && (cv28 & ztl::make_mask(0u));
-    _ch2_enabled = enabled && (cv28 & ztl::make_mask(1u));
+    _ch1_addr_enabled = enabled && (cv28 & ztl::make_mask(0u));
+    _ch2_primary_enabled = enabled && (cv28 & ztl::make_mask(1u));
+    _logon_enabled = enabled && (cv28 & ztl::make_mask(7u));
     _ch2_consist_enabled = ch2_consist_enabled;
     if constexpr (HighCurrent<T>) impl().highCurrent(cv28 & ztl::make_mask(6u));
     _did = {impl().readCv(250u - 1u),
@@ -125,7 +127,7 @@ protected:
   ///
   /// \param  value CV value
   void pom(uint8_t value) {
-    if (full(_pom_deque)) return;
+    if (!_ch2_primary_enabled || full(_pom_deque)) return;
     _pom_deque.push_back(encode_datagram(make_datagram<Bits::_12>(0u, value)));
   }
 
@@ -152,13 +154,15 @@ protected:
   /// \param  cid         Command station ID
   /// \param  session_id  Session ID
   void logonEnable(uint8_t gg, uint16_t cid, uint8_t session_id) {
-    auto const _cidequal{cid == _cid};
+    if (!_logon_enabled) return;
+
+    auto const cid_equal{cid == _cid};
     auto const session_id_equal{session_id == _session_id};
 
     // Exceptions
     // - Either skip logon if diff between session IDs is <=4
     // - Or force new logon if diff is >4
-    if (_cidequal && !session_id_equal) {
+    if (cid_equal && !session_id_equal) {
       auto const skip{static_cast<uint32_t>(session_id - _session_id) <= 4u};
       _logon_selected = _logon_assigned = skip;
       _logon_backoff.reset();
@@ -189,7 +193,8 @@ protected:
   ///
   /// \param  did Unique ID
   void logonSelect(std::span<uint8_t const, 4uz> did) {
-    if (_logon_assigned || !std::ranges::equal(did, _did)) return;
+    if (!_logon_enabled || _logon_assigned || !std::ranges::equal(did, _did))
+      return;
     _logon_selected = true;
     std::array<uint8_t, 5uz> data{
       static_cast<uint8_t>(ztl::make_mask(7u) | (_addrs.primary >> 8u)),
@@ -210,7 +215,7 @@ protected:
   /// \param  did   Unique ID
   /// \param  addr  Assigned address
   void logonAssign(std::span<uint8_t const, 4uz> did, Address addr) {
-    if (!std::ranges::equal(did, _did)) return;
+    if (!_logon_enabled || !std::ranges::equal(did, _did)) return;
     _logon_assigned = _logon_store = true;
     // Fucking stupid and doesn't conform to standard...
     _addrs.primary = _addrs.logon = addr;
@@ -278,14 +283,6 @@ private:
     impl().transmitBiDi({cbegin(_ch1), size(_ch1)});
   }
 
-  /// Handle app:pom, app:ext, app:dyn and app:subID datagrams
-  void appPomExtDynSubId() {
-    // Send either pom only (no fucking thanks ESU)
-    if (!empty(_pom_deque)) appPom();
-    // Or whatever fits into channel2
-    else appExtDynSubId();
-  }
-
   /// Handle app::pom
   void appPom() {
     auto const& packet{_pom_deque.front()};
@@ -312,7 +309,7 @@ private:
     if (empty(_tos_deque)) return;
     auto const& packet{_tos_deque.front()};
     std::ranges::copy(packet, begin(_ch2));
-    impl().transmitBiDi({begin(_ch2), size(packet)});
+    impl().transmitBiDi({cbegin(_ch2), size(packet)});
     _tos_deque.pop_front();
   }
 
@@ -388,6 +385,7 @@ private:
   ztl::inplace_deque<std::array<uint8_t, datagram_size<Bits::_18>>,
                      DCC_RX_BIDI_DEQUE_SIZE>
     _dyn_deque{};
+  ztl::inplace_deque<Channel1, DCC_RX_BIDI_DEQUE_SIZE> _adr_deque{};
   ztl::inplace_deque<Channel1, DCC_RX_BIDI_DEQUE_SIZE> _pom_deque{};
   ztl::inplace_deque<Channel2, 2uz> _tos_deque{};
   ztl::inplace_deque<BundledChannels, 2uz> _logon_deque{};
@@ -398,9 +396,10 @@ private:
   uint8_t _qos{};         ///< Quality of service
 
   // Not bitfields as those are most likely mutated in interrupt context
-  bool _ch1_enabled{};
-  bool _ch2_enabled{};
+  bool _ch1_addr_enabled{};
+  bool _ch2_primary_enabled{};
   bool _ch2_consist_enabled{};
+  bool _logon_enabled{};
   bool _logon_selected{};
   bool _logon_assigned{};
   bool _logon_store{};
