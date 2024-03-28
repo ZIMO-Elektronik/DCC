@@ -82,7 +82,7 @@ if(NOT TARGET static_math)
 endif()
 
 if(NOT TARGET ZTL::ZTL)
-  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.19.0")
+  cpmaddpackage(gh:ZIMO-Elektronik/ZTL@0.19.0)
 endif()
 
 target_link_libraries(DCC INTERFACE static_math ZTL::ZTL)

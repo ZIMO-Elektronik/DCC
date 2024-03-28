@@ -19,10 +19,13 @@ BiDiTest::BiDiTest() {
   _cvs[65299uz - 1uz] = 0xABu;   // CID high byte
   _cvs[65300uz - 1uz] = 0xCDu;   // CID low byte
   _cvs[65301uz - 1uz] = 0x2A;    // Session ID
+}
 
+BiDiTest::~BiDiTest() {}
+
+void BiDiTest::SetUp() {
   Expectation read_cv{EXPECT_CALL(*this, readCv(_))
                         .WillOnce(Return(_cvs[29uz - 1uz]))
-                        // .WillOnce(Return(_cvs[1uz - 1uz]))
                         .WillOnce(Return(_cvs[17uz - 1uz]))
                         .WillOnce(Return(_cvs[18uz - 1uz]))
                         .WillOnce(Return(_cvs[19uz - 1uz]))
@@ -41,5 +44,3 @@ BiDiTest::BiDiTest() {
                         .WillOnce(Return(_cvs[65301uz - 1uz]))};
   init();
 }
-
-BiDiTest::~BiDiTest() {}

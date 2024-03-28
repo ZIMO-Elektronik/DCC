@@ -13,5 +13,5 @@ struct EncodeDecodeTest : ::testing::Test {
 };
 
 MATCHER_P(DatagramMatcher, datagram, "") {
-  return std::equal(cbegin(datagram), cend(datagram), arg);
+  return std::ranges::equal(datagram, arg);
 }

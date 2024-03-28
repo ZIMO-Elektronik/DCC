@@ -2,10 +2,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug DCCExamples",
+      "name": "Debug DCCReplExample",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/examples/DCCExamples",
+      "program": "${workspaceFolder}/build/examples/repl/DCCReplExample",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

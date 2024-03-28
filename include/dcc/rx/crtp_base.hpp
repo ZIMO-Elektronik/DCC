@@ -146,12 +146,6 @@ struct CrtpBase : bidi::CrtpBase<T> {
   /// \return false Last received bit wasn't packet end
   bool packetEnd() const { return _packet_end; }
 
-  /// Start channel1 (12 bit payload)
-  void cutoutChannel1() { BiDi::cutoutChannel1(); }
-
-  /// Start channel2 (36 bit payload)
-  void cutoutChannel2() { BiDi::cutoutChannel2(); }
-
 protected:
   using BiDi::_addrs;
   using BiDi::impl;
@@ -172,8 +166,10 @@ private:
     }
     auto const cv19{impl().readCv(19u - 1u)};
     auto const cv20{impl().readCv(20u - 1u)};
-    auto const addr{100u * (cv20 & 0b0111'1111u) + (cv19 & 0b0111'1111u)};
-    _addrs.consist = {static_cast<Address::value_type>(addr), Address::Long};
+    auto const consist_addr{100u * (cv20 & 0b0111'1111u) +
+                            (cv19 & 0b0111'1111u)};
+    _addrs.consist = {static_cast<Address::value_type>(consist_addr),
+                      Address::Long};
     _f0_exception = !(cv29 & ztl::make_mask(1u));
     auto const cv15{impl().readCv(15u - 1u)};
     auto const cv16{impl().readCv(16u - 1u)};

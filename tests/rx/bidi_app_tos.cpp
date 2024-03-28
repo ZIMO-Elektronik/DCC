@@ -2,8 +2,15 @@
 #include "bidi_test.hpp"
 
 TEST_F(BiDiTest, app_tos) {
-  for (auto i{0u}; i < 30.0 / 10E-3; ++i) tipOffSearch();
+  // Does not require CV28:1
+  _cvs[28uz - 1uz] = static_cast<uint8_t>(_cvs[28uz - 1uz] & 0b1111'11101u);
+  _addrs.received = _addrs.primary;
+  SetUp();
+
   _addrs.received = {0u, dcc::Address::Broadcast};
+
+  // Make sure to get past backoff (see RCN-218)
+  for (auto i{0u}; i < 30.0 / 10E-3; ++i) tipOffSearch();
 
   // Encode address
   std::array<uint8_t, 2uz> adr;
@@ -19,6 +26,6 @@ TEST_F(BiDiTest, app_tos) {
   it = std::copy(cbegin(adr_low), cend(adr_low), it);
   std::copy(cbegin(time), cend(time), it);
 
-  EXPECT_CALL(*this, transmitBiDi(DatagramMatcher(datagram))).Times(AtLeast(1));
+  EXPECT_CALL(*this, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   cutoutChannel2();
 }

@@ -38,6 +38,34 @@ template<typename T>
 struct CrtpBase {
   friend T;
 
+  /// Start channel1 (12 bit payload)
+  void cutoutChannel1() {
+    if (!_ch1_enabled) return;
+    // Only send in channel1 if last valid address was broadcast, short or long
+    if (_addrs.received.type == Address::Broadcast ||
+        _addrs.received.type == Address::Short ||
+        _addrs.received.type == Address::Long)
+      appAdr();
+    // or automatic logon
+    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(1u);
+  }
+
+  /// Start channel2 (36 bit payload)
+  void cutoutChannel2() {
+    if (!_ch2_enabled) return;
+    // Only send in channel2 if last valid address was own
+    if (_addrs.received == _addrs.primary ||
+        (_logon_assigned && _addrs.received == _addrs.logon))
+      appPomExtDynSubId();
+    // or consist
+    else if (_ch2_consist_enabled && _addrs.received == _addrs.consist)
+      appExtDynSubId();
+    // or automatic logon
+    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(2u);
+    // or broadcast
+    else if (_addrs.received.type == Address::Broadcast) appTos();
+  }
+
 protected:
   constexpr CrtpBase() = default;
   Decoder auto& impl() { return static_cast<T&>(*this); }
@@ -86,34 +114,6 @@ protected:
   void executeThreadMode() {
     logonStore();
     updateTimepoints();
-  }
-
-  /// Start channel1 (12 bit payload)
-  void cutoutChannel1() {
-    if (!_ch1_enabled) return;
-    // Only send in channel1 if last valid address was broadcast, short or long
-    if (_addrs.received.type == Address::Broadcast ||
-        _addrs.received.type == Address::Short ||
-        _addrs.received.type == Address::Long)
-      appAdr();
-    // or automatic logon
-    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(1u);
-  }
-
-  /// Start channel2 (36 bit payload)
-  void cutoutChannel2() {
-    if (!_ch2_enabled) return;
-    // Only send in channel2 if last valid address was own
-    if (_addrs.received == _addrs.primary ||
-        (_logon_assigned && _addrs.received == _addrs.logon))
-      appPomExtDynSubId();
-    // or consist
-    else if (_ch2_consist_enabled && _addrs.received == _addrs.consist)
-      appExtDynSubId();
-    // or automatic logon
-    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(2u);
-    // or broadcast
-    else if (_addrs.received.type == Address::Broadcast) appTos();
   }
 
   /// Quality of service

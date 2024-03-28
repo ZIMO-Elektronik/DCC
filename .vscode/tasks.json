@@ -2,12 +2,6 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "CMake DCCTests Clang",
-      "type": "shell",
-      "isBackground": true,
-      "command": "cmake -Bbuild -GNinja -DCMAKE_TOOLCHAIN_FILE=CMakeModules/src/toolchains/clang.cmake -DCMAKE_BUILD_TYPE=Debug"
-    },
-    {
       "label": "CMake DCCTests",
       "type": "shell",
       "isBackground": true,

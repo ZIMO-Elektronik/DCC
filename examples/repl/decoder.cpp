@@ -44,10 +44,11 @@ void Decoder::serviceAck() {}
 void Decoder::transmitBiDi(std::span<uint8_t const>) {}
 
 uint8_t Decoder::readCv(uint32_t cv_addr, [[maybe_unused]] uint8_t byte) {
+  auto const red_byte{
+    static_cast<uint8_t>(cv_addr < size(_cvs) ? _cvs[cv_addr] : 0u)};
   cli::Cli::cout() << "Read CV byte " << cv_addr
-                   << "==" << static_cast<uint32_t>(_cvs[cv_addr])
-                   << PROMPTENDL;
-  return _cvs[cv_addr];
+                   << "==" << static_cast<uint32_t>(red_byte) << PROMPTENDL;
+  return red_byte;
 }
 
 uint8_t Decoder::writeCv(uint32_t cv_addr, uint8_t byte) {
