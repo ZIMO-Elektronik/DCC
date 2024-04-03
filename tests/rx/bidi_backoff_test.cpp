@@ -10,7 +10,7 @@ BiDiBackoffTest::BiDiBackoffTest() {
 
 BiDiBackoffTest::~BiDiBackoffTest() {}
 
-int BiDiBackoffTest::countTillFalse(int max) {
+int BiDiBackoffTest::CountTillFalse(int max) {
   int i{};
   for (; i < max; ++i)
     if (!_backoff) break;

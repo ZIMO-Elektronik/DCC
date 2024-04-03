@@ -327,10 +327,10 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
 /// Delete RMT DCC encoder
 ///
 /// \param  encoder             RMT encoder handle
-/// \return ESP_OK              Delete RMT DCC encoder successfully
-/// \return ESP_ERR_INVALID_ARG Delete RMT DCC encoder failed because of invalid
+/// \retval ESP_OK              Delete RMT DCC encoder successfully
+/// \retval ESP_ERR_INVALID_ARG Delete RMT DCC encoder failed because of invalid
 ///                             argument
-/// \return ESP_FAIL            Delete RMT DCC encoder failed because of other
+/// \retval ESP_FAIL            Delete RMT DCC encoder failed because of other
 ///                             error
 static esp_err_t rmt_del_dcc_encoder(rmt_encoder_t* encoder) {
   rmt_dcc_encoder_t* dcc_encoder =
@@ -344,10 +344,10 @@ static esp_err_t rmt_del_dcc_encoder(rmt_encoder_t* encoder) {
 /// Reset RMT DCC encoder
 ///
 /// \param  encoder             RMT encoder handle
-/// \return ESP_OK              Reset RMT DCC encoder successfully
-/// \return ESP_ERR_INVALID_ARG Reset RMT DCC encoder failed because of invalid
+/// \retval ESP_OK              Reset RMT DCC encoder successfully
+/// \retval ESP_ERR_INVALID_ARG Reset RMT DCC encoder failed because of invalid
 ///                             argument
-/// \return ESP_FAIL            Reset RMT DCC encoder failed because of other
+/// \retval ESP_FAIL            Reset RMT DCC encoder failed because of other
 ///                             error
 static esp_err_t rmt_dcc_encoder_reset(rmt_encoder_t* encoder) {
   rmt_dcc_encoder_t* dcc_encoder =
@@ -363,12 +363,12 @@ static esp_err_t rmt_dcc_encoder_reset(rmt_encoder_t* encoder) {
 ///
 /// \param  config              DCC encoder configuration
 /// \param  ret_encoder         Returned encoder handle
-/// \return ESP_OK              Create RMT DCC encoder successfully
-/// \return ESP_ERR_INVALID_ARG Create RMT DCC encoder failed because of
+/// \retval ESP_OK              Create RMT DCC encoder successfully
+/// \retval ESP_ERR_INVALID_ARG Create RMT DCC encoder failed because of
 ///                             invalid argument
-/// \return ESP_ERR_NO_MEM      Create RMT DCC encoder failed because out of
+/// \retval ESP_ERR_NO_MEM      Create RMT DCC encoder failed because out of
 ///                             memory
-/// \return ESP_FAIL            Create RMT DCC encoder failed because of other
+/// \retval ESP_FAIL            Create RMT DCC encoder failed because of other
 ///                             error
 esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
                               rmt_encoder_handle_t* ret_encoder) {

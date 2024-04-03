@@ -4,6 +4,12 @@
 - Limit number of preamble bits of RMT encoder to 30
 - Rename dcc_encoder_config_t::cutoutbit_duration to bidibit_duration
 - Remove optional mduEntry
+- Bugfix standard compliant CV28
+  - Logon must be enabled by CV28:7 and ignores CV28:1 and CV28:0
+- Bugfix standard compliant RCN-217
+  - Reply with active address in channel 1 (instead of just primary)
+- Bugfix standard compliant RCN-218
+  - Logon address is only temporary
 
 ## 0.32.0
 - Individual timings for namespace dcc::rx and dcc::tx

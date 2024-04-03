@@ -7,11 +7,11 @@
 using dcc::rx::bidi::Backoff;
 
 struct BiDiBackoffTest : ::testing::Test {
+protected:
   BiDiBackoffTest();
   virtual ~BiDiBackoffTest();
 
-  int countTillFalse(int max);
+  int CountTillFalse(int max);
 
-protected:
   Backoff _backoff{};
 };
