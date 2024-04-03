@@ -8,6 +8,7 @@ using namespace ::testing;
 
 // Receive test fixture
 struct RxTest : ::testing::Test {
+protected:
   RxTest();
   virtual ~RxTest();
 
@@ -16,6 +17,7 @@ struct RxTest : ::testing::Test {
   void Receive(dcc::Packet const& packet);
   void Receive(dcc::tx::Timings const& timings);
   void Execute();
+  void Cutout();
 
   void EnterServiceMode();
 
@@ -28,7 +30,9 @@ struct RxTest : ::testing::Test {
     return dis(gen);
   }
 
-protected:
   RxMock _mock;
   std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
+  uint32_t _did{0xAABBCCDDu};
+  uint16_t _cid{0xABCDu};
+  uint8_t _session_id{0x2Au};
 };

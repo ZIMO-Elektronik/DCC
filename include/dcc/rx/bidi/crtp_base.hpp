@@ -38,59 +38,8 @@ template<typename T>
 struct CrtpBase {
   friend T;
 
-protected:
-  constexpr CrtpBase() = default;
-  Decoder auto& impl() { return static_cast<T&>(*this); }
-  Decoder auto const& impl() const { return static_cast<T const&>(*this); }
-
-  /// Execute adds dyn (ID7) datagrams to deque
-  ///
-  /// \tparam Dyns... Types of dyn datagrams
-  /// \param  dyns... Messages
-  template<std::derived_from<Dyn>... Dyns>
-  void execute(Dyns&&... dyns)
-    requires((sizeof...(Dyns) <
-              DCC_RX_BIDI_DEQUE_SIZE))  // TODO remove double braces, currently
-                                        // fucks with VSCode highlighting
-  {
-    if (!sizeof...(Dyns) ||
-        (DCC_RX_BIDI_DEQUE_SIZE - size(_dyn_deque) < sizeof...(Dyns) + 1uz))
-      return;
-    (dyn(std::forward<Dyns>(dyns)), ...);
-    dyn(_qos, 7u);
-  }
-
-  /// Configure
-  ///
-  /// \param  enabled             BiDi enabled
-  /// \param  ch2_consist_enabled CH2 is used by consist address as well
-  void config(bool enabled, bool ch2_consist_enabled) {
-    auto const cv28{impl().readCv(28u - 1u)};
-    _ch1_enabled = enabled && (cv28 & ztl::make_mask(0u));
-    _ch2_enabled = enabled && (cv28 & ztl::make_mask(1u));
-    _ch2_consist_enabled = ch2_consist_enabled;
-    if constexpr (HighCurrent<T>) impl().highCurrent(cv28 & ztl::make_mask(6u));
-    _did = {impl().readCv(250u - 1u),
-            impl().readCv(251u - 1u),
-            impl().readCv(252u - 1u),
-            impl().readCv(253u - 1u)};
-    std::array const cv65297_65298{impl().readCv(65297u - 1u),
-                                   impl().readCv(65298u - 1u)};
-    _addrs.logon = decode_address(cbegin(cv65297_65298));
-    _cid = static_cast<decltype(_cid)>((impl().readCv(65299u - 1u) << 8u) |
-                                       impl().readCv(65300u - 1u));
-    _session_id = impl().readCv(65301u - 1u);
-  }
-
-  /// Execute in thread mode
-  void executeThreadMode() {
-    logonStore();
-    updateTimepoints();
-  }
-
   /// Start channel1 (12 bit payload)
   void cutoutChannel1() {
-    if (!_ch1_enabled) return;
     // Only send in channel1 if last valid address was broadcast, short or long
     if (_addrs.received.type == Address::Broadcast ||
         _addrs.received.type == Address::Short ||
@@ -102,18 +51,63 @@ protected:
 
   /// Start channel2 (36 bit payload)
   void cutoutChannel2() {
-    if (!_ch2_enabled) return;
     // Only send in channel2 if last valid address was own
-    if (_addrs.received == _addrs.primary ||
-        (_logon_assigned && _addrs.received == _addrs.logon))
-      appPomExtDynSubId();
+    if ((_addrs.received == _addrs.primary && !_logon_assigned) ||
+        (_addrs.received == _addrs.logon && _logon_assigned))
+      empty(_pom_deque) ? appExtDynSubId() : appPom();
     // or consist
-    else if (_ch2_consist_enabled && _addrs.received == _addrs.consist)
+    else if (_addrs.received == _addrs.consist && !_logon_assigned &&
+             _ch2_consist_enabled)
       appExtDynSubId();
     // or automatic logon
     else if (_addrs.received.type == Address::AutomaticLogon) appLogon(2u);
     // or broadcast
     else if (_addrs.received.type == Address::Broadcast) appTos();
+  }
+
+protected:
+  constexpr CrtpBase() = default;
+  Decoder auto& impl() { return static_cast<T&>(*this); }
+  Decoder auto const& impl() const { return static_cast<T const&>(*this); }
+
+  /// Execute adds adr (ID1/2) and dyn (ID7) datagrams to deque in thread mode
+  ///
+  /// \tparam Dyns... Types of dyn datagrams
+  /// \param  dyns... Messages
+  template<std::derived_from<Dyn>... Dyns>
+  void executeThreadMode(Dyns&&... dyns)
+    requires((sizeof...(Dyns) <
+              DCC_RX_BIDI_DEQUE_SIZE))  // TODO remove double braces, currently
+                                        // fucks with VSCode highlighting
+  {
+    if (_ch1_addr_enabled && empty(_adr_deque)) adr();
+    if (_ch2_enabled && (sizeof...(Dyns) > 0uz) &&
+        (DCC_RX_BIDI_DEQUE_SIZE - size(_dyn_deque) >= sizeof...(Dyns) + 1uz)) {
+      (dyn(std::forward<Dyns>(dyns)), ...);
+      dyn(_qos, 7u);
+    }
+    logonStore();
+    updateTimepoints();
+  }
+
+  /// Configure
+  ///
+  /// \param  enabled             BiDi enabled
+  /// \param  ch2_consist_enabled CH2 is used by consist address as well
+  void config(bool enabled, bool ch2_consist_enabled) {
+    auto const cv28{impl().readCv(28u - 1u)};
+    _ch1_addr_enabled = enabled && (cv28 & ztl::make_mask(0u));
+    _ch2_enabled = enabled && (cv28 & ztl::make_mask(1u));
+    _logon_enabled = enabled && (cv28 & ztl::make_mask(7u));
+    _ch2_consist_enabled = enabled && ch2_consist_enabled;
+    if constexpr (HighCurrent<T>) impl().highCurrent(cv28 & ztl::make_mask(6u));
+    _did = {impl().readCv(250u - 1u),
+            impl().readCv(251u - 1u),
+            impl().readCv(252u - 1u),
+            impl().readCv(253u - 1u)};
+    _cid = static_cast<decltype(_cid)>((impl().readCv(65297u - 1u) << 8u) |
+                                       impl().readCv(65298u - 1u));
+    _session_id = impl().readCv(65299u - 1u);
   }
 
   /// Quality of service
@@ -125,7 +119,7 @@ protected:
   ///
   /// \param  value CV value
   void pom(uint8_t value) {
-    if (full(_pom_deque)) return;
+    if (!_ch2_enabled || full(_pom_deque)) return;
     _pom_deque.push_back(encode_datagram(make_datagram<Bits::_12>(0u, value)));
   }
 
@@ -136,9 +130,9 @@ protected:
       _last_packet_tp - _tos_tp)};
     if (sec >= 30s) return;
     auto& packet{*end(_tos_deque)};
-    auto const adr_high{adrHigh()};
+    auto const adr_high{adrHigh(_addrs.primary)};
     auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(packet))};
-    auto const adr_low{adrLow()};
+    auto const adr_low{adrLow(_addrs.primary)};
     it = std::copy(cbegin(adr_low), cend(adr_low), it);
     auto const time{encode_datagram(
       make_datagram<Bits::_12>(14u, static_cast<uint32_t>(sec.count())))};
@@ -151,14 +145,16 @@ protected:
   /// \param  gg          Address group
   /// \param  cid         Command station ID
   /// \param  session_id  Session ID
-  void logonEnable(uint8_t gg, uint16_t cid, uint8_t session_id) {
-    auto const _cidequal{cid == _cid};
+  void logonEnable(AddressGroup gg, uint16_t cid, uint8_t session_id) {
+    if (!_logon_enabled) return;
+
+    auto const cid_equal{cid == _cid};
     auto const session_id_equal{session_id == _session_id};
 
     // Exceptions
     // - Either skip logon if diff between session IDs is <=4
     // - Or force new logon if diff is >4
-    if (_cidequal && !session_id_equal) {
+    if (cid_equal && !session_id_equal) {
       auto const skip{static_cast<uint32_t>(session_id - _session_id) <= 4u};
       _logon_selected = _logon_assigned = skip;
       _logon_backoff.reset();
@@ -169,13 +165,14 @@ protected:
 
     if (_logon_selected || _logon_assigned) return;
     switch (gg) {
-      case 0b00u: [[fallthrough]];              // All decoders
-      case 0b01u: break;                        // Multi-function decoders
-      case 0b10u: return;                       // Accessory decoder
-      case 0b11u: _logon_backoff.now(); break;  // No backoff
+      case AddressGroup::All: [[fallthrough]];  // All decoders
+      case AddressGroup::Loco: break;           // Multi-function decoders
+      case AddressGroup::Acc: return;           // Accessory decoder
+      case AddressGroup::Now: _logon_backoff.now(); break;  // No backoff
     }
 
     if (_logon_backoff) return;
+    assert(!full(_logon_deque));
     _logon_deque.push_back(encode_datagram(
       make_datagram<Bits::_48>(15u,
                                static_cast<uint64_t>(zimo_id) << 32u |
@@ -189,7 +186,8 @@ protected:
   ///
   /// \param  did Unique ID
   void logonSelect(std::span<uint8_t const, 4uz> did) {
-    if (_logon_assigned || !std::ranges::equal(did, _did)) return;
+    if (!_logon_enabled || _logon_assigned || !std::ranges::equal(did, _did))
+      return;
     _logon_selected = true;
     std::array<uint8_t, 5uz> data{
       static_cast<uint8_t>(ztl::make_mask(7u) | (_addrs.primary >> 8u)),
@@ -197,6 +195,7 @@ protected:
       0u,
       0u,
       0u};
+    assert(!full(_logon_deque));
     _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
       static_cast<uint64_t>(data[0uz]) << 40u |
       static_cast<uint64_t>(data[1uz]) << 32u |
@@ -207,15 +206,20 @@ protected:
 
   /// Logon assign
   ///
-  /// \param  did   Unique ID
-  /// \param  addr  Assigned address
-  void logonAssign(std::span<uint8_t const, 4uz> did, Address addr) {
-    if (!std::ranges::equal(did, _did)) return;
+  /// \param  did                       Unique ID
+  /// \param  addr                      Assigned address
+  /// \param  overwrite_primary_address Overwrite primary address
+  void logonAssign(std::span<uint8_t const, 4uz> did,
+                   Address addr,
+                   bool overwrite_primary_address) {
+    if (!_logon_enabled || !std::ranges::equal(did, _did)) return;
     _logon_assigned = _logon_store = true;
+    _addrs.logon = addr;
     // Fucking stupid and doesn't conform to standard...
-    _addrs.primary = _addrs.logon = addr;
+    if (overwrite_primary_address) _addrs.primary = addr;
     static constexpr std::array<uint8_t, 5uz> data{
       13u << 4u | 0u, 0u, 0u, 0u, 0u};
+    assert(!full(_logon_deque));
     _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
       static_cast<uint64_t>(data[0uz]) << 40uz |
       static_cast<uint64_t>(data[1uz]) << 32uz | data[2uz] << 24uz |
@@ -226,6 +230,24 @@ protected:
   Addresses _addrs{};
 
 private:
+  /// Addr adr datagrams
+  void adr() {
+    // Active address is primary
+    if (!_addrs.consist) {
+      _adr_deque.push_back(adrHigh(_addrs.primary));
+      _adr_deque.push_back(adrLow(_addrs.primary));
+    }
+    // Active address is consist
+    else if (_addrs.consist > 0u && _addrs.consist < 128u) {
+      _adr_deque.push_back(adrHigh(_addrs.consist));
+      _adr_deque.push_back(adrLow(_addrs.consist));
+    }
+    // RCN-217 can't encode CV20 yet
+    else {
+      // TODO
+    }
+  }
+
   /// Add generic dyn datagram
   ///
   /// \param  d Generic dyn datagram
@@ -272,22 +294,15 @@ private:
 
   /// Handle app:adr_low and app:adr_high datagrams
   void appAdr() {
-    // TODO consist currently never sent!
-    auto const adr_high{adrHigh()};
-    _ch1 = _ch1 == adr_high ? adrLow() : adr_high;
+    if (empty(_adr_deque)) return;
+    _ch1 = _adr_deque.front();
     impl().transmitBiDi({cbegin(_ch1), size(_ch1)});
-  }
-
-  /// Handle app:pom, app:ext, app:dyn and app:subID datagrams
-  void appPomExtDynSubId() {
-    // Send either pom only (no fucking thanks ESU)
-    if (!empty(_pom_deque)) appPom();
-    // Or whatever fits into channel2
-    else appExtDynSubId();
+    _adr_deque.pop_front();
   }
 
   /// Handle app::pom
   void appPom() {
+    if (empty(_pom_deque)) return;
     auto const& packet{_pom_deque.front()};
     std::copy(cbegin(packet), cend(packet), begin(_ch2));
     impl().transmitBiDi({cbegin(_ch2), size(packet)});
@@ -312,7 +327,7 @@ private:
     if (empty(_tos_deque)) return;
     auto const& packet{_tos_deque.front()};
     std::ranges::copy(packet, begin(_ch2));
-    impl().transmitBiDi({begin(_ch2), size(packet)});
+    impl().transmitBiDi({cbegin(_ch2), size(packet)});
     _tos_deque.pop_front();
   }
 
@@ -331,21 +346,27 @@ private:
 
   /// Get app:adr_high
   ///
+  /// \param  addr  Address
   /// \return Datagram for app:adr_high
-  auto adrHigh() const {
-    // TODO consist currently never sent!
+  auto adrHigh(Address addr) const {
     return encode_datagram(make_datagram<Bits::_12>(
       1u,
-      _addrs.primary < 128u ? 0u : 0x80u | (_addrs.primary & 0x3F00u) >> 8u));
+      addr == _addrs.primary
+        ? (_addrs.primary < 128u ? 0u
+                                 : 0x80u | (_addrs.primary & 0x3F00u) >> 8u)
+        : 0b0110'0000u));
   }
 
   /// Get app:adr_low
   ///
+  /// \param  addr  Address
   /// \return Datagram for app:adr_low
-  auto adrLow() const {
-    // TODO consist currently never sent!
-    return encode_datagram(
-      make_datagram<Bits::_12>(2u, _addrs.primary & 0x00FFu));
+  auto adrLow(Address addr) const {
+    return encode_datagram(make_datagram<Bits::_12>(
+      2u,
+      addr == _addrs.primary
+        ? (_addrs.primary & 0x00FFu)
+        : (_addrs.consist.reversed << 7u | (_addrs.consist & 0x007Fu))));
   }
 
   /// Logon store
@@ -356,16 +377,16 @@ private:
   void logonStore() {
     if (!_logon_store) return;
     _logon_store = false;
-    // This is wrong on so many levels... I can't even... FML
-    impl().writeCv(17u - 1u,
-                   static_cast<uint8_t>(0b1100'0000u | (_addrs.primary >> 8u)));
-    impl().writeCv(18u - 1u, static_cast<uint8_t>(_addrs.primary));
-    impl().writeCv(29u - 1u, true, 5u);
-    impl().writeCv(65297u - 1u, static_cast<uint8_t>(_addrs.logon >> 8u));
-    impl().writeCv(65298u - 1u, static_cast<uint8_t>(_addrs.logon));
-    impl().writeCv(65299u - 1u, static_cast<uint8_t>(_cid >> 8u));
-    impl().writeCv(65300u - 1u, static_cast<uint8_t>(_cid));
-    impl().writeCv(65301u - 1u, _session_id);
+    // Fucking stupid and doesn't conform to standard...
+    if (_addrs.primary == _addrs.logon) {
+      impl().writeCv(
+        17u - 1u, static_cast<uint8_t>(0b1100'0000u | (_addrs.primary >> 8u)));
+      impl().writeCv(18u - 1u, static_cast<uint8_t>(_addrs.primary));
+      impl().writeCv(29u - 1u, true, 5u);
+    }
+    impl().writeCv(65297u - 1u, static_cast<uint8_t>(_cid >> 8u));
+    impl().writeCv(65298u - 1u, static_cast<uint8_t>(_cid));
+    impl().writeCv(65299u - 1u, _session_id);
   }
 
   /// Update time points
@@ -388,6 +409,7 @@ private:
   ztl::inplace_deque<std::array<uint8_t, datagram_size<Bits::_18>>,
                      DCC_RX_BIDI_DEQUE_SIZE>
     _dyn_deque{};
+  ztl::inplace_deque<Channel1, 2uz> _adr_deque{};
   ztl::inplace_deque<Channel1, DCC_RX_BIDI_DEQUE_SIZE> _pom_deque{};
   ztl::inplace_deque<Channel2, 2uz> _tos_deque{};
   ztl::inplace_deque<BundledChannels, 2uz> _logon_deque{};
@@ -398,12 +420,14 @@ private:
   uint8_t _qos{};         ///< Quality of service
 
   // Not bitfields as those are most likely mutated in interrupt context
-  bool _ch1_enabled{};
-  bool _ch2_enabled{};
   bool _ch2_consist_enabled{};
+  bool _logon_enabled{};
   bool _logon_selected{};
   bool _logon_assigned{};
   bool _logon_store{};
+
+  bool _ch1_addr_enabled : 1 {};
+  bool _ch2_enabled : 1 {};
 };
 
 }  // namespace dcc::rx::bidi

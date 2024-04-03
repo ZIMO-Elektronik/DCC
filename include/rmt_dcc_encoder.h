@@ -51,12 +51,12 @@ typedef struct {
 ///
 /// \param  config              DCC encoder configuration
 /// \param  ret_encoder         Returned encoder handle
-/// \return ESP_OK              Create RMT DCC encoder successfully
-/// \return ESP_ERR_INVALID_ARG Create RMT DCC encoder failed because of
+/// \retval ESP_OK              Create RMT DCC encoder successfully
+/// \retval ESP_ERR_INVALID_ARG Create RMT DCC encoder failed because of
 ///                             invalid argument
-/// \return ESP_ERR_NO_MEM      Create RMT DCC encoder failed because out of
+/// \retval ESP_ERR_NO_MEM      Create RMT DCC encoder failed because out of
 ///                             memory
-/// \return ESP_FAIL            Create RMT DCC encoder failed because of other
+/// \retval ESP_FAIL            Create RMT DCC encoder failed because of other
 ///                             error
 esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
                               rmt_encoder_handle_t* ret_encoder);

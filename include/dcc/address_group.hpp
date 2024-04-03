@@ -2,19 +2,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// Packet
+/// Address group
 ///
-/// \file   dcc/packet.hpp
+/// \file   dcc/address_group.hpp
 /// \author Vincent Hamp
-/// \date   31/01/2022
+/// \date   02/04/2024
 
 #pragma once
 
 #include <cstdint>
-#include <ztl/inplace_vector.hpp>
 
 namespace dcc {
 
-using Packet = ztl::inplace_vector<uint8_t, DCC_MAX_PACKET_SIZE>;
+/// Address group (RCN-218)
+enum class AddressGroup : uint8_t {
+  All = 0b00u,
+  Loco = 0b01u,
+  Acc = 0b10u,
+  Now = 0b11u
+};
 
 }  // namespace dcc

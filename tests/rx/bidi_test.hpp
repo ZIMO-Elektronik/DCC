@@ -7,10 +7,12 @@ using namespace ::testing;
 
 // BiDi test fixture
 struct BiDiTest : ::testing::Test, RxMock {
+protected:
   BiDiTest();
   virtual ~BiDiTest();
 
-private:
+  void SetUp() override;
+
   std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
 };
 

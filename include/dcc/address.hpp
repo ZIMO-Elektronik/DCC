@@ -48,6 +48,8 @@ struct Address {
     AutomaticLogon,  ///< Address is automatic logon
     IdleSystem       ///< Address for system commands
   } type{};
+
+  bool reversed{};  /// Direction reversed
 };
 
 #pragma GCC diagnostic push

@@ -116,41 +116,35 @@ struct CrtpBase : bidi::CrtpBase<T> {
   ///
   /// \tparam Dyns... Types of dyn messages
   /// \param  dyns... Messages
-  /// \return true    Command to own address
-  /// \return false   Command to other address
+  /// \retval true    Command to own address
+  /// \retval false   Command to other address
   template<std::derived_from<bidi::Dyn>... Dyns>
   bool execute(Dyns&&... dyns)
     requires((sizeof...(Dyns) <
               DCC_RX_BIDI_DEQUE_SIZE))  // TODO remove double braces, currently
                                         // fucks with VSCode highlighting
   {
-    BiDi::execute(std::forward<Dyns>(dyns)...);
+    BiDi::executeThreadMode(std::forward<Dyns>(dyns)...);
     return executeThreadMode();
   }
 
   /// Service mode
   ///
-  /// \return true  Service mode active
-  /// \return false Operations mode active
+  /// \retval true  Service mode active
+  /// \retval false Operations mode active
   bool serviceMode() const { return _mode == Mode::Service; }
 
   /// MAN function
   ///
-  /// \return true  MAN function active
-  /// \return false MAN function inactive
+  /// \retval true  MAN function active
+  /// \retval false MAN function inactive
   bool man() const { return _man; }
 
   /// Check if last received bit was a packet end
   ///
-  /// \return true  Last received bit was packet end
-  /// \return false Last received bit wasn't packet end
+  /// \retval true  Last received bit was packet end
+  /// \retval false Last received bit wasn't packet end
   bool packetEnd() const { return _packet_end; }
-
-  /// Start channel1 (12 bit payload)
-  void cutoutChannel1() { BiDi::cutoutChannel1(); }
-
-  /// Start channel2 (36 bit payload)
-  void cutoutChannel2() { BiDi::cutoutChannel2(); }
 
 protected:
   using BiDi::_addrs;
@@ -161,6 +155,7 @@ private:
 
   /// Configure
   void config() {
+    // Primary address
     auto const cv29{impl().readCv(29u - 1u)};
     if (cv29 & ztl::make_mask(5u)) {
       std::array const cv17_18{impl().readCv(17u - 1u),
@@ -170,14 +165,26 @@ private:
       auto const cv1{impl().readCv(1u - 1u)};
       _addrs.primary = decode_address(&cv1);
     }
+    _addrs.primary.reversed = cv29 & ztl::make_mask(0u);
+
+    // Consist address
     auto const cv19{impl().readCv(19u - 1u)};
     auto const cv20{impl().readCv(20u - 1u)};
-    auto const addr{100u * (cv20 & 0b0111'1111u) + (cv19 & 0b0111'1111u)};
-    _addrs.consist = {static_cast<Address::value_type>(addr), Address::Long};
+    auto const consist_addr{100u * (cv20 & 0b0111'1111u) +
+                            (cv19 & 0b0111'1111u)};
+    _addrs.consist = {static_cast<Address::value_type>(consist_addr),
+                      Address::Long};
+    _addrs.consist.reversed = cv19 & ztl::make_mask(7u);
+
+    // Legacy exception for F0
     _f0_exception = !(cv29 & ztl::make_mask(1u));
+
+    // Decoder lock
     auto const cv15{impl().readCv(15u - 1u)};
     auto const cv16{impl().readCv(16u - 1u)};
     _cvs_locked = cv15 != cv16 && cv15 && cv16;
+
+    // Additional BiDi config
     BiDi::config(cv29 & ztl::make_mask(3u), cv20 & ztl::make_mask(7u));
   }
 
@@ -200,14 +207,13 @@ private:
 
   /// Execute in thread mode
   ///
-  /// \return true  Command to own address
-  /// \return false Command to other address
+  /// \retval true  Command to own address
+  /// \retval false Command to other address
   bool executeThreadMode() {
     if (empty(_deque)) return false;
     auto const retval{_mode == Mode::Operations ? executeOperations()
                                                 : executeService()};
     _deque.pop_front();
-    BiDi::executeThreadMode();
     return retval;
   }
 
@@ -217,15 +223,15 @@ private:
     auto const addr{decode_address(cbegin(packet))};
     _addrs.received = addr;
     if (addr.type != Address::AutomaticLogon) return;
-    if (size(packet) <= 7uz || !crc8(packet))
+    if (size(packet) <= (6uz + 1uz) || !crc8(packet))
       executeAutomaticLogon(addr, {cbegin(packet) + 1, cend(packet)});
     _deque.pop_front();
   }
 
   /// Execute commands in operations mode
   ///
-  /// \return true  Command to own address or 0
-  /// \return false Command to other address
+  /// \retval true  Command to own address or 0
+  /// \retval false Command to other address
   bool executeOperations() {
     bool retval{};
     auto const& packet{_deque.front()};
@@ -250,7 +256,7 @@ private:
 
   /// Execute commands in service mode
   ///
-  /// \return true
+  /// \retval true
   bool executeService() {
     countOwnEqualPackets();
     // Reset
@@ -288,13 +294,21 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \return true  Command to own address or 0
-  /// \return false Command to other address
+  /// \retval true  Command to own address or 0
+  /// \retval false Command to other address
   bool executeOperationsAddressed(Address addr,
                                   std::span<uint8_t const> bytes) {
-    bool const broadcast{addr.type == Address::Broadcast};
-    if (!broadcast && addr != _addrs.primary && addr != _addrs.consist)
-      return false;
+    // Address is broadcast
+    if (!addr)
+      ;
+    // Address is primary or consist and logon ain't assigned
+    else if ((addr == _addrs.primary || addr == _addrs.consist) &&
+             !_addrs.logon)
+      ;
+    // Address is logon, pretend it's primary from here on
+    else if (addr == _addrs.logon) addr = _addrs.primary;
+    // Address is not of interest
+    else return false;
 
     countOwnEqualPackets();
 
@@ -302,7 +316,7 @@ private:
       case Instruction::UnknownService:  // TODO
         break;
       case Instruction::DecoderControl:
-        if (broadcast && !bytes[0uz]) serviceMode(true);
+        if (!addr && !bytes[0uz]) serviceMode(true);
         else decoderControl(bytes);
         break;
       case Instruction::ConsistControl: consistControl(bytes); break;
@@ -324,41 +338,48 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \return true  Command to own address or 0
-  /// \return false Command to other address
+  /// \retval true  Command to own address or 0
+  /// \retval false Command to other address
   bool executeAutomaticLogon(Address addr, std::span<uint8_t const> bytes) {
     if (addr != 254u) return false;
 
     switch (bytes[0uz] & 0xF0u) {
       // SELECT
-      case 0b1101'0000u:
-        BiDi::logonSelect(bytes.subspan<2uz, sizeof(uint32_t)>());
+      case 0b1101'0000u: {
+        auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
+        BiDi::logonSelect(did);
         break;
+      }
 
       // LOGON_ASSIGN
-      case 0b1110'0000u:
+      case 0b1110'0000u: {
+        auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
+        // Fucking stupid ZIMO version which overwrites primary address
+        auto const overwrite_primary_address{(bytes[6uz] & 0b1100'0000u) !=
+                                             0b1100'0000u};
         // Multi-function decoders (long address)
         if (auto const a13_8{bytes[6uz] & 0x3Fu}; a13_8 < 0x28u)
-          BiDi::logonAssign(bytes.subspan<2uz, sizeof(uint32_t)>(),
-                            decode_address(&bytes[6uz]));
+          BiDi::logonAssign(
+            did, decode_address(&bytes[6uz]), overwrite_primary_address);
         // Accessory decoder
         else if (a13_8 < 0x38u) break;
         // Multi-function decoders (short address)
         else if (a13_8 < 0x39u)
-          BiDi::logonAssign(bytes.subspan<2u, sizeof(uint32_t)>(),
-                            decode_address(&bytes[7u]));
+          BiDi::logonAssign(
+            did, decode_address(&bytes[7uz]), overwrite_primary_address);
         // Reserved
         else if (a13_8 < 0x3Fu) break;
         // FW update
         else if (a13_8 < 0x40u) break;
         break;
+      }
 
       // LOGON_ENABLE
       case 0b1111'0000u: {
-        auto const g{static_cast<uint8_t>(bytes[0uz] & 0b11u)};
+        auto const gg{static_cast<AddressGroup>(bytes[0uz] & 0b11u)};
         auto const cid{data2uint16(&bytes[1uz])};
         auto const session_id{bytes[3uz]};
-        BiDi::logonEnable(g, cid, session_id);
+        BiDi::logonEnable(gg, cid, session_id);
         break;
       }
     }
@@ -750,10 +771,9 @@ private:
   /// \param  dir   Direction
   /// \param  speed Speed
   void directionSpeed(uint32_t addr, int32_t dir, int32_t speed) {
-    auto const reverse{addr == _addrs.primary
-                         ? impl().readCv(29u - 1u) & ztl::make_mask(0u)
-                         : impl().readCv(19u - 1u) & ztl::make_mask(7u)};
-    impl().direction(addr, reverse ? dir * -1 : dir);
+    auto const reversed{addr == _addrs.primary ? _addrs.primary.reversed
+                                               : _addrs.consist.reversed};
+    impl().direction(addr, reversed ? dir * -1 : dir);
     impl().speed(addr, speed);
   }
 

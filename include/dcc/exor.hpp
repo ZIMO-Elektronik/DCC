@@ -27,4 +27,13 @@ constexpr uint8_t exor(std::span<uint8_t const> bytes) {
                          [](uint8_t a, uint8_t b) { return a ^ b; });
 }
 
+/// Exclusive disjunction (ex-or)
+///
+/// \param  packet  Packet
+/// \return Ex-or
+constexpr uint8_t exor(Packet const& packet) {
+  // Packet checksum is not part of exor
+  return exor({cbegin(packet), size(packet) - 1uz});
+}
+
 }  // namespace dcc
