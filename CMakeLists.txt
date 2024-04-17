@@ -57,7 +57,7 @@ target_compile_definitions(
             DCC_TX_MIN_PREAMBLE_BITS=${DCC_TX_MIN_PREAMBLE_BITS}
             DCC_TX_DEQUE_SIZE=${DCC_TX_DEQUE_SIZE})
 
-if(PROJECT_IS_TOP_LEVEL)
+if(PROJECT_IS_TOP_LEVEL AND CMAKE_SYSTEM_NAME STREQUAL CMAKE_HOST_SYSTEM_NAME)
   target_include_directories(DCC INTERFACE include)
   target_compile_options(DCC
                          INTERFACE -Werror;-Wno-error=deprecated-declarations)
