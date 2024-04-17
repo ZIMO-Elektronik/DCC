@@ -454,7 +454,7 @@ private:
     if (!(bytes[0uz] & 0b0000'1111u)) speed = 0;
     // Emergency stop
     else if (!(bytes[0uz] & 0b0000'1110u)) return impl().emergencyStop(addr);
-    else speed = (bytes[0uz] & 0b0000'1111) - 1;
+    else speed = static_cast<int32_t>(bytes[0uz] & 0b0000'1111u) - 1;
 
     // 14 speed steps and F0
     if (_f0_exception) {
@@ -464,7 +464,7 @@ private:
                                                        : 0u};
       impl().function(addr, mask, state);
     }
-    // 28 speed steps
+    // 28 speed steps with intermediate
     else {
       speed <<= 1u;
       if (speed && !(bytes[0uz] & ztl::make_mask(4u))) --speed;

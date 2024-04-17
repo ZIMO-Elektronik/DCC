@@ -14,7 +14,7 @@ endif()
 FetchContent_Declare(
   CMakeModules
   GIT_REPOSITORY https://github.com/ZIMO-Elektronik/CMakeModules
-  GIT_TAG v0.7.0
+  GIT_TAG v0.8.0
   SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
 FetchContent_MakeAvailable(CMakeModules)
 
@@ -57,7 +57,7 @@ target_compile_definitions(
             DCC_TX_MIN_PREAMBLE_BITS=${DCC_TX_MIN_PREAMBLE_BITS}
             DCC_TX_DEQUE_SIZE=${DCC_TX_DEQUE_SIZE})
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+if(PROJECT_IS_TOP_LEVEL)
   target_include_directories(DCC INTERFACE include)
   target_compile_options(DCC
                          INTERFACE -Werror;-Wno-error=deprecated-declarations)
