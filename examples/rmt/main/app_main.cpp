@@ -20,7 +20,7 @@ extern "C" void app_main() {
   ESP_ERROR_CHECK(rmt_enable(rmt_channel));
 
   // New DCC encoder
-  dcc_encoder_config_t encoder_config{.num_preamble = 17u,
+  dcc_encoder_config_t encoder_config{.num_preamble = DCC_TX_MIN_PREAMBLE_BITS,
                                       .bidibit_duration = 60u,
                                       .bit1_duration = 58u,
                                       .bit0_duration = 100u,

@@ -64,13 +64,13 @@ struct CrtpBase : bidi::CrtpBase<T> {
 
     if (full(_deque)) return reset();  // TODO task full error counter?
 
-    // Successfully received a bit -> enter state machine
+    // Successfully received a bit
     switch (_state) {
       case State::Preamble:
         // Is bit a preamble "one"
         if (bit) ++_bit_count;
         // In case it's not, and we have less than enough preamble bits
-        else if (_bit_count < DCC_RX_PREAMBLE_BITS * 2uz) return reset();
+        else if (_bit_count < DCC_RX_MIN_PREAMBLE_BITS * 2uz) return reset();
         // In case it's not and we have enough preamble bits but this is only
         // the first half of the packet startbit
         else if (!_byte_count) ++_byte_count;

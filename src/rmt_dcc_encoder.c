@@ -374,17 +374,17 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
                               rmt_encoder_handle_t* ret_encoder) {
   esp_err_t ret = ESP_OK;
   rmt_dcc_encoder_t* dcc_encoder = NULL;
-  ESP_GOTO_ON_FALSE(config && ret_encoder &&                  //
-                      config->num_preamble >= 17u &&          //
-                      config->num_preamble <= 30u &&          //
-                      (!config->bidibit_duration ||           //
-                       (config->bidibit_duration >= 57u &&    //
-                        config->bidibit_duration <= 61u)) &&  //
-                      config->bit1_duration >= 56u &&         //
-                      config->bit1_duration <= 60u &&         //
-                      config->bit0_duration >= 97u &&         //
-                      config->bit0_duration <= 114u &&        //
-                      config->endbit_duration <= 60u,         //
+  ESP_GOTO_ON_FALSE(config && ret_encoder &&                               //
+                      config->num_preamble >= DCC_TX_MIN_PREAMBLE_BITS &&  //
+                      config->num_preamble <= DCC_TX_MAX_PREAMBLE_BITS &&  //
+                      (!config->bidibit_duration ||                        //
+                       (config->bidibit_duration >= 57u &&                 //
+                        config->bidibit_duration <= 61u)) &&               //
+                      config->bit1_duration >= 56u &&                      //
+                      config->bit1_duration <= 60u &&                      //
+                      config->bit0_duration >= 97u &&                      //
+                      config->bit0_duration <= 114u &&                     //
+                      config->endbit_duration <= 60u,                      //
                     ESP_ERR_INVALID_ARG,
                     err,
                     TAG,

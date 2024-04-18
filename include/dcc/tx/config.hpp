@@ -15,7 +15,7 @@
 namespace dcc::tx {
 
 struct Config {
-  /// Number of preamble bits [17-255]
+  /// Number of preamble bits [17-30]
   uint8_t preamble_bits{DCC_TX_MIN_PREAMBLE_BITS};
 
   /// Duration of 1 bit [52-64]

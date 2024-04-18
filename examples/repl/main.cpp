@@ -36,7 +36,7 @@ void command_station_task(FiFo<dcc::Packet>* fifo) {
   CommandStation command_station;
 
   // Initializing the command station is optional
-  command_station.init({.preamble_bits = 17u,
+  command_station.init({.preamble_bits = DCC_TX_MIN_PREAMBLE_BITS,
                         .bit1_duration = 58u,
                         .bit0_duration = 100u,
                         .bidi = true});
