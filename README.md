@@ -143,12 +143,12 @@ set(DCC_RX_DEQUE_SIZE
 If the build is running as a top-level CMake project then tests and a REPL example will be generated.
 ```sh
 cmake -Bbuild
-cmake --build build --target DCCReplExample
+cmake --build build --target DCCRepl
 ```
 
 The REPL allows a handful of commands to be sent from a simulated command station running in one thread to a simulated decoder running in another.
 ```sh
-./build/examples/repl/DCCReplExample
+./build/examples/repl/DCCRepl
 dcc> help
 Commands available:
  - help

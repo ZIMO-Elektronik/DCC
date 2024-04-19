@@ -20,10 +20,10 @@
       "command": "./build/tests/DCCTests"
     },
     {
-      "label": "Ninja DCCReplExample",
+      "label": "Ninja DCCRepl",
       "type": "shell",
       "isBackground": true,
-      "command": "ninja -C build DCCReplExample"
+      "command": "ninja -C build DCCRepl"
     },
   ]
 }
