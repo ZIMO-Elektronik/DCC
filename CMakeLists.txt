@@ -31,10 +31,10 @@ set(DCC_RX_MIN_PREAMBLE_BITS
     10u
     CACHE STRING "Minimum number of preambel bits of decoder")
 set(DCC_RX_DEQUE_SIZE
-    32u-1u
+    31u
     CACHE STRING "Size of the receiver deque of decoder")
 set(DCC_RX_BIDI_DEQUE_SIZE
-    8u-1u
+    7u
     CACHE STRING "Size of the sender deque of decoder")
 set(DCC_TX_MIN_PREAMBLE_BITS
     17u
@@ -43,7 +43,7 @@ set(DCC_TX_MAX_PREAMBLE_BITS
     30u
     CACHE STRING "Maximum number of preambel bits of command station")
 set(DCC_TX_DEQUE_SIZE
-    4u-1u
+    3u
     CACHE STRING "Size of the transmitter deque of command station")
 
 add_library(DCC INTERFACE)
