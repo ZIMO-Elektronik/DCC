@@ -127,7 +127,7 @@ FetchContent_Declare(
 target_link_libraries(YourTarget PRIVATE DCC::DCC)
 ```
 
-or, on [ESP platforms](https://www.espressif.com/en/products/socs/esp32), with the [IDF Component Manager](https://docs.espressif.com/projects/idf-component-manager/en/latest/) by adding it to a `idf_component.yml` file.
+or, on [ESP32 platforms](https://www.espressif.com/en/products/socs/esp32), with the [IDF Component Manager](https://docs.espressif.com/projects/idf-component-manager/en/latest/) by adding it to a `idf_component.yml` file.
 ```yaml
 dependencies:
   zimo-elektronik/dcc:
@@ -187,6 +187,11 @@ dcc> Address 3: set speed 18
 ```
 
 #### ESP32
+On [ESP32 platforms](https://www.espressif.com/en/products/socs/esp32) examples from the [examples](https://github.com/ZIMO-Elektronik/DCC/raw/master/examples) subfolder can be built directly using the [IDF Frontend](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/tools/idf-py.html).
+
+```sh
+idf.py create-project-from-example "zimo-elektronik/dcc^0.34.0:esp32"
+```
 
 #### STM32
 An example that runs on [STM32](https://www.st.com/en/microcontrollers-microprocessors/stm32-32-bit-arm-cortex-mcus.html) platforms is a decoder and command station pair for a [NUCLEO-H743ZI](https://www.st.com/en/evaluation-tools/nucleo-h743zi.html) development board.
