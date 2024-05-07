@@ -6,8 +6,8 @@ struct CommandStation : dcc::tx::CrtpBase<CommandStation> {
   friend dcc::tx::CrtpBase<CommandStation>;
 
 private:
-  // Switch left and right track output
-  void setTrackOutputs(bool left, bool right);
+  // Write track outputs
+  void trackOutputs(bool N, bool P);
 
   // BiDi start
   void biDiStart();

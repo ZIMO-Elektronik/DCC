@@ -5,10 +5,16 @@ on:
     branches: [master]
 
 jobs:
+  arm-none-eabi-gcc:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/arm-none-eabi-gcc.yml@v0.0.4
+    with:
+      arch: -mcpu=cortex-m7
+      target: DCCStm32Decoder DCCStm32CommandStation
+
   esp-elf-gcc:
     uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.0.4
     with:
-      path: examples/rmt
+      path: examples/esp32
       target: esp32
 
   x86_64-linux-gnu-gcc:

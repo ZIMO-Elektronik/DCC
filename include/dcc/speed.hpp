@@ -2,18 +2,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// BiDi dyn speed
+/// Speed
 ///
-/// \file   dcc/bidi/speed.hpp
+/// \file   dcc/speed.hpp
 /// \author Vincent Hamp
-/// \date   15/06/2023
+/// \date   06/06/2024
 
 #pragma once
 
-#include "dyn.hpp"
+#include <cstdint>
 
-namespace dcc::bidi {
+namespace dcc {
 
-struct Speed : Dyn {};
+enum Speed : int32_t {
+  EStop = -1,
+  Stop = 0,
+};
 
-}  // namespace dcc::bidi
+}  // namespace dcc

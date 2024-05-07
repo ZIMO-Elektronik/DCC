@@ -38,7 +38,7 @@ constexpr Timings bytes2timings(std::span<uint8_t const> bytes,
   auto first{begin(timings)};
 
   // Preamble
-  auto const preamble_count{cfg.preamble_bits * 2uz};
+  auto const preamble_count{cfg.num_preamble * 2uz};
   first =
     std::ranges::fill_n(first,
                         static_cast<Timings::difference_type>(preamble_count),

@@ -36,10 +36,12 @@ void command_station_task(FiFo<dcc::Packet>* fifo) {
   CommandStation command_station;
 
   // Initializing the command station is optional
-  command_station.init({.preamble_bits = DCC_TX_MIN_PREAMBLE_BITS,
-                        .bit1_duration = 58u,
-                        .bit0_duration = 100u,
-                        .bidi = true});
+  command_station.init({
+    .num_preamble = DCC_TX_MIN_PREAMBLE_BITS,
+    .bit1_duration = 58u,
+    .bit0_duration = 100u,
+    .flags = {.invert = false, .bidi = true},
+  });
 
   for (;;) {
     std::this_thread::sleep_for(1ms);
@@ -73,13 +75,13 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
 
   // Set direction and speed
   root->Insert("direction_speed",
-               [&](std::ostream&, int8_t dir, uint8_t speed) {
+               [&](std::ostream&, bool dir, uint8_t speed) {
                  auto const packet{dcc::make_advanced_operations_speed_packet(
-                   addr, dir, speed)};
+                   addr, dir << 7u | speed)};
                  fifo->push_back(packet);
                },
                "Set direction and speed",
-               {"Direction [>0 forward, <=0 backward]", "Speed [0-126]"});
+               {"Direction [1 forward, 0 backward]", "Speed [0-127]"});
 
   // Set F4-F0
   root->Insert("f4-f0",

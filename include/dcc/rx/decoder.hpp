@@ -19,7 +19,7 @@ template<typename T>
 concept Decoder = Readable<T> && Writable<T> &&
                   requires(T t,
                            uint32_t addr,
-                           int32_t dir,
+                           bool dir,
                            int32_t speed,
                            uint32_t mask,
                            uint32_t state,
@@ -27,7 +27,6 @@ concept Decoder = Readable<T> && Writable<T> &&
                            std::span<uint8_t const> bytes) {
                     { t.direction(addr, dir) } -> std::same_as<void>;
                     { t.speed(addr, speed) } -> std::same_as<void>;
-                    { t.emergencyStop(addr) } -> std::same_as<void>;
                     { t.function(addr, mask, state) } -> std::same_as<void>;
                     { t.serviceModeHook(service_mode) } -> std::same_as<void>;
                     { t.serviceAck() } -> std::same_as<void>;

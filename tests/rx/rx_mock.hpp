@@ -5,7 +5,6 @@
 struct RxMock : dcc::rx::CrtpBase<RxMock> {
   MOCK_METHOD(void, direction, (uint32_t, int32_t));
   MOCK_METHOD(void, speed, (uint32_t, int32_t));
-  MOCK_METHOD(void, emergencyStop, (uint32_t));
   MOCK_METHOD(void, function, (uint32_t, uint32_t, uint32_t));
   MOCK_METHOD(void, serviceModeHook, (bool));
   MOCK_METHOD(void, serviceAck, ());

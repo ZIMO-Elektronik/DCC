@@ -14,14 +14,16 @@
 #include <ztl/bits.hpp>
 #include "../addresses.hpp"
 #include "../crc8.hpp"
+#include "../direction.hpp"
 #include "../instruction.hpp"
 #include "../packet.hpp"
+#include "../speed.hpp"
 #include "../utility.hpp"
 #include "async_readable.hpp"
 #include "async_writable.hpp"
 #include "bidi/crtp_base.hpp"
 #include "decoder.hpp"
-#include "east_west_man.hpp"
+#include "east_west.hpp"
 #include "timing.hpp"
 
 namespace dcc::rx {
@@ -113,18 +115,10 @@ struct CrtpBase : bidi::CrtpBase<T> {
 
   /// Execute received commands
   ///
-  ///
-  /// \tparam Dyns... Types of dyn messages
-  /// \param  dyns... Messages
-  /// \retval true    Command to own address
-  /// \retval false   Command to other address
-  template<std::derived_from<bidi::Dyn>... Dyns>
-  bool execute(Dyns&&... dyns)
-    requires((sizeof...(Dyns) <
-              DCC_RX_BIDI_DEQUE_SIZE))  // TODO remove double braces, currently
-                                        // fucks with VSCode highlighting
-  {
-    BiDi::executeThreadMode(std::forward<Dyns>(dyns)...);
+  /// \retval true  Command to own address
+  /// \retval false Command to other address
+  bool execute() {
+    BiDi::executeThreadMode();
     return executeThreadMode();
   }
 
@@ -411,11 +405,11 @@ private:
 
       // 126 speed steps (plus 0)
       case 0b0011'1111u: {
-        auto const dir{bytes[1uz] & ztl::make_mask(7u) ? 1 : -1};
-        // Halt
-        if (!(bytes[1uz] & 0b0111'1111u)) directionSpeed(addr, dir, 0);
+        auto const dir{static_cast<bool>(bytes[1uz] & ztl::make_mask(7u))};
+        // Stop
+        if (!(bytes[1uz] & 0b0111'1111u)) directionSpeed(addr, dir, Stop);
         // Emergency stop
-        else if (!(bytes[1uz] & 0b0111'1110u)) impl().emergencyStop(addr);
+        else if (!(bytes[1uz] & 0b0111'1110u)) impl().speed(addr, EStop);
         else {
           auto const speed{scale_speed<126>((bytes[1uz] & 0b0111'1111) - 1)};
           directionSpeed(addr, dir, speed);
@@ -423,15 +417,16 @@ private:
         break;
       }
 
-      // MAN
+      // Special operating modes
       case 0b0011'1110u:
-        if constexpr (EastWestMan<T>) {
-          _man = bytes[1uz] & ztl::make_mask(7u);
-          if (auto const dir{bytes[1uz] & ztl::make_mask(6u)   ? 1   // East
-                             : bytes[1uz] & ztl::make_mask(5u) ? -1  // West
-                                                               : 0})
-            impl().eastWestMan(addr, dir);
-          else impl().eastWestMan(addr, {});
+        _man = bytes[1uz] & ztl::make_mask(7u);
+        if constexpr (EastWest<T>) {
+          if (bytes[1uz] & ztl::make_mask(6u))  // East
+            impl().eastWestDirection(addr, East);
+          else if (ztl::make_mask(5u))  // West
+            impl().eastWestDirection(addr, West);
+          else  // Neither
+            impl().eastWestDirection(addr, std::nullopt);
         }
         break;
 
@@ -447,13 +442,13 @@ private:
   /// \param  addr  Address
   /// \param  bytes Raw bytes
   void speedAndDirection(uint32_t addr, std::span<uint8_t const> bytes) {
-    auto const dir{bytes[0uz] & ztl::make_mask(5u) ? 1 : -1};
+    auto const dir{static_cast<bool>(bytes[0uz] & ztl::make_mask(5u))};
     int32_t speed{};
 
-    // Halt
-    if (!(bytes[0uz] & 0b0000'1111u)) speed = 0;
+    // Stop
+    if (!(bytes[0uz] & 0b0000'1111u)) speed = Stop;
     // Emergency stop
-    else if (!(bytes[0uz] & 0b0000'1110u)) return impl().emergencyStop(addr);
+    else if (!(bytes[0uz] & 0b0000'1110u)) return impl().speed(addr, EStop);
     else speed = static_cast<int32_t>(bytes[0uz] & 0b0000'1111u) - 1;
 
     // 14 speed steps and F0
@@ -770,10 +765,10 @@ private:
   /// \param  addr  Address
   /// \param  dir   Direction
   /// \param  speed Speed
-  void directionSpeed(uint32_t addr, int32_t dir, int32_t speed) {
+  void directionSpeed(uint32_t addr, bool dir, int32_t speed) {
     auto const reversed{addr == _addrs.primary ? _addrs.primary.reversed
                                                : _addrs.consist.reversed};
-    impl().direction(addr, reversed ? dir * -1 : dir);
+    impl().direction(addr, reversed ? !dir : dir);
     impl().speed(addr, speed);
   }
 

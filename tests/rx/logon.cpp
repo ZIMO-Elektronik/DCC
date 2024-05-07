@@ -17,8 +17,8 @@ TEST_F(RxTest, logon_with_new_cid_and_session_id) {
   Cutout();
 
   // Execute commands to address 1000
-  EXPECT_CALL(_mock, direction(3u, -1));
+  EXPECT_CALL(_mock, direction(3u, false));
   EXPECT_CALL(_mock, speed(3u, _));
-  Receive(dcc::make_advanced_operations_speed_packet(1000u, -1, 10u));
+  Receive(dcc::make_advanced_operations_speed_packet(1000u, 0u));
   Execute();
 }

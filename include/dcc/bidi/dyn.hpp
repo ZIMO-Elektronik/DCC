@@ -21,8 +21,8 @@ struct Dyn {
   constexpr operator value_type&() { return d; }
   constexpr operator value_type const&() const { return d; }
 
-  value_type d;  ///< DV (dynamic CV)
-  uint8_t x;     ///< Subindex
+  value_type d{};  ///< DV (dynamic CV)
+  uint8_t x{};     ///< Subindex
 };
 
 }  // namespace dcc::bidi

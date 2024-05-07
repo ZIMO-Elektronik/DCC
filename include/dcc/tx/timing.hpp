@@ -15,12 +15,12 @@
 namespace dcc::tx {
 
 enum Timing {
-  Bit1Min = 56u,         ///< Minimal timing for half a 1-bit
-  Bit1 = 58u,            ///< Standard timing for half a 1-bit
-  Bit1Max = 60u,         ///< Maximal timing for half a 1-bit
-  Bit0Min = 97u,         ///< Minimal timing for half a 0-bit
-  Bit0 = 100u,           ///< Standard timing for half a 0-bit
-  Bit0Max = 114u,        ///< Maximal timing for half a 0-bit
+  Bit1Min = DCC_TX_MIN_BIT_1_TIMING,  ///< Minimal timing for half a 1-bit
+  Bit1 = 58u,                         ///< Standard timing for half a 1-bit
+  Bit1Max = DCC_TX_MAX_BIT_1_TIMING,  ///< Maximal timing for half a 1-bit
+  Bit0Min = DCC_TX_MIN_BIT_0_TIMING,  ///< Minimal timing for half a 0-bit
+  Bit0 = 100u,                        ///< Standard timing for half a 0-bit
+  Bit0Max = DCC_TX_MAX_BIT_0_TIMING,  ///< Maximal timing for half a 0-bit
   Bit0MaxAnalog = 9898u  ///< Maximal timing for half a 0-bit analog
 };
 
