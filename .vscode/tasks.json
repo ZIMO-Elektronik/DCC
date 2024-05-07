@@ -2,6 +2,12 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "CMake DCCStm32*",
+      "type": "shell",
+      "isBackground": true,
+      "command": "cmake -Bbuild -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DARCH=\"-mcpu=cortex-m7 -mfloat-abi=hard\" -DCMAKE_TOOLCHAIN_FILE=CMakeModules/cmake/toolchain-arm-none-eabi-gcc.cmake"
+    },
+    {
       "label": "CMake DCCTests",
       "type": "shell",
       "isBackground": true,

@@ -12,18 +12,14 @@ Decoder::Decoder() {
   _cvs[8uz - 1uz] = 13u;     // Temporary manufacturer ID (S-9.2.2 Appendix A)
 }
 
-void Decoder::direction(uint32_t addr, int32_t dir) {
+void Decoder::direction(uint32_t addr, bool dir) {
   cli::Cli::cout() << "Address " << addr << ": set direction "
-                   << (dir == 1 ? "forward" : "backward") << PROMPTENDL;
+                   << (dir ? "forward" : "backward") << PROMPTENDL;
 }
 
 void Decoder::speed(uint32_t addr, int32_t speed) {
   cli::Cli::cout() << "Address " << addr << ": set speed " << speed
                    << PROMPTENDL;
-}
-
-void Decoder::emergencyStop(uint32_t addr) {
-  cli::Cli::cout() << "Address " << addr << ": e-stop" << PROMPTENDL;
 }
 
 void Decoder::function(uint32_t addr, uint32_t mask, uint32_t state) {

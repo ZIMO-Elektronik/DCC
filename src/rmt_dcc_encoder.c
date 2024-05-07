@@ -380,11 +380,11 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
                       (!config->bidibit_duration ||                        //
                        (config->bidibit_duration >= 57u &&                 //
                         config->bidibit_duration <= 61u)) &&               //
-                      config->bit1_duration >= 56u &&                      //
-                      config->bit1_duration <= 60u &&                      //
-                      config->bit0_duration >= 97u &&                      //
-                      config->bit0_duration <= 114u &&                     //
-                      config->endbit_duration <= 60u,                      //
+                      config->bit1_duration >= DCC_TX_MIN_BIT_1_TIMING &&  //
+                      config->bit1_duration <= DCC_TX_MAX_BIT_1_TIMING &&  //
+                      config->bit0_duration >= DCC_TX_MIN_BIT_0_TIMING &&  //
+                      config->bit0_duration <= DCC_TX_MAX_BIT_0_TIMING &&  //
+                      config->endbit_duration <= DCC_TX_MAX_BIT_1_TIMING,  //
                     ESP_ERR_INVALID_ARG,
                     err,
                     TAG,

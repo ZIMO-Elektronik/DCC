@@ -18,7 +18,7 @@
 #include "../../bidi/datagram.hpp"
 #include "../../bidi/direction_status_byte.hpp"
 #include "../../bidi/dyn.hpp"
-#include "../../bidi/speed.hpp"
+#include "../../bidi/kmh.hpp"
 #include "../../bidi/temperature.hpp"
 #include "../../bidi/track_voltage.hpp"
 #include "../../zimo_id.hpp"
@@ -38,6 +38,24 @@ template<typename T>
 struct CrtpBase {
   friend T;
 
+  /// Add dyn (ID7) datagrams to deque
+  ///
+  /// \tparam Dyns... Types of dyn datagrams
+  /// \param  dyns... Datagrams
+  template<std::derived_from<Dyn>... Dyns>
+  void datagram(Dyns&&... dyns) {
+    // Block full and release empty deque to avoid getting the same datagrams
+    // send over and over again...
+    if (full(_dyn_deque)) _block_dyn_deque = true;
+    else if (empty(_dyn_deque)) {
+      _block_dyn_deque = false;
+      dyn(_qos, 7u);
+    }
+
+    // Only allow pushing datagrams if not blocked
+    if (!_block_dyn_deque) (dyn(std::forward<Dyns>(dyns)), ...);
+  }
+
   /// Start channel1 (12 bit payload)
   void cutoutChannel1() {
     // Only send in channel1 if last valid address was broadcast, short or long
@@ -54,11 +72,11 @@ struct CrtpBase {
     // Only send in channel2 if last valid address was own
     if ((_addrs.received == _addrs.primary && !_logon_assigned) ||
         (_addrs.received == _addrs.logon && _logon_assigned))
-      empty(_pom_deque) ? appExtDynSubId() : appPom();
+      empty(_pom_deque) ? appDyn() : appPom();
     // or consist
     else if (_addrs.received == _addrs.consist && !_logon_assigned &&
              _ch2_consist_enabled)
-      appExtDynSubId();
+      appDyn();
     // or automatic logon
     else if (_addrs.received.type == Address::AutomaticLogon) appLogon(2u);
     // or broadcast
@@ -71,21 +89,8 @@ protected:
   Decoder auto const& impl() const { return static_cast<T const&>(*this); }
 
   /// Execute adds adr (ID1/2) and dyn (ID7) datagrams to deque in thread mode
-  ///
-  /// \tparam Dyns... Types of dyn datagrams
-  /// \param  dyns... Messages
-  template<std::derived_from<Dyn>... Dyns>
-  void executeThreadMode(Dyns&&... dyns)
-    requires((sizeof...(Dyns) <
-              DCC_RX_BIDI_DEQUE_SIZE))  // TODO remove double braces, currently
-                                        // fucks with VSCode highlighting
-  {
-    if (_ch1_addr_enabled && empty(_adr_deque)) adr();
-    if (_ch2_enabled && (sizeof...(Dyns) > 0uz) &&
-        (DCC_RX_BIDI_DEQUE_SIZE - size(_dyn_deque) >= sizeof...(Dyns) + 1uz)) {
-      (dyn(std::forward<Dyns>(dyns)), ...);
-      dyn(_qos, 7u);
-    }
+  void executeThreadMode() {
+    adr();
     logonStore();
     updateTimepoints();
   }
@@ -100,7 +105,8 @@ protected:
     _ch2_enabled = enabled && (cv28 & ztl::make_mask(1u));
     _logon_enabled = enabled && (cv28 & ztl::make_mask(7u));
     _ch2_consist_enabled = enabled && ch2_consist_enabled;
-    if constexpr (HighCurrent<T>) impl().highCurrent(cv28 & ztl::make_mask(6u));
+    if constexpr (HighCurrent<T>)
+      impl().highCurrentBiDi(cv28 & ztl::make_mask(6u));
     _did = {impl().readCv(250u - 1u),
             impl().readCv(251u - 1u),
             impl().readCv(252u - 1u),
@@ -232,8 +238,9 @@ protected:
 private:
   /// Addr adr datagrams
   void adr() {
+    if (!_ch1_addr_enabled || !empty(_adr_deque)) return;
     // Active address is primary
-    if (!_addrs.consist) {
+    else if (!_addrs.consist) {
       _adr_deque.push_back(adrHigh(_addrs.primary));
       _adr_deque.push_back(adrLow(_addrs.primary));
     }
@@ -253,12 +260,12 @@ private:
   /// \param  d Generic dyn datagram
   void dyn(Dyn d) { dyn(d.d, d.x); }
 
-  /// Add speed dyn datagram
+  /// Add kmh dyn datagram
   ///
-  /// \param  speed Speed dyn datagram
-  void dyn(Speed speed) {
-    auto const tmp{speed < 512 ? (speed < 256 ? speed : speed - 256) : 255};
-    dyn(static_cast<uint8_t>(tmp), speed < 256 ? 0u : 1u);
+  /// \param  kmh Kmh dyn datagram
+  void dyn(Kmh kmh) {
+    auto const tmp{kmh < 512 ? (kmh < 256 ? kmh : kmh - 256) : 255};
+    dyn(static_cast<uint8_t>(tmp), kmh < 256 ? 0u : 1u);
   }
 
   /// Add temperature dyn datagram
@@ -272,7 +279,9 @@ private:
   /// Add direction status dyn datagram
   ///
   /// \param  dir_stat  Direction status byte dyn datagram
-  void dyn(DirectionStatusByte dir_stat) { dyn(dir_stat, 27u); }
+  void dyn(DirectionStatusByte dir_stat) {
+    dyn(static_cast<uint8_t>(dir_stat), 27u);
+  }
 
   /// Add track voltage dyn datagram
   ///
@@ -283,11 +292,12 @@ private:
     dyn(static_cast<uint8_t>(track_voltage_with_dc_component / 100), 46u);
   }
 
-  /// Handle app:dyn datagrams
+  /// Add app:dyn datagrams
   ///
   /// \param  d DV (dynamic CV)
   /// \param  x Subindex
   void dyn(uint8_t d, uint8_t x) {
+    if (!_ch2_enabled || full(_dyn_deque)) return;
     _dyn_deque.push_back(encode_datagram(
       make_datagram<Bits::_18>(7u, static_cast<uint32_t>(d << 6u | x))));
   }
@@ -309,8 +319,8 @@ private:
     _pom_deque.pop_front();
   }
 
-  /// Handle app:ext, app:dyn and app:subID datagrams
-  void appExtDynSubId() {
+  /// Handle app:dyn datagrams
+  void appDyn() {
     if (empty(_dyn_deque)) return;
     auto first{begin(_ch2)};
     auto const last{cend(_ch2)};
@@ -401,20 +411,28 @@ private:
     _last_packet_tp = packet_tp;
   }
 
+  // Timepoints
   std::chrono::time_point<std::chrono::system_clock> _last_packet_tp{};
   std::chrono::time_point<std::chrono::system_clock> _tos_tp{};
+
   std::array<uint8_t, 4uz> _did{};
+
+  // Buffers
   Channel1 _ch1{};
   Channel2 _ch2{};
+
+  // Deques
   ztl::inplace_deque<std::array<uint8_t, datagram_size<Bits::_18>>,
                      DCC_RX_BIDI_DEQUE_SIZE>
     _dyn_deque{};
-  ztl::inplace_deque<Channel1, 2uz> _adr_deque{};
   ztl::inplace_deque<Channel1, DCC_RX_BIDI_DEQUE_SIZE> _pom_deque{};
+  ztl::inplace_deque<Channel1, 2uz> _adr_deque{};
   ztl::inplace_deque<Channel2, 2uz> _tos_deque{};
   ztl::inplace_deque<BundledChannels, 2uz> _logon_deque{};
+
   Backoff _logon_backoff{};
   Backoff _tos_backoff{};
+
   uint16_t _cid{};        ///< Central ID
   uint8_t _session_id{};  ///< Session ID
   uint8_t _qos{};         ///< Quality of service
@@ -428,6 +446,7 @@ private:
 
   bool _ch1_addr_enabled : 1 {};
   bool _ch2_enabled : 1 {};
+  bool _block_dyn_deque : 1 {};
 };
 
 }  // namespace dcc::rx::bidi

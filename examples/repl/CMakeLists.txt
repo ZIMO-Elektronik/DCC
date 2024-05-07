@@ -1,4 +1,4 @@
-file(GLOB_RECURSE SRC *.cpp)
+file(GLOB_RECURSE SRC src/*.cpp)
 add_executable(DCCRepl ${SRC})
 
 target_common_warnings(DCCRepl PRIVATE)

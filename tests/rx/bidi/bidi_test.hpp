@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rx_mock.hpp"
+#include "../rx_mock.hpp"
 
 using namespace dcc::bidi;
 using namespace ::testing;

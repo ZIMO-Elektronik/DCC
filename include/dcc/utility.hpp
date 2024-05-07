@@ -95,21 +95,17 @@ consteval auto make_reset_packet() { return Packet{0x00u, 0x00u, 0x00u}; }
 
 /// Make an advanced operations speed packet
 ///
-/// \param  addr  Address
-/// \param  dir   Direction
-/// \param  speed Speed (0-126)
+/// \param  addr      Address
+/// \param  rggggggg  Direction and speed byte
 /// \return Advanced operations speed packet
 constexpr auto make_advanced_operations_speed_packet(Address::value_type addr,
-                                                     int8_t dir,
-                                                     uint8_t speed) {
+                                                     uint8_t rggggggg) {
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
                            first)};
   *last++ = 0b0011'1111u;
-  auto const r{static_cast<uint32_t>(dir > 0) << 7u};
-  auto const g{speed & 0x7Fu};
-  *last++ = static_cast<uint8_t>(r | g);
+  *last++ = rggggggg;
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;

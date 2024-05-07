@@ -1,3 +1,4 @@
 - Literal for converting CV number to index? The "- 1u" everything is fucking ugly
 - dcc::tx::CrtpBase currently pops it's deque at a bad time. Although the design or inplace_deque guarantees that it's not UB it looks funky.
 - Replace `RMT_MEM_ALLOC_CAPS` macro with [`rmt_alloc_encoder_mem`](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/rmt.html#_CPPv421rmt_alloc_encoder_mem6size_t)
+- Add STM32 examples?

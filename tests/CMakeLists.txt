@@ -7,6 +7,8 @@ sanitize(address,undefined)
 
 target_common_warnings(DCCTests PRIVATE)
 
+target_compile_options(DCC INTERFACE -Werror;-Wno-error=deprecated-declarations)
+
 cpmaddpackage("gh:google/googletest#main")
 
 target_link_libraries(DCCTests PRIVATE DCC::DCC GTest::gtest_main GTest::gmock)

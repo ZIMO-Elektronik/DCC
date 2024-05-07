@@ -32,8 +32,8 @@ struct CrtpBase {
   ///
   /// \param  cfg Configuration
   void init(Config cfg) {
-    assert(cfg.preamble_bits >= DCC_TX_MIN_PREAMBLE_BITS &&                 //
-           cfg.preamble_bits <= DCC_TX_MAX_PREAMBLE_BITS &&                 //
+    assert(cfg.num_preamble >= DCC_TX_MIN_PREAMBLE_BITS &&                  //
+           cfg.num_preamble <= DCC_TX_MAX_PREAMBLE_BITS &&                  //
            cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max &&  //
            cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);   //
     _cfg = cfg;
@@ -62,7 +62,7 @@ struct CrtpBase {
     // As long as there are packet timings
     if (_packet_count < _packet->size()) return packetTiming();
     // or BiDi timings
-    else if (_cfg.bidi && _bidi_count <= 4uz) return bidiTiming();
+    else if (_cfg.flags.bidi && _bidi_count <= 4uz) return bidiTiming();
 
     // TODO theoretically deque could be popped here safely?
     // we'd just need to check whether packet doesn't point to idle_packet and
@@ -96,8 +96,12 @@ private:
   Timings::value_type packetTiming() {
     auto const retval{
       (*_packet)[static_cast<Timings::size_type>(_packet_count)]};
-    if (_packet_count++ % 2uz) impl().setTrackOutputs(false, true);
-    else impl().setTrackOutputs(true, false);
+    // First half bit
+    if (!(_packet_count++ % 2uz))
+      impl().trackOutputs(false ^ _cfg.flags.invert, true ^ _cfg.flags.invert);
+    // Second half bit
+    else
+      impl().trackOutputs(true ^ _cfg.flags.invert, false ^ _cfg.flags.invert);
     return retval;
   }
 
@@ -108,12 +112,13 @@ private:
     switch (_bidi_count++) {
       // Send half a 1 bit
       case 0uz:
-        impl().setTrackOutputs(true, false);
+        impl().trackOutputs(false ^ _cfg.flags.invert,
+                            true ^ _cfg.flags.invert);
         return static_cast<Timings::value_type>(bidi::Timing::TCS);
 
       // Cutout start
       case 1uz:
-        impl().setTrackOutputs(false, false);
+        impl().trackOutputs(false, false);
         impl().biDiStart();
         return static_cast<Timings::value_type>(bidi::Timing::TTS1 -
                                                 bidi::Timing::TCS);

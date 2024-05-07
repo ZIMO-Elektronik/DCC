@@ -9,14 +9,11 @@ struct Decoder : dcc::rx::CrtpBase<Decoder> {
   Decoder();
 
 private:
-  // Set direction (1 forward, -1 backward)
-  void direction(uint32_t addr, int32_t dir);
+  // Set direction (1 forward, 0 backward)
+  void direction(uint32_t addr, bool dir);
 
-  // Set speed (regardless of CV settings scaled to 0-255)
+  // Set speed [-1, 255]
   void speed(uint32_t addr, int32_t speed);
-
-  // Emergency stop
-  void emergencyStop(uint32_t addr);
 
   // Set function inputs
   void function(uint32_t addr, uint32_t mask, uint32_t state);

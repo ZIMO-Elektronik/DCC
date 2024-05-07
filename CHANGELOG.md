@@ -1,11 +1,19 @@
 # Changelog
 
+##
+- Add datagram method to `rx::bidi::CrtpBase` to queue dyn (ID7) datagrams
+- Replace `int32_t` direction (1, -1) with `bool` (1, 0)
+- Remove decoders `emergencyStop` API and replace it with `speed(-1)`
+- Add `Direction` and `Speed` enumerations
+- Rename `bidi::Speed` to `bidi::Kmh` to avoid ambiguity
+- Rename `tx::Config::preamble_bits` to `num_preamble` to match RMT configuration
+
 ## 0.33.1
 - Add `DCC_TX_MAX_PREAMBLE_BITS` definition
 
 ## 0.33.0
 - Limit number of preamble bits of RMT encoder to 30
-- Rename dcc_encoder_config_t::cutoutbit_duration to bidibit_duration
+- Rename `dcc_encoder_config_t::cutoutbit_duration` to `bidibit_duration`
 - Remove optional mduEntry
 - Bugfix standard compliant CV28
   - Logon must be enabled by CV28:7 and ignores CV28:1 and CV28:0
@@ -15,17 +23,17 @@
   - Logon address is only temporary
 
 ## 0.32.0
-- Individual timings for namespace dcc::rx and dcc::tx
-- Move time2bit to namespace dcc::rx
+- Individual timings for namespace `dcc::rx` and `dcc::tx`
+- Move `time2bit` to namespace `dcc::rx`
 - Bugfix RMT encoder [#13032](https://github.com/espressif/esp-idf/issues/13032)
 
 ## 0.31.0
-- Changes to namespace dcc::tx
-  - Rename raw2timings to bytes2timings
-  - Rename CrtpBase::raw to CrtpBase::bytes
+- Changes to namespace `dcc::tx`
+  - Rename `raw2timings` to `bytes2timings`
+  - Rename `CrtpBase::raw` to `CrtpBase::bytes`
 
 ## 0.30.0
-- Use 'speed' instead of 'notch'
+- Use `speed` instead of `notch`
 - Update to ZTL 0.18.0
 
 ## 0.29.1
@@ -52,26 +60,26 @@
 - API changes to bytewise CV read
 
 ## 0.26.1
-- Bugfix QoS message not written to deque
+- Bugfix QoS datagram not written to deque
 
 ## 0.26.0
 - API changes to bitwise CV read
 
 ## 0.25.0
-- BiDi dyn messages get added from execute method
-- Add BiDi temperature message (ID7, subindex 26)
+- BiDi dyn datagrams get added from execute method
+- Add BiDi temperature datagram (ID7, subindex 26)
 - CV15/16 the values 0 can no longer activate the lock
 
 ## 0.24.1
 - Short and long addresses are considered equal if their values are
-- make_*_packet functions
-- Bugfix QoS message wasn't thread safe
+- `make_*_packet` functions
+- Bugfix QoS datagram wasn't thread safe
 
 ## 0.24.0
-- Rename serviceMode to serviceModeHook
+- Rename `serviceMode` to `serviceModeHook`
 
 ## 0.23.0
-- time2bit returns Bit enum instead of std::optional (overhead is pretty significant)
+- `time2bit` returns `Bit` enum instead of `std::optional` (overhead is pretty significant)
 
 ## 0.22.2
 - Use CPM.cmake
@@ -95,7 +103,7 @@
 - LOGON_ASSIGN CRC must be calculated before 6/8 encoding
 
 ## 0.21.0
-- Mainline RCN218
+- Mainline RCN-218
 - LOGON_ENABLE does not have CRC
 - LOGON_SELECT uses 6/8 encoding
 
@@ -103,7 +111,7 @@
 - Add proprietary CV20
 
 ## 0.20.0
-- Minimal implementation of (crippled) RCN218
+- Minimal implementation of (crippled) RCN-218
 - Update to ZTL 0.15.0
 
 ## 0.19.0

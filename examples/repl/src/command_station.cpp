@@ -1,6 +1,6 @@
 #include "command_station.hpp"
 
-void CommandStation::setTrackOutputs(bool, bool) {}
+void CommandStation::trackOutputs(bool, bool) {}
 
 void CommandStation::biDiStart() {}
 
