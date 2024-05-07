@@ -1,6 +1,6 @@
 # Changelog
 
-##
+## 0.34.0
 - Add datagram method to `rx::bidi::CrtpBase` to queue dyn (ID7) datagrams
 - Replace `int32_t` direction (1, -1) with `bool` (1, 0)
 - Remove decoders `emergencyStop` API and replace it with `speed(-1)`
