@@ -8,6 +8,8 @@ on:
 
 jobs:
   tests:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/ctest.yml@v0.0.4
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.0.6
     with:
+      args: -DCMAKE_BUILD_TYPE=Debug
       target: DCCTests
+      post-build: ctest --test-dir build --schedule-random --timeout 86400
