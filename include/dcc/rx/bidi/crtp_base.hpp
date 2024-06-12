@@ -111,9 +111,9 @@ protected:
             impl().readCv(251u - 1u),
             impl().readCv(252u - 1u),
             impl().readCv(253u - 1u)};
-    _cid = static_cast<decltype(_cid)>((impl().readCv(65297u - 1u) << 8u) |
-                                       impl().readCv(65298u - 1u));
-    _session_id = impl().readCv(65299u - 1u);
+    _cids.front() = static_cast<decltype(_cids)::value_type>(
+      (impl().readCv(65297u - 1u) << 8u) | impl().readCv(65298u - 1u));
+    _session_ids.front() = impl().readCv(65299u - 1u);
   }
 
   /// Quality of service
@@ -154,22 +154,30 @@ protected:
   void logonEnable(AddressGroup gg, uint16_t cid, uint8_t session_id) {
     if (!_logon_enabled) return;
 
-    auto const cid_equal{cid == _cid};
-    auto const session_id_equal{session_id == _session_id};
+    // Store new CID and session ID
+    _cids.back() = cid;
+    _session_ids.back() = session_id;
 
     // Exceptions
-    // - Either skip logon if diff between session IDs is <=4
-    // - Or force new logon if diff is >4
-    if (cid_equal && !session_id_equal) {
-      auto const skip{static_cast<uint32_t>(session_id - _session_id) <= 4u};
-      _logon_selected = _logon_assigned = skip;
-      _logon_backoff.reset();
+    if (_cids.back() == _cids.front()) {
+      // Difference decides whether fast logon or skip
+      auto const session_id_diff{
+        static_cast<uint32_t>(_session_ids.back() - _session_ids.front())};
+      auto const skip{session_id_diff <= 4u};
+      _logon_selected = _logon_assigned = _logon_store = skip;
+
+      // Skip logon if diff between session IDs is <=4
+      if (skip) {
+        std::array const cv65300_65301{impl().readCv(65300u - 1u),
+                                       impl().readCv(65301u - 1u)};
+        _addrs.logon = decode_address(cbegin(cv65300_65301));
+        return;
+      }
+      // Force new logon if diff is >4
+      else
+        _addrs.logon = 0u;
     }
 
-    _cid = cid;
-    _session_id = session_id;
-
-    if (_logon_selected || _logon_assigned) return;
     switch (gg) {
       case AddressGroup::All: [[fallthrough]];  // All decoders
       case AddressGroup::Loco: break;           // Multi-function decoders
@@ -221,8 +229,7 @@ protected:
     if (!_logon_enabled || !std::ranges::equal(did, _did)) return;
     _logon_assigned = _logon_store = true;
     _addrs.logon = addr;
-    // Fucking stupid and doesn't conform to standard...
-    if (overwrite_primary_address) _addrs.primary = addr;
+    if (addr && overwrite_primary_address) _addrs.primary = addr;  // Stupid
     static constexpr std::array<uint8_t, 5uz> data{
       13u << 4u | 0u, 0u, 0u, 0u, 0u};
     assert(!full(_logon_deque));
@@ -239,6 +246,11 @@ private:
   /// Addr adr datagrams
   void adr() {
     if (!_ch1_addr_enabled || !empty(_adr_deque)) return;
+    // Active address is logon
+    else if (_addrs.logon) {
+      _adr_deque.push_back(adrHigh(_addrs.logon));
+      _adr_deque.push_back(adrLow(_addrs.logon));
+    }
     // Active address is primary
     else if (!_addrs.consist) {
       _adr_deque.push_back(adrHigh(_addrs.primary));
@@ -361,10 +373,9 @@ private:
   auto adrHigh(Address addr) const {
     return encode_datagram(make_datagram<Bits::_12>(
       1u,
-      addr == _addrs.primary
-        ? (_addrs.primary < 128u ? 0u
-                                 : 0x80u | (_addrs.primary & 0x3F00u) >> 8u)
-        : 0b0110'0000u));
+      addr == _addrs.consist
+        ? 0b0110'0000u
+        : (addr < 128u ? 0u : 0x80u | (addr & 0x3F00u) >> 8u)));
   }
 
   /// Get app:adr_low
@@ -374,29 +385,36 @@ private:
   auto adrLow(Address addr) const {
     return encode_datagram(make_datagram<Bits::_12>(
       2u,
-      addr == _addrs.primary
-        ? (_addrs.primary & 0x00FFu)
-        : (_addrs.consist.reversed << 7u | (_addrs.consist & 0x007Fu))));
+      addr == _addrs.consist
+        ? (_addrs.consist.reversed << 7u | (_addrs.consist & 0x007Fu))
+        : (addr & 0x00FFu)));
   }
 
   /// Logon store
   ///
-  /// I fucking hate this. RCN218 stupidly requires us to answer extended
-  /// packets directly in the following cutout. This is so time-critical that
-  /// logon information can only be stored asynchronously...
+  /// RCN218 requires us to answer extended packets directly in the following
+  /// cutout. This is so time-critical that logon information can only be stored
+  /// asynchronously...
   void logonStore() {
     if (!_logon_store) return;
     _logon_store = false;
-    // Fucking stupid and doesn't conform to standard...
+
+    // Doesn't conform to standard...
     if (_addrs.primary == _addrs.logon) {
       impl().writeCv(
         17u - 1u, static_cast<uint8_t>(0b1100'0000u | (_addrs.primary >> 8u)));
       impl().writeCv(18u - 1u, static_cast<uint8_t>(_addrs.primary));
       impl().writeCv(29u - 1u, true, 5u);
     }
-    impl().writeCv(65297u - 1u, static_cast<uint8_t>(_cid >> 8u));
-    impl().writeCv(65298u - 1u, static_cast<uint8_t>(_cid));
-    impl().writeCv(65299u - 1u, _session_id);
+
+    _cids.front() = _cids.back();
+    impl().writeCv(65297u - 1u, static_cast<uint8_t>(_cids.back() >> 8u));
+    impl().writeCv(65298u - 1u, static_cast<uint8_t>(_cids.back()));
+
+    _session_ids.front() = _session_ids.back();
+    impl().writeCv(65299u - 1u, _session_ids.back());
+    impl().writeCv(65300u - 1u, static_cast<uint8_t>(_addrs.logon >> 8u));
+    impl().writeCv(65301u - 1u, static_cast<uint8_t>(_addrs.logon));
   }
 
   /// Update time points
@@ -405,7 +423,7 @@ private:
   void updateTimepoints() {
     auto const packet_tp{std::chrono::system_clock::now()};
     if (packet_tp - _last_packet_tp >= 2s) {
-      _tos_backoff.reset();
+      _tos_backoff.now();
       _tos_tp = packet_tp;
     }
     _last_packet_tp = packet_tp;
@@ -433,9 +451,9 @@ private:
   Backoff _logon_backoff{};
   Backoff _tos_backoff{};
 
-  uint16_t _cid{};        ///< Central ID
-  uint8_t _session_id{};  ///< Session ID
-  uint8_t _qos{};         ///< Quality of service
+  std::array<uint16_t, 2uz> _cids{};        ///< Central ID
+  std::array<uint8_t, 2uz> _session_ids{};  ///< Session ID
+  uint8_t _qos{};                           ///< Quality of service
 
   // Not bitfields as those are most likely mutated in interrupt context
   bool _ch2_consist_enabled{};

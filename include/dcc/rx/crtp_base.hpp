@@ -62,52 +62,46 @@ struct CrtpBase : bidi::CrtpBase<T> {
     if (bit == Invalid) return;
 
     // Alternate halfbit <-> bit
-    if (_state != State::Preamble && (_is_halfbit = !_is_halfbit)) return;
+    if (_state > Startbit && (_is_halfbit = !_is_halfbit)) return;
 
     if (full(_deque)) return reset();  // TODO task full error counter?
 
     // Successfully received a bit
     switch (_state) {
-      case State::Preamble:
-        // Is bit a preamble "one"
+      case Preamble:
         if (bit) ++_bit_count;
-        // In case it's not, and we have less than enough preamble bits
         else if (_bit_count < DCC_RX_MIN_PREAMBLE_BITS * 2uz) return reset();
-        // In case it's not and we have enough preamble bits but this is only
-        // the first half of the packet startbit
-        else if (!_byte_count) ++_byte_count;
-        else {
-          _bit_count = _byte_count = 0uz;
-          _is_halfbit = false;
-          ++_preamble_count;  // Count received preambles
-          flush();            // Flush since new command is replacing old one
-          _state = State::Data;
-        }
+        else _state = Startbit;
         break;
 
-      case State::Data: {
-        auto data{end(_deque)->data()};
-        data[_byte_count] =
-          static_cast<uint8_t>((data[_byte_count] << 1u) | bit);
-        if (++_bit_count < 8uz) return;
+      case Startbit:
+        _packet.clear();
         _bit_count = 0uz;
-        _checksum = static_cast<uint8_t>(_checksum ^ data[_byte_count++]);
-        _state = State::Endbit;
+        _is_halfbit = false;
+        ++_preamble_count;
+        _state = Data;
         break;
-      }
 
-      case State::Endbit:
+      case Data:
+        _byte = static_cast<uint8_t>((_byte << 1u) | bit);
+        if (++_bit_count < 8uz) return;
+        _packet.push_back(_byte);
+        _checksum = static_cast<uint8_t>(_checksum ^ _byte);
+        _bit_count = _byte = 0u;
+        _state = Endbit;
+        break;
+
+      case Endbit:
         if (!bit) {
-          _state = State::Data;
+          _state = Data;
           return;
         }
         // Valid packets contain at least 3 bytes
-        else if (!_checksum && _byte_count >= 3uz) {
-          end(_deque)->resize(static_cast<Packet::size_type>(_byte_count));
-          ++_packet_count;  // Count received packets
-          _deque.push_back();
+        else if (!_checksum && size(_packet) >= 3uz) {
+          ++_packet_count;
+          _deque.push_back(_packet);
           _packet_end = true;
-          executeHandlerMode();
+          executeHandlerMode();  // Some packets must be answered immediately
         }
         return reset();
     }
@@ -126,7 +120,7 @@ struct CrtpBase : bidi::CrtpBase<T> {
   ///
   /// \retval true  Service mode active
   /// \retval false Operations mode active
-  bool serviceMode() const { return _mode == Mode::Service; }
+  bool serviceMode() const { return _mode == Service; }
 
   /// MAN function
   ///
@@ -205,8 +199,8 @@ private:
   /// \retval false Command to other address
   bool executeThreadMode() {
     if (empty(_deque)) return false;
-    auto const retval{_mode == Mode::Operations ? executeOperations()
-                                                : executeService()};
+    auto const retval{_mode == Operations ? executeOperations()
+                                          : executeService()};
     _deque.pop_front();
     return retval;
   }
@@ -654,7 +648,7 @@ private:
   /// \param  byte    CV value
   void verifyImpl(uint32_t cv_addr, uint8_t byte) {
     auto cb{[this, byte](uint8_t red_byte) {
-      if (_mode == Mode::Operations) BiDi::pom(red_byte);
+      if (_mode == Operations) BiDi::pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
     if constexpr (AsyncReadable<T>) impl().readCv(cv_addr, byte, cb);
@@ -668,7 +662,7 @@ private:
   /// \param  pos     CV bit position
   void verifyImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
     auto cb{[this, bit](bool red_bit) {
-      if (_mode == Mode::Operations) BiDi::pom(red_bit);
+      if (_mode == Operations) BiDi::pom(red_bit);
       else if (bit == red_bit) impl().serviceAck();
     }};
     if constexpr (AsyncReadable<T>) impl().readCv(cv_addr, bit, pos, cb);
@@ -691,7 +685,7 @@ private:
   /// \param  byte    CV value
   void writeImpl(uint32_t cv_addr, uint8_t byte) {
     auto cb{[this, byte](uint8_t red_byte) {
-      if (_mode == Mode::Operations) BiDi::pom(red_byte);
+      if (_mode == Operations) BiDi::pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
     if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, byte, cb);
@@ -705,7 +699,7 @@ private:
   /// \param  pos     CV bit position
   void writeImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
     auto cb{[this, bit](bool red_bit) {
-      if (_mode == Mode::Operations) BiDi::pom(red_bit);
+      if (_mode == Operations) BiDi::pom(red_bit);
       else if (red_bit == bit) impl().serviceAck();
     }};
     if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, bit, pos, cb);
@@ -791,14 +785,10 @@ private:
     }
   }
 
-  /// Flush the current packet
-  void flush() { *end(_deque) = {}; }
-
   /// Reset
   void reset() {
-    flush();
-    _bit_count = _byte_count = _checksum = 0u;
-    _state = State::Preamble;
+    _bit_count = _byte = _checksum = 0u;
+    _state = Preamble;
   }
 
   /// Enter or exit service mode
@@ -808,24 +798,26 @@ private:
     // Disable other peripherals which might interfere
     if (enter) {
       impl().serviceModeHook(true);
-      _mode = Mode::Service;
+      _mode = Service;
     } else {
       impl().serviceModeHook(false);
-      _mode = Mode::Operations;
+      _mode = Operations;
     }
   }
 
   ztl::inplace_deque<Packet, DCC_RX_DEQUE_SIZE> _deque{};
-  Packet _last_own_packet{};  ///< Copy of last packet for own address
+  Packet _packet{};           ///< Current packet
+  Packet _last_own_packet{};  ///< Last packet for own address
   size_t _bit_count{};
-  size_t _byte_count{};
   size_t _own_equal_packets_count{1uz};
   size_t _packet_count{};
   size_t _preamble_count{};
+  uint8_t _byte{};
   uint8_t _checksum{};     ///< On-the-fly calculated checksum
   uint8_t _index_reg{1u};  ///< Paged mode index register
-  enum class State : uint8_t { Preamble, Data, Endbit } _state{};
-  enum class Mode : uint8_t { Operations, Service } _mode{};
+
+  enum State : uint8_t { Preamble, Startbit, Data, Endbit } _state{};
+  enum Mode : uint8_t { Operations, Service } _mode{};
 
   // Not bitfields as those are most likely mutated in interrupt context
   bool _is_halfbit{};

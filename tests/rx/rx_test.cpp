@@ -16,6 +16,10 @@ RxTest::RxTest() {
   _cvs[65297uz - 1uz] = static_cast<uint8_t>(_cid >> 8u);  // CID high byte
   _cvs[65298uz - 1uz] = static_cast<uint8_t>(_cid >> 0u);  // CID low byte
   _cvs[65299uz - 1uz] = _session_id;                       // Session ID
+  _cvs[65300uz - 1uz] = static_cast<uint8_t>(
+    0b1100'0000u | _logon_addr >> 8u);  // Logon address high byte
+  _cvs[65301uz - 1uz] =
+    static_cast<uint8_t>(_logon_addr >> 0u);  // Logon address low byte
 }
 
 RxTest::~RxTest() {}
