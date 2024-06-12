@@ -35,4 +35,5 @@ protected:
   uint32_t _did{0xAABBCCDDu};
   uint16_t _cid{0xABCDu};
   uint8_t _session_id{0x2Au};
+  dcc::Address _logon_addr{.value = 1000u, .type = dcc::Address::Long};
 };

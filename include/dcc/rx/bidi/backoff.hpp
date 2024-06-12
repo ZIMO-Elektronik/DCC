@@ -31,12 +31,9 @@ struct Backoff {
   }
 
   /// Don't backoff next time
-  void now() { _count = 0u; }
-
-  /// Reset
-  void reset() {
+  void now() {
     _range = 0;
-    _count = randomCount();
+    _count = 0u;
   }
 
 private:
@@ -45,7 +42,7 @@ private:
   }
 
   int8_t _range{};
-  uint8_t _count{randomCount()};
+  uint8_t _count{};
 };
 
 }  // namespace dcc::rx::bidi

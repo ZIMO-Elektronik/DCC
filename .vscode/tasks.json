@@ -31,5 +31,29 @@
       "isBackground": true,
       "command": "ninja -C build DCCRepl"
     },
+    {
+      "label": "act arm-none-eabi-gcc",
+      "type": "shell",
+      "isBackground": true,
+      "command": "act -j arm-none-eabi-gcc --input arch=-mcpu=cortex-m7 --input target=\"DCCStm32Decoder DCCStm32CommandStation\""
+    },
+    {
+      "label": "act esp-elf-gcc",
+      "type": "shell",
+      "isBackground": true,
+      "command": "act -j esp-elf-gcc --input path=examples/esp32 --input target=esp32"
+    },
+    {
+      "label": "act x86_64-linux-gnu-gcc",
+      "type": "shell",
+      "isBackground": true,
+      "command": "act -j x86_64-linux-gnu-gcc"
+    },
+    {
+      "label": "act tests",
+      "type": "shell",
+      "isBackground": true,
+      "command": "act -j tests --input args=-DCMAKE_BUILD_TYPE=Debug --input target=DCCTests --input post-build=\"ctest --test-dir build --schedule-random --timeout 86400\""
+    }
   ]
 }
