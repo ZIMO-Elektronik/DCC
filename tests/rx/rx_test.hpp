@@ -23,6 +23,8 @@ protected:
 
   void ReceiveAndExecuteTwoIdenticalCvWritePackets(uint32_t addr, uint8_t byte);
 
+  void Logon();
+
   template<std::unsigned_integral T>
   static T RandomInterval(T min, T max) {
     std::mt19937 gen{std::random_device{}()};
@@ -30,10 +32,16 @@ protected:
     return dis(gen);
   }
 
-  RxMock _mock;
+  NiceMock<RxMock> _mock;
+  dcc::Addresses _addrs{.primary = {.value = 3u, .type = dcc::Address::Short},
+                        .consist = {.value = 3u, .type = dcc::Address::Short},
+                        .logon = {.value = 1000u, .type = dcc::Address::Long}};
   std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
   uint32_t _did{0xAABBCCDDu};
   uint16_t _cid{0xABCDu};
   uint8_t _session_id{0x2Au};
-  dcc::Address _logon_addr{.value = 1000u, .type = dcc::Address::Long};
 };
+
+MATCHER_P(DatagramMatcher, datagram, "") {
+  return std::equal(cbegin(datagram), cend(datagram), cbegin(arg));
+}

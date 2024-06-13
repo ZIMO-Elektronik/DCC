@@ -12,7 +12,8 @@ TEST_F(RxTest, write_byte_operations_mode) {
 TEST_F(RxTest, write_byte_operations_mode_requires_two_identical_packets) {
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto cv_value{RandomInterval<uint8_t>(0u, 255u)};
-  auto packet{dcc::make_cv_access_long_write_packet(3u, cv_addr, cv_value)};
+  auto packet{
+    dcc::make_cv_access_long_write_packet(_addrs.primary, cv_addr, cv_value)};
 
   Expectation do_not_write_cv{
     EXPECT_CALL(_mock, writeCv(cv_addr, cv_value)).Times(0)};

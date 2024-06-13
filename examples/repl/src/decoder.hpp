@@ -4,7 +4,6 @@
 
 struct Decoder : dcc::rx::CrtpBase<Decoder> {
   friend dcc::rx::CrtpBase<Decoder>;
-  friend dcc::rx::CrtpBase<Decoder>::BiDi;
 
   Decoder();
 

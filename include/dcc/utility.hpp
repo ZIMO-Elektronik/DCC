@@ -219,6 +219,45 @@ constexpr auto make_feature_expansion_f28_f21_packet(Address::value_type addr,
   return packet;
 }
 
+/// Make a binary state short packet
+///
+/// \param  addr      Address
+/// \param  dlllllll  Binary state and number
+/// \return Feature expansion packet for F28-F21
+constexpr auto make_binary_state_short_packet(Address::value_type addr,
+                                              uint8_t dlllllll) {
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
+                           first)};
+  *last++ = 0b1101'1101u;
+  *last++ = dlllllll;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make a binary state long packet
+///
+/// \param  addr      Address
+/// \param  dlllllll  Binary state and number
+/// \param  hhhhhhhh  Bla
+/// \return Feature expansion packet for F28-F21
+constexpr auto make_binary_state_long_packet(Address::value_type addr,
+                                             uint8_t dlllllll,
+                                             uint8_t hhhhhhhh) {
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({addr, addr < 128u ? Address::Short : Address::Long},
+                           first)};
+  *last++ = 0b1100'0000u;
+  *last++ = dlllllll;
+  *last++ = hhhhhhhh;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
 /// Make a CV access long form packet for verifying CV
 ///
 /// \param  addr    Address

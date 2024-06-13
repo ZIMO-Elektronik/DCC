@@ -8,6 +8,7 @@ using namespace dcc::bidi;
 
 // BiDi encode-decode test fixture
 struct EncodeDecodeTest : ::testing::Test {
+protected:
   EncodeDecodeTest();
   virtual ~EncodeDecodeTest();
 };

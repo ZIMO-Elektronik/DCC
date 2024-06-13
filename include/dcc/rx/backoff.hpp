@@ -4,7 +4,7 @@
 
 /// Backoff logic
 ///
-/// \file   dcc/rx/bidi/backoff.hpp
+/// \file   dcc/rx/backoff.hpp
 /// \author Vincent Hamp
 /// \date   09/08/2023
 
@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-namespace dcc::rx::bidi {
+namespace dcc::rx {
 
 /// Implements O(2^n) backoff logic
 struct Backoff {
@@ -45,4 +45,4 @@ private:
   uint8_t _count{};
 };
 
-}  // namespace dcc::rx::bidi
+}  // namespace dcc::rx
