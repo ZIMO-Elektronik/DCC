@@ -231,7 +231,6 @@ To create a receiver (decoder) class it is necessary to derive from `dcc::rx::Cr
 
 struct Decoder : dcc::rx::CrtpBase<Decoder> {
   friend dcc::rx::CrtpBase<Decoder>;
-  friend dcc::rx::CrtpBase<Decoder>::BiDi;
 
 private:
   // Set direction (1 forward, 0 backward)

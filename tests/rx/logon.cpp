@@ -20,27 +20,21 @@ TEST_F(RxTest, logon_with_new_cid) {
 
   // Execute commands to address 1000
   EXPECT_CALL(_mock, writeCv(_, _)).Times(5);
-  EXPECT_CALL(_mock, direction(3u, false));
-  EXPECT_CALL(_mock, speed(3u, _));
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   Receive(dcc::make_advanced_operations_speed_packet(1000u, 0u));
   Execute();
 }
 
 // Known CID and session ID <=4 skips logon
 TEST_F(RxTest, logon_with_known_cid_and_session_id_le_4) {
-  EXPECT_CALL(_mock, readCv(_))
-    .WillOnce(Return(_cvs[65300uz - 1uz]))
-    .WillOnce(Return(_cvs[65301uz - 1uz]));
-
-  // Enable
-  Receive(
-    dcc::make_logon_enable_packet(dcc::AddressGroup::Now, _cid, _session_id));
+  Logon();
 
   // Execute commands to address 1000
   EXPECT_CALL(_mock, writeCv(_, _)).Times(5);
-  EXPECT_CALL(_mock, direction(3u, false));
-  EXPECT_CALL(_mock, speed(3u, _));
-  Receive(dcc::make_advanced_operations_speed_packet(_logon_addr, 0u));
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
+  Receive(dcc::make_advanced_operations_speed_packet(_addrs.logon, 0u));
   Execute();
 }
 
@@ -68,8 +62,8 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_gt_4) {
 
   // Execute commands to address 1000
   EXPECT_CALL(_mock, writeCv(_, _)).Times(5);
-  EXPECT_CALL(_mock, direction(3u, false));
-  EXPECT_CALL(_mock, speed(3u, _));
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   Receive(dcc::make_advanced_operations_speed_packet(1000u, 0u));
   Execute();
 }

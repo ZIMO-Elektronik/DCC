@@ -11,9 +11,8 @@ TEST_F(RxTest, verify_bit_service_mode) {
     dcc::make_cv_access_long_verify_service_packet(cv_addr, bit, position)};
 
   // 5 or more identical packets
-  Expectation readCv{
-    EXPECT_CALL(_mock, readCv(cv_addr, bit, position)).WillOnce(Return(bit))};
-  Expectation ack{EXPECT_CALL(_mock, serviceAck())};
+  EXPECT_CALL(_mock, readCv(cv_addr, bit, position)).WillOnce(Return(bit));
+  EXPECT_CALL(_mock, serviceAck());
   for (auto i{0uz}; i < 5uz; ++i) {
     Receive(packet);
     Execute();

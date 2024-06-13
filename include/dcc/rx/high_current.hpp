@@ -4,7 +4,7 @@
 
 /// High current
 ///
-/// \file   dcc/rx/bidi/high_current.hpp
+/// \file   dcc/rx/high_current.hpp
 /// \author Vincent Hamp
 /// \date   29/11/2022
 
@@ -12,11 +12,11 @@
 
 #include <concepts>
 
-namespace dcc::rx::bidi {
+namespace dcc::rx {
 
 template<typename T>
 concept HighCurrent = requires(T t, bool high_current) {
   { t.highCurrentBiDi(high_current) } -> std::same_as<void>;
 };
 
-}  // namespace dcc::rx::bidi
+}  // namespace dcc::rx

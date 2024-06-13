@@ -1,10 +1,10 @@
-#include "bidi_backoff_test.hpp"
+#include "backoff_test.hpp"
 
-TEST_F(BiDiBackoffTest, initial_backoff_is_always_false) {
+TEST_F(BackoffTest, initial_backoff_is_always_false) {
   EXPECT_FALSE(static_cast<bool>(_backoff));
 }
 
-TEST_F(BiDiBackoffTest, repeated_values_stay_below_max_range) {
+TEST_F(BackoffTest, repeated_values_stay_below_max_range) {
   EXPECT_LT(CountTillFalse(CHAR_BIT), CHAR_BIT);
   EXPECT_LT(CountTillFalse(CHAR_BIT << 1), CHAR_BIT << 1);
   EXPECT_LT(CountTillFalse(CHAR_BIT << 2), CHAR_BIT << 2);
@@ -18,7 +18,7 @@ TEST_F(BiDiBackoffTest, repeated_values_stay_below_max_range) {
   EXPECT_LT(CountTillFalse(CHAR_BIT), CHAR_BIT);
 }
 
-TEST_F(BiDiBackoffTest, now) {
+TEST_F(BackoffTest, now) {
   EXPECT_LT(CountTillFalse(CHAR_BIT), CHAR_BIT);
   EXPECT_LT(CountTillFalse(CHAR_BIT << 1), CHAR_BIT << 1);
   EXPECT_LT(CountTillFalse(CHAR_BIT << 2), CHAR_BIT << 2);
