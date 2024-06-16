@@ -1,8 +1,8 @@
+#pragma once
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <dcc/dcc.hpp>
-
-#pragma once
 
 using namespace dcc::bidi;
 
