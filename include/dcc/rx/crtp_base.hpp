@@ -50,7 +50,57 @@ struct CrtpBase {
   friend T;
 
   /// Initialize
-  void init() { config(); }
+  void init() {
+    // Primary address
+    auto const cv29{impl().readCv(29u - 1u)};
+    if (cv29 & ztl::make_mask(5u)) {
+      std::array const cv17_18{impl().readCv(17u - 1u),
+                               impl().readCv(18u - 1u)};
+      _addrs.primary = decode_address(cv17_18);
+    } else {
+      auto const cv1{impl().readCv(1u - 1u)};
+      _addrs.primary = decode_address(&cv1);
+    }
+    _addrs.primary.reversed = cv29 & ztl::make_mask(0u);
+
+    // Consist address
+    auto const cv19{impl().readCv(19u - 1u)};
+    auto const cv20{impl().readCv(20u - 1u)};
+    auto const consist_addr{100u * (cv20 & 0b0111'1111u) +
+                            (cv19 & 0b0111'1111u)};
+    _addrs.consist = {static_cast<Address::value_type>(consist_addr),
+                      Address::Long};
+    _addrs.consist.reversed = cv19 & ztl::make_mask(7u);
+
+    // Legacy exception for F0
+    _f0_exception = !(cv29 & ztl::make_mask(1u));
+
+    // Decoder lock
+    auto const cv15{impl().readCv(15u - 1u)};
+    auto const cv16{impl().readCv(16u - 1u)};
+    _cvs_locked = cv15 != cv16 && cv15 && cv16;
+
+    // BiDi
+    auto const bidi_enabled{static_cast<bool>(cv29 & ztl::make_mask(3u))};
+    auto const ch2_consist_enabled{
+      static_cast<bool>(cv20 & ztl::make_mask(7u))};
+    auto const cv28{impl().readCv(28u - 1u)};
+    _ch1_addr_enabled = bidi_enabled && (cv28 & ztl::make_mask(0u));
+    _ch2_data_enabled = bidi_enabled && (cv28 & ztl::make_mask(1u));
+    _logon_enabled = bidi_enabled && (cv28 & ztl::make_mask(7u));
+    _ch2_consist_enabled = bidi_enabled && ch2_consist_enabled;
+    if constexpr (HighCurrent<T>)
+      impl().highCurrentBiDi(cv28 & ztl::make_mask(6u));
+
+    // IDs
+    _did = {impl().readCv(250u - 1u),
+            impl().readCv(251u - 1u),
+            impl().readCv(252u - 1u),
+            impl().readCv(253u - 1u)};
+    _cids.front() = static_cast<decltype(_cids)::value_type>(
+      (impl().readCv(65297u - 1u) << 8u) | impl().readCv(65298u - 1u));
+    _session_ids.front() = impl().readCv(65299u - 1u);
+  }
 
   /// Enable
   void enable() {
@@ -109,14 +159,17 @@ struct CrtpBase {
           _state = Data;
           return;
         }
-        // Valid packets contain at least 3 bytes
+        // Execute or push back valid packet
         else if (!_checksum && size(_packet) >= 3uz) {
-          ++_packet_count;
-          _deque.push_back(_packet);
           _packet_end = true;
-          executeHandlerMode();  // Some packets must be answered immediately
+          ++_packet_count;
+          _addrs.received = decode_address(_packet);
+          if (!executeHandlerMode()) _deque.push_back(_packet);
         }
-        return reset();
+        // Immediately clear invalid packet
+        else
+          _packet.clear();
+        reset();
     }
   }
 
@@ -164,29 +217,30 @@ struct CrtpBase {
 
   /// Start channel1 (12 bit payload)
   void cutoutChannel1() {
-    // Only send in channel1 if last valid address was broadcast, short or long
-    if (_addrs.received.type == Address::Broadcast ||
-        _addrs.received.type == Address::Short ||
-        _addrs.received.type == Address::Long)
-      appAdr();
-    // or automatic logon
-    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(1u);
+    switch (_addrs.received.type) {
+      case Address::Broadcast: [[fallthrough]];
+      case Address::Short: [[fallthrough]];
+      case Address::Long: appAdr(); break;
+      case Address::AutomaticLogon: appLogon(1u); break;
+      default: break;
+    }
   }
 
   /// Start channel2 (36 bit payload)
   void cutoutChannel2() {
-    // Only send in channel2 if last valid address was own
-    if ((_addrs.received == _addrs.primary && !_logon_assigned) ||
-        (_addrs.received == _addrs.logon && _logon_assigned))
-      empty(_pom_deque) ? appDyn() : appPom();
-    // or consist
-    else if (_addrs.received == _addrs.consist && !_logon_assigned &&
-             _ch2_consist_enabled)
-      appDyn();
-    // or automatic logon
-    else if (_addrs.received.type == Address::AutomaticLogon) appLogon(2u);
-    // or broadcast
-    else if (_addrs.received.type == Address::Broadcast) appTos();
+    switch (_addrs.received.type) {
+      case Address::Broadcast: appTos(); break;
+      case Address::Short: [[fallthrough]];
+      case Address::Long:
+        if (_addrs.received == _logon_assigned ? _addrs.logon : _addrs.primary)
+          decode_instruction(_packet) == Instruction::CvLong ? appPom()
+                                                             : appDyn();
+        else if (_addrs.received == _addrs.consist && _ch2_consist_enabled)
+          appDyn();
+        break;
+      case Address::AutomaticLogon: appLogon(2u); break;
+      default: break;
+    }
   }
 
 private:
@@ -194,57 +248,16 @@ private:
   Decoder auto& impl() { return static_cast<T&>(*this); }
   Decoder auto const& impl() const { return static_cast<T const&>(*this); }
 
-  /// Configure
-  void config() {
-    // Primary address
-    auto const cv29{impl().readCv(29u - 1u)};
-    if (cv29 & ztl::make_mask(5u)) {
-      std::array const cv17_18{impl().readCv(17u - 1u),
-                               impl().readCv(18u - 1u)};
-      _addrs.primary = decode_address(cbegin(cv17_18));
-    } else {
-      auto const cv1{impl().readCv(1u - 1u)};
-      _addrs.primary = decode_address(&cv1);
-    }
-    _addrs.primary.reversed = cv29 & ztl::make_mask(0u);
-
-    // Consist address
-    auto const cv19{impl().readCv(19u - 1u)};
-    auto const cv20{impl().readCv(20u - 1u)};
-    auto const consist_addr{100u * (cv20 & 0b0111'1111u) +
-                            (cv19 & 0b0111'1111u)};
-    _addrs.consist = {static_cast<Address::value_type>(consist_addr),
-                      Address::Long};
-    _addrs.consist.reversed = cv19 & ztl::make_mask(7u);
-
-    // Legacy exception for F0
-    _f0_exception = !(cv29 & ztl::make_mask(1u));
-
-    // Decoder lock
-    auto const cv15{impl().readCv(15u - 1u)};
-    auto const cv16{impl().readCv(16u - 1u)};
-    _cvs_locked = cv15 != cv16 && cv15 && cv16;
-
-    // BiDi
-    auto const bidi_enabled{static_cast<bool>(cv29 & ztl::make_mask(3u))};
-    auto const ch2_consist_enabled{
-      static_cast<bool>(cv20 & ztl::make_mask(7u))};
-    auto const cv28{impl().readCv(28u - 1u)};
-    _ch1_addr_enabled = bidi_enabled && (cv28 & ztl::make_mask(0u));
-    _ch2_enabled = bidi_enabled && (cv28 & ztl::make_mask(1u));
-    _logon_enabled = bidi_enabled && (cv28 & ztl::make_mask(7u));
-    _ch2_consist_enabled = bidi_enabled && ch2_consist_enabled;
-    if constexpr (HighCurrent<T>)
-      impl().highCurrentBiDi(cv28 & ztl::make_mask(6u));
-
-    // IDs
-    _did = {impl().readCv(250u - 1u),
-            impl().readCv(251u - 1u),
-            impl().readCv(252u - 1u),
-            impl().readCv(253u - 1u)};
-    _cids.front() = static_cast<decltype(_cids)::value_type>(
-      (impl().readCv(65297u - 1u) << 8u) | impl().readCv(65298u - 1u));
-    _session_ids.front() = impl().readCv(65299u - 1u);
+  /// Execute in handler mode (interrupt context)
+  ///
+  /// \retval true  Command to AutomaticLogon address
+  /// \retval false Command to other address
+  bool executeHandlerMode() {
+    if (_addrs.received.type != Address::AutomaticLogon) return false;
+    if (size(_packet) <= (6uz + 1uz) || !crc8(_packet))
+      executeAutomaticLogon(_addrs.received,
+                            {cbegin(_packet) + 1, cend(_packet)});
+    return true;
   }
 
   /// Execute in thread mode
@@ -252,33 +265,14 @@ private:
   /// \retval true  Command to own address
   /// \retval false Command to other address
   bool executeThreadMode() {
-    if (empty(_deque)) return false;
-
-    //
-    adr();
-
-    //
-    logonStore();
-
-    //
-    updateQos();
-    updateTimepoints();
-
-    auto const retval{_mode == Operations ? executeOperations()
-                                          : executeService()};
+    if (packetEnd() || empty(_deque)) return false;
+    adr();               // Prepare address broadcasts for BiDi channel 1
+    logonStore();        // Store logon information if necessary
+    updateQos();         // Update quality of service
+    updateTimepoints();  // Update timepoints for tip-off search
+    auto const retval{serviceMode() ? executeService() : executeOperations()};
     _deque.pop_front();
     return retval;
-  }
-
-  /// Execute in handler mode (interrupt context)
-  void executeHandlerMode() {
-    auto const& packet{_deque.front()};
-    auto const addr{decode_address(cbegin(packet))};
-    _addrs.received = addr;
-    if (addr.type != Address::AutomaticLogon) return;
-    if (size(packet) <= (6uz + 1uz) || !crc8(packet))
-      executeAutomaticLogon(addr, {cbegin(packet) + 1, cend(packet)});
-    _deque.pop_front();
   }
 
   /// Execute commands in operations mode
@@ -288,7 +282,7 @@ private:
   bool executeOperations() {
     bool retval{};
     auto const& packet{_deque.front()};
-    switch (auto const addr{decode_address(cbegin(packet))}; addr.type) {
+    switch (auto const addr{decode_address(packet)}; addr.type) {
       case Address::IdleSystem:
         executeOperationsSystem({cbegin(packet) + 1, cend(packet)});
         break;
@@ -310,7 +304,6 @@ private:
   ///
   /// \retval true
   bool executeService() {
-    countOwnEqualPackets();
     // Reset
     if (auto const& packet{_deque.front()}; !packet[0uz])
       ;
@@ -319,8 +312,7 @@ private:
     // Register mode
     else if (size(packet) == 3uz) registerMode({cbegin(packet), cend(packet)});
     // CvLong
-    else if (size(packet) == 4uz && _own_equal_packets_count == 2uz)
-      cvLong({cbegin(packet), cend(packet)});
+    else if (size(packet) == 4uz) cvLong({cbegin(packet), cend(packet)});
     return true;
   }
 
@@ -362,9 +354,7 @@ private:
     // Address is not of interest
     else return false;
 
-    countOwnEqualPackets();
-
-    switch (decode_instruction(cbegin(bytes))) {
+    switch (decode_instruction(bytes)) {
       case Instruction::UnknownService:  // TODO
         break;
       case Instruction::DecoderControl:
@@ -634,6 +624,11 @@ private:
   ///
   /// \param  bytes Raw bytes
   void cvLong(std::span<uint8_t const> bytes) {
+    countOwnEqualCvPackets();
+
+    // Ignore all but the second packet while in service mode
+    if (serviceMode() && _own_equal_cv_packets_count != 2uz) return;
+
     switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
             static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
       // Reserved
@@ -644,8 +639,9 @@ private:
 
       // Write byte
       case 0b11u:
-        if (_own_equal_packets_count < 2uz) return;
-        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bytes[2uz]);
+        if (_own_equal_cv_packets_count < 2uz) return;
+        else if (_own_equal_cv_packets_count == 2uz)
+          cvWrite(cv_addr, bytes[2uz]);
         else cvVerify(cv_addr, bytes[2uz]);
         break;
 
@@ -654,7 +650,7 @@ private:
         auto const pos{bytes[2uz] & 0b111u};
         auto const bit{static_cast<bool>(bytes[2uz] & ztl::make_mask(3u))};
         if (!(bytes[2uz] & ztl::make_mask(4u))) cvVerify(cv_addr, bit, pos);
-        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
+        else if (_own_equal_cv_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
         break;
       }
     }
@@ -664,6 +660,8 @@ private:
   ///
   /// \param  bytes Raw bytes
   void cvShort(std::span<uint8_t const> bytes) {
+    countOwnEqualCvPackets();
+
     switch (bytes[0uz] & 0x0Fu) {
       // Not available for use
       case 0b0000u: break;
@@ -680,7 +678,7 @@ private:
 
       // Extended address 0 and 1 (CV17 and CV18)
       case 0b0100u:
-        if (_own_equal_packets_count != 2uz) return;
+        if (_own_equal_cv_packets_count != 2uz) return;
         cvWrite(17u - 1u, static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
         cvWrite(18u - 1u, bytes[2uz]);
         cvWrite(29u - 1u, true, 5u);
@@ -688,7 +686,7 @@ private:
 
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
-        if (_own_equal_packets_count != 2uz) return;
+        if (_own_equal_cv_packets_count != 2uz) return;
         cvWrite(31u - 1u, bytes[1uz]);
         cvWrite(32u - 1u, bytes[2uz]);
         break;
@@ -712,11 +710,11 @@ private:
   /// \param  byte    CV value
   void cvVerifyImpl(uint32_t cv_addr, uint8_t byte) {
     auto cb{[this, byte](uint8_t red_byte) {
-      if (_mode == Operations) pom(red_byte);
+      if (!serviceMode()) pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
     if constexpr (AsyncReadable<T>) impl().readCv(cv_addr, byte, cb);
-    else cb(impl().readCv(cv_addr, byte));
+    else std::invoke(cb, impl().readCv(cv_addr, byte));
   }
 
   /// CV bit verify
@@ -726,14 +724,14 @@ private:
   /// \param  pos     CV bit position
   void cvVerifyImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
     auto cb{[this, bit](bool red_bit) {
-      if (_mode == Operations) pom(red_bit);
+      if (!serviceMode()) pom(red_bit);
       else if (bit == red_bit) impl().serviceAck();
     }};
     if constexpr (AsyncReadable<T>) impl().readCv(cv_addr, bit, pos, cb);
-    else cb(impl().readCv(cv_addr, bit, pos));
+    else std::invoke(cb, impl().readCv(cv_addr, bit, pos));
   }
 
-  /// CV byte and bit write, if necessary update config
+  /// CV byte and bit write, if necessary update init
   ///
   /// \param  cv_addr CV address
   /// \param  ts...   CV value or bit and bit position
@@ -750,7 +748,7 @@ private:
                                                   28u - 1u,
                                                   29u - 1u};
     if (std::ranges::any_of(cvs, [cv_addr](uint8_t a) { return a == cv_addr; }))
-      config();
+      init();
   }
 
   /// CV byte write
@@ -759,11 +757,11 @@ private:
   /// \param  byte    CV value
   void cvWriteImpl(uint32_t cv_addr, uint8_t byte) {
     auto cb{[this, byte](uint8_t red_byte) {
-      if (_mode == Operations) pom(red_byte);
+      if (!serviceMode()) pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
     if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, byte, cb);
-    else cb(impl().writeCv(cv_addr, byte));
+    else std::invoke(cb, impl().writeCv(cv_addr, byte));
   }
 
   /// CV bit write
@@ -773,11 +771,11 @@ private:
   /// \param  pos     CV bit position
   void cvWriteImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
     auto cb{[this, bit](bool red_bit) {
-      if (_mode == Operations) pom(red_bit);
+      if (!serviceMode()) pom(red_bit);
       else if (red_bit == bit) impl().serviceAck();
     }};
     if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, bit, pos, cb);
-    else cb(impl().writeCv(cv_addr, bit, pos));
+    else std::invoke(cb, impl().writeCv(cv_addr, bit, pos));
   }
 
   /// Register mode
@@ -840,12 +838,13 @@ private:
     impl().speed(addr, speed);
   }
 
-  /// Count own equal packets
-  void countOwnEqualPackets() {
-    if (_deque.front() == _last_own_packet) ++_own_equal_packets_count;
+  /// Count own equal CV packets
+  void countOwnEqualCvPackets() {
+    if (_last_own_cv_packet == _deque.front()) ++_own_equal_cv_packets_count;
     else {
-      _own_equal_packets_count = 1uz;
-      _last_own_packet = _deque.front();
+      _own_equal_cv_packets_count = 1uz;
+      _last_own_cv_packet = _deque.front();
+      _pom_deque.clear();
     }
   }
 
@@ -873,7 +872,8 @@ private:
   ///
   /// \param  value CV value
   void pom(uint8_t value) {
-    if (!_ch2_enabled || full(_pom_deque)) return;
+    if (!_ch2_data_enabled) return;
+    _pom_deque.clear();
     _pom_deque.push_back(encode_datagram(make_datagram<Bits::_12>(0u, value)));
   }
 
@@ -919,7 +919,7 @@ private:
       if (skip) {
         std::array const cv65300_65301{impl().readCv(65300u - 1u),
                                        impl().readCv(65301u - 1u)};
-        _addrs.logon = decode_address(cbegin(cv65300_65301));
+        _addrs.logon = decode_address(cv65300_65301);
         return;
       }
       // Force new logon if diff is >4
@@ -977,6 +977,7 @@ private:
                    bool overwrite_primary_address) {
     if (!_logon_enabled || !std::ranges::equal(did, _did)) return;
     _logon_assigned = _logon_store = true;
+    _addrs.consist = 0u;
     _addrs.logon = addr;
     if (addr && overwrite_primary_address) _addrs.primary = addr;  // Stupid
     static constexpr std::array<uint8_t, 5uz> data{
@@ -988,7 +989,7 @@ private:
       data[3uz] << 16uz | data[4uz] << 8uz | crc8(data))));
   }
 
-  /// Addr adr datagrams
+  /// Add adr datagrams
   void adr() {
     if (!_ch1_addr_enabled || !empty(_adr_deque)) return;
     // Active address is logon
@@ -1037,7 +1038,7 @@ private:
   /// \param  d DV (dynamic CV)
   /// \param  x Subindex
   void dyn(uint8_t d, uint8_t x) {
-    if (!_ch2_enabled || full(_dyn_deque)) return;
+    if (!_ch2_data_enabled || full(_dyn_deque)) return;
     _dyn_deque.push_back(encode_datagram(
       make_datagram<Bits::_18>(7u, static_cast<uint32_t>(d << 6u | x))));
   }
@@ -1052,21 +1053,27 @@ private:
 
   /// Handle app::pom
   void appPom() {
-    if (empty(_pom_deque)) return;
-    auto const& packet{_pom_deque.front()};
-    std::copy(cbegin(packet), cend(packet), begin(_ch2));
-    impl().transmitBiDi({cbegin(_ch2), size(packet)});
-    _pom_deque.pop_front();
+    if (!_ch2_data_enabled) return;
+    // Implicitly acknowledge CV access commands while deque is empty
+    else if (empty(_pom_deque))
+      impl().transmitBiDi({cbegin(acks), sizeof(acks[0uz])});
+    // Current packet must be the one that generated the response
+    else if (_packet == _last_own_cv_packet) {
+      auto const& datagram{_pom_deque.front()};
+      std::copy(cbegin(datagram), cend(datagram), begin(_ch2));
+      impl().transmitBiDi({cbegin(_ch2), size(datagram)});
+      _pom_deque.pop_front();
+    }
   }
 
-  /// Handle app:dyn datagrams
+  /// Handle app:dyn
   void appDyn() {
     if (empty(_dyn_deque)) return;
     auto first{begin(_ch2)};
     auto const last{cend(_ch2)};
     do {
-      auto const& packet{_dyn_deque.front()};
-      first = std::copy_n(cbegin(packet), size(packet), first);
+      auto const& datagram{_dyn_deque.front()};
+      first = std::copy_n(cbegin(datagram), size(datagram), first);
       _dyn_deque.pop_front();
     } while (!empty(_dyn_deque) && last - first >= ssize(_dyn_deque.front()));
     impl().transmitBiDi({cbegin(_ch2), first});
@@ -1075,20 +1082,20 @@ private:
   /// Handle app:tos
   void appTos() {
     if (empty(_tos_deque)) return;
-    auto const& packet{_tos_deque.front()};
-    std::ranges::copy(packet, begin(_ch2));
-    impl().transmitBiDi({cbegin(_ch2), size(packet)});
+    auto const& datagram{_tos_deque.front()};
+    std::ranges::copy(datagram, begin(_ch2));
+    impl().transmitBiDi({cbegin(_ch2), size(datagram)});
     _tos_deque.pop_front();
   }
 
   /// Handle app::logon
   void appLogon(uint32_t ch) {
     if (empty(_logon_deque)) return;
-    if (auto const& packet{_logon_deque.front()}; ch == 1u) {
-      std::copy(begin(packet), begin(packet) + 2, begin(_ch1));
+    if (auto const& datagram{_logon_deque.front()}; ch == 1u) {
+      std::copy(begin(datagram), begin(datagram) + 2, begin(_ch1));
       impl().transmitBiDi({cbegin(_ch1), size(_ch1)});
     } else {
-      std::copy(begin(packet) + 2, end(packet), begin(_ch2));
+      std::copy(begin(datagram) + 2, end(datagram), begin(_ch2));
       impl().transmitBiDi({cbegin(_ch2), size(_ch2)});
       _logon_deque.pop_front();
     }
@@ -1135,6 +1142,10 @@ private:
       impl().writeCv(29u - 1u, true, 5u);
     }
 
+    // Every assign clears eventually set consist address
+    impl().writeCv(19u - 1u, 0u);
+    impl().writeCv(20u - 1u, 0u);
+
     _cids.front() = _cids.back();
     impl().writeCv(65297u - 1u, static_cast<uint8_t>(_cids.back() >> 8u));
     impl().writeCv(65298u - 1u, static_cast<uint8_t>(_cids.back()));
@@ -1170,23 +1181,22 @@ private:
 
   // Deques
   ztl::inplace_deque<Packet, DCC_RX_DEQUE_SIZE> _deque{};
-  ztl::inplace_deque<std::array<uint8_t, datagram_size<Bits::_18>>,
-                     DCC_RX_BIDI_DEQUE_SIZE>
+  ztl::inplace_deque<Datagram<datagram_size<Bits::_18>>, DCC_RX_BIDI_DEQUE_SIZE>
     _dyn_deque{};
-  ztl::inplace_deque<Channel1, DCC_RX_BIDI_DEQUE_SIZE> _pom_deque{};
-  ztl::inplace_deque<Channel1, 2uz> _adr_deque{};
-  ztl::inplace_deque<Channel2, 2uz> _tos_deque{};
-  ztl::inplace_deque<BundledChannels, 2uz> _logon_deque{};
+  ztl::inplace_deque<Datagram<datagram_size<Bits::_48>>, 1uz> _logon_deque{};
+  ztl::inplace_deque<Datagram<datagram_size<Bits::_36>>, 1uz> _tos_deque{};
+  ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 2uz> _adr_deque{};
+  ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 2uz> _pom_deque{};
 
-  Packet _packet{};           ///< Current packet
-  Packet _last_own_packet{};  ///< Last packet for own address
+  Packet _packet{};              ///< Current packet
+  Packet _last_own_cv_packet{};  ///< Last CV packet for own address
 
   Addresses _addrs{};
 
   size_t _bit_count{};
-  size_t _own_equal_packets_count{1uz};
   size_t _packet_count{};
   size_t _preamble_count{};
+  size_t _own_equal_cv_packets_count{};
   uint8_t _byte{};
   uint8_t _checksum{};     ///< On-the-fly calculated checksum
   uint8_t _index_reg{1u};  ///< Paged mode index register
@@ -1215,6 +1225,8 @@ private:
   // Not bitfields as those are most likely mutated in interrupt context
   bool _is_halfbit{};
   bool _packet_end{};
+  bool _ch1_addr_enabled{};
+  bool _ch2_data_enabled{};
   bool _ch2_consist_enabled{};
   bool _logon_enabled{};
   bool _logon_selected{};
@@ -1226,8 +1238,6 @@ private:
   bool _f0_exception : 1 {};
   bool _man : 1 {};
   bool _zimo : 1 {};
-  bool _ch1_addr_enabled : 1 {};
-  bool _ch2_enabled : 1 {};
   bool _block_dyn_deque : 1 {};
 };
 

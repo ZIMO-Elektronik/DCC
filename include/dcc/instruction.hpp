@@ -11,6 +11,8 @@
 #pragma once
 
 #include <cstdint>
+#include <span>
+#include "packet.hpp"
 
 namespace dcc {
 
@@ -55,6 +57,23 @@ constexpr Instruction decode_instruction(InputIt first) {
   }
   if (*first == 0b1111'1110u) return Instruction::Logon;
   return Instruction::UnknownService;
+}
+
+/// Decode instruction
+///
+/// \param  bytes Raw bytes
+/// \return Instruction
+constexpr Instruction decode_instruction(std::span<uint8_t const> bytes) {
+  return decode_instruction(cbegin(bytes));
+}
+
+/// Decode instruction
+///
+/// \param  packet  Packet
+/// \return Instruction
+constexpr Instruction decode_instruction(Packet const& packet) {
+  auto const offset{packet[0uz] >= 128u && packet[1uz] <= 252u};
+  return decode_instruction(cbegin(packet) + 1 + offset);
 }
 
 }  // namespace dcc

@@ -290,7 +290,9 @@ Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enou
         vTaskDelay(pdMS_TO_TICKS(5u));
       }
     }
-    ```
+    ```    
+> [!WARNING]  
+> During the BiDi cutout, execution is temporarily blocked and may return immediately.
 
 #### Optional
 There are various optional methods that can be implemented if required. One of them are asynchronous CV methods that contain a callback as the last parameter. These methods allow to return immediately and execute the callback at a later point in time. Another addition can enable or disable high-current BiDi if the corresponding bit is set in CV29. And last but not least, the east-west direction according to [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) is supported.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.35.0
+- Add `dcc::Packet` and `std::span` overloads to `decode_address`
+- Add `dcc::Packet` and `std::span` overloads to `decode_instruction`
+- Block `rx::CrtpBase::execute` during BiDi cutout
+- Bugfix POM ID0 datagrams may only be sent in BiDi cutouts following CV access commands ([#15](https://github.com/ZIMO-Elektronik/DCC/issues/15))
+
 ## 0.34.0
 - Add datagram method to `rx::bidi::CrtpBase` to queue dyn (ID7) datagrams
 - Replace `int32_t` direction (1, -1) with `bool` (1, 0)

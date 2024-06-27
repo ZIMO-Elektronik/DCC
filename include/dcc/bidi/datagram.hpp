@@ -55,6 +55,14 @@ inline constexpr std::array<uint8_t, 256uz> decode_lut{
 
 }  // namespace detail
 
+/// Instruction understood and will be executed
+///
+/// For some stupid, incomprehensible reason, there are two versions of ACK.
+inline constexpr std::array<uint8_t, 2uz> acks{0b0000'1111u, 0b1111'0000u};
+
+/// Instruction received correctly but not supported
+inline constexpr uint8_t nack{0b0011'1100u};
+
 /// Enumeration to specify datagram bits
 enum class Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
 

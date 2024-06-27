@@ -53,7 +53,12 @@ void RxTest::Receive(dcc::tx::Timings const& timings) {
                           [this](uint32_t time) { _mock.receive(time); });
 }
 
-void RxTest::Execute() { _mock.execute(); }
+void RxTest::Execute() {
+  // Receive additional preamble bit before calling execute to avoid being
+  // inside a cutout and getting execution blocked!
+  _mock.receive(dcc::rx::Timing::Bit1);
+  _mock.execute();
+}
 
 void RxTest::Cutout() {
   _mock.cutoutChannel1();
