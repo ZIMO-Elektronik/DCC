@@ -13,6 +13,8 @@
 #include <cassert>
 #include <cstdint>
 #include <iterator>
+#include <span>
+#include "packet.hpp"
 
 namespace dcc {
 
@@ -60,28 +62,44 @@ struct Address {
 template<std::input_iterator InputIt>
 constexpr Address decode_address(InputIt first) {
   // 0
-  if (*first < 1u) return {*first, Address::Broadcast};
+  if (*first == 0u) return {*first, Address::Broadcast};
   // 1-127
-  else if (*first < 128u) return {*first, Address::Short};
+  else if (*first <= 127u) return {*first, Address::Short};
   // 128-191
-  else if (*first < 192u)
+  else if (*first <= 191u)
     return {*first, Address::Accessory};  // TODO most likely wrong?
   // 192-231
-  else if (*first < 232u) {
+  else if (*first <= 231u) {
     auto const a13_8{*first++};
     auto const a7_0{*first};
     return {static_cast<Address::value_type>(((a13_8 << 8u) | a7_0) & 0x3FFFu),
             Address::Long};
   }
   // 232-252
-  else if (*first < 253u)
+  else if (*first <= 252u)
     return {*first, Address::Reserved};
   // 253
-  else if (*first < 254u) return {*first, Address::DataTransfer};
+  else if (*first == 253u) return {*first, Address::DataTransfer};
   // 254
-  else if (*first < 255u) return {*first, Address::AutomaticLogon};
+  else if (*first == 254u) return {*first, Address::AutomaticLogon};
   // 255
   else return {*first, Address::IdleSystem};
+}
+
+/// Decode address
+///
+/// \param  bytes Raw bytes
+/// \return Address
+constexpr Address decode_address(std::span<uint8_t const> bytes) {
+  return decode_address(cbegin(bytes));
+}
+
+/// Decode address
+///
+/// \param  packet  Packet
+/// \return Address
+constexpr Address decode_address(Packet const& packet) {
+  return decode_address(cbegin(packet));
 }
 
 /// Encode address

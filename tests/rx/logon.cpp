@@ -19,7 +19,7 @@ TEST_F(RxTest, logon_with_new_cid) {
   Cutout();
 
   // Execute commands to address 1000
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(5);
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   Receive(dcc::make_advanced_operations_speed_packet(1000u, 0u));
@@ -31,7 +31,7 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_le_4) {
   Logon();
 
   // Execute commands to address 1000
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(5);
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   Receive(dcc::make_advanced_operations_speed_packet(_addrs.logon, 0u));
@@ -61,7 +61,7 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_gt_4) {
   Cutout();
 
   // Execute commands to address 1000
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(5);
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   Receive(dcc::make_advanced_operations_speed_packet(1000u, 0u));
