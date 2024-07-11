@@ -3,8 +3,8 @@
 using namespace dcc::bidi;
 
 TEST_F(RxTest, app_pom) {
-  auto cv_addr{static_cast<uint8_t>(rand())};
-  auto value{static_cast<uint8_t>(rand())};
+  auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
+  auto value{RandomInterval<uint8_t>(0u, 255u)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, _)).WillRepeatedly(Return(value));
 
@@ -20,8 +20,8 @@ TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
   _cvs[28uz - 1uz] = static_cast<uint8_t>(_cvs[28uz - 1uz] & 0b1111'11101u);
   SetUp();
 
-  auto cv_addr{static_cast<uint8_t>(rand())};
-  auto value{static_cast<uint8_t>(rand())};
+  auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
+  auto value{RandomInterval<uint8_t>(0u, 255u)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, _)).WillRepeatedly(Return(value));
 
