@@ -6,7 +6,7 @@ TEST_F(RxTest, logon_with_new_cid) {
 
   // Enable
   Receive(dcc::make_logon_enable_packet(
-    dcc::AddressGroup::Now, _cid + 1u, static_cast<uint8_t>(rand())));
+    dcc::AddressGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
   Cutout();
 
   // Select

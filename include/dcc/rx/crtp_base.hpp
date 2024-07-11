@@ -232,7 +232,8 @@ struct CrtpBase {
       case Address::Broadcast: appTos(); break;
       case Address::Short: [[fallthrough]];
       case Address::Long:
-        if (_addrs.received == _logon_assigned ? _addrs.logon : _addrs.primary)
+        if (_addrs.received ==
+            (_logon_assigned ? _addrs.logon : _addrs.primary))
           decode_instruction(_packet) == Instruction::CvLong ? appPom()
                                                              : appDyn();
         else if (_addrs.received == _addrs.consist && _ch2_consist_enabled)
