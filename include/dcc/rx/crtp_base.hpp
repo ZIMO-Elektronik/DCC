@@ -1055,11 +1055,10 @@ private:
   /// Handle app::pom
   void appPom() {
     if (!_ch2_data_enabled) return;
-    // Implicitly acknowledge CV access commands while deque is empty
-    else if (empty(_pom_deque))
+    // Implicitly acknowledge all CV access commands
+    else if (_packet != _last_own_cv_packet)
       impl().transmitBiDi({cbegin(acks), sizeof(acks[0uz])});
-    // Current packet must be the one that generated the response
-    else if (_packet == _last_own_cv_packet) {
+    else if (!empty(_pom_deque)) {
       auto const& datagram{_pom_deque.front()};
       std::copy(cbegin(datagram), cend(datagram), begin(_ch2));
       impl().transmitBiDi({cbegin(_ch2), size(datagram)});
