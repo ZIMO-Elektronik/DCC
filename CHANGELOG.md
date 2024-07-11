@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.35.1
+- Bugfix POM only ever acknowledged once ([#15](https://github.com/ZIMO-Elektronik/DCC/issues/15))
+- Bugfix operator precedence ([#24](https://github.com/ZIMO-Elektronik/DCC/issues/24))
+
 ## 0.35.0
 - Add `dcc::Packet` and `std::span` overloads to `decode_address`
 - Add `dcc::Packet` and `std::span` overloads to `decode_instruction`
