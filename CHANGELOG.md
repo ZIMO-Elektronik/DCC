@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.35.3
+- Bugfix typo in `decode_instruction` results in incorrect decoding ([#27](https://github.com/ZIMO-Elektronik/DCC/issues/27))
+
 ## 0.35.2
 - Ignore `-Warray-bounds` for `decode_address`
 
