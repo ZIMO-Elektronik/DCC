@@ -67,7 +67,7 @@ constexpr auto uint32_2data(uint32_t word, uint8_t* data) {
 ///
 /// \tparam Scale Scaling
 /// \param  speed Speed
-/// \raturn Scaled speed
+/// \return Scaled speed
 template<int32_t Scale>
 constexpr int32_t scale_speed(int32_t speed)
   requires(Scale == 14 || Scale == 28 || Scale == 126)
