@@ -21,7 +21,9 @@ protected:
 
   void EnterServiceMode();
 
-  void ReceiveAndExecuteTwoIdenticalCvWritePackets(uint32_t addr, uint8_t byte);
+  void ReceiveAndExecuteTwoIdenticalCvWritePackets(uint16_t addr,
+                                                   uint32_t cv_addr,
+                                                   uint8_t byte);
 
   void Logon();
 
@@ -34,7 +36,7 @@ protected:
 
   NiceMock<RxMock> _mock;
   dcc::Addresses _addrs{.primary = {.value = 3u, .type = dcc::Address::Short},
-                        .consist = {.value = 3u, .type = dcc::Address::Short},
+                        .consist = {.value = 4u, .type = dcc::Address::Short},
                         .logon = {.value = 1000u, .type = dcc::Address::Long}};
   std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
   uint32_t _did{0xAABBCCDDu};

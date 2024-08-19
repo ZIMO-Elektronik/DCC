@@ -71,10 +71,10 @@ void RxTest::EnterServiceMode() {
   Execute();
 }
 
-void RxTest::ReceiveAndExecuteTwoIdenticalCvWritePackets(uint32_t addr,
+void RxTest::ReceiveAndExecuteTwoIdenticalCvWritePackets(uint16_t addr,
+                                                         uint32_t cv_addr,
                                                          uint8_t byte) {
-  auto packet{
-    dcc::make_cv_access_long_write_packet(_addrs.primary, addr, byte)};
+  auto packet{dcc::make_cv_access_long_write_packet(addr, cv_addr, byte)};
   for (auto i{0uz}; i < 2uz; ++i) {
     Receive(packet);
     Execute();

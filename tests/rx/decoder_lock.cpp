@@ -6,9 +6,9 @@ TEST_F(RxTest, cv15_not_equal_cv15_activates_decoder_lock) {
   SetUp();
 
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto cv_value{RandomInterval<uint8_t>(0u, 255u)};
-  EXPECT_CALL(_mock, writeCv(cv_addr, cv_value)).Times(0);
-  ReceiveAndExecuteTwoIdenticalCvWritePackets(cv_addr, cv_value);
+  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte)).Times(0);
+  ReceiveAndExecuteTwoIdenticalCvWritePackets(_addrs.primary, cv_addr, byte);
 }
 
 TEST_F(RxTest, cv15_zero_deactivates_decoder_lock) {
@@ -17,9 +17,9 @@ TEST_F(RxTest, cv15_zero_deactivates_decoder_lock) {
   SetUp();
 
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto cv_value{RandomInterval<uint8_t>(0u, 255u)};
-  EXPECT_CALL(_mock, writeCv(cv_addr, cv_value));
-  ReceiveAndExecuteTwoIdenticalCvWritePackets(cv_addr, cv_value);
+  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte));
+  ReceiveAndExecuteTwoIdenticalCvWritePackets(_addrs.primary, cv_addr, byte);
 }
 
 TEST_F(RxTest, cv16_zero_deactivates_decoder_lock) {
@@ -28,7 +28,7 @@ TEST_F(RxTest, cv16_zero_deactivates_decoder_lock) {
   SetUp();
 
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto cv_value{RandomInterval<uint8_t>(0u, 255u)};
-  EXPECT_CALL(_mock, writeCv(cv_addr, cv_value));
-  ReceiveAndExecuteTwoIdenticalCvWritePackets(cv_addr, cv_value);
+  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte));
+  ReceiveAndExecuteTwoIdenticalCvWritePackets(_addrs.primary, cv_addr, byte);
 }

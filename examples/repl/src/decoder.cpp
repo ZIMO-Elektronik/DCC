@@ -12,17 +12,17 @@ Decoder::Decoder() {
   _cvs[8uz - 1uz] = 13u;     // Temporary manufacturer ID (S-9.2.2 Appendix A)
 }
 
-void Decoder::direction(uint32_t addr, bool dir) {
+void Decoder::direction(uint16_t addr, bool dir) {
   cli::Cli::cout() << "Address " << addr << ": set direction "
                    << (dir ? "forward" : "backward") << PROMPTENDL;
 }
 
-void Decoder::speed(uint32_t addr, int32_t speed) {
+void Decoder::speed(uint16_t addr, int32_t speed) {
   cli::Cli::cout() << "Address " << addr << ": set speed " << speed
                    << PROMPTENDL;
 }
 
-void Decoder::function(uint32_t addr, uint32_t mask, uint32_t state) {
+void Decoder::function(uint16_t addr, uint32_t mask, uint32_t state) {
   auto const f_high{std::bit_width(mask) - 1};
   auto const f_low{std::countr_zero(mask)};
   cli::Cli::cout() << "Address " << addr << ": f" << f_high << "-"
