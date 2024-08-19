@@ -5,7 +5,7 @@
 
 void Decoder::direction(uint16_t addr, bool dir) {}
 
-void Decoder::speed(uint32_t, int32_t speed) {
+void Decoder::speed(uint16_t addr, int32_t speed) {
   if (speed) {
     printf("\nDecoder: accelerate to speed step %d\n", speed);
     bsp_write_green_led(true);
