@@ -313,7 +313,7 @@ private:
     // Register mode
     else if (size(packet) == 3uz) registerMode({cbegin(packet), cend(packet)});
     // CvLong
-    else if (size(packet) == 4uz) cvLong({cbegin(packet), cend(packet)});
+    else if (size(packet) == 4uz) cvLong(0u, {cbegin(packet), cend(packet)});
     return true;
   }
 
@@ -369,8 +369,8 @@ private:
       case Instruction::SpeedDirection: speedAndDirection(addr, bytes); break;
       case Instruction::FunctionGroup: functionGroup(addr, bytes); break;
       case Instruction::FeatureExpansion: featureExpansion(addr, bytes); break;
-      case Instruction::CvLong: cvLong(bytes); break;
-      case Instruction::CvShort: cvShort(bytes); break;
+      case Instruction::CvLong: cvLong(addr, bytes); break;
+      case Instruction::CvShort: cvShort(addr, bytes); break;
       default: break;
     }
 
@@ -623,8 +623,12 @@ private:
 
   /// Execute CV access - long form
   ///
+  ///
+  /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void cvLong(std::span<uint8_t const> bytes) {
+  void cvLong(uint32_t addr, std::span<uint8_t const> bytes) {
+    if (addr && addr == _addrs.consist) return;
+
     countOwnEqualCvPackets();
 
     // Ignore all but the second packet while in service mode
@@ -659,8 +663,11 @@ private:
 
   /// Execute CV access - short form
   ///
+  /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void cvShort(std::span<uint8_t const> bytes) {
+  void cvShort(uint32_t addr, std::span<uint8_t const> bytes) {
+    if (addr && addr == _addrs.consist) return;
+
     countOwnEqualCvPackets();
 
     switch (bytes[0uz] & 0x0Fu) {
