@@ -473,10 +473,9 @@ constexpr auto make_logon_select_packet(uint16_t manufacturer_id,
 /// \param  did             Unique ID
 /// \param  addr            Address (own encoding!)
 /// \return LOGON_ASSIGN packet
-constexpr auto
-make_logon_assign_packet([[maybe_unused]] uint16_t manufacturer_id,
-                         [[maybe_unused]] uint32_t did,
-                         [[maybe_unused]] uint16_t addr) {
+constexpr auto make_logon_assign_packet(uint16_t manufacturer_id,
+                                        uint32_t did,
+                                        uint16_t addr) {
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address({254u, Address::AutomaticLogon}, first)};

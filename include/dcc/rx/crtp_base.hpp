@@ -446,7 +446,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void advancedOperations(uint32_t addr, std::span<uint8_t const> bytes) {
+  void advancedOperations(Address::value_type addr,
+                          std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
       // Speed, direction and function (currently only mentioned in RCN-212)
       case 0b0011'1100u:  // TODO
@@ -490,7 +491,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void speedAndDirection(uint32_t addr, std::span<uint8_t const> bytes) {
+  void speedAndDirection(Address::value_type addr,
+                         std::span<uint8_t const> bytes) {
     auto const dir{static_cast<bool>(bytes[0uz] & ztl::make_mask(5u))};
     int32_t speed{};
 
@@ -525,7 +527,7 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void functionGroup(uint32_t addr, std::span<uint8_t const> bytes) {
+  void functionGroup(Address::value_type addr, std::span<uint8_t const> bytes) {
     uint32_t mask{};
     uint32_t state{};
 
@@ -562,7 +564,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void featureExpansion(uint32_t addr, std::span<uint8_t const> bytes) {
+  void featureExpansion(Address::value_type addr,
+                        std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
       // Binary state control instruction long form (3 bytes)
       case 0b1100'0000u:
@@ -626,7 +629,7 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void cvLong(uint32_t addr, std::span<uint8_t const> bytes) {
+  void cvLong(Address::value_type addr, std::span<uint8_t const> bytes) {
     if (addr && addr == _addrs.consist) return;
 
     countOwnEqualCvPackets();
@@ -665,7 +668,7 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void cvShort(uint32_t addr, std::span<uint8_t const> bytes) {
+  void cvShort(Address::value_type addr, std::span<uint8_t const> bytes) {
     if (addr && addr == _addrs.consist) return;
 
     countOwnEqualCvPackets();
@@ -839,7 +842,7 @@ private:
   /// \param  addr  Address
   /// \param  dir   Direction
   /// \param  speed Speed
-  void directionSpeed(uint32_t addr, bool dir, int32_t speed) {
+  void directionSpeed(Address::value_type addr, bool dir, int32_t speed) {
     auto const reversed{addr == _addrs.primary ? _addrs.primary.reversed
                                                : _addrs.consist.reversed};
     impl().direction(addr, reversed ? !dir : dir);

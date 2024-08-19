@@ -3,7 +3,7 @@
 #include <cstdio>
 #include "bsp.h"
 
-void Decoder::direction(uint32_t addr, bool dir) {}
+void Decoder::direction(uint16_t addr, bool dir) {}
 
 void Decoder::speed(uint32_t, int32_t speed) {
   if (speed) {
@@ -15,7 +15,7 @@ void Decoder::speed(uint32_t, int32_t speed) {
   }
 }
 
-void Decoder::function(uint32_t addr, uint32_t mask, uint32_t state) {
+void Decoder::function(uint16_t addr, uint32_t mask, uint32_t state) {
   if (!(mask & 0b0'1000u)) return;
   else if (state & 0b0'1000u) {
     printf("Decoder: set function F3\n");

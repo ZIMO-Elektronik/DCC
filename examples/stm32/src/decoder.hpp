@@ -7,13 +7,13 @@ struct Decoder : dcc::rx::CrtpBase<Decoder> {
 
 private:
   // Set direction (1 forward, 0 backward)
-  void direction(uint32_t addr, bool dir);
+  void direction(uint16_t addr, bool dir);
 
   // Set speed [-1, 255] (regardless of CV settings)
-  void speed(uint32_t addr, int32_t speed);
+  void speed(uint16_t addr, int32_t speed);
 
   // Set function inputs
-  void function(uint32_t addr, uint32_t mask, uint32_t state);
+  void function(uint16_t addr, uint32_t mask, uint32_t state);
 
   // Enter or exit service mode
   void serviceModeHook(bool service_mode);
