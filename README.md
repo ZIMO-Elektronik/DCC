@@ -64,7 +64,7 @@ The DCC protocol is defined by various standards published by the [National Mode
     - Consist control
       - Set consist address :ballot_box_with_check:
     - Advanced operations
-      - Speed, direction and function :negative_squared_cross_mark:
+      - Speed, direction and function :ballot_box_with_check:
       - Analog function group :negative_squared_cross_mark:
       - Special operating modes :ballot_box_with_check:
       - 128 speed step control :ballot_box_with_check:
