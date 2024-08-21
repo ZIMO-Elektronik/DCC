@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 #include <utility>
 #include <ztl/math.hpp>
@@ -93,6 +94,31 @@ consteval auto make_idle_packet() { return Packet{0xFFu, 0x00u, 0xFFu}; }
 /// \return Reset packet
 consteval auto make_reset_packet() { return Packet{0x00u, 0x00u, 0x00u}; }
 
+/// Make an advanced operations speed, direction and functions
+///
+/// \param  addr      Address
+/// \param  rggggggg  Direction and speed byte
+/// \param  f7_0      F7-0
+/// \param  fs...     Functions
+/// \return Advanced operations speed, direction and functions packet
+constexpr auto make_advanced_operations_speed_direction_and_functions_packet(
+  Address::value_type addr,
+  uint8_t rggggggg,
+  uint8_t f7_f0,
+  std::unsigned_integral auto... fs) {
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(
+    {addr, addr <= 127u ? Address::Short : Address::Long}, first)};
+  *last++ = 0b0011'1100u;
+  *last++ = rggggggg;
+  *last++ = f7_f0;
+  ((*last++ = static_cast<uint8_t>(fs)), ...);
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
 /// Make an advanced operations speed packet
 ///
 /// \param  addr      Address
@@ -125,9 +151,20 @@ make_advanced_operations_analog_function_group_packet(Address::value_type) {
   return packet;
 }
 
-/// TODO
-constexpr auto make_speed_and_direction_packet(Address::value_type) {
+/// Make speed and direction packet
+///
+/// \param  addr    Address
+/// \param  rggggg  Direction and speed byte
+/// \return Speed and direction packet
+constexpr auto make_speed_and_direction_packet(Address::value_type addr,
+                                               uint8_t rggggg) {
   Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(
+    {addr, addr <= 127u ? Address::Short : Address::Long}, first)};
+  *last++ = 0b0100'0000u | rggggg;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
@@ -168,16 +205,16 @@ constexpr auto make_function_group_f8_f5_packet(Address::value_type addr,
 
 /// Make a function group packet for F12-F9
 ///
-/// \param  addr  Address
-/// \param  state F12-F9 state
+/// \param  addr    Address
+/// \param  f12_f9  F12-F9 state
 /// \return Function group packet for F12-F9
 constexpr auto make_function_group_f12_f9_packet(Address::value_type addr,
-                                                 uint8_t state) {
+                                                 uint8_t f12_f9) {
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(
     {addr, addr <= 127u ? Address::Short : Address::Long}, first)};
-  *last++ = 0b1010'0000u | (state & 0xFu);
+  *last++ = 0b1010'0000u | (f12_f9 & 0xFu);
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
@@ -185,17 +222,17 @@ constexpr auto make_function_group_f12_f9_packet(Address::value_type addr,
 
 /// Make a feature expansion packet for F20-F13
 ///
-/// \param  addr  Address
-/// \param  state F20-F13 state
+/// \param  addr    Address
+/// \param  f20_f13 F20-F13 state
 /// \return Feature expansion packet for F20-F13
 constexpr auto make_feature_expansion_f20_f13_packet(Address::value_type addr,
-                                                     uint8_t state) {
+                                                     uint8_t f20_f13) {
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(
     {addr, addr <= 127u ? Address::Short : Address::Long}, first)};
   *last++ = 0b1101'1110u;
-  *last++ = state;
+  *last++ = f20_f13;
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
@@ -203,17 +240,17 @@ constexpr auto make_feature_expansion_f20_f13_packet(Address::value_type addr,
 
 /// Make a feature expansion packet for F28-F21
 ///
-/// \param  addr  Address
-/// \param  state F28-F21 state
+/// \param  addr    Address
+/// \param  f28_f21 F28-F21 state
 /// \return Feature expansion packet for F28-F21
 constexpr auto make_feature_expansion_f28_f21_packet(Address::value_type addr,
-                                                     uint8_t state) {
+                                                     uint8_t f28_f21) {
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(
     {addr, addr <= 127u ? Address::Short : Address::Long}, first)};
   *last++ = 0b1101'1111u;
-  *last++ = state;
+  *last++ = f28_f21;
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
@@ -222,8 +259,8 @@ constexpr auto make_feature_expansion_f28_f21_packet(Address::value_type addr,
 /// Make a binary state short packet
 ///
 /// \param  addr      Address
-/// \param  dlllllll  Binary state and number
-/// \return Feature expansion packet for F28-F21
+/// \param  dlllllll  Binary state low byte and number
+/// \return Binary state short packet
 constexpr auto make_binary_state_short_packet(Address::value_type addr,
                                               uint8_t dlllllll) {
   Packet packet{};
@@ -240,9 +277,9 @@ constexpr auto make_binary_state_short_packet(Address::value_type addr,
 /// Make a binary state long packet
 ///
 /// \param  addr      Address
-/// \param  dlllllll  Binary state and number
-/// \param  hhhhhhhh  Bla
-/// \return Feature expansion packet for F28-F21
+/// \param  dlllllll  Binary state low byte and number
+/// \param  hhhhhhhh  Binary state high byte
+/// \return Binary state long packet
 constexpr auto make_binary_state_long_packet(Address::value_type addr,
                                              uint8_t dlllllll,
                                              uint8_t hhhhhhhh) {

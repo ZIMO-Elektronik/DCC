@@ -257,7 +257,7 @@ static size_t IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
                                        rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0;
   rmt_encode_state_t state = RMT_ENCODING_RESET;
-  rmt_encode_state_t session_state = 0;
+  rmt_encode_state_t session_state = RMT_ENCODING_RESET;
   rmt_dcc_encoder_t* dcc_encoder =
     __containerof(encoder, rmt_dcc_encoder_t, base);
 
@@ -457,8 +457,8 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
   return ESP_OK;
 err:
   if (dcc_encoder) {
-    if (dcc_encoder->bytes_encoder) rmt_del_encoder(dcc_encoder->bytes_encoder);
     if (dcc_encoder->copy_encoder) rmt_del_encoder(dcc_encoder->copy_encoder);
+    if (dcc_encoder->bytes_encoder) rmt_del_encoder(dcc_encoder->bytes_encoder);
     free(dcc_encoder);
   }
   return ret;

@@ -54,9 +54,9 @@ struct CrtpBase {
     // Primary address
     auto const cv29{impl().readCv(29u - 1u)};
     if (cv29 & ztl::make_mask(5u)) {
-      std::array const cv17_18{impl().readCv(17u - 1u),
-                               impl().readCv(18u - 1u)};
-      _addrs.primary = decode_address(cv17_18);
+      std::array const cv17_cv18{impl().readCv(17u - 1u),
+                                 impl().readCv(18u - 1u)};
+      _addrs.primary = decode_address(cv17_cv18);
     } else {
       auto const cv1{impl().readCv(1u - 1u)};
       _addrs.primary = decode_address(&cv1);
@@ -449,9 +449,25 @@ private:
   void advancedOperations(Address::value_type addr,
                           std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
-      // Speed, direction and function (currently only mentioned in RCN-212)
-      case 0b0011'1100u:  // TODO
-        break;
+      // Speed, direction and function
+      case 0b0011'1100u:
+        // F7-F0
+        if (size(bytes) > 3uz)
+          impl().function(
+            addr, 0xFFu << 0u, static_cast<uint32_t>(bytes[2uz] << 0u));
+        // F15-F8
+        if (size(bytes) > 4uz)
+          impl().function(
+            addr, 0xFFu << 8u, static_cast<uint32_t>(bytes[3uz] << 8u));
+        // F23-F16
+        if (size(bytes) > 5uz)
+          impl().function(
+            addr, 0xFFu << 16u, static_cast<uint32_t>(bytes[4uz] << 16u));
+        // F31-F24
+        if (size(bytes) > 6uz)
+          impl().function(
+            addr, 0xFFu << 0u, static_cast<uint32_t>(bytes[5uz] << 24u));
+        [[fallthrough]];
 
       // 126 speed steps (plus 0)
       case 0b0011'1111u: {
