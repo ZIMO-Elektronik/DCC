@@ -1,6 +1,6 @@
 # Changelog
 
-##
+## 0.36.0
 - Add speed, direction and functions instruction
 - Bugfix no CV manipulation on consist address ([#26](https://github.com/ZIMO-Elektronik/DCC/issues/26))
 
