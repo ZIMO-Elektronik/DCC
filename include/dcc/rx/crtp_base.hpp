@@ -431,9 +431,8 @@ private:
   }
 
   /// Execute decoder control
-  void decoderControl(std::span<uint8_t const>) const {
-    // TODO
-  }
+  /// \todo
+  void decoderControl(std::span<uint8_t const>) const {}
 
   /// Execute consist control
   ///
@@ -498,7 +497,7 @@ private:
 
       // Analog function group
       case 0b0011'1101u:
-        // TODO
+        /// \todo
         break;
     }
   }
@@ -601,12 +600,12 @@ private:
 
       // System time (3 bytes)
       case 0b1100'0010u:
-        // TODO
+        /// \todo
         break;
 
       // Command station properties (4 bytes)
       case 0b1100'0011u:
-        // TODO
+        /// \todo
         break;
 
       // F20-F19-F18-F17-F16-F15-F14-F13
@@ -835,9 +834,8 @@ private:
   }
 
   /// Time
-  void time(std::span<uint8_t const>) const {
-    // TODO
-  }
+  /// \todo
+  void time(std::span<uint8_t const>) const {}
 
   /// Execute binary state
   ///
@@ -1036,7 +1034,7 @@ private:
     }
     // RCN-217 can't encode CV20 yet
     else {
-      // TODO
+      /// \todo
     }
   }
 

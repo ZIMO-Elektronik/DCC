@@ -1,6 +1,8 @@
 # Changelog
 
 ## 0.37.0
+- Add `dcc::Address` overloads of `make_*_packet` functions
+  - Allows to e.g. send address 100-127 as type `Long`
 - Add `DCC_TX_MIN_BIDI_BIT_TIMING` definition
 - Add `DCC_TX_MAX_BIDI_BIT_TIMING` definition
 
@@ -95,7 +97,7 @@
 - CV15/16 the values 0 can no longer activate the lock
 
 ## 0.24.1
-- Short and long addresses are considered equal if their values are
+- `Short` and `Long` addresses are considered equal if their values are
 - `make_*_packet` functions
 - Bugfix QoS datagram wasn't thread safe
 
@@ -179,7 +181,7 @@
 - Default paged mode index register to 1
 
 ## 0.7
-- Bugfix short addresses must also work in CV17/18
+- Bugfix `Short` addresses must also work in CV17/18
 
 ## 0.6
 - Added register mode

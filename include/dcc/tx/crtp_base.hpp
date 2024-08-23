@@ -64,9 +64,9 @@ struct CrtpBase {
     // or BiDi timings
     else if (_cfg.flags.bidi && _bidi_count <= 4uz) return bidiTiming();
 
-    // TODO theoretically deque could be popped here safely?
-    // we'd just need to check whether packet doesn't point to idle_packet and
-    // deque ain't empty?
+    /// \todo theoretically deque could be popped here safely?
+    /// we'd just need to check whether packet doesn't point to idle_packet and
+    /// deque ain't empty?
 
     // Deque is empty, send idle packet
     if (empty(_deque)) _packet = &_idle_packet;
