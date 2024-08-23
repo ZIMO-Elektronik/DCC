@@ -69,7 +69,7 @@ constexpr Address decode_address(InputIt first) {
   else if (*first <= 127u) return {*first, Address::Short};
   // 128-191
   else if (*first <= 191u)
-    return {*first, Address::Accessory};  // TODO most likely wrong?
+    return {*first, Address::Accessory};  /// \todo wrong?
   // 192-231
   else if (*first <= 231u) {
     auto const a13_8{*first++};
@@ -118,7 +118,7 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
     case Address::Broadcast: *first++ = 0u; break;
     case Address::Short: *first++ = static_cast<uint8_t>(addr); break;
     case Address::Accessory:
-      // TODO (see decode_address)
+      /// \todo see decode_address
       break;
     case Address::Long:
       *first++ = static_cast<uint8_t>(0b1100'0000u | addr >> 8u);
