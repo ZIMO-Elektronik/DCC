@@ -28,6 +28,9 @@ project(
 set(DCC_MAX_PACKET_SIZE
     18u
     CACHE STRING "Maximum size of a packet in bytes")
+set(DCC_RX_MIN_PREAMBLE_BITS
+    10u
+    CACHE STRING "Minimum number of preambel bits of decoder")
 set(DCC_RX_MIN_BIT_1_TIMING
     52u
     CACHE STRING "Minimum duration of a 1 bit of decoder")
@@ -40,15 +43,18 @@ set(DCC_RX_MIN_BIT_0_TIMING
 set(DCC_RX_MAX_BIT_0_TIMING
     119u
     CACHE STRING "Maximum duration of a 0 bit of decoder")
-set(DCC_RX_MIN_PREAMBLE_BITS
-    10u
-    CACHE STRING "Minimum number of preambel bits of decoder")
 set(DCC_RX_DEQUE_SIZE
     31u
     CACHE STRING "Size of the receiver deque of decoder")
 set(DCC_RX_BIDI_DEQUE_SIZE
     7u
     CACHE STRING "Size of the sender deque of decoder")
+set(DCC_TX_MIN_PREAMBLE_BITS
+    17u
+    CACHE STRING "Minimum number of preambel bits of command station")
+set(DCC_TX_MAX_PREAMBLE_BITS
+    30u
+    CACHE STRING "Maximum number of preambel bits of command station")
 set(DCC_TX_MIN_BIT_1_TIMING
     56u
     CACHE STRING "Minimum duration of a 1 bit of command station")
@@ -61,12 +67,12 @@ set(DCC_TX_MIN_BIT_0_TIMING
 set(DCC_TX_MAX_BIT_0_TIMING
     114u
     CACHE STRING "Maximum duration of a 0 bit of command station")
-set(DCC_TX_MIN_PREAMBLE_BITS
-    17u
-    CACHE STRING "Minimum number of preambel bits of command station")
-set(DCC_TX_MAX_PREAMBLE_BITS
-    30u
-    CACHE STRING "Maximum number of preambel bits of command station")
+set(DCC_TX_MIN_BIDI_BIT_TIMING
+    57u
+    CACHE STRING "Minimum duration of a BiDi bit of command station")
+set(DCC_TX_MAX_BIDI_BIT_TIMING
+    61u
+    CACHE STRING "Maximum duration of a BiDi bit of command station")
 set(DCC_TX_DEQUE_SIZE
     3u
     CACHE STRING "Size of the transmitter deque of command station")
@@ -79,19 +85,21 @@ target_compile_features(DCC INTERFACE cxx_std_23)
 target_compile_definitions(
   DCC
   INTERFACE DCC_MAX_PACKET_SIZE=${DCC_MAX_PACKET_SIZE}
+            DCC_RX_MIN_PREAMBLE_BITS=${DCC_RX_MIN_PREAMBLE_BITS}
             DCC_RX_MIN_BIT_1_TIMING=${DCC_RX_MIN_BIT_1_TIMING}
             DCC_RX_MAX_BIT_1_TIMING=${DCC_RX_MAX_BIT_1_TIMING}
             DCC_RX_MIN_BIT_0_TIMING=${DCC_RX_MIN_BIT_0_TIMING}
             DCC_RX_MAX_BIT_0_TIMING=${DCC_RX_MAX_BIT_0_TIMING}
-            DCC_RX_MIN_PREAMBLE_BITS=${DCC_RX_MIN_PREAMBLE_BITS}
             DCC_RX_DEQUE_SIZE=${DCC_RX_DEQUE_SIZE}
             DCC_RX_BIDI_DEQUE_SIZE=${DCC_RX_BIDI_DEQUE_SIZE}
+            DCC_TX_MIN_PREAMBLE_BITS=${DCC_TX_MIN_PREAMBLE_BITS}
+            DCC_TX_MAX_PREAMBLE_BITS=${DCC_TX_MAX_PREAMBLE_BITS}
             DCC_TX_MIN_BIT_1_TIMING=${DCC_TX_MIN_BIT_1_TIMING}
             DCC_TX_MAX_BIT_1_TIMING=${DCC_TX_MAX_BIT_1_TIMING}
             DCC_TX_MIN_BIT_0_TIMING=${DCC_TX_MIN_BIT_0_TIMING}
             DCC_TX_MAX_BIT_0_TIMING=${DCC_TX_MAX_BIT_0_TIMING}
-            DCC_TX_MIN_PREAMBLE_BITS=${DCC_TX_MIN_PREAMBLE_BITS}
-            DCC_TX_MAX_PREAMBLE_BITS=${DCC_TX_MAX_PREAMBLE_BITS}
+            DCC_TX_MIN_BIDI_BIT_TIMING=${DCC_TX_MIN_BIDI_BIT_TIMING}
+            DCC_TX_MAX_BIDI_BIT_TIMING=${DCC_TX_MAX_BIDI_BIT_TIMING}
             DCC_TX_DEQUE_SIZE=${DCC_TX_DEQUE_SIZE})
 
 if(PROJECT_IS_TOP_LEVEL)
