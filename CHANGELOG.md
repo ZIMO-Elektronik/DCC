@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.37.0
+- Add `DCC_TX_MIN_BIDI_BIT_TIMING` definition
+- Add `DCC_TX_MAX_BIDI_BIT_TIMING` definition
+
 ## 0.36.0
 - Add speed, direction and functions instruction
 - Bugfix no CV manipulation on consist address ([#26](https://github.com/ZIMO-Elektronik/DCC/issues/26))

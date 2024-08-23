@@ -374,21 +374,22 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
                               rmt_encoder_handle_t* ret_encoder) {
   esp_err_t ret = ESP_OK;
   rmt_dcc_encoder_t* dcc_encoder = NULL;
-  ESP_GOTO_ON_FALSE(config && ret_encoder &&                               //
-                      config->num_preamble >= DCC_TX_MIN_PREAMBLE_BITS &&  //
-                      config->num_preamble <= DCC_TX_MAX_PREAMBLE_BITS &&  //
-                      (!config->bidibit_duration ||                        //
-                       (config->bidibit_duration >= 57u &&                 //
-                        config->bidibit_duration <= 61u)) &&               //
-                      config->bit1_duration >= DCC_TX_MIN_BIT_1_TIMING &&  //
-                      config->bit1_duration <= DCC_TX_MAX_BIT_1_TIMING &&  //
-                      config->bit0_duration >= DCC_TX_MIN_BIT_0_TIMING &&  //
-                      config->bit0_duration <= DCC_TX_MAX_BIT_0_TIMING &&  //
-                      config->endbit_duration <= DCC_TX_MAX_BIT_1_TIMING,  //
-                    ESP_ERR_INVALID_ARG,
-                    err,
-                    TAG,
-                    "invalid argument");
+  ESP_GOTO_ON_FALSE(
+    config && ret_encoder &&                                         //
+      config->num_preamble >= DCC_TX_MIN_PREAMBLE_BITS &&            //
+      config->num_preamble <= DCC_TX_MAX_PREAMBLE_BITS &&            //
+      (!config->bidibit_duration ||                                  //
+       (config->bidibit_duration >= DCC_TX_MIN_BIDI_BIT_TIMING &&    //
+        config->bidibit_duration <= DCC_TX_MAX_BIDI_BIT_TIMING)) &&  //
+      config->bit1_duration >= DCC_TX_MIN_BIT_1_TIMING &&            //
+      config->bit1_duration <= DCC_TX_MAX_BIT_1_TIMING &&            //
+      config->bit0_duration >= DCC_TX_MIN_BIT_0_TIMING &&            //
+      config->bit0_duration <= DCC_TX_MAX_BIT_0_TIMING &&            //
+      config->endbit_duration <= DCC_TX_MAX_BIT_1_TIMING,            //
+    ESP_ERR_INVALID_ARG,
+    err,
+    TAG,
+    "invalid argument");
   dcc_encoder =
     heap_caps_calloc(1, sizeof(rmt_dcc_encoder_t), RMT_MEM_ALLOC_CAPS);
   ESP_GOTO_ON_FALSE(
