@@ -14,10 +14,14 @@ jobs:
       target: DCCStm32Decoder DCCStm32CommandStation
 
   esp-elf-gcc:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.0.8
-    with:
-      path: examples/esp32
-      target: esp32
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.1.6
+        with:
+          submodules: recursive
+      - uses: espressif/esp-idf-ci-action@v1
+        with:
+          path: examples/esp32
 
   x86_64-linux-gnu-gcc:
     uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.0.8
