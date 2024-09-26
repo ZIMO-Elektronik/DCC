@@ -11,11 +11,11 @@ The implementation provided here is used in the following products:
 - [ZIMO small-](https://www.zimo.at/web2010/products/ms-sound-decoder_EN.htm) and [large-scale MS decoders](https://www.zimo.at/web2010/products/ms-sound-decoder-grossbahn_EN.htm)
 
 <details>
-  <summary>Table of contents</summary>
+  <summary>Table of Contents</summary>
   <ol>
     <li><a href="#protocol">Protocol</a></li>
     <li><a href="#features">Features</a></li>
-    <li><a href="#getting-started">Getting started</a></li>
+    <li><a href="#getting-started">Getting Started</a></li>
       <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
@@ -25,7 +25,7 @@ The implementation provided here is used in the following products:
       <ul>
         <li><a href="#receiver-1">Receiver</a></li>
         <li><a href="#transmitter-1">Transmitter</a></li>
-        <li><a href="#esp32-rmt-encoder-1">ESP32 RMT encoder</a></li>
+        <li><a href="#esp32-rmt-encoder-1">ESP32 RMT Encoder</a></li>
       </ul>
   </ol>
 </details>
@@ -97,11 +97,11 @@ The DCC protocol is defined by various standards published by the [National Mode
 - Configurable preamble, bit durations and BiDi cutout
 - Supports user-defined packets and transmission of raw bytes
 
-### ESP32 RMT encoder
+### ESP32 RMT Encoder
 - Configurable preamble, bit durations and BiDi cutout
 - Only supports transmission of raw bytes
 
-## Getting started
+## Getting Started
 ### Prerequisites
 - C++23 compatible compiler
 - [CMake](https://cmake.org/) ( >= 3.25 )
@@ -368,7 +368,7 @@ Again implementing the [CommandStation](include/dcc/tx/command_station.hpp) conc
     }
     ```
 
-### ESP32 RMT encoder
+### ESP32 RMT Encoder
 Similar to the other encoders of the [ESP-IDF](https://github.com/espressif/esp-idf) framework, the RMT encoder has only one function to create a new instance. For more information on how to use the encoder please refer to the [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) or the RMT example.
 ```c
 #include <rmt_dcc_encoder.h>
@@ -385,11 +385,11 @@ ESP_ERROR_CHECK(rmt_new_dcc_encoder(&encoder_config, &encoder));
 
 The following members of `dcc_encoder_config_t` may require some explanation.
 
-#### BiDi bit duration
+#### BiDi Bit Duration
 This duration may be set to values between 57-61 to enable the generation of BiDi cutout bits prior to the next preamble. These four cutout bits would be sent in the background if the cutout was not active. The following graphic from [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) visualizes these bits with a dashed line.
 ![BiDi cutout](https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/bidibit_duration.png)
 
-#### End bit duration
+#### End Bit Duration
 Mainly due to a workaround of [esp-idf #13003](https://github.com/espressif/esp-idf/issues/13003) the end bit duration can be adjusted independently of the bit1 duration. This allows the RMT transmission complete callback to be executed at the right time.
 
 #### Flags
