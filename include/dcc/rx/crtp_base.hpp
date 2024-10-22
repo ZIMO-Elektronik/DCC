@@ -166,9 +166,11 @@ struct CrtpBase {
           _addrs.received = decode_address(_packet);
           if (!executeHandlerMode()) _deque.push_back(_packet);
         }
-        // Immediately clear invalid packet
-        else
+        // Immediately clear received address and invalid packet
+        else {
+          _addrs.received = {};
           _packet.clear();
+        }
         reset();
     }
   }
