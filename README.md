@@ -1,6 +1,6 @@
 # DCC
 
-[![build](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml) [![tests](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml)
+[![build](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/build.yml) [![tests](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml/badge.svg)](https://github.com/ZIMO-Elektronik/DCC/actions/workflows/tests.yml) [![license](https://img.shields.io/github/license/ZIMO-Elektronik/DCC)](https://github.com/ZIMO-Elektronik/DCC/raw/master/LICENSE)
 
 <img src="https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/logo.gif" align="right"/>
 
