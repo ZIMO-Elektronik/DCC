@@ -197,6 +197,11 @@ struct CrtpBase {
   /// \retval false Last received bit wasn't packet end
   bool packetEnd() const { return _packet_end; }
 
+  /// Addresses
+  ///
+  /// \return Addresses
+  Addresses const& addresses() const { return _addrs; }
+
   /// Add dyn (ID7) datagrams to deque
   ///
   /// \tparam Dyns... Types of dyn datagrams
