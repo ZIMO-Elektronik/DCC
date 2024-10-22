@@ -166,9 +166,11 @@ struct CrtpBase {
           _addrs.received = decode_address(_packet);
           if (!executeHandlerMode()) _deque.push_back(_packet);
         }
-        // Immediately clear invalid packet
-        else
+        // Immediately clear received address and invalid packet
+        else {
+          _addrs.received = {};
           _packet.clear();
+        }
         reset();
     }
   }
@@ -196,6 +198,11 @@ struct CrtpBase {
   /// \retval true  Last received bit was packet end
   /// \retval false Last received bit wasn't packet end
   bool packetEnd() const { return _packet_end; }
+
+  /// Addresses
+  ///
+  /// \return Addresses
+  Addresses const& addresses() const { return _addrs; }
 
   /// Add dyn (ID7) datagrams to deque
   ///
