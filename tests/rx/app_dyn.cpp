@@ -22,7 +22,7 @@ TEST_F(RxTest, app_dyn) {
     std::ranges::copy(first, std::back_inserter(datagram));
     std::ranges::copy(second, std::back_inserter(datagram));
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-    _mock.cutoutChannel2();
+    _mock.biDiChannel2();
   }
 
   {
@@ -32,7 +32,7 @@ TEST_F(RxTest, app_dyn) {
     std::ranges::copy(third, std::back_inserter(datagram));
     std::ranges::copy(fourth, std::back_inserter(datagram));
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-    _mock.cutoutChannel2();
+    _mock.biDiChannel2();
   }
 
   {
@@ -42,7 +42,7 @@ TEST_F(RxTest, app_dyn) {
     std::ranges::copy(fifth, std::back_inserter(datagram));
     std::ranges::copy(sixt, std::back_inserter(datagram));
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-    _mock.cutoutChannel2();
+    _mock.biDiChannel2();
   }
 
   {
@@ -53,13 +53,13 @@ TEST_F(RxTest, app_dyn) {
     std::vector<uint8_t> datagram;
     std::ranges::copy(seventh, std::back_inserter(datagram));
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-    _mock.cutoutChannel2();
+    _mock.biDiChannel2();
   }
 
   {
     // Deque is empty again at this point
     EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
-    _mock.cutoutChannel2();
+    _mock.biDiChannel2();
   }
 }
 
@@ -72,5 +72,5 @@ TEST_F(RxTest, dont_transmit_following_foreign_address) {
     _mock.datagram(DirectionStatusByte{static_cast<uint8_t>(i)});
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
-  _mock.cutoutChannel2();
+  _mock.biDiChannel2();
 }

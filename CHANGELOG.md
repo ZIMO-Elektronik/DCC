@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.38.0
+- Rename `rx::CrtpBase::cutoutChannel1` to `rx::CrtpBase::biDiChannel1` to match `tx`
+- Rename `rx::CrtpBase::cutoutChannel2` to `rx::CrtpBase::biDiChannel2` to match `tx`
+
 ## 0.37.0
 - Add `dcc::Address` overloads of `make_*_packet` functions
   - Allows to e.g. send address 100-127 as type `Long`

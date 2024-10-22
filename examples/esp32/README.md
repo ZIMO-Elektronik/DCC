@@ -9,7 +9,7 @@ This example shows how to set up a DCC RMT encoder to send packets using the RMT
 * A development board with any supported Espressif SOC chip (see `Supported Targets` table above)
 * A USB cable for Power supply and programming
 
-The GPIO number used in this example can be changed according to your board, by the macro `RMT_GPIO_NUM` defined in the [source file](main/app_main.cpp).
+The GPIO number used in this example can be changed according to your board, by the macro `RMT_GPIO_NUM` defined in the [source file](https://github.com/ZIMO-Elektronik/DCC/blob/master/examples/esp32/main/app_main.cpp).
 
 ### Build and Flash
 Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.

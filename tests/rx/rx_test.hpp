@@ -17,7 +17,7 @@ protected:
   void Receive(dcc::Packet const& packet);
   void Receive(dcc::tx::Timings const& timings);
   void Execute();
-  void Cutout();
+  void BiDi();
 
   void EnterServiceMode();
 

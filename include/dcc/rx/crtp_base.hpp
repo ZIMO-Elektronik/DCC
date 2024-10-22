@@ -223,7 +223,7 @@ struct CrtpBase {
   }
 
   /// Start channel1 (12 bit payload)
-  void cutoutChannel1() {
+  void biDiChannel1() {
     switch (_addrs.received.type) {
       case Address::Broadcast: [[fallthrough]];
       case Address::Short: [[fallthrough]];
@@ -234,7 +234,7 @@ struct CrtpBase {
   }
 
   /// Start channel2 (36 bit payload)
-  void cutoutChannel2() {
+  void biDiChannel2() {
     switch (_addrs.received.type) {
       case Address::Broadcast: appTos(); break;
       case Address::Short: [[fallthrough]];
