@@ -7,16 +7,16 @@ TEST_F(RxTest, logon_with_new_cid) {
   // Enable
   Receive(dcc::make_logon_enable_packet(
     dcc::AddressGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
-  Cutout();
+  BiDi();
 
   // Select
   Receive(dcc::make_logon_select_packet(dcc::zimo_id, _did));
-  Cutout();
+  BiDi();
 
   // Assign address 1000
   Receive(
     dcc::make_logon_assign_packet(dcc::zimo_id, _did, (0b11 << 14u) | 1000u));
-  Cutout();
+  BiDi();
 
   // Execute commands to address 1000
   EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
@@ -48,17 +48,17 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_gt_4) {
   for (auto i{0uz}; i < 10uz; ++i) {
     Receive(dcc::make_logon_enable_packet(
       dcc::AddressGroup::Now, _cid, _session_id + 5u));
-    Cutout();
+    BiDi();
   }
 
   // Select
   Receive(dcc::make_logon_select_packet(dcc::zimo_id, _did));
-  Cutout();
+  BiDi();
 
   // Assign address 1000
   Receive(
     dcc::make_logon_assign_packet(dcc::zimo_id, _did, (0b11 << 14u) | 1000u));
-  Cutout();
+  BiDi();
 
   // Execute commands to address 1000
   EXPECT_CALL(_mock, writeCv(_, _)).Times(7);

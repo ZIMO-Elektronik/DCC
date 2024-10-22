@@ -13,7 +13,7 @@ TEST_F(RxTest, app_pom) {
 
   auto datagram{encode_datagram(make_datagram<Bits::_12>(0u, value))};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.cutoutChannel2();
+  _mock.biDiChannel2();
 }
 
 TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
@@ -29,5 +29,5 @@ TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
   Execute();
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
-  _mock.cutoutChannel2();
+  _mock.biDiChannel2();
 }

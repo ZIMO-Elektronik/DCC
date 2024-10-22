@@ -60,9 +60,9 @@ void RxTest::Execute() {
   _mock.execute();
 }
 
-void RxTest::Cutout() {
-  _mock.cutoutChannel1();
-  _mock.cutoutChannel2();
+void RxTest::BiDi() {
+  _mock.biDiChannel1();
+  _mock.biDiChannel2();
 }
 
 void RxTest::EnterServiceMode() {

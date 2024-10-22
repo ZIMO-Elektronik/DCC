@@ -19,11 +19,11 @@ TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
     Execute();
-    _mock.cutoutChannel1();
+    _mock.biDiChannel1();
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
     Execute();
-    _mock.cutoutChannel1();
+    _mock.biDiChannel1();
   }
 }
 
@@ -46,11 +46,11 @@ TEST_F(RxTest, app_adr_alternate_logon_id1_id2) {
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
     Execute();
-    _mock.cutoutChannel1();
+    _mock.biDiChannel1();
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
     Execute();
-    _mock.cutoutChannel1();
+    _mock.biDiChannel1();
   }
 }
 
@@ -63,7 +63,7 @@ TEST_F(RxTest, app_adr_disabled_with_cv28_0) {
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
   Execute();
-  _mock.cutoutChannel1();
+  _mock.biDiChannel1();
 }
 
 TEST_F(RxTest, app_adr_consist) {
@@ -80,11 +80,11 @@ TEST_F(RxTest, app_adr_consist) {
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
   Execute();
-  _mock.cutoutChannel1();
+  _mock.biDiChannel1();
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
   Execute();
-  _mock.cutoutChannel1();
+  _mock.biDiChannel1();
 }
 
 TEST_F(RxTest, app_adr_long_consist_not_supported) {
@@ -100,5 +100,5 @@ TEST_F(RxTest, app_adr_long_consist_not_supported) {
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
   Execute();
-  _mock.cutoutChannel1();
+  _mock.biDiChannel1();
 }

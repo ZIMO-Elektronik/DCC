@@ -25,5 +25,5 @@ TEST_F(RxTest, app_tos) {
   std::copy(cbegin(time), cend(time), it);
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.cutoutChannel2();
+  _mock.biDiChannel2();
 }
