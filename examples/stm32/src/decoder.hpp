@@ -38,6 +38,8 @@ private:
 
   // Minimal set of CVs
   std::array<uint8_t, 29uz> _cvs{
-    3u, 1u,   2u,   1u, 1u, 1u, 4u, 145u, 55u, 0u, 0u, 117u, 128u, 195u, 0u,
-    0u, 192u, 128u, 0u, 0u, 0u, 0u, 0u,   0u,  0u, 0u, 0u,   131u, 14u};
+    3u,   1u,   2u, 1u,   1u,   1u,   4u, DCC_MANUFACTURER_ID,
+    55u,  0u,   0u, 117u, 128u, 195u, 0u, 0u,
+    192u, 128u, 0u, 0u,   0u,   0u,   0u, 0u,
+    0u,   0u,   0u, 131u, 14u};
 };

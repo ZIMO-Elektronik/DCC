@@ -7,9 +7,9 @@
   std::cout << std::flush
 
 Decoder::Decoder() {
-  _cvs[29uz - 1uz] = 0b10u;  // Decoder configuration
-  _cvs[1uz - 1uz] = 3u;      // Primary address
-  _cvs[8uz - 1uz] = 13u;     // Temporary manufacturer ID (S-9.2.2 Appendix A)
+  _cvs[29uz - 1uz] = 0b10u;               // Decoder configuration
+  _cvs[1uz - 1uz] = 3u;                   // Primary address
+  _cvs[8uz - 1uz] = DCC_MANUFACTURER_ID;  // Manufacturer ID
 }
 
 void Decoder::direction(uint16_t addr, bool dir) {

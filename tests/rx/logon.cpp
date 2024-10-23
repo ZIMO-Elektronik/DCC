@@ -10,12 +10,12 @@ TEST_F(RxTest, logon_with_new_cid) {
   BiDi();
 
   // Select
-  Receive(dcc::make_logon_select_packet(dcc::zimo_id, _did));
+  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
   // Assign address 1000
-  Receive(
-    dcc::make_logon_assign_packet(dcc::zimo_id, _did, (0b11 << 14u) | 1000u));
+  Receive(dcc::make_logon_assign_packet(
+    DCC_MANUFACTURER_ID, _did, (0b11 << 14u) | 1000u));
   BiDi();
 
   // Execute commands to address 1000
@@ -52,12 +52,12 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_gt_4) {
   }
 
   // Select
-  Receive(dcc::make_logon_select_packet(dcc::zimo_id, _did));
+  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
   // Assign address 1000
-  Receive(
-    dcc::make_logon_assign_packet(dcc::zimo_id, _did, (0b11 << 14u) | 1000u));
+  Receive(dcc::make_logon_assign_packet(
+    DCC_MANUFACTURER_ID, _did, (0b11 << 14u) | 1000u));
   BiDi();
 
   // Execute commands to address 1000

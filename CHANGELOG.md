@@ -1,5 +1,9 @@
 # Changelog
 
+##
+- Remove `zimo_id`
+- Add `DCC_MANUFACTURER_ID` definition
+
 ## 0.38.0
 - Rename `rx::CrtpBase::cutoutChannel1` to `rx::CrtpBase::biDiChannel1` to match `tx`
 - Rename `rx::CrtpBase::cutoutChannel2` to `rx::CrtpBase::biDiChannel2` to match `tx`
