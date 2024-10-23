@@ -29,7 +29,6 @@
 #include "../packet.hpp"
 #include "../speed.hpp"
 #include "../utility.hpp"
-#include "../zimo_id.hpp"
 #include "async_readable.hpp"
 #include "async_writable.hpp"
 #include "backoff.hpp"
@@ -325,21 +324,8 @@ private:
   }
 
   /// Execute system commands
-  ///
-  /// \param  bytes Raw bytes
-  void executeOperationsSystem(std::span<uint8_t const> bytes) {
-    switch (bytes[0uz]) {
-      case 0x01u: _zimo = bytes[1uz] == zimo_id; break;
-      case 0x02u:
-        // Decoder search
-        break;
-      case 0x03u:
-        // Direct access?
-        break;
-      case 0x04u:
-        // Set address?
-        break;
-    }
+  void executeOperationsSystem(std::span<uint8_t const>) {
+    /// \todo ?
   }
 
   /// Execute addressed commands
@@ -968,13 +954,13 @@ private:
 
     if (_logon_backoff) return;
     assert(!full(_logon_deque));
-    _logon_deque.push_back(encode_datagram(
-      make_datagram<Bits::_48>(15u,
-                               static_cast<uint64_t>(zimo_id) << 32u |
-                                 static_cast<uint32_t>(_did[0uz]) << 24u |
-                                 static_cast<uint32_t>(_did[1uz]) << 16u |
-                                 static_cast<uint32_t>(_did[2uz]) << 8u |
-                                 static_cast<uint32_t>(_did[3uz]))));
+    _logon_deque.push_back(encode_datagram(make_datagram<Bits::_48>(
+      15u,
+      static_cast<uint64_t>(DCC_MANUFACTURER_ID) << 32u |
+        static_cast<uint32_t>(_did[0uz]) << 24u |
+        static_cast<uint32_t>(_did[1uz]) << 16u |
+        static_cast<uint32_t>(_did[2uz]) << 8u |
+        static_cast<uint32_t>(_did[3uz]))));
   }
 
   /// Logon select
@@ -1268,7 +1254,6 @@ private:
   bool _cvs_locked : 1 {};
   bool _f0_exception : 1 {};
   bool _man : 1 {};
-  bool _zimo : 1 {};
   bool _block_dyn_deque : 1 {};
 };
 
