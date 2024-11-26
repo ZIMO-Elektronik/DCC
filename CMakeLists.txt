@@ -129,7 +129,7 @@ if(NOT TARGET static_math)
 endif()
 
 if(NOT TARGET ZTL::ZTL)
-  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.19.0")
+  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.19.1")
 endif()
 
 target_link_libraries(DCC INTERFACE static_math ZTL::ZTL)
@@ -146,6 +146,8 @@ if(PROJECT_IS_TOP_LEVEL)
   add_clang_format_target(DCCFormat OPTIONS -i FILES ${SRC})
 endif()
 
-if(BUILD_TESTING AND CMAKE_SYSTEM_NAME STREQUAL CMAKE_HOST_SYSTEM_NAME)
+if(BUILD_TESTING
+   AND PROJECT_IS_TOP_LEVEL
+   AND CMAKE_SYSTEM_NAME STREQUAL CMAKE_HOST_SYSTEM_NAME)
   add_subdirectory(tests)
 endif()

@@ -2,30 +2,6 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build DCCRepl",
-      "type": "shell",
-      "isBackground": true,
-      "command": "ninja -C build DCCRepl"
-    },
-    {
-      "label": "Build DCCTests",
-      "type": "shell",
-      "isBackground": true,
-      "command": "ninja -C build DCCTests"
-    },
-    {
-      "label": "Config DCCStm32*",
-      "type": "shell",
-      "isBackground": true,
-      "command": "cmake -Bbuild -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DARCH=\"-mcpu=cortex-m7 -mfloat-abi=hard\" -DCMAKE_TOOLCHAIN_FILE=CMakeModules/cmake/toolchain-arm-none-eabi-gcc.cmake"
-    },
-    {
-      "label": "Config DCCTests",
-      "type": "shell",
-      "isBackground": true,
-      "command": "cmake -Bbuild -GNinja -DCMAKE_BUILD_TYPE=Debug"
-    },
-    {
       "label": "Run act arm-none-eabi-gcc",
       "type": "shell",
       "isBackground": true,

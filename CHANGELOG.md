@@ -3,6 +3,7 @@
 ##
 - Remove `zimo_id`
 - Add `DCC_MANUFACTURER_ID` definition
+- Bugfix CMake always includes tests
 
 ## 0.38.0
 - Rename `rx::CrtpBase::cutoutChannel1` to `rx::CrtpBase::biDiChannel1` to match `tx`
