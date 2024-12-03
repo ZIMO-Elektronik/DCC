@@ -1,6 +1,6 @@
 # Changelog
 
-##
+## 0.38.1
 - Remove `zimo_id`
 - Add `DCC_MANUFACTURER_ID` definition
 - Bugfix CMake always includes tests
