@@ -116,13 +116,13 @@ This library is meant to be consumed with CMake,
 
 ```cmake
 # Either by including it with CPM
-cpmaddpackage("gh:ZIMO-Elektronik/DCC@0.34.0")
+cpmaddpackage("gh:ZIMO-Elektronik/DCC@0.39.0")
 
 # or the FetchContent module
 FetchContent_Declare(
   DCC
   GIT_REPOSITORY "https://github.com/ZIMO-Elektronik/DCC"
-  GIT_TAG v0.34.0)
+  GIT_TAG v0.39.0)
 
 target_link_libraries(YourTarget PRIVATE DCC::DCC)
 ```
@@ -131,7 +131,7 @@ or, on [ESP32 platforms](https://www.espressif.com/en/products/socs/esp32), with
 ```yaml
 dependencies:
   zimo-elektronik/dcc:
-    version: "0.34.0"
+    version: "0.39.0"
 ```
 
 A number of [options](CMakeLists.txt) are provided to configure various sizes such as the receiver deque length or the maximum packet length. When RAM becomes scarce, deque lengths can be reduced. On the other hand, if the processing of the commands is too slow and cannot be done every few milliseconds, it can make sense to lengthen the deques and batch process several commands at once. Otherwise, we recommend sticking with the defaults.
@@ -190,7 +190,7 @@ dcc> Address 3: set speed 18
 On [ESP32 platforms](https://www.espressif.com/en/products/socs/esp32) examples from the [examples](https://github.com/ZIMO-Elektronik/DCC/raw/master/examples) subfolder can be built directly using the [IDF Frontend](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/tools/idf-py.html).
 
 ```sh
-idf.py create-project-from-example "zimo-elektronik/dcc^0.34.0:esp32"
+idf.py create-project-from-example "zimo-elektronik/dcc^0.39.0:esp32"
 ```
 
 #### STM32
@@ -378,7 +378,7 @@ dcc_encoder_config_t encoder_config{.num_preamble = 17u,
                                     .bit1_duration = 58u,
                                     .bit0_duration = 100u,
                                     .endbit_duration = 58u - 24u,
-                                    .flags{.invert = false, .zimo0 = true}};
+                                    .flags{.level0 = false, .zimo0 = true}};
 rmt_encoder_handle_t* encoder;
 ESP_ERROR_CHECK(rmt_new_dcc_encoder(&encoder_config, &encoder));
 ```
@@ -393,8 +393,8 @@ This duration may be set to values between 57-61 to enable the generation of BiD
 Mainly due to a workaround of [esp-idf #13003](https://github.com/espressif/esp-idf/issues/13003) the end bit duration can be adjusted independently of the bit1 duration. This allows the RMT transmission complete callback to be executed at the right time.
 
 #### Flags
-- invert  
-  Boolean value which corresponds to the level of the first half bit.
+- level0
+  Value corresponds to the level of the first half bit.
 
 - zimo0  
   Transmit 0-bit prior to preamble.
