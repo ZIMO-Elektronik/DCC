@@ -375,17 +375,17 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
   esp_err_t ret = ESP_OK;
   rmt_dcc_encoder_t* dcc_encoder = NULL;
   ESP_GOTO_ON_FALSE(
-    config && ret_encoder &&                                         //
-      config->num_preamble >= DCC_TX_MIN_PREAMBLE_BITS &&            //
-      config->num_preamble <= DCC_TX_MAX_PREAMBLE_BITS &&            //
-      (!config->bidibit_duration ||                                  //
-       (config->bidibit_duration >= DCC_TX_MIN_BIDI_BIT_TIMING &&    //
-        config->bidibit_duration <= DCC_TX_MAX_BIDI_BIT_TIMING)) &&  //
-      config->bit1_duration >= DCC_TX_MIN_BIT_1_TIMING &&            //
-      config->bit1_duration <= DCC_TX_MAX_BIT_1_TIMING &&            //
-      config->bit0_duration >= DCC_TX_MIN_BIT_0_TIMING &&            //
-      config->bit0_duration <= DCC_TX_MAX_BIT_0_TIMING &&            //
-      config->endbit_duration <= DCC_TX_MAX_BIT_1_TIMING,            //
+    config && ret_encoder &&                                        //
+      config->num_preamble >= DCC_TX_MIN_PREAMBLE_BITS &&           //
+      config->num_preamble <= DCC_TX_MAX_PREAMBLE_BITS &&           //
+      (!config->bidibit_duration ||                                 //
+       (config->bidibit_duration >= DCC_TX_MIN_BIDI_BIT_TIMING &&   //
+        config->bidibit_duration <= DCC_TX_MAX_BIDI_BIT_TIMING)) && //
+      config->bit1_duration >= DCC_TX_MIN_BIT_1_TIMING &&           //
+      config->bit1_duration <= DCC_TX_MAX_BIT_1_TIMING &&           //
+      config->bit0_duration >= DCC_TX_MIN_BIT_0_TIMING &&           //
+      config->bit0_duration <= DCC_TX_MAX_BIT_0_TIMING &&           //
+      config->endbit_duration <= DCC_TX_MAX_BIT_1_TIMING,           //
     ESP_ERR_INVALID_ARG,
     err,
     TAG,
@@ -413,28 +413,28 @@ esp_err_t rmt_new_dcc_encoder(dcc_encoder_config_t const* config,
   if (config->bidibit_duration)
     dcc_encoder->bidi_symbol = (rmt_symbol_word_t){
       .duration0 = config->bidibit_duration,
-      .level0 = 0u ^ config->flags.invert,
+      .level0 = config->flags.level0,
       .duration1 = config->bidibit_duration,
-      .level1 = 1u ^ config->flags.invert,
+      .level1 = !config->flags.level0,
     };
   dcc_encoder->one_symbol = (rmt_symbol_word_t){
     .duration0 = config->bit1_duration,
-    .level0 = 0u ^ config->flags.invert,
+    .level0 = config->flags.level0,
     .duration1 = config->bit1_duration,
-    .level1 = 1u ^ config->flags.invert,
+    .level1 = !config->flags.level0,
   };
   dcc_encoder->zero_symbol = (rmt_symbol_word_t){
     .duration0 = config->bit0_duration,
-    .level0 = 0u ^ config->flags.invert,
+    .level0 = config->flags.level0,
     .duration1 = config->bit0_duration,
-    .level1 = 1u ^ config->flags.invert,
+    .level1 = !config->flags.level0,
   };
   dcc_encoder->end_symbol = (rmt_symbol_word_t){
     .duration0 = config->bit1_duration,
-    .level0 = 0u ^ config->flags.invert,
+    .level0 = config->flags.level0,
     .duration1 =
       config->endbit_duration ? config->endbit_duration : config->bit1_duration,
-    .level1 = 1u ^ config->flags.invert,
+    .level1 = !config->flags.level0,
   };
 
   // Initial state

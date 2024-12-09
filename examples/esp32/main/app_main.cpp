@@ -28,7 +28,7 @@ extern "C" void app_main() {
                                       .bit1_duration = 58u,
                                       .bit0_duration = 100u,
                                       .endbit_duration = 58u - 24u,
-                                      .flags{.invert = false, .zimo0 = true}};
+                                      .flags{.level0 = false, .zimo0 = true}};
   rmt_encoder_handle_t rmt_encoder{};
   ESP_ERROR_CHECK(rmt_new_dcc_encoder(&encoder_config, &rmt_encoder));
 

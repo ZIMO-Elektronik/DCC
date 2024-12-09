@@ -37,10 +37,23 @@ typedef struct {
   uint8_t endbit_duration;
 
   struct {
-    /// Invert RMT symbol level
+    /// Level of the first bit
     ///
-    /// This boolean value corresponds to the level of the first half bit.
-    bool invert : 1;
+    /// The name is identical to that of Espressif's RMT driver
+    /// rmt_symbol_word_t structure.
+    ///
+    /// ```c
+    /// typedef union {
+    ///     struct {
+    ///         uint16_t duration0 : 15; /*!< Duration of level0 */
+    ///         uint16_t level0 : 1;     /*!< Level of the first part */
+    ///         uint16_t duration1 : 15; /*!< Duration of level1 */
+    ///         uint16_t level1 : 1;     /*!< Level of the second part */
+    ///     };
+    ///     uint32_t val; /*!< Equivalent unsigned value for the RMT symbol */
+    /// } rmt_symbol_word_t;
+    /// ```
+    bool level0 : 1;
 
     /// ZIMO 0
     bool zimo0 : 1;
