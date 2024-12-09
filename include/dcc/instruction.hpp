@@ -17,16 +17,16 @@
 namespace dcc {
 
 enum class Instruction : uint8_t {
-  UnknownService,      ///< Instruction is unknown or service
-  DecoderControl,      ///< Instruction is decoder control
-  ConsistControl,      ///< Instruction is consist control
-  AdvancedOperations,  ///< Instruction is advanced operations
-  SpeedDirection,      ///< Instruction is speed and direction
-  FunctionGroup,       ///< Instruction is function group
-  FeatureExpansion,    ///< Instruction is feature expansion
-  CvLong,              ///< Instruction is long type CV access
-  CvShort,             ///< Instruction is short type CV access
-  Logon                ///< Instruction is logon
+  UnknownService,     ///< Instruction is unknown or service
+  DecoderControl,     ///< Instruction is decoder control
+  ConsistControl,     ///< Instruction is consist control
+  AdvancedOperations, ///< Instruction is advanced operations
+  SpeedDirection,     ///< Instruction is speed and direction
+  FunctionGroup,      ///< Instruction is function group
+  FeatureExpansion,   ///< Instruction is feature expansion
+  CvLong,             ///< Instruction is long type CV access
+  CvShort,            ///< Instruction is short type CV access
+  Logon               ///< Instruction is logon
 };
 
 /// Decode instruction
@@ -76,4 +76,4 @@ constexpr Instruction decode_instruction(Packet const& packet) {
   return decode_instruction(cbegin(packet) + 1 + offset);
 }
 
-}  // namespace dcc
+} // namespace dcc

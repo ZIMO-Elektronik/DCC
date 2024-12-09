@@ -153,7 +153,7 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   scheduler.Run();
 }
 
-}  // namespace
+} // namespace
 
 int main() {
   // Use a FIFO with internal locking to communicate between REPL and command

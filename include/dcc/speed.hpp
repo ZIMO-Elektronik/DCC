@@ -19,4 +19,4 @@ enum Speed : int32_t {
   Stop = 0,
 };
 
-}  // namespace dcc
+} // namespace dcc

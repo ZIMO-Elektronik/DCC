@@ -19,4 +19,4 @@ concept HighCurrent = requires(T t, bool high_current) {
   { t.highCurrentBiDi(high_current) } -> std::same_as<void>;
 };
 
-}  // namespace dcc::rx
+} // namespace dcc::rx

@@ -28,4 +28,4 @@ concept AsyncReadable = requires(T t,
   { t.readCv(cv_addr, bit, pos, bit_cb) } -> std::same_as<void>;
 };
 
-}  // namespace dcc::rx
+} // namespace dcc::rx

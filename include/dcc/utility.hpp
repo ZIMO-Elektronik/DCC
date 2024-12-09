@@ -695,4 +695,4 @@ constexpr auto make_logon_assign_packet(uint16_t manufacturer_id,
   return packet;
 }
 
-}  // namespace dcc
+} // namespace dcc

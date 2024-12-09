@@ -22,4 +22,4 @@ enum class AddressGroup : uint8_t {
   Now = 0b11u
 };
 
-}  // namespace dcc
+} // namespace dcc

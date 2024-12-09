@@ -20,4 +20,4 @@ concept EastWest = requires(T t, uint16_t addr, std::optional<bool> opt_dir) {
   { t.eastWestDirection(addr, opt_dir) } -> std::same_as<void>;
 };
 
-}  // namespace dcc::rx
+} // namespace dcc::rx

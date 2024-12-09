@@ -15,4 +15,4 @@ namespace dcc::bidi {
 /// Baudrate
 inline constexpr auto baudrate{250'000u};
 
-}  // namespace dcc::bidi
+} // namespace dcc::bidi

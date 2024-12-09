@@ -34,4 +34,4 @@ concept Decoder = Readable<T> && Writable<T> &&
                     { t.transmitBiDi(bytes) } -> std::same_as<void>;
                   };
 
-}  // namespace dcc::rx
+} // namespace dcc::rx

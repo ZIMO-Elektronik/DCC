@@ -16,13 +16,13 @@
 namespace dcc::rx {
 
 enum Timing {
-  Bit1Min = DCC_RX_MIN_BIT_1_TIMING,  ///< Minimal timing for half a 1-bit
-  Bit1 = 58u,                         ///< Standard timing for half a 1-bit
-  Bit1Max = DCC_RX_MAX_BIT_1_TIMING,  ///< Maximal timing for half a 1-bit
-  Bit0Min = DCC_RX_MIN_BIT_0_TIMING,  ///< Minimal timing for half a 0-bit
-  Bit0 = 100u,                        ///< Standard timing for half a 0-bit
-  Bit0Max = DCC_RX_MAX_BIT_0_TIMING,  ///< Maximal timing for half a 0-bit
-  Bit0MaxAnalog = 10000u  ///< Maximal timing for half a 0-bit analog
+  Bit1Min = DCC_RX_MIN_BIT_1_TIMING, ///< Minimal timing for half a 1-bit
+  Bit1 = 58u,                        ///< Standard timing for half a 1-bit
+  Bit1Max = DCC_RX_MAX_BIT_1_TIMING, ///< Maximal timing for half a 1-bit
+  Bit0Min = DCC_RX_MIN_BIT_0_TIMING, ///< Minimal timing for half a 0-bit
+  Bit0 = 100u,                       ///< Standard timing for half a 0-bit
+  Bit0Max = DCC_RX_MAX_BIT_0_TIMING, ///< Maximal timing for half a 0-bit
+  Bit0MaxAnalog = 10000u             ///< Maximal timing for half a 0-bit analog
 };
 
 /// Convert time to bit
@@ -35,4 +35,4 @@ constexpr Bit time2bit(uint32_t time) {
   else return Invalid;
 }
 
-}  // namespace dcc::rx
+} // namespace dcc::rx

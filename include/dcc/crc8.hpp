@@ -45,7 +45,7 @@ inline constexpr std::array<uint8_t, 256uz> crc8_lut{
   0xC8u, 0x96u, 0x15u, 0x4Bu, 0xA9u, 0xF7u, 0xB6u, 0xE8u, 0x0Au, 0x54u, 0xD7u,
   0x89u, 0x6Bu, 0x35u};
 
-}  // namespace detail
+} // namespace detail
 
 /// CRC8 (Dallas/Maxim)
 ///
@@ -80,4 +80,4 @@ constexpr uint8_t crc8(Packet const& packet) {
   return crc8({cbegin(packet), size(packet) - 1uz});
 }
 
-}  // namespace dcc
+} // namespace dcc

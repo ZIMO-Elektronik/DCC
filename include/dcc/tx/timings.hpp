@@ -22,10 +22,10 @@ namespace dcc::tx {
 
 using Timings =
   ztl::inplace_vector<uint16_t,
-                      (std::numeric_limits<uint8_t>::max() +    // Preamble
-                       1uz +                                    // Startbit
-                       DCC_MAX_PACKET_SIZE * (CHAR_BIT + 1uz))  // Data
-                        * 2uz>;                                 // Halfbit
+                      (std::numeric_limits<uint8_t>::max() +   // Preamble
+                       1uz +                                   // Startbit
+                       DCC_MAX_PACKET_SIZE * (CHAR_BIT + 1uz)) // Data
+                        * 2uz>;                                // Halfbit
 
 /// Convert bytes into timings
 ///
@@ -73,4 +73,4 @@ constexpr Timings packet2timings(Packet const& packet, Config cfg = {}) {
   return bytes2timings({cbegin(packet), size(packet)}, cfg);
 }
 
-}  // namespace dcc::tx
+} // namespace dcc::tx

@@ -16,4 +16,4 @@ namespace dcc {
 
 enum Bit : uint8_t { _0, _1, Invalid };
 
-}  // namespace dcc
+} // namespace dcc

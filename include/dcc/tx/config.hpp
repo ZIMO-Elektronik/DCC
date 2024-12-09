@@ -37,4 +37,4 @@ struct Config {
   } flags{};
 };
 
-}  // namespace dcc::tx
+} // namespace dcc::tx

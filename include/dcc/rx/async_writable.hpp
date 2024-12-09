@@ -28,4 +28,4 @@ concept AsyncWritable = requires(T t,
   { t.writeCv(cv_addr, bit, pos, bit_cb) } -> std::same_as<void>;
 };
 
-}  // namespace dcc::rx
+} // namespace dcc::rx

@@ -13,7 +13,7 @@ extern "C" void app_main() {
   // Setup RMT on RMT_GPIO_NUM
   rmt_tx_channel_config_t chan_config{.gpio_num = RMT_GPIO_NUM,
                                       .clk_src = RMT_CLK_SRC_DEFAULT,
-                                      .resolution_hz = 1'000'000u,  // 1MHz
+                                      .resolution_hz = 1'000'000u, // 1MHz
                                       .mem_block_symbols =
                                         SOC_RMT_CHANNELS_PER_GROUP *
                                         SOC_RMT_MEM_WORDS_PER_CHANNEL,

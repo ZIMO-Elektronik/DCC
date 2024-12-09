@@ -19,4 +19,4 @@ enum Direction : bool {
   West = false,
 };
 
-}  // namespace dcc
+} // namespace dcc

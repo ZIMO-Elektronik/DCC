@@ -17,4 +17,4 @@ namespace dcc::bidi {
 inline constexpr auto channel1_size{datagram_size<Bits::_12>};
 using Channel1 = std::array<uint8_t, channel1_size>;
 
-}  // namespace dcc::bidi
+} // namespace dcc::bidi

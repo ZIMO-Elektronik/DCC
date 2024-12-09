@@ -45,4 +45,4 @@ private:
   uint8_t _count{};
 };
 
-}  // namespace dcc::rx
+} // namespace dcc::rx

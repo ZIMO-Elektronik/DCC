@@ -23,4 +23,4 @@ concept CommandStation = requires(T t, bool N, bool P) {
   { t.biDiEnd() } -> std::same_as<void>;
 };
 
-}  // namespace dcc::tx
+} // namespace dcc::tx

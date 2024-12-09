@@ -36,4 +36,4 @@ constexpr uint8_t exor(Packet const& packet) {
   return exor({cbegin(packet), size(packet) - 1uz});
 }
 
-}  // namespace dcc
+} // namespace dcc

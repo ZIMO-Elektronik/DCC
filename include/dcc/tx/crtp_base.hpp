@@ -32,10 +32,10 @@ struct CrtpBase {
   ///
   /// \param  cfg Configuration
   void init(Config cfg) {
-    assert(cfg.num_preamble >= DCC_TX_MIN_PREAMBLE_BITS &&                  //
-           cfg.num_preamble <= DCC_TX_MAX_PREAMBLE_BITS &&                  //
-           cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max &&  //
-           cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);   //
+    assert(cfg.num_preamble >= DCC_TX_MIN_PREAMBLE_BITS &&                 //
+           cfg.num_preamble <= DCC_TX_MAX_PREAMBLE_BITS &&                 //
+           cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max && //
+           cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);  //
     _cfg = cfg;
   }
 
@@ -152,4 +152,4 @@ private:
   Config _cfg{};
 };
 
-}  // namespace dcc::tx
+} // namespace dcc::tx

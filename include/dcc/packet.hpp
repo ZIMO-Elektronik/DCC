@@ -17,4 +17,4 @@ namespace dcc {
 
 using Packet = ztl::inplace_vector<uint8_t, DCC_MAX_PACKET_SIZE>;
 
-}  // namespace dcc
+} // namespace dcc

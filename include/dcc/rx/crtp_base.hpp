@@ -118,7 +118,7 @@ struct CrtpBase {
   ///
   /// \param  time  Time in µs
   void receive(uint32_t time) {
-    _packet_end = false;  // Whatever we got, its not packet end anymore
+    _packet_end = false; // Whatever we got, its not packet end anymore
 
     auto const bit{time2bit(time)};
     if (bit == Invalid) return;
@@ -126,7 +126,7 @@ struct CrtpBase {
     // Alternate halfbit <-> bit
     if (_state > Startbit && (_is_halfbit = !_is_halfbit)) return;
 
-    if (full(_deque)) return reset();  // TODO task full error counter?
+    if (full(_deque)) return reset(); // TODO task full error counter?
 
     // Successfully received a bit
     switch (_state) {
@@ -273,10 +273,10 @@ private:
   /// \retval false Command to other address
   bool executeThreadMode() {
     if (packetEnd() || empty(_deque)) return false;
-    adr();               // Prepare address broadcasts for BiDi channel 1
-    logonStore();        // Store logon information if necessary
-    updateQos();         // Update quality of service
-    updateTimepoints();  // Update timepoints for tip-off search
+    adr();              // Prepare address broadcasts for BiDi channel 1
+    logonStore();       // Store logon information if necessary
+    updateQos();        // Update quality of service
+    updateTimepoints(); // Update timepoints for tip-off search
     auto const retval{serviceMode() ? executeService() : executeOperations()};
     _deque.pop_front();
     return retval;
@@ -349,7 +349,7 @@ private:
     else return false;
 
     switch (decode_instruction(bytes)) {
-      case Instruction::UnknownService:  // TODO
+      case Instruction::UnknownService: // TODO
         break;
       case Instruction::DecoderControl:
         if (!addr && !bytes[0uz]) serviceMode(true);
@@ -479,11 +479,11 @@ private:
       case 0b0011'1110u:
         _man = bytes[1uz] & ztl::make_mask(7u);
         if constexpr (EastWest<T>) {
-          if (bytes[1uz] & ztl::make_mask(6u))  // East
+          if (bytes[1uz] & ztl::make_mask(6u)) // East
             impl().eastWestDirection(addr, East);
-          else if (ztl::make_mask(5u))  // West
+          else if (ztl::make_mask(5u)) // West
             impl().eastWestDirection(addr, West);
-          else  // Neither
+          else // Neither
             impl().eastWestDirection(addr, std::nullopt);
         }
         break;
@@ -687,12 +687,12 @@ private:
 
       // Acceleration adjustment (CV23)
       case 0b0010u:
-        cvWrite(23u - 1u, bytes[1uz]);  // Fine if written at once
+        cvWrite(23u - 1u, bytes[1uz]); // Fine if written at once
         break;
 
       // Deceleration adjustment (CV24)
       case 0b0011u:
-        cvWrite(24u - 1u, bytes[1uz]);  // Fine if written at once
+        cvWrite(24u - 1u, bytes[1uz]); // Fine if written at once
         break;
 
       // Extended address 0 and 1 (CV17 and CV18)
@@ -946,10 +946,10 @@ private:
     }
 
     switch (gg) {
-      case AddressGroup::All: [[fallthrough]];  // All decoders
-      case AddressGroup::Loco: break;           // Multi-function decoders
-      case AddressGroup::Acc: return;           // Accessory decoder
-      case AddressGroup::Now: _logon_backoff.now(); break;  // No backoff
+      case AddressGroup::All: [[fallthrough]]; // All decoders
+      case AddressGroup::Loco: break;          // Multi-function decoders
+      case AddressGroup::Acc: return;          // Accessory decoder
+      case AddressGroup::Now: _logon_backoff.now(); break; // No backoff
     }
 
     if (_logon_backoff) return;
@@ -997,7 +997,7 @@ private:
     _logon_assigned = _logon_store = true;
     _addrs.consist = 0u;
     _addrs.logon = addr;
-    if (addr && overwrite_primary_address) _addrs.primary = addr;  // Stupid
+    if (addr && overwrite_primary_address) _addrs.primary = addr; // Stupid
     static constexpr std::array<uint8_t, 5uz> data{
       13u << 4u | 0u, 0u, 0u, 0u, 0u};
     assert(!full(_logon_deque));
@@ -1205,8 +1205,8 @@ private:
   ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 2uz> _adr_deque{};
   ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 2uz> _pom_deque{};
 
-  Packet _packet{};              ///< Current packet
-  Packet _last_own_cv_packet{};  ///< Last CV packet for own address
+  Packet _packet{};             ///< Current packet
+  Packet _last_own_cv_packet{}; ///< Last CV packet for own address
 
   Addresses _addrs{};
 
@@ -1215,8 +1215,8 @@ private:
   size_t _preamble_count{};
   size_t _own_equal_cv_packets_count{};
   uint8_t _byte{};
-  uint8_t _checksum{};     ///< On-the-fly calculated checksum
-  uint8_t _index_reg{1u};  ///< Paged mode index register
+  uint8_t _checksum{};    ///< On-the-fly calculated checksum
+  uint8_t _index_reg{1u}; ///< Paged mode index register
 
   enum State : uint8_t { Preamble, Startbit, Data, Endbit } _state{};
   enum Mode : uint8_t { Operations, Service } _mode{};
@@ -1234,10 +1234,10 @@ private:
   Backoff _logon_backoff{};
   Backoff _tos_backoff{};
 
-  std::array<uint16_t, 2uz> _cids{};        ///< Central ID
-  std::array<uint8_t, 2uz> _session_ids{};  ///< Session ID
+  std::array<uint16_t, 2uz> _cids{};       ///< Central ID
+  std::array<uint8_t, 2uz> _session_ids{}; ///< Session ID
 
-  uint8_t _qos{};  ///< Quality of service
+  uint8_t _qos{}; ///< Quality of service
 
   // Not bitfields as those are most likely mutated in interrupt context
   bool _is_halfbit{};
@@ -1257,4 +1257,4 @@ private:
   bool _block_dyn_deque : 1 {};
 };
 
-}  // namespace dcc::rx
+} // namespace dcc::rx

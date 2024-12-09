@@ -23,4 +23,4 @@ concept Readable =
     { t.readCv(cv_addr, bit, pos) } -> std::convertible_to<bool>;
   };
 
-}  // namespace dcc::rx
+} // namespace dcc::rx

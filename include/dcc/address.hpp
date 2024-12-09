@@ -40,18 +40,18 @@ struct Address {
   value_type value{};
 
   enum : uint8_t {
-    UnknownService,  ///< Address is unknown or service (=no address)
-    Broadcast,       ///< Address is broadcast
-    Short,           ///< Address is short
-    Accessory,       ///< Address is accessory decoder
-    Long,            ///< Address is long
-    Reserved,        ///< Address is reserved
-    DataTransfer,    ///< Address for data transfer
-    AutomaticLogon,  ///< Address is automatic logon
-    IdleSystem       ///< Address for system commands
+    UnknownService, ///< Address is unknown or service (=no address)
+    Broadcast,      ///< Address is broadcast
+    Short,          ///< Address is short
+    Accessory,      ///< Address is accessory decoder
+    Long,           ///< Address is long
+    Reserved,       ///< Address is reserved
+    DataTransfer,   ///< Address for data transfer
+    AutomaticLogon, ///< Address is automatic logon
+    IdleSystem      ///< Address for system commands
   } type{};
 
-  bool reversed{};  /// Direction reversed
+  bool reversed{}; /// Direction reversed
 };
 
 #pragma GCC diagnostic push
@@ -68,8 +68,7 @@ constexpr Address decode_address(InputIt first) {
   // 1-127
   else if (*first <= 127u) return {*first, Address::Short};
   // 128-191
-  else if (*first <= 191u)
-    return {*first, Address::Accessory};  /// \todo wrong?
+  else if (*first <= 191u) return {*first, Address::Accessory}; /// \todo wrong?
   // 192-231
   else if (*first <= 231u) {
     auto const a13_8{*first++};
@@ -132,4 +131,4 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
   return first;
 }
 
-}  // namespace dcc
+} // namespace dcc

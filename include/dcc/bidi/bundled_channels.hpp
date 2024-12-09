@@ -18,4 +18,4 @@ namespace dcc::bidi {
 inline constexpr auto bundled_channels_size{channel1_size + channel2_size};
 using BundledChannels = std::array<uint8_t, bundled_channels_size>;
 
-}  // namespace dcc::bidi
+} // namespace dcc::bidi

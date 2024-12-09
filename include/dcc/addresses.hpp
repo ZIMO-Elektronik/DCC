@@ -21,4 +21,4 @@ struct Addresses {
   Address received{};
 };
 
-}  // namespace dcc
+} // namespace dcc

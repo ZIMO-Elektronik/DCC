@@ -31,7 +31,7 @@ TEST(crc8, crc8) {
                      0x00u,
                      0x01u,
                      0x00u,
-                     0xFFu};  // Packet checksum is not part of CRC
+                     0xFFu}; // Packet checksum is not part of CRC
   EXPECT_EQ(dcc::crc8(packet), 0x4Cu);
 
   uint8_t crc{};

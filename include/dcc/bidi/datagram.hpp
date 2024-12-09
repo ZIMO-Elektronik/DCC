@@ -53,7 +53,7 @@ inline constexpr std::array<uint8_t, 256uz> decode_lut{
   0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u,
   0x00u, 0x00u, 0x00u};
 
-}  // namespace detail
+} // namespace detail
 
 /// Instruction understood and will be executed
 ///
@@ -165,4 +165,4 @@ constexpr auto make_data(std::span<uint8_t const> datagram) {
   return data;
 }
 
-}  // namespace dcc::bidi
+} // namespace dcc::bidi

@@ -16,4 +16,4 @@ namespace dcc::bidi {
 
 struct TrackVoltage : Dyn {};
 
-}  // namespace dcc::bidi
+} // namespace dcc::bidi
