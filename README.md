@@ -393,7 +393,7 @@ This duration may be set to values between 57-61 to enable the generation of BiD
 Mainly due to a workaround of [esp-idf #13003](https://github.com/espressif/esp-idf/issues/13003) the end bit duration can be adjusted independently of the bit1 duration. This allows the RMT transmission complete callback to be executed at the right time.
 
 #### Flags
-- level0
+- level0  
   Value corresponds to the level of the first half bit.
 
 - zimo0  
