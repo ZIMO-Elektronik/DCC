@@ -67,3 +67,22 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_gt_4) {
   Receive(dcc::make_advanced_operations_speed_packet(1000u, 0u));
   Execute();
 }
+
+// LOGON_SELECT disables LOGON_ENABLE (and ID15 datagram)
+TEST_F(RxTest, no_id15_datagram_after_logon_select) {
+  EXPECT_CALL(_mock, transmitBiDi(_)).Times(2 * 2);
+
+  // Enable
+  Receive(dcc::make_logon_enable_packet(
+    dcc::AddressGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+  BiDi();
+
+  // Select
+  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
+  BiDi();
+
+  // Enable (again)
+  Receive(dcc::make_logon_enable_packet(
+    dcc::AddressGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+  BiDi();
+}

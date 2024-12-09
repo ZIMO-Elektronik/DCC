@@ -919,7 +919,7 @@ private:
   /// \param  cid         Command station ID
   /// \param  session_id  Session ID
   void logonEnable(AddressGroup gg, uint16_t cid, uint8_t session_id) {
-    if (!_logon_enabled) return;
+    if (!_logon_enabled || _logon_selected) return;
 
     // Store new CID and session ID
     _cids.back() = cid;
