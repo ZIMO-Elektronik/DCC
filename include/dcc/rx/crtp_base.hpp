@@ -126,7 +126,7 @@ struct CrtpBase {
     // Alternate halfbit <-> bit
     if (_state > Startbit && (_is_halfbit = !_is_halfbit)) return;
 
-    if (full(_deque)) return reset(); // TODO task full error counter?
+    if (full(_deque)) return reset(); /// \todo task full error counter?
 
     // Successfully received a bit
     switch (_state) {
@@ -349,7 +349,7 @@ private:
     else return false;
 
     switch (decode_instruction(bytes)) {
-      case Instruction::UnknownService: // TODO
+      case Instruction::UnknownService: /// \todo
         break;
       case Instruction::DecoderControl:
         if (!addr && !bytes[0uz]) serviceMode(true);

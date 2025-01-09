@@ -179,7 +179,7 @@ QualifierAlignment: Right
 ReferenceAlignment: Pointer
 ReflowComments:  true
 RemoveBracesLLVM: false
-RemoveParentheses: MultipleParentheses
+RemoveParentheses: Leave
 RemoveSemicolon: true
 RequiresClausePosition: WithPreceding
 RequiresExpressionIndentation: OuterScope

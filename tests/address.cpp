@@ -18,66 +18,97 @@ TEST(address, short_and_accessory_address_are_not_equal_despite_same_value) {
 }
 
 TEST(address, decode_address) {
-  std::array<uint8_t, 2uz> data{};
+  {
+    std::array<uint8_t, 2uz> data{};
+    EXPECT_EQ(dcc::decode_address(cbegin(data)),
+              (dcc::Address{.value = 0u, .type = dcc::Address::Broadcast}));
+  }
 
-  data = {};
-  EXPECT_EQ(dcc::decode_address(cbegin(data)),
-            (dcc::Address{.value = 0u, .type = dcc::Address::Broadcast}));
+  {
+    std::array<uint8_t, 2uz> data{0b0000'0011u};
+    EXPECT_EQ(dcc::decode_address(cbegin(data)),
+              (dcc::Address{.value = 3u, .type = dcc::Address::Short}));
+  }
 
-  data = {0b0000'0011u};
-  EXPECT_EQ(dcc::decode_address(cbegin(data)),
-            (dcc::Address{.value = 3u, .type = dcc::Address::Short}));
+  {
+    std::array<uint8_t, 2uz> data{0b1011'0011u, 0b0010'0010u};
+    EXPECT_EQ(dcc::decode_address(cbegin(data)),
+              (dcc::Address{.value = 717u, .type = dcc::Address::Accessory}));
+  }
 
-  data = {0b1111'1110u};
-  EXPECT_EQ(
-    dcc::decode_address(cbegin(data)),
-    (dcc::Address{.value = 254u, .type = dcc::Address::AutomaticLogon}));
+  {
+    std::array<uint8_t, 2uz> data{0b1101'0011u, 0b0000'1010u};
+    EXPECT_EQ(dcc::decode_address(cbegin(data)),
+              (dcc::Address{.value = 4874u, .type = dcc::Address::Long}));
+  }
 
-  data = {0b1111'1111u};
-  EXPECT_EQ(dcc::decode_address(cbegin(data)),
-            (dcc::Address{.value = 255u, .type = dcc::Address::IdleSystem}));
+  {
+    std::array<uint8_t, 2uz> data{0b1111'1110u};
+    EXPECT_EQ(
+      dcc::decode_address(cbegin(data)),
+      (dcc::Address{.value = 254u, .type = dcc::Address::AutomaticLogon}));
+  }
 
-  data = {0b1101'0011u, 0b0000'1010u};
-  EXPECT_EQ(dcc::decode_address(cbegin(data)),
-            (dcc::Address{.value = 4874u, .type = dcc::Address::Long}));
+  {
+    std::array<uint8_t, 2uz> data{0b1111'1111u};
+    EXPECT_EQ(dcc::decode_address(cbegin(data)),
+              (dcc::Address{.value = 255u, .type = dcc::Address::IdleSystem}));
+  }
 }
 
 TEST(address, encode_address) {
-  std::array<uint8_t, 2uz> data{};
-  std::array<uint8_t, 2uz> expected{};
+  {
+    std::array<uint8_t, 2uz> data{};
+    EXPECT_EQ(dcc::encode_address(
+                dcc::Address{.value = 0u, .type = dcc::Address::Broadcast},
+                begin(data)),
+              cbegin(data) + 1);
+    EXPECT_EQ(data, (decltype(data){}));
+  }
 
-  expected = {};
-  EXPECT_EQ(
-    dcc::encode_address(
-      dcc::Address{.value = 0u, .type = dcc::Address::Broadcast}, begin(data)),
-    cbegin(data) + 1);
-  EXPECT_EQ(data, expected);
+  {
+    std::array<uint8_t, 2uz> data{};
+    EXPECT_EQ(
+      dcc::encode_address(
+        dcc::Address{.value = 3u, .type = dcc::Address::Short}, begin(data)),
+      cbegin(data) + 1);
+    EXPECT_EQ(data, (decltype(data){0b0000'0011u}));
+  }
 
-  expected = {0b0000'0011u};
-  EXPECT_EQ(
-    dcc::encode_address(dcc::Address{.value = 3u, .type = dcc::Address::Short},
-                        begin(data)),
-    cbegin(data) + 1);
-  EXPECT_EQ(data, expected);
+  {
+    std::array<uint8_t, 2uz> data{};
+    EXPECT_EQ(dcc::encode_address(
+                dcc::Address{.value = 717u, .type = dcc::Address::Accessory},
+                begin(data)),
+              cbegin(data) + 2);
+    EXPECT_EQ(data, (decltype(data){0b1011'0011u, 0b0010'0010u}));
+  }
 
-  expected = {0b1111'1110u};
-  EXPECT_EQ(dcc::encode_address(
-              dcc::Address{.value = 254u, .type = dcc::Address::AutomaticLogon},
-              begin(data)),
-            cbegin(data) + 1);
-  EXPECT_EQ(data, expected);
+  {
+    std::array<uint8_t, 2uz> data{};
+    EXPECT_EQ(
+      dcc::encode_address(
+        dcc::Address{.value = 4874u, .type = dcc::Address::Long}, begin(data)),
+      cbegin(data) + 2);
+    EXPECT_EQ(data, (decltype(data){0b1101'0011u, 0b0000'1010u}));
+  }
 
-  expected = {0b1111'1111u};
-  EXPECT_EQ(dcc::encode_address(
-              dcc::Address{.value = 255u, .type = dcc::Address::IdleSystem},
-              begin(data)),
-            cbegin(data) + 1);
-  EXPECT_EQ(data, expected);
+  {
+    std::array<uint8_t, 2uz> data{};
+    EXPECT_EQ(
+      dcc::encode_address(
+        dcc::Address{.value = 254u, .type = dcc::Address::AutomaticLogon},
+        begin(data)),
+      cbegin(data) + 1);
+    EXPECT_EQ(data, (decltype(data){0b1111'1110u}));
+  }
 
-  expected = {0b1101'0011u, 0b0000'1010u};
-  EXPECT_EQ(
-    dcc::encode_address(
-      dcc::Address{.value = 4874u, .type = dcc::Address::Long}, begin(data)),
-    cbegin(data) + 2);
-  EXPECT_EQ(data, expected);
+  {
+    std::array<uint8_t, 2uz> data{};
+    EXPECT_EQ(dcc::encode_address(
+                dcc::Address{.value = 255u, .type = dcc::Address::IdleSystem},
+                begin(data)),
+              cbegin(data) + 1);
+    EXPECT_EQ(data, (decltype(data){0b1111'1111u}));
+  }
 }

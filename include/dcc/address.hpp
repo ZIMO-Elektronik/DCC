@@ -54,8 +54,6 @@ struct Address {
   bool reversed{}; /// Direction reversed
 };
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
 /// Decode address
 ///
 /// \tparam InputIt std::input_iterator
@@ -68,13 +66,18 @@ constexpr Address decode_address(InputIt first) {
   // 1-127
   else if (*first <= 127u) return {*first, Address::Short};
   // 128-191
-  else if (*first <= 191u) return {*first, Address::Accessory}; /// \todo wrong?
+  else if (*first <= 191u) {
+    auto const a7_2{(*first++ & 0b0011'1111u) << 2u};
+    auto const a10_8{(*first & 0b0111'0000u) << 4u};
+    auto const a1_0{(*first & 0b0000'0110u) >> 1u};
+    return {static_cast<Address::value_type>(a10_8 | a7_2 | a1_0),
+            Address::Accessory};
+  }
   // 192-231
   else if (*first <= 231u) {
-    auto const a13_8{*first++};
+    auto const a13_8{(*first++ & 0b0011'1111u) << 8u};
     auto const a7_0{*first};
-    return {static_cast<Address::value_type>(((a13_8 << 8u) | a7_0) & 0x3FFFu),
-            Address::Long};
+    return {static_cast<Address::value_type>(a13_8 | a7_0), Address::Long};
   }
   // 232-252
   else if (*first <= 252u)
@@ -86,7 +89,6 @@ constexpr Address decode_address(InputIt first) {
   // 255
   else return {*first, Address::IdleSystem};
 }
-#pragma GCC diagnostic pop
 
 /// Decode address
 ///
@@ -117,7 +119,10 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
     case Address::Broadcast: *first++ = 0u; break;
     case Address::Short: *first++ = static_cast<uint8_t>(addr); break;
     case Address::Accessory:
-      /// \todo see decode_address
+      *first++ =
+        static_cast<uint8_t>(0b1000'0000u | ((addr & 0b1111'1100u) >> 2u));
+      *first++ = static_cast<uint8_t>((addr & 0b0111'0000'0000u) >> 4u |
+                                      (addr & 0b0000'0011u) << 1u);
       break;
     case Address::Long:
       *first++ = static_cast<uint8_t>(0b1100'0000u | addr >> 8u);
