@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.40.1
+- Add boolean return value to `bytes` and `packet` methods of `tx::CrtpBase`
+
 ## 0.40.0
 - Add `size` and `capacity` methods to `tx::CrtpBase`
 - Remove async CV bit operations
