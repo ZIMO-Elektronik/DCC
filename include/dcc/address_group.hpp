@@ -15,7 +15,7 @@
 namespace dcc {
 
 /// Address group (RCN-218)
-enum class AddressGroup : uint8_t {
+enum struct AddressGroup : uint8_t {
   All = 0b00u,
   Loco = 0b01u,
   Acc = 0b10u,

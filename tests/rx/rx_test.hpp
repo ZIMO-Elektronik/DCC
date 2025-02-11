@@ -35,9 +35,10 @@ protected:
   }
 
   NiceMock<RxMock> _mock;
-  dcc::Addresses _addrs{.primary = {.value = 3u, .type = dcc::Address::Short},
-                        .consist = {.value = 4u, .type = dcc::Address::Short},
-                        .logon = {.value = 1000u, .type = dcc::Address::Long}};
+  dcc::Addresses _addrs{
+    .primary = {.value = 3u, .type = dcc::Address::BasicLoco},
+    .consist = {.value = 4u, .type = dcc::Address::BasicLoco},
+    .logon = {.value = 1000u, .type = dcc::Address::ExtendedLoco}};
   std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
   uint32_t _did{0xAABBCCDDu};
   uint16_t _cid{0xABCDu};

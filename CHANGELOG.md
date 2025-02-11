@@ -1,7 +1,12 @@
 # Changelog
 
-##
-- Add `Accessory` address encoding/decoding
+## 0.40.0
+- Add `size` and `capacity` methods to `tx::CrtpBase`
+- Remove async CV bit operations
+- Async CV operations are only used in service mode
+- Add `BasicAccessory` and `ExtendedAccessory` address
+- Rename `Short` to `BasicLoco` address
+- Rename `Long` to `ExtendedLoco` address
 
 ## 0.39.0
 - Bugfix disable LOGON_ENABLE after LOGON_SELECT ([#38](https://github.com/ZIMO-Elektronik/DCC/issues/38))

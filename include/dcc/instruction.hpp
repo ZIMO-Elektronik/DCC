@@ -16,7 +16,7 @@
 
 namespace dcc {
 
-enum class Instruction : uint8_t {
+enum struct Instruction : uint8_t {
   UnknownService,     ///< Instruction is unknown or service
   DecoderControl,     ///< Instruction is decoder control
   ConsistControl,     ///< Instruction is consist control

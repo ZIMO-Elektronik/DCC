@@ -22,7 +22,7 @@ namespace dcc::tx {
 
 using Timings =
   ztl::inplace_vector<uint16_t,
-                      (std::numeric_limits<uint8_t>::max() +   // Preamble
+                      (DCC_TX_MAX_PREAMBLE_BITS +              // Preamble
                        1uz +                                   // Startbit
                        DCC_MAX_PACKET_SIZE * (CHAR_BIT + 1uz)) // Data
                         * 2uz>;                                // Halfbit

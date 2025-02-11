@@ -64,7 +64,7 @@ inline constexpr std::array<uint8_t, 2uz> acks{0b0000'1111u, 0b1111'0000u};
 inline constexpr uint8_t nack{0b0011'1100u};
 
 /// Enumeration to specify datagram bits
-enum class Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
+enum struct Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
 
 /// Convert datagram bits to size
 ///
