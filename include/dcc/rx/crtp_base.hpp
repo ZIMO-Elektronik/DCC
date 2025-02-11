@@ -68,7 +68,7 @@ struct CrtpBase {
     auto const consist_addr{100u * (cv20 & 0b0111'1111u) +
                             (cv19 & 0b0111'1111u)};
     _addrs.consist = {static_cast<Address::value_type>(consist_addr),
-                      Address::Long};
+                      Address::ExtendedLoco};
     _addrs.consist.reversed = cv19 & ztl::make_mask(7u);
 
     // Legacy exception for F0
@@ -225,8 +225,8 @@ struct CrtpBase {
   void biDiChannel1() {
     switch (_addrs.received.type) {
       case Address::Broadcast: [[fallthrough]];
-      case Address::Short: [[fallthrough]];
-      case Address::Long: appAdr(); break;
+      case Address::BasicLoco: [[fallthrough]];
+      case Address::ExtendedLoco: appAdr(); break;
       case Address::AutomaticLogon: appLogon(1u); break;
       default: break;
     }
@@ -236,8 +236,8 @@ struct CrtpBase {
   void biDiChannel2() {
     switch (_addrs.received.type) {
       case Address::Broadcast: appTos(); break;
-      case Address::Short: [[fallthrough]];
-      case Address::Long:
+      case Address::BasicLoco: [[fallthrough]];
+      case Address::ExtendedLoco:
         if (_addrs.received ==
             (_logon_assigned ? _addrs.logon : _addrs.primary))
           decode_instruction(_packet) == Instruction::CvLong ? appPom()
@@ -294,11 +294,11 @@ private:
         executeOperationsSystem({cbegin(packet) + 1, cend(packet)});
         break;
       case Address::Broadcast: [[fallthrough]];
-      case Address::Short:
+      case Address::BasicLoco:
         retval =
           executeOperationsAddressed(addr, {cbegin(packet) + 1, cend(packet)});
         break;
-      case Address::Long:
+      case Address::ExtendedLoco:
         retval =
           executeOperationsAddressed(addr, {cbegin(packet) + 2, cend(packet)});
         break;
@@ -732,8 +732,9 @@ private:
       if (!serviceMode()) pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
-    if constexpr (AsyncReadable<T>) impl().readCv(cv_addr, byte, cb);
-    else std::invoke(cb, impl().readCv(cv_addr, byte));
+    if (serviceMode() || !AsyncReadable<T>)
+      std::invoke(cb, impl().readCv(cv_addr, byte));
+    else if constexpr (AsyncReadable<T>) impl().readCv(cv_addr, byte, cb);
   }
 
   /// CV bit verify
@@ -742,12 +743,8 @@ private:
   /// \param  bit     CV bit
   /// \param  pos     CV bit position
   void cvVerifyImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
-    auto cb{[this, bit](bool red_bit) {
-      if (!serviceMode()) pom(red_bit);
-      else if (bit == red_bit) impl().serviceAck();
-    }};
-    if constexpr (AsyncReadable<T>) impl().readCv(cv_addr, bit, pos, cb);
-    else std::invoke(cb, impl().readCv(cv_addr, bit, pos));
+    if (serviceMode() && impl().readCv(cv_addr, bit, pos) == bit)
+      impl().serviceAck();
   }
 
   /// CV byte and bit write, if necessary update init
@@ -779,8 +776,9 @@ private:
       if (!serviceMode()) pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
-    if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, byte, cb);
-    else std::invoke(cb, impl().writeCv(cv_addr, byte));
+    if (serviceMode() || !AsyncReadable<T>)
+      std::invoke(cb, impl().writeCv(cv_addr, byte));
+    else if constexpr (AsyncReadable<T>) impl().writeCv(cv_addr, byte, cb);
   }
 
   /// CV bit write
@@ -789,12 +787,8 @@ private:
   /// \param  bit     CV bit
   /// \param  pos     CV bit position
   void cvWriteImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
-    auto cb{[this, bit](bool red_bit) {
-      if (!serviceMode()) pom(red_bit);
-      else if (red_bit == bit) impl().serviceAck();
-    }};
-    if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, bit, pos, cb);
-    else std::invoke(cb, impl().writeCv(cv_addr, bit, pos));
+    if (serviceMode() && impl().writeCv(cv_addr, bit, pos) == bit)
+      impl().serviceAck();
   }
 
   /// Register mode

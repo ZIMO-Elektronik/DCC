@@ -17,15 +17,9 @@
 namespace dcc::rx {
 
 template<typename T>
-concept AsyncWritable = requires(T t,
-                                 uint32_t cv_addr,
-                                 uint8_t byte,
-                                 bool bit,
-                                 uint32_t pos,
-                                 std::function<void(uint8_t)> byte_cb,
-                                 std::function<void(bool)> bit_cb) {
-  { t.writeCv(cv_addr, byte, byte_cb) } -> std::same_as<void>;
-  { t.writeCv(cv_addr, bit, pos, bit_cb) } -> std::same_as<void>;
+concept AsyncWritable = requires(
+  T t, uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb) {
+  { t.writeCv(cv_addr, byte, cb) } -> std::same_as<void>;
 };
 
 } // namespace dcc::rx

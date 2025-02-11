@@ -60,7 +60,7 @@ void command_station_task(FiFo<dcc::Packet>* fifo) {
 // REPL task reading user input
 void repl_task(FiFo<dcc::Packet>* fifo) {
   // Start with primary address 3
-  dcc::Address addr{3u, dcc::Address::Short};
+  dcc::Address addr{3u, dcc::Address::BasicLoco};
 
   auto root{std::make_unique<cli::Menu>("dcc")};
 

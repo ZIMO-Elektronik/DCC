@@ -18,6 +18,7 @@
 #include "command_station.hpp"
 #include "config.hpp"
 #include "timings.hpp"
+#include "track_outputs.hpp"
 
 namespace dcc::tx {
 
@@ -43,15 +44,15 @@ struct CrtpBase {
   ///
   /// \param  packet  Packet
   void packet(Packet const& packet) {
-    return bytes({cbegin(packet), size(packet)});
+    return bytes({cbegin(packet), std::size(packet)});
   }
 
   /// Transmit bytes
   ///
-  /// \param  bytes Bytes
+  /// \param  bytes Bytes containing DCC packet
   void bytes(std::span<uint8_t const> bytes) {
     if (full(_deque)) return;
-    assert(size(bytes) <= DCC_MAX_PACKET_SIZE);
+    assert(std::size(bytes) <= DCC_MAX_PACKET_SIZE);
     _deque.push_back(bytes2timings(bytes, _cfg));
   }
 
@@ -62,26 +63,33 @@ struct CrtpBase {
     // As long as there are packet timings
     if (_packet_count < _packet->size()) return packetTiming();
     // or BiDi timings
-    else if (_cfg.flags.bidi && _bidi_count <= 4uz) return bidiTiming();
-
-    /// \todo theoretically deque could be popped here safely?
-    /// we'd just need to check whether packet doesn't point to idle_packet and
-    /// deque ain't empty?
+    else if (_cfg.flags.bidi && _bidi_count <= 4uz) return biDiTiming();
 
     // Deque is empty, send idle packet
     if (empty(_deque)) _packet = &_idle_packet;
     // Deque contains packet, send it
     else {
       _packet = &_deque.front();
-      // Careful! This only works because of the design of ztl::inplace_deque.
-      // The slot _packet currently points to will stay valid until the next
-      // call of pop_front().
+      /// \warning
+      /// Careful! This only works because of the design of ztl::inplace_deque.
+      /// The slot _packet currently points to will stay valid until the next
+      /// call of pop_front().
       _deque.pop_front();
     }
     _packet_count = _bidi_count = 0uz;
 
     return packetTiming();
   }
+
+  /// Get deque size
+  ///
+  /// \return Deque size
+  constexpr auto size() const { return std::size(_deque); }
+
+  /// Get deque capacity
+  ///
+  /// \return Deque capacity
+  constexpr auto capacity() const { return DCC_TX_DEQUE_SIZE; }
 
 private:
   constexpr CrtpBase() = default;
@@ -94,31 +102,32 @@ private:
   ///
   /// \return Next timings from current packet
   Timings::value_type packetTiming() {
-    auto const retval{
-      (*_packet)[static_cast<Timings::size_type>(_packet_count)]};
-    // First half bit
-    if (!(_packet_count++ % 2uz))
-      impl().trackOutputs(false ^ _cfg.flags.invert, true ^ _cfg.flags.invert);
-    // Second half bit
-    else
-      impl().trackOutputs(true ^ _cfg.flags.invert, false ^ _cfg.flags.invert);
-    return retval;
+    if constexpr (TrackOutputs<T>)
+      !(_packet_count % 2uz)
+        ? impl().trackOutputs(false ^ _cfg.flags.invert, // First half bit
+                              true ^ _cfg.flags.invert)
+        : impl().trackOutputs(true ^ _cfg.flags.invert, // Second half bit
+                              false ^ _cfg.flags.invert);
+    return (*_packet)[static_cast<Timings::size_type>(_packet_count++)];
   }
 
   /// BiDi timing
   ///
   /// \return Next BiDi timing
-  Timings::value_type bidiTiming() {
+  Timings::value_type biDiTiming() {
     switch (_bidi_count++) {
       // Send half a 1 bit
       case 0uz:
-        impl().trackOutputs(false ^ _cfg.flags.invert,
-                            true ^ _cfg.flags.invert);
+        if constexpr (TrackOutputs<T>)
+          impl().trackOutputs(false ^ _cfg.flags.invert,
+                              true ^ _cfg.flags.invert);
         return static_cast<Timings::value_type>(bidi::Timing::TCS);
 
       // Cutout start
       case 1uz:
-        impl().trackOutputs(false, false);
+        if constexpr (TrackOutputs<T>)
+          impl().trackOutputs(false ^ _cfg.flags.invert,
+                              false ^ _cfg.flags.invert);
         impl().biDiStart();
         return static_cast<Timings::value_type>(bidi::Timing::TTS1 -
                                                 bidi::Timing::TCS);
