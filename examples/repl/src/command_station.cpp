@@ -1,7 +1,5 @@
 #include "command_station.hpp"
 
-void CommandStation::trackOutputs(bool, bool) {}
-
 void CommandStation::biDiStart() {}
 
 void CommandStation::biDiChannel1() {}
