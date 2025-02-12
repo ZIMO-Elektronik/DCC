@@ -300,27 +300,15 @@ There are various optional methods that can be implemented if required. One of t
   // Read CV asynchronously
   void readCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
 
-  // Read CV bit asynchronously
-  void readCv(uint32_t cv_addr,
-              bool bit,
-              uint32_t pos,
-              std::function<void(bool)> cb);
-
   // Write CV asynchronously
   void
   writeCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
-
-  // Write CV bit asynchronously
-  void writeCv(uint32_t cv_addr,
-               bool bit,
-               uint32_t pos,
-               std::function<void(bool)> cb);
 
   // High-current BiDi
   void highCurrentBiDi(bool high_current);
 
   // Set east-west direction
-  void eastWestDirection(uint32_t cv_addr, std::optional<bool> dir);
+  void eastWestDirection(uint32_t addr, std::optional<bool> dir);
 ```
 
 ### Transmitter
@@ -332,9 +320,6 @@ struct CommandStation : dcc::tx::CrtpBase<CommandStation> {
   friend dcc::tx::CrtpBase<CommandStation>;
 
 private:
-  // Write track outputs
-  void trackOutputs(bool N, bool P);
-
   // BiDi start
   void biDiStart();
 
@@ -367,6 +352,14 @@ Again implementing the [CommandStation](include/dcc/tx/command_station.hpp) conc
       TIM->ARR = arr;                              // Set timer period register
     }
     ```
+
+#### Optional
+In addition to the mandatory methods, there is also the convenience option of having the track outputs switched by the logic of the base class.
+
+```cpp
+  // Write track outputs
+  void trackOutputs(bool N, bool P);
+```
 
 ### ESP32 RMT Encoder
 Similar to the other encoders of the [ESP-IDF](https://github.com/espressif/esp-idf) framework, the RMT encoder has only one function to create a new instance. For more information on how to use the encoder please refer to the [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) or the RMT example.
