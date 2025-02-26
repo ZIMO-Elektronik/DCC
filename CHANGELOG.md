@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.40.2
+- Ignore `-Warray-bounds` for `decode_address`
+
 ## 0.40.1
 - Add boolean return value to `bytes` and `packet` methods of `tx::CrtpBase`
 
