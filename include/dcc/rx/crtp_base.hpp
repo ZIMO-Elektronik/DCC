@@ -393,13 +393,13 @@ private:
         // Fucking stupid ZIMO version which overwrites primary address
         auto const overwrite_primary_address{(bytes[6uz] & 0b1100'0000u) !=
                                              0b1100'0000u};
-        // Multi-function decoders (long address)
+        // Multi-function decoders (extended address)
         if (auto const a13_8{bytes[6uz] & 0x3Fu}; a13_8 < 0x28u)
           logonAssign(
             did, decode_address(&bytes[6uz]), overwrite_primary_address);
         // Accessory decoder
         else if (a13_8 < 0x38u) break;
-        // Multi-function decoders (short address)
+        // Multi-function decoders (basic address)
         else if (a13_8 < 0x39u)
           logonAssign(
             did, decode_address(&bytes[7uz]), overwrite_primary_address);

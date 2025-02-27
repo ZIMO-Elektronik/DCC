@@ -25,22 +25,52 @@ RxTest::RxTest() {
 RxTest::~RxTest() {}
 
 void RxTest::SetUp() {
-  EXPECT_CALL(_mock, readCv(_))
-    .WillOnce(Return(_cvs[29uz - 1uz]))
-    .WillOnce(Return(_cvs[1uz - 1uz]))
-    .WillOnce(Return(_cvs[19uz - 1uz]))
-    .WillOnce(Return(_cvs[20uz - 1uz]))
-    .WillOnce(Return(_cvs[15uz - 1uz]))
-    .WillOnce(Return(_cvs[16uz - 1uz]))
-    .WillOnce(Return(_cvs[28uz - 1uz]))
-    .WillOnce(Return(_cvs[250uz - 1uz]))
-    .WillOnce(Return(_cvs[251uz - 1uz]))
-    .WillOnce(Return(_cvs[252uz - 1uz]))
-    .WillOnce(Return(_cvs[253uz - 1uz]))
-    .WillOnce(Return(_cvs[65297uz - 1uz]))
-    .WillOnce(Return(_cvs[65298uz - 1uz]))
-    .WillOnce(Return(_cvs[65299uz - 1uz]));
-  _mock.init();
+  // Extended address
+  if (_cvs[29uz - 1uz] & ztl::make_mask(5u)) {
+    /// \note
+    /// This is weird... but not having the EXPECT_CALL inside a lambda makes
+    /// GCC 14.2.1 hang.
+    std::invoke([this] {
+      EXPECT_CALL(_mock, readCv(_))
+        .WillOnce(Return(_cvs[29uz - 1uz]))
+        .WillOnce(Return(_cvs[17uz - 1uz]))
+        .WillOnce(Return(_cvs[18uz - 1uz]))
+        .WillOnce(Return(_cvs[19uz - 1uz]))
+        .WillOnce(Return(_cvs[20uz - 1uz]))
+        .WillOnce(Return(_cvs[15uz - 1uz]))
+        .WillOnce(Return(_cvs[16uz - 1uz]))
+        .WillOnce(Return(_cvs[28uz - 1uz]))
+        .WillOnce(Return(_cvs[250uz - 1uz]))
+        .WillOnce(Return(_cvs[251uz - 1uz]))
+        .WillOnce(Return(_cvs[252uz - 1uz]))
+        .WillOnce(Return(_cvs[253uz - 1uz]))
+        .WillOnce(Return(_cvs[65297uz - 1uz]))
+        .WillOnce(Return(_cvs[65298uz - 1uz]))
+        .WillOnce(Return(_cvs[65299uz - 1uz]));
+      _mock.init();
+    });
+  }
+  // Basic address
+  else {
+    std::invoke([this] {
+      EXPECT_CALL(_mock, readCv(_))
+        .WillOnce(Return(_cvs[29uz - 1uz]))
+        .WillOnce(Return(_cvs[1uz - 1uz]))
+        .WillOnce(Return(_cvs[19uz - 1uz]))
+        .WillOnce(Return(_cvs[20uz - 1uz]))
+        .WillOnce(Return(_cvs[15uz - 1uz]))
+        .WillOnce(Return(_cvs[16uz - 1uz]))
+        .WillOnce(Return(_cvs[28uz - 1uz]))
+        .WillOnce(Return(_cvs[250uz - 1uz]))
+        .WillOnce(Return(_cvs[251uz - 1uz]))
+        .WillOnce(Return(_cvs[252uz - 1uz]))
+        .WillOnce(Return(_cvs[253uz - 1uz]))
+        .WillOnce(Return(_cvs[65297uz - 1uz]))
+        .WillOnce(Return(_cvs[65298uz - 1uz]))
+        .WillOnce(Return(_cvs[65299uz - 1uz]));
+      _mock.init();
+    });
+  }
 }
 
 void RxTest::Receive(dcc::Packet const& packet) {
