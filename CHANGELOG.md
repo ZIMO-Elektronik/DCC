@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.40.3
+- Bugfix minimum CMake version set in `static_math` no longer supported by CMake 4.0.0
+
 ## 0.40.2
 - Ignore `-Warray-bounds` for `decode_address`
 
