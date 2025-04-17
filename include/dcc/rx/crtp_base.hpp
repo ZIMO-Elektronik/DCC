@@ -99,6 +99,9 @@ struct CrtpBase {
     _cids.front() = static_cast<decltype(_cids)::value_type>(
       (impl().readCv(65297u - 1u) << 8u) | impl().readCv(65298u - 1u));
     _session_ids.front() = impl().readCv(65299u - 1u);
+
+    // Initialization time point
+    _tps.init = std::chrono::system_clock::now();
   }
 
   /// Enable
@@ -276,7 +279,7 @@ private:
     adr();              // Prepare address broadcasts for BiDi channel 1
     logonStore();       // Store logon information if necessary
     updateQos();        // Update quality of service
-    updateTimepoints(); // Update timepoints for tip-off search
+    updateTimePoints(); // Update time points for tip-off search
     auto const retval{serviceMode() ? executeService() : executeOperations()};
     _deque.pop_front();
     return retval;
@@ -893,16 +896,21 @@ private:
   void tipOffSearch() {
     using std::literals::chrono_literals::operator""s;
     if (_tos_backoff || !empty(_tos_deque)) return;
-    auto const sec{std::chrono::duration_cast<std::chrono::seconds>(
-      _last_packet_tp - _tos_tp)};
-    if (sec >= 30s) return;
+    auto const now{std::chrono::system_clock::now()};
+    if (std::chrono::duration_cast<std::chrono::seconds>(now - _tps.init) >=
+        30s)
+      return;
+    if (_tps.tos == decltype(_tps.tos){}) _tps.tos = now;
     auto& packet{*end(_tos_deque)};
     auto const adr_high{adrHigh(_addrs.primary)};
     auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(packet))};
     auto const adr_low{adrLow(_addrs.primary)};
     it = std::copy(cbegin(adr_low), cend(adr_low), it);
-    auto const time{encode_datagram(
-      make_datagram<Bits::_12>(14u, static_cast<uint32_t>(sec.count())))};
+    auto const time{encode_datagram(make_datagram<Bits::_12>(
+      14u,
+      static_cast<uint32_t>(
+        std::chrono::duration_cast<std::chrono::seconds>(_tps.tos - _tps.init)
+          .count())))};
     std::copy(cbegin(time), cend(time), it);
     _tos_deque.push_back();
   }
@@ -1180,14 +1188,14 @@ private:
   /// Update time points
   ///
   /// In case time between two packets is >=2s allow tip-off search again.
-  void updateTimepoints() {
+  void updateTimePoints() {
     using std::literals::chrono_literals::operator""s;
-    auto const packet_tp{std::chrono::system_clock::now()};
-    if (packet_tp - _last_packet_tp >= 2s) {
+    auto const now{std::chrono::system_clock::now()};
+    if (now - _tps.packet >= 2s) {
       _tos_backoff.now();
-      _tos_tp = packet_tp;
+      _tps.tos = decltype(_tps.tos){};
     }
-    _last_packet_tp = packet_tp;
+    _tps.packet = now;
   }
 
   // Deques
@@ -1215,9 +1223,12 @@ private:
   enum State : uint8_t { Preamble, Startbit, Data, Endbit } _state{};
   enum Mode : uint8_t { Operations, Service } _mode{};
 
-  // Timepoints
-  std::chrono::time_point<std::chrono::system_clock> _last_packet_tp{};
-  std::chrono::time_point<std::chrono::system_clock> _tos_tp{};
+  // Time points
+  struct {
+    std::chrono::time_point<std::chrono::system_clock> init;
+    std::chrono::time_point<std::chrono::system_clock> packet;
+    std::chrono::time_point<std::chrono::system_clock> tos;
+  } _tps;
 
   std::array<uint8_t, 4uz> _did{};
 
