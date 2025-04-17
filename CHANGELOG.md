@@ -1,5 +1,8 @@
 # Changelog
 
+##
+- Bugfix tip-off search time corresponds to that of the first search packet ([#50](https://github.com/ZIMO-Elektronik/DCC/issues/50))
+
 ## 0.40.3
 - Bugfix minimum CMake version set in `static_math` no longer supported by CMake 4.0.0
 
