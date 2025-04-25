@@ -49,7 +49,7 @@ struct Address {
     Reserved,          ///< Reserved
     DataTransfer,      ///< Data transfer
     AutomaticLogon,    ///< Automatic logon
-    IdleSystem         ///< System commands
+    Idle               ///< Idle
   } type{};
 
   bool reversed{}; /// Direction reversed
@@ -92,7 +92,7 @@ constexpr Address decode_address(InputIt first) {
   // 254
   else if (*first == 254u) return {*first, Address::AutomaticLogon};
   // 255
-  else return {*first, Address::IdleSystem};
+  else return {*first, Address::Idle};
 }
 #pragma GCC diagnostic pop
 
@@ -145,7 +145,7 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
     case Address::Reserved: assert(false); break;
     case Address::DataTransfer: *first++ = 253u; break;
     case Address::AutomaticLogon: *first++ = 254u; break;
-    case Address::IdleSystem: *first++ = 255u; break;
+    case Address::Idle: *first++ = 255u; break;
   }
   return first;
 }

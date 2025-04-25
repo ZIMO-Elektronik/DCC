@@ -75,7 +75,7 @@ TEST(address, decode_address) {
   {
     std::array<uint8_t, 2uz> data{0b1111'1111u};
     EXPECT_EQ(dcc::decode_address(cbegin(data)),
-              (dcc::Address{.value = 255u, .type = dcc::Address::IdleSystem}));
+              (dcc::Address{.value = 255u, .type = dcc::Address::Idle}));
   }
 }
 
@@ -140,10 +140,10 @@ TEST(address, encode_address) {
 
   {
     std::array<uint8_t, 2uz> data{};
-    EXPECT_EQ(dcc::encode_address(
-                dcc::Address{.value = 255u, .type = dcc::Address::IdleSystem},
-                begin(data)),
-              cbegin(data) + 1);
+    EXPECT_EQ(
+      dcc::encode_address(
+        dcc::Address{.value = 255u, .type = dcc::Address::Idle}, begin(data)),
+      cbegin(data) + 1);
     EXPECT_EQ(data, (decltype(data){0b1111'1111u}));
   }
 }
