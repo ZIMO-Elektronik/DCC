@@ -1,5 +1,8 @@
 # Changelog
 
+##
+- Rename `IdleSystem` to `Idle` address (255 no longer used for anything but idle)
+
 ## 0.40.4
 - Bugfix tip-off search time corresponds to that of the first search packet ([#50](https://github.com/ZIMO-Elektronik/DCC/issues/50))
 - Bugfix place `rmt_dcc_encoder_reset` in IRAM_ATTR

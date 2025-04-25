@@ -293,9 +293,6 @@ private:
     bool retval{};
     auto const& packet{_deque.front()};
     switch (auto const addr{decode_address(packet)}; addr.type) {
-      case Address::IdleSystem:
-        executeOperationsSystem({cbegin(packet) + 1, cend(packet)});
-        break;
       case Address::Broadcast: [[fallthrough]];
       case Address::BasicLoco:
         retval =
@@ -324,11 +321,6 @@ private:
     // CvLong
     else if (size(packet) == 4uz) cvLong(0u, {cbegin(packet), cend(packet)});
     return true;
-  }
-
-  /// Execute system commands
-  void executeOperationsSystem(std::span<uint8_t const>) {
-    /// \todo ?
   }
 
   /// Execute addressed commands
