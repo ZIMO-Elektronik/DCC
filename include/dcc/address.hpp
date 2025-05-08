@@ -42,7 +42,7 @@ struct Address {
   enum : uint8_t {
     UnknownService,    ///< Unknown or service (=no address)
     Broadcast,         ///< Broadcast
-    BasicLoco,         ///< Basic loco ()
+    BasicLoco,         ///< Basic loco
     BasicAccessory,    ///< Basic accessory
     ExtendedAccessory, ///< Extended accessory
     ExtendedLoco,      ///< Extended loco
