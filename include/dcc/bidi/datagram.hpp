@@ -113,7 +113,7 @@ template<Bits I, std::unsigned_integral T>
 constexpr auto make_datagram(T data) {
   Datagram<datagram_size<I>> datagram{};
   // Data must be smaller than the number of bits
-  assert(data < smath::pow<uint64_t>(2u, datagram_size<I> * 6u));
+  assert(data < smath::pow<uint64_t>(2u, datagram_size<I> * 6uz));
   for (auto i{size(datagram)}; i-- > 0u;) {
     datagram[i] = data & 0x3Fu;
     data >>= 6u;
@@ -128,7 +128,7 @@ constexpr auto make_datagram(T data) {
 /// \return Encoded datagram
 template<size_t I>
 constexpr auto encode_datagram(Datagram<I> const& datagram) {
-  Datagram<I> encoded_datagram;
+  Datagram<I> encoded_datagram{};
   std::ranges::transform(datagram, begin(encoded_datagram), [](uint8_t b) {
     return detail::encode_lut[b];
   });
@@ -161,7 +161,7 @@ constexpr auto make_data(std::span<uint8_t const> datagram) {
     data |= b & 0x3Fu;
   }
   // Data must be smaller than the number of bits
-  assert(data < smath::pow<uint64_t>(2u, size(datagram) * 6u));
+  assert(data < smath::pow<uint64_t>(2u, size(datagram) * 6uz));
   return data;
 }
 
