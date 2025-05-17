@@ -15,6 +15,7 @@
 #include <utility>
 #include <ztl/math.hpp>
 #include "address.hpp"
+#include "address_assign.hpp"
 #include "address_group.hpp"
 #include "crc8.hpp"
 #include "exor.hpp"

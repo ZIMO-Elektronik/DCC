@@ -385,19 +385,15 @@ private:
       // LOGON_ASSIGN
       case 0b1110'0000u: {
         auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
-        // Fucking stupid ZIMO version which overwrites primary address
-        auto const overwrite_primary_address{(bytes[6uz] & 0b1100'0000u) !=
-                                             0b1100'0000u};
+        auto const bb{static_cast<AddressAssign>(bytes[6uz] >> 6u)};
         // Multi-function decoders (extended address)
         if (auto const a13_8{bytes[6uz] & 0x3Fu}; a13_8 < 0x28u)
-          logonAssign(
-            did, decode_address(&bytes[6uz]), overwrite_primary_address);
+          logonAssign(did, bb, decode_address(&bytes[6uz]));
         // Accessory decoder
         else if (a13_8 < 0x38u) break;
         // Multi-function decoders (basic address)
         else if (a13_8 < 0x39u)
-          logonAssign(
-            did, decode_address(&bytes[7uz]), overwrite_primary_address);
+          logonAssign(did, bb, decode_address(&bytes[7uz]));
         // Reserved
         else if (a13_8 < 0x3Fu) break;
         // FW update
@@ -982,16 +978,17 @@ private:
   /// Logon assign
   ///
   /// \param  did                       Unique ID
+  /// \param  bb                        Address assign
   /// \param  addr                      Assigned address
   /// \param  overwrite_primary_address Overwrite primary address
   void logonAssign(std::span<uint8_t const, 4uz> did,
-                   Address addr,
-                   bool overwrite_primary_address) {
+                   AddressAssign bb,
+                   Address addr) {
     if (!_logon_enabled || !std::ranges::equal(did, _did)) return;
     _logon_assigned = _logon_store = true;
     _addrs.consist = 0u;
     _addrs.logon = addr;
-    if (addr && overwrite_primary_address) _addrs.primary = addr; // Stupid
+    if (addr && bb == AddressAssign::Permanent) _addrs.primary = addr;
     static constexpr std::array<uint8_t, 5uz> data{
       13u << 4u | 0u, 0u, 0u, 0u, 0u};
     assert(!full(_logon_deque));
@@ -1165,7 +1162,7 @@ private:
     if (!_logon_store) return;
     _logon_store = false;
 
-    // Doesn't conform to standard...
+    // Logon assign is permanent
     if (_addrs.primary == _addrs.logon) {
       impl().writeCv(
         17u - 1u, static_cast<uint8_t>(0b1100'0000u | (_addrs.primary >> 8u)));
