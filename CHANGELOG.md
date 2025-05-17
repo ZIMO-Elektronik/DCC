@@ -1,6 +1,7 @@
 # Changelog
 
 ##
+- Add workaround for transmitting long consist addresses ([#53](https://github.com/ZIMO-Elektronik/DCC/issues/53))
 - Rename `IdleSystem` to `Idle` address (255 no longer used for anything but idle)
 
 ## 0.40.4
