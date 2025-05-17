@@ -3,10 +3,6 @@
 using namespace dcc::bidi;
 
 TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
-  // Encode address
-  std::array<uint8_t, 2uz> adr;
-  encode_address(_addrs.received, begin(adr));
-
   // Make datagram
   auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0u))};
   auto adr_low{encode_datagram(
@@ -30,14 +26,11 @@ TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
 TEST_F(RxTest, app_adr_alternate_logon_id1_id2) {
   Logon();
 
-  // Encode address
-  std::array<uint8_t, 2uz> adr;
-  encode_address(_addrs.logon, begin(adr));
-
-  // Make datagram (who the fuck decided that encoding...?)
-  auto adr_high{
-    encode_datagram(make_datagram<Bits::_12>(1u, adr[0uz] & 0b1011'1111u))};
-  auto adr_low{encode_datagram(make_datagram<Bits::_12>(2u, adr[1uz]))};
+  // Make datagram
+  auto adr_high{encode_datagram(
+    make_datagram<Bits::_12>(1u, 0x80u | (_addrs.logon & 0x3F00u) >> 8u))};
+  auto adr_low{
+    encode_datagram(make_datagram<Bits::_12>(2u, _addrs.logon & 0x00FFu))};
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
@@ -87,7 +80,7 @@ TEST_F(RxTest, app_adr_consist) {
   _mock.biDiChannel1();
 }
 
-TEST_F(RxTest, app_adr_long_consist_not_supported) {
+TEST_F(RxTest, app_adr_long_consist_not_standardized) {
   _cvs[19uz - 1uz] = 83u;
   _cvs[20uz - 1uz] = 12u;
   _addrs.consist = static_cast<dcc::Address::value_type>(
@@ -95,10 +88,20 @@ TEST_F(RxTest, app_adr_long_consist_not_supported) {
     (_cvs[19uz - 1uz] & 0b0111'1111u));
   SetUp();
 
+  // Make datagram
+  auto adr_high{encode_datagram(
+    make_datagram<Bits::_12>(1u, 0x80u | (_addrs.consist & 0x3F00u) >> 8u))};
+  auto adr_low{
+    encode_datagram(make_datagram<Bits::_12>(2u, _addrs.consist & 0x00FFu))};
+
   // Send whatever packet to get last received address to match consist
   Receive(dcc::make_function_group_f4_f0_packet(_addrs.consist, 10u));
 
-  EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
+  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
+  Execute();
+  _mock.biDiChannel1();
+
+  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
   Execute();
   _mock.biDiChannel1();
 }

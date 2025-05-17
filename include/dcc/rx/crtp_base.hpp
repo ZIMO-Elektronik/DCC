@@ -1015,13 +1015,16 @@ private:
       _adr_deque.push_back(adrLow(_addrs.primary));
     }
     // Active address is consist
-    else if (_addrs.consist > 0u && _addrs.consist < 128u) {
+    else if (_addrs.consist < 128u) {
+      _adr_deque.push_back(adrHighConsist(_addrs.consist));
+      _adr_deque.push_back(adrLowConsist(_addrs.consist));
+    }
+    /// \todo Active address is extended consist... which isn't standardized
+    /// yet. Instead we send consist as if it would be an extended primary
+    /// address.
+    else {
       _adr_deque.push_back(adrHigh(_addrs.consist));
       _adr_deque.push_back(adrLow(_addrs.consist));
-    }
-    // RCN-217 can't encode CV20 yet
-    else {
-      /// \todo
     }
   }
 
@@ -1030,15 +1033,22 @@ private:
   /// \param  d Generic dyn datagram
   template<std::derived_from<Dyn> Dyns>
   void dyn(Dyns&& d) {
+    // Subindex ? - generic
     if constexpr (std::same_as<Dyns, Dyn>) dyn(d.d, d.x);
+    // Subindex 0 or 1 - speed
     else if constexpr (std::same_as<Dyns, Kmh>) {
       auto const tmp{d < 512 ? (d < 256 ? d : d - 256) : 255};
       dyn(static_cast<uint8_t>(tmp), d < 256 ? 0u : 1u);
-    } else if constexpr (std::same_as<Dyns, Temperature>) {
+    }
+    // Subindex 26 - temperature
+    else if constexpr (std::same_as<Dyns, Temperature>) {
       auto const tmp{ztl::lerp<Dyn::value_type>(d.d, -50, 205, 0, 255)};
       dyn(static_cast<uint8_t>(tmp), 26u);
-    } else if constexpr (std::same_as<Dyns, DirectionStatusByte>)
+    }
+    // Subindex 27 - direction status byte
+    else if constexpr (std::same_as<Dyns, DirectionStatusByte>)
       dyn(static_cast<uint8_t>(d), 27u);
+    // Subindex 46 - track voltage
     else if constexpr (std::same_as<Dyns, TrackVoltage>) {
       auto const tmp{std::max<Dyn::value_type>(0, d - 5000)};
       dyn(static_cast<uint8_t>(tmp / 100), 46u);
@@ -1112,33 +1122,43 @@ private:
     }
   }
 
-  /// Get app:adr_high
+  /// Get app:adr_high for primary or logon address
   ///
   /// \param  addr  Address
   /// \return Datagram for app:adr_high
   auto adrHigh(Address addr) const {
     return encode_datagram(make_datagram<Bits::_12>(
-      1u,
-      addr == _addrs.consist
-        ? 0b0110'0000u
-        : (addr < 128u ? 0u : 0x80u | (addr & 0x3F00u) >> 8u)));
+      1u, addr < 128u ? 0u : 0x80u | (addr & 0x3F00u) >> 8u));
   }
 
-  /// Get app:adr_low
+  /// Get app:adr_high for consist address
+  ///
+  /// \param  addr  Address
+  /// \return Datagram for app:adr_high
+  auto adrHighConsist([[maybe_unused]] Address addr) const {
+    return encode_datagram(make_datagram<Bits::_12>(1u, 0b0110'0000u));
+  }
+
+  /// Get app:adr_low for primary or logon address
   ///
   /// \param  addr  Address
   /// \return Datagram for app:adr_low
   auto adrLow(Address addr) const {
+    return encode_datagram(make_datagram<Bits::_12>(2u, addr & 0x00FFu));
+  }
+
+  /// Get app:adr_low for consist address
+  ///
+  /// \param  addr  Address
+  /// \return Datagram for app:adr_low
+  auto adrLowConsist(Address addr) const {
     return encode_datagram(make_datagram<Bits::_12>(
-      2u,
-      addr == _addrs.consist
-        ? (_addrs.consist.reversed << 7u | (_addrs.consist & 0x007Fu))
-        : (addr & 0x00FFu)));
+      2u, static_cast<uint8_t>(addr.reversed << 7u) | (addr & 0x007Fu)));
   }
 
   /// Logon store
   ///
-  /// RCN218 requires us to answer extended packets directly in the following
+  /// RCN-218 requires us to answer extended packets directly in the following
   /// cutout. This is so time-critical that logon information can only be stored
   /// asynchronously...
   void logonStore() {
