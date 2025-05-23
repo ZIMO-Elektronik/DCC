@@ -8,4 +8,4 @@ on:
 
 jobs:
   license:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/license-checker.yml@v0.0.9
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/license-checker.yml@v0.1.0
