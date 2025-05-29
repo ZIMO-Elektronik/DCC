@@ -149,7 +149,7 @@ struct CrtpBase {
 
       case Data:
         _byte = static_cast<uint8_t>((_byte << 1u) | bit);
-        if (++_bit_count < 8uz) return;
+        if (++_bit_count < CHAR_BIT) return;
         _packet.push_back(_byte);
         _checksum = static_cast<uint8_t>(_checksum ^ _byte);
         _bit_count = _byte = 0u;

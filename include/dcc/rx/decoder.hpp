@@ -26,12 +26,12 @@ concept Decoder = Readable<T> && Writable<T> &&
                            uint32_t state,
                            bool service_mode,
                            std::span<uint8_t const> bytes) {
-                    { t.direction(addr, dir) } -> std::same_as<void>;
-                    { t.speed(addr, speed) } -> std::same_as<void>;
-                    { t.function(addr, mask, state) } -> std::same_as<void>;
-                    { t.serviceModeHook(service_mode) } -> std::same_as<void>;
-                    { t.serviceAck() } -> std::same_as<void>;
-                    { t.transmitBiDi(bytes) } -> std::same_as<void>;
+                    { t.direction(addr, dir) };
+                    { t.speed(addr, speed) };
+                    { t.function(addr, mask, state) };
+                    { t.serviceModeHook(service_mode) };
+                    { t.serviceAck() };
+                    { t.transmitBiDi(bytes) };
                   };
 
 } // namespace dcc::rx

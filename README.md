@@ -312,7 +312,7 @@ There are various optional methods that can be implemented if required. One of t
 ```
 
 ### Transmitter
-As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::CrtpBase`. The template argument of the base is checked with a concept called [CommandStation](include/dcc/tx/command_station.hpp).
+As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::CrtpBase`. There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.
 ```cpp
 #include <dcc/dcc.hpp>
 
@@ -320,6 +320,12 @@ struct CommandStation : dcc::tx::CrtpBase<CommandStation> {
   friend dcc::tx::CrtpBase<CommandStation>;
 
 private:
+  // Write track outputs
+  void trackOutputs(bool N, bool P);
+
+  // Packet end
+  void packetEnd();
+
   // BiDi start
   void biDiStart();
 
@@ -334,8 +340,8 @@ private:
 };
 ```
 
-Again implementing the [CommandStation](include/dcc/tx/command_station.hpp) concept isn't sufficient:
-1. After we have instantiated the class we can configure the track signal by calling the `init` method. The method takes `Config` as a parameter and lets us set the number of preamble bits, the bit durations and whether a BiDi cutout should be generated. This step is optional, if `init` it is not called, then default settings are used.
+Again, inheriting from the base class isn't sufficient:
+1. After we have instantiated the class we must configure the track signal by calling the `init` method. The method takes `Config` as a parameter and lets us set the number of preamble bits, the bit durations and whether a BiDi cutout should be generated.
     ```cpp
     // Initializing the command station is optional
     command_station.init({.num_preamble = 17u,
@@ -353,13 +359,15 @@ Again implementing the [CommandStation](include/dcc/tx/command_station.hpp) conc
     }
     ```
 
-#### Optional
-In addition to the mandatory methods, there is also the convenience option of having the track outputs switched by the logic of the base class.
-
+#### Packet vs. Timings
+If you look at the signature of the transmitter base, you will see that it has a second template parameter which can be either `dcc::Packet` or `dcc::tx::Timings`.
 ```cpp
-  // Write track outputs
-  void trackOutputs(bool N, bool P);
+template<typename T, typename D = Packet>
+requires(std::same_as<D, Packet> || std::same_as<D, Timings>)
+struct CrtpBase
 ```
+
+This parameter determines whether the transmitter stores packets to be sent as bytes or as bit timings. The trade-off is simple, packets require **less RAM** but **more instructions** in the interrupt, timings require **more RAM** but **fewer instructions** in the interrupt.
 
 ### ESP32 RMT Encoder
 Similar to the other encoders of the [ESP-IDF](https://github.com/espressif/esp-idf) framework, the RMT encoder has only one function to create a new instance. For more information on how to use the encoder please refer to the [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) or the RMT example.

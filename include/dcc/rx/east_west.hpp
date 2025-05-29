@@ -17,7 +17,7 @@ namespace dcc::rx {
 
 template<typename T>
 concept EastWest = requires(T t, uint16_t addr, std::optional<bool> opt_dir) {
-  { t.eastWestDirection(addr, opt_dir) } -> std::same_as<void>;
+  { t.eastWestDirection(addr, opt_dir) };
 };
 
 } // namespace dcc::rx

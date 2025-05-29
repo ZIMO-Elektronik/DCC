@@ -40,7 +40,7 @@ void command_station_task(FiFo<dcc::Packet>* fifo) {
     .num_preamble = DCC_TX_MIN_PREAMBLE_BITS,
     .bit1_duration = 58u,
     .bit0_duration = 100u,
-    .flags = {.invert = false, .bidi = true},
+    .flags = {.bidi = true},
   });
 
   for (;;) {

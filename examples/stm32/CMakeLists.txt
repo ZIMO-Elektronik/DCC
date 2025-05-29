@@ -1,4 +1,4 @@
-cpmaddpackage("gh:STMicroelectronics/STM32CubeH7@1.11.2")
+cpmaddpackage("gh:STMicroelectronics/STM32CubeH7@1.12.1")
 
 function(add_stm32_target TARGET)
   file(GLOB_RECURSE SRC

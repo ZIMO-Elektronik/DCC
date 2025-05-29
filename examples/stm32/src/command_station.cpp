@@ -4,14 +4,6 @@
 
 void CommandStation::trackOutputs(bool N, bool P) { bsp_write_track(N, P); }
 
-void CommandStation::biDiStart() {}
-
-void CommandStation::biDiChannel1() {}
-
-void CommandStation::biDiChannel2() {}
-
-void CommandStation::biDiEnd() {}
-
 CommandStation command_station;
 
 extern "C" void TIMER_IRQ_HANDLER() {
@@ -25,7 +17,7 @@ int main() {
     .num_preamble = DCC_TX_MIN_PREAMBLE_BITS,
     .bit1_duration = 58u,
     .bit0_duration = 100u,
-    .flags = {.invert = false, .bidi = true},
+    .flags = {.bidi = true},
   });
 
   // Turn red LED on to indicate this board is the command station
