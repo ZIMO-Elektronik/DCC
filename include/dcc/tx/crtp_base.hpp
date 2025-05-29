@@ -17,6 +17,9 @@
 #include "../bidi/timing.hpp"
 #include "command_station.hpp"
 #include "config.hpp"
+#include "ipacket.hpp"
+#include "itimings.hpp"
+#include "pre_cutout.hpp"
 #include "timings.hpp"
 #include "track_outputs.hpp"
 
@@ -25,7 +28,10 @@ namespace dcc::tx {
 /// CRTP base for transmitting DCC
 ///
 /// \tparam T Type to downcast to
-template<typename T>
+/// \tparam D Packet buffer type
+template<typename T, typename D = IPacket>
+requires std::same_as<D, IPacket> || std::same_as<D, ITimings>
+
 struct CrtpBase {
   friend T;
 
@@ -38,6 +44,7 @@ struct CrtpBase {
            cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max && //
            cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);  //
     _cfg = cfg;
+    _idle_packet.recalculate(_cfg);
   }
 
   /// Transmit packet
@@ -57,7 +64,8 @@ struct CrtpBase {
   bool bytes(std::span<uint8_t const> bytes) {
     if (full(_deque)) return false;
     assert(std::size(bytes) <= DCC_MAX_PACKET_SIZE);
-    _deque.push_back(bytes2timings(bytes, _cfg));
+    _deque.push_back(D(bytes, _cfg));
+
     return true;
   }
 
@@ -66,7 +74,7 @@ struct CrtpBase {
   /// \return Bit duration in µs
   Timings::value_type transmit() {
     // As long as there are packet timings
-    if (_packet_count < _packet->size()) return packetTiming();
+    if (_packet->hasNext()) return packetTiming();
     // or BiDi timings
     else if (_cfg.flags.bidi && _bidi_count <= 4uz) return biDiTiming();
 
@@ -81,7 +89,8 @@ struct CrtpBase {
       /// call of pop_front().
       _deque.pop_front();
     }
-    _packet_count = _bidi_count = 0uz;
+    _idle_packet.resetIndex();
+    _bidi_count = 0uz;
 
     return packetTiming();
   }
@@ -108,12 +117,10 @@ private:
   /// \return Next timings from current packet
   Timings::value_type packetTiming() {
     if constexpr (TrackOutputs<T>)
-      !(_packet_count % 2uz)
-        ? impl().trackOutputs(false ^ _cfg.flags.invert, // First half bit
-                              true ^ _cfg.flags.invert)
-        : impl().trackOutputs(true ^ _cfg.flags.invert, // Second half bit
-                              false ^ _cfg.flags.invert);
-    return (*_packet)[static_cast<Timings::size_type>(_packet_count++)];
+      impl().trackOutputs(_polarity ^ _cfg.flags.invert,
+                          !_polarity ^ _cfg.flags.invert);
+    _polarity = !_polarity;
+    return _packet->next();
   }
 
   /// BiDi timing
@@ -126,6 +133,8 @@ private:
         if constexpr (TrackOutputs<T>)
           impl().trackOutputs(false ^ _cfg.flags.invert,
                               true ^ _cfg.flags.invert);
+
+        if constexpr (PreCutout<T>) impl().preCutout();
         return static_cast<Timings::value_type>(bidi::Timing::TCS);
 
       // Cutout start
@@ -157,12 +166,25 @@ private:
     }
   }
 
-  static constexpr Timings _idle_packet{packet2timings(make_idle_packet())};
+  /// Packet queue
+  ztl::inplace_deque<D, DCC_TX_DEQUE_SIZE> _deque{};
 
-  ztl::inplace_deque<Timings, DCC_TX_DEQUE_SIZE> _deque{};
-  Timings const* _packet{&_idle_packet};
-  size_t _packet_count{};
+  /// Current packet
+  D* _packet{&_idle_packet};
+
+  /// Idle packet
+  D _idle_packet{};
+
+  /// Polarity indicator
+  bool _polarity{false};
+
+  /// Byte count
+  size_t _byte_count{};
+
+  /// Bidi count
   size_t _bidi_count{};
+
+  /// Config
   Config _cfg{};
 };
 
