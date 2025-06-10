@@ -25,13 +25,6 @@ struct Config {
   uint8_t bit0_duration{Bit0};
 
   struct {
-    /// Invert phase
-    ///
-    /// By default the phase is "positive", so P > N for the first half bit.
-    /// Setting this flag inverts the phase so that it's "negative" and P < N
-    /// for the first half bit. See RCN-210 for further details.
-    bool invert{};
-
     /// Enable BiDi
     bool bidi{true};
   } flags{};

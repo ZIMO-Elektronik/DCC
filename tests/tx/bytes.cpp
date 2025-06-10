@@ -1,6 +1,7 @@
 #include "tx_test.hpp"
 
 TEST_F(TxTest, bytes) {
-  for (auto i{DCC_TX_DEQUE_SIZE}; i-- > 0uz;) EXPECT_TRUE(_mock.bytes({}));
-  EXPECT_FALSE(_mock.bytes({}));
+  auto packet{dcc::make_idle_packet()};
+  EXPECT_TRUE(_packet_mock.bytes(packet));
+  EXPECT_TRUE(_timings_mock.bytes(packet));
 }

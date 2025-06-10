@@ -16,10 +16,12 @@ namespace dcc::tx {
 
 template<typename T>
 concept CommandStation = requires(T t, bool N, bool P) {
-  { t.biDiStart() } -> std::same_as<void>;
-  { t.biDiChannel1() } -> std::same_as<void>;
-  { t.biDiChannel2() } -> std::same_as<void>;
-  { t.biDiEnd() } -> std::same_as<void>;
+  { t.trackOutputs(N, P) };
+  { t.packetEnd() };
+  { t.biDiStart() };
+  { t.biDiChannel1() };
+  { t.biDiChannel2() };
+  { t.biDiEnd() };
 };
 
 } // namespace dcc::tx

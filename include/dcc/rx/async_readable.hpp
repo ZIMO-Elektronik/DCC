@@ -19,7 +19,7 @@ namespace dcc::rx {
 template<typename T>
 concept AsyncReadable = requires(
   T t, uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb) {
-  { t.readCv(cv_addr, byte, cb) } -> std::same_as<void>;
+  { t.readCv(cv_addr, byte, cb) };
 };
 
 } // namespace dcc::rx

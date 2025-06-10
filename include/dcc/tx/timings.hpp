@@ -16,16 +16,17 @@
 #include <cstdint>
 #include <span>
 #include <ztl/inplace_vector.hpp>
+#include "../packet.hpp"
 #include "config.hpp"
 
 namespace dcc::tx {
 
 using Timings =
   ztl::inplace_vector<uint16_t,
-                      (DCC_TX_MAX_PREAMBLE_BITS +              // Preamble
-                       1uz +                                   // Startbit
-                       DCC_MAX_PACKET_SIZE * (CHAR_BIT + 1uz)) // Data
-                        * 2uz>;                                // Halfbit
+                      (DCC_TX_MAX_PREAMBLE_BITS +               // Preamble
+                       DCC_MAX_PACKET_SIZE * (1uz + CHAR_BIT) + // Start + data
+                       1uz) *                                   // End
+                        2uz>;
 
 /// Convert bytes into timings
 ///
