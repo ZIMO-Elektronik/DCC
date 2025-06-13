@@ -70,7 +70,7 @@ enum struct Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
 ///
 /// \tparam I Datagram bits
 template<Bits I>
-inline constexpr auto datagram_size{(std::to_underlying(I) + 4uz) / 6uz};
+inline constexpr auto datagram_size{(std::to_underlying(I) + 5uz) / 6uz};
 
 template<size_t I = datagram_size<Bits::_48>>
 using Datagram = std::array<uint8_t, I>;
