@@ -36,12 +36,10 @@ void command_station_task(FiFo<dcc::Packet>* fifo) {
   CommandStation command_station;
 
   // Initializing the command station is optional
-  command_station.init({
-    .num_preamble = DCC_TX_MIN_PREAMBLE_BITS,
-    .bit1_duration = 58u,
-    .bit0_duration = 100u,
-    .flags = {.bidi = true},
-  });
+  command_station.init({.num_preamble = DCC_TX_MIN_PREAMBLE_BITS,
+                        .bit1_duration = 58u,
+                        .bit0_duration = 100u,
+                        .flags = {.bidi = true}});
 
   for (;;) {
     std::this_thread::sleep_for(1ms);

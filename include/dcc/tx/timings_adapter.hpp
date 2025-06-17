@@ -18,11 +18,8 @@
 
 namespace dcc::tx {
 
-/// TimingsAdapter
-class TimingsAdapter : public std::ranges::view_interface<TimingsAdapter> {
-  struct Sentinel {};
-
-public:
+/// Convert Packet to Timings on-the-fly
+struct TimingsAdapter : std::ranges::view_interface<TimingsAdapter> {
   using value_type = Timings::value_type;
   using size_type = Timings::size_type;
   using difference_type = Timings::difference_type;
@@ -79,14 +76,16 @@ public:
              : _cfg.bit0_duration;
   }
 
-  constexpr bool operator==(Sentinel) const { return _count >= _max_count; }
+  constexpr bool operator==(std::default_sentinel_t) const {
+    return _count >= _max_count;
+  }
 
   TimingsAdapter& begin() { return *this; }
   TimingsAdapter const& begin() const { return *this; }
-  Sentinel end() { return {}; }
-  Sentinel end() const { return {}; }
-  Sentinel cend() { return {}; }
-  Sentinel cend() const { return {}; }
+  std::default_sentinel_t end() { return std::default_sentinel; }
+  std::default_sentinel_t end() const { return std::default_sentinel; }
+  std::default_sentinel_t cend() { return std::default_sentinel; }
+  std::default_sentinel_t cend() const { return std::default_sentinel; }
 
 private:
   Packet _packet;

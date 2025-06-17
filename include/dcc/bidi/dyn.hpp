@@ -25,4 +25,12 @@ struct Dyn {
   uint8_t x{};    ///< Subindex
 };
 
+struct Kmh : Dyn {};
+
+struct Temperature : Dyn {};
+
+struct TrackVoltage : Dyn {};
+
+struct DirectionStatusByte : Dyn {};
+
 } // namespace dcc::bidi
