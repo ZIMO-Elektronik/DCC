@@ -80,7 +80,7 @@ TEST_F(RxTest, app_adr_consist) {
   _mock.biDiChannel1();
 }
 
-TEST_F(RxTest, app_adr_long_consist_not_standardized) {
+TEST_F(RxTest, app_adr_long_consist) {
   _cvs[19uz - 1uz] = 83u;
   _cvs[20uz - 1uz] = 12u;
   _addrs.consist = static_cast<dcc::Address::value_type>(
@@ -104,4 +104,25 @@ TEST_F(RxTest, app_adr_long_consist_not_standardized) {
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
   Execute();
   _mock.biDiChannel1();
+}
+
+TEST_F(RxTest, app_adr_broadcast) {
+  // Make datagram
+  auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0u))};
+  auto adr_low{encode_datagram(
+    make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.primary)))};
+
+  InSequence s;
+  for (auto i{0uz}; i < 10uz; ++i) {
+    // Broadcast
+    Receive(dcc::make_speed_and_direction_packet(0u, 0u));
+
+    EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(0);
+    Execute();
+    _mock.biDiChannel1();
+
+    EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(0);
+    Execute();
+    _mock.biDiChannel1();
+  }
 }
