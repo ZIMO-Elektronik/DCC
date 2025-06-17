@@ -227,7 +227,6 @@ struct CrtpBase {
   /// Start channel1 (12 bit payload)
   void biDiChannel1() {
     switch (_addrs.received.type) {
-      case Address::Broadcast: [[fallthrough]];
       case Address::BasicLoco: [[fallthrough]];
       case Address::ExtendedLoco: appAdr(); break;
       case Address::AutomaticLogon: appLogon(1u); break;
