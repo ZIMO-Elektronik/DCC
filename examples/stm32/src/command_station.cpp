@@ -13,12 +13,10 @@ extern "C" void TIMER_IRQ_HANDLER() {
 
 int main() {
   bsp_init_command_station();
-  command_station.init({
-    .num_preamble = DCC_TX_MIN_PREAMBLE_BITS,
-    .bit1_duration = 58u,
-    .bit0_duration = 100u,
-    .flags = {.bidi = true},
-  });
+  command_station.init({.num_preamble = DCC_TX_MIN_PREAMBLE_BITS,
+                        .bit1_duration = 58u,
+                        .bit0_duration = 100u,
+                        .flags = {.bidi = true}});
 
   // Turn red LED on to indicate this board is the command station
   bsp_write_red_led(true);

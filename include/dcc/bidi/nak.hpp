@@ -2,19 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// BiDi channel2 type alias
+/// BiDi NAK
 ///
-/// \file   dcc/bidi/channel2.hpp
+/// \file   dcc/bidi/nak.hpp
 /// \author Vincent Hamp
-/// \date   12/02/2023
+/// \date   15/05/2025
 
 #pragma once
 
-#include "datagram.hpp"
+#include <array>
+#include <cstdint>
 
 namespace dcc::bidi {
 
-inline constexpr auto channel2_size{datagram_size<Bits::_36>};
-using Channel2 = std::array<uint8_t, channel2_size>;
+using Nak = uint8_t;
+
+/// Instruction received correctly but not supported
+inline constexpr uint8_t nak{0b0011'1100u};
 
 } // namespace dcc::bidi

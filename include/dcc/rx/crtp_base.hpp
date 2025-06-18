@@ -16,13 +16,11 @@
 #include <ztl/bits.hpp>
 #include <ztl/inplace_deque.hpp>
 #include "../addresses.hpp"
-#include "../bidi/bundled_channels.hpp"
+#include "../bidi/acks.hpp"
+#include "../bidi/channel.hpp"
 #include "../bidi/datagram.hpp"
-#include "../bidi/direction_status_byte.hpp"
 #include "../bidi/dyn.hpp"
-#include "../bidi/kmh.hpp"
-#include "../bidi/temperature.hpp"
-#include "../bidi/track_voltage.hpp"
+#include "../bidi/nak.hpp"
 #include "../crc8.hpp"
 #include "../direction.hpp"
 #include "../instruction.hpp"
@@ -1069,7 +1067,7 @@ private:
     _adr_deque.pop_front();
   }
 
-  /// Handle app::pom
+  /// Handle app:pom
   void appPom() {
     if (!_ch2_data_enabled) return;
     // Implicitly acknowledge all CV access commands
@@ -1105,7 +1103,7 @@ private:
     _tos_deque.pop_front();
   }
 
-  /// Handle app::logon
+  /// Handle app:logon
   void appLogon(uint32_t ch) {
     if (empty(_logon_deque)) return;
     if (auto const& datagram{_logon_deque.front()}; ch == 1u) {

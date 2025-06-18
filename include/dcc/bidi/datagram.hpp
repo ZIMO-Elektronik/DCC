@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <span>
 
 namespace dcc::bidi {
 
@@ -55,14 +56,6 @@ inline constexpr std::array<uint8_t, 256uz> decode_lut{
 
 } // namespace detail
 
-/// Instruction understood and will be executed
-///
-/// For some stupid, incomprehensible reason, there are two versions of ACK.
-inline constexpr std::array<uint8_t, 2uz> acks{0b0000'1111u, 0b1111'0000u};
-
-/// Instruction received correctly but not supported
-inline constexpr uint8_t nack{0b0011'1100u};
-
 /// Enumeration to specify datagram bits
 enum struct Bits { _12 = 12uz, _18 = 18uz, _24 = 24uz, _36 = 36uz, _48 = 48uz };
 
@@ -91,7 +84,7 @@ using Datagram = std::array<uint8_t, I>;
 /// \param  data  Data
 /// \return 12, 18, 24, 36 or 48bit datagram
 template<Bits I, std::unsigned_integral T>
-constexpr auto make_datagram(uint32_t id, T data) {
+constexpr auto make_datagram(uint8_t id, T data) {
   Datagram<datagram_size<I>> datagram{};
   // Data must be smaller than the number of bits (-4 for ID)
   assert(data < smath::pow<uint64_t>(2u, datagram_size<I> * 6uz - 4uz));
@@ -99,7 +92,7 @@ constexpr auto make_datagram(uint32_t id, T data) {
     datagram[i] = data & 0x3Fu;
     data >>= 6u;
   }
-  datagram.front() = static_cast<uint8_t>(id << 2u | (data & 0x03u));
+  datagram.front() = static_cast<uint8_t>(id << 2u) | (data & 0x03u);
   return datagram;
 }
 

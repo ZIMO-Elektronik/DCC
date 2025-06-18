@@ -4,7 +4,7 @@
 
 <img src="https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/logo.gif" align="right"/>
 
-DCC is an acronym for [Digital Command Control](https://en.wikipedia.org/wiki/Digital_Command_Control), a standardized protocol for controlling digital model railways. This C++ library of the same name contains platform-independent code to either decode (decoder) or generate (command station) a DCC signal on the track. For both cases, a typical microcontroller timer with microsecond precision is sufficient for implementing a receiver or transmitter class. Also included, but not platform-independent, is an encoder for the [ESP32 RMT](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) peripherals.
+DCC is an acronym for [Digital Command Control](https://en.wikipedia.org/wiki/Digital_Command_Control), a standardized protocol for controlling digital model railways. This C++ library of the same name contains **platform-independent** code to either decode (decoder) or generate (command station) a DCC signal on the track. For both cases, a typical microcontroller timer with microsecond precision is sufficient for implementing a receiver or transmitter class. Also included, but not platform-independent, is an encoder for the [ESP32 RMT](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) peripherals.
 
 The implementation provided here is used in the following products:
 - [ZIMO MN decoders](https://www.zimo.at/web2010/products/mn-nicht-sound-decoder_EN.htm)
@@ -205,7 +205,7 @@ cmake --build build --target DCCStm32Decoder DCCStm32CommandStation
 
 This example builds two firmwares, one for the decoder (`DCCStm32Decoder.hex`) and one for the command station (`DCCStm32CommandStation.hex`). Both files must be flashed onto a development board each (e.g. with the [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html)).
 
-Since this example simulates real transmission over a track, it is also necessary to connect the two PE5 pins (N track) and the two PE5 pins (P track) with each other. The command station uses the pins as outputs to send a DCC signal, the decoder uses the pins as inputs to receive the same signal again. The development board with command station firmware can be recognized by the permanently lit red LED.
+Since this example simulates real transmission over a track, it is also **necessary to connect** the two **PE5** pins (N track) and the two **PE6** pins (P track) with each other. The command station uses the pins as outputs to send a DCC signal, the decoder uses the pins as inputs to receive the same signal again. The development board with command station firmware can be recognized by the permanently lit red LED.
 
 During ongoing operation, the following steps are repeated in an endless loop:
 1.  Accelerate loco "3" to speed step 42 in forward direction
@@ -265,7 +265,7 @@ private:
 };
 ```
 
-Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enough to get a working receiver though. The following points are still necessary:
+Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enough to get a working receiver though. The following points are also necessary:
 1. After instantiating the class, the `init` method must be called. This triggers the actual configuration and results in a series of CV read calls. Things like the primary address, the number of speed steps or whether BiDi is enabled is determined. These things are intentionally not done in the constructor in case the class is instantiated globally and the CVs aren't available at that point.
     ```cpp
     // Initializing the decoder is mandatory
@@ -281,7 +281,7 @@ Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enou
     }
     ```
 
-3. In order to keep the time in handler mode (interrupt context) as short as possible, received packets (with the exception of [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) ones) are not executed immediately. For received packets to be executed, the `execute` method must be called periodically. This could either be done either inside a super-loop or, as in the snippet below, in an RTOS task.
+3. In order to keep the time in handler mode (interrupt context) as short as possible, received packets (with the exception of [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) ones) are **not executed immediately**. For received packets to be executed, the `execute` method must be called **periodically**. This could either be done either inside a super-loop or, as in the snippet below, in an RTOS task.
     ```cpp
     // RTOS task
     void task(void*) {
@@ -347,7 +347,7 @@ Again, inheriting from the base class isn't sufficient:
     command_station.init({.num_preamble = 17u,
                           .bit1_duration = 58u,
                           .bit0_duration = 100u,
-                          .bidi = true});
+                          .flags = {.bidi = true}});
     ```
 
 2. The DCC signal must be generated as output. A transmitter usually uses an H-bridge for this, in which the left and right sides are switched at dedicated times. The switching times are best maintained with a hardware timer interrupt. The times between the interrupts, i.e. the periods, correspond to the return value of the `transmit` method. Each time a new period is returned, the hardware timer must be reloaded with it. In order to comply with the standard timings, it is advisable to assign this interrupt a very high priority.
@@ -369,6 +369,30 @@ struct CrtpBase
 
 This parameter determines whether the transmitter stores packets to be sent as bytes or as bit timings. The trade-off is simple, packets require **less RAM** but **more instructions** in the interrupt, timings require **more RAM** but **fewer instructions** in the interrupt.
 
+#### BiDi Dissector
+If enabled and implemented, the base class of the transmitter offers callbacks for the corresponding BiDi (RailCom) timings (e.g. `biDiChannel1`), but receiving the UART data itself is the **responsibility of the user**. Theoretically, two bytes can be read in channel 1 and up to eight bytes in channel 2. Unfortunately, decoding the UART data is very error-prone due to the crappy encoding and because the data itself is **context-sensitive**. For this reason, there is a separate `dcc::bidi::Dissector` class that can be used to iterate over the data. Dereferencing the iterator returns a [std::variant](https://www.cppreference.com/w/cpp/utility/variant.html) sum type of all possible datagrams.
+
+Here is a snippet of some channel 1 and 2 feedback. Alternatively, the dissector can also be created with an address if the last packet is no longer available.
+```cpp
+// Last sent packet
+dcc::Packet packet{0x03u, 0xA0u, 0xA3u};
+
+// Received datagram
+dcc::bidi::Datagram<> datagram{0x99u, 0xA5u, 0x59u, 0x2Eu, 0xD2u, 0x00u, 0x00u, 0x00u};
+
+// Create dissector
+Dissector dissector{datagram, packet};
+
+// Iterate
+for (auto const& dg : dissector)
+  if (auto adr_low{get_if<dcc::bidi::app::AdrLow>(&dg)}) {
+    // Use app:adr_low data here
+  } else if (auto dyn{get_if<dcc::bidi::app::Dyn>(&dg)}) {
+    // Use app:dyn data here
+  }
+  // else if...
+```
+
 ### ESP32 RMT Encoder
 Similar to the other encoders of the [ESP-IDF](https://github.com/espressif/esp-idf) framework, the RMT encoder has only one function to create a new instance. For more information on how to use the encoder please refer to the [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) or the RMT example.
 ```c
@@ -387,15 +411,15 @@ ESP_ERROR_CHECK(rmt_new_dcc_encoder(&encoder_config, &encoder));
 The following members of `dcc_encoder_config_t` may require some explanation.
 
 #### BiDi Bit Duration
-This duration may be set to values between 57-61 to enable the generation of BiDi cutout bits prior to the next preamble. These four cutout bits would be sent in the background if the cutout was not active. The following graphic from [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) visualizes these bits with a dashed line.
+`bidibit_duration` may be set to values between 57-61 to enable the generation of BiDi cutout bits prior to the next preamble. These four cutout bits would be sent in the background if the cutout was not active. The following graphic from [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) visualizes these bits with a dashed line.
 ![BiDi cutout](https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/bidibit_duration.png)
 
 #### End Bit Duration
-Mainly due to a workaround of [esp-idf #13003](https://github.com/espressif/esp-idf/issues/13003) the end bit duration can be adjusted independently of the bit1 duration. This allows the RMT transmission complete callback to be executed at the right time.
+Mainly due to a workaround of [esp-idf #13003](https://github.com/espressif/esp-idf/issues/13003) the `endbit_duration` can be adjusted independently of the bit1 duration. This allows the RMT transmission complete callback to be executed at the right time.
 
 #### Flags
-- level0  
+- `level0`  
   Value corresponds to the level of the first half bit.
 
-- zimo0  
+- `zimo0`  
   Transmit 0-bit prior to preamble.
