@@ -19,8 +19,11 @@
 #include "../bidi/acks.hpp"
 #include "../bidi/channel.hpp"
 #include "../bidi/datagram.hpp"
-#include "../bidi/dyn.hpp"
+#include "../bidi/direction_status_byte.hpp"
+#include "../bidi/kmh.hpp"
 #include "../bidi/nak.hpp"
+#include "../bidi/temperature.hpp"
+#include "../bidi/track_voltage.hpp"
 #include "../crc8.hpp"
 #include "../direction.hpp"
 #include "../instruction.hpp"
@@ -208,7 +211,7 @@ struct CrtpBase {
   ///
   /// \tparam Dyns... Types of dyn datagrams
   /// \param  dyns... Datagrams
-  template<std::derived_from<Dyn>... Dyns>
+  template<std::derived_from<app::Dyn>... Dyns>
   void datagram(Dyns&&... dyns) {
     // Block full and release empty deque to avoid getting the same datagrams
     // send over and over again...
@@ -219,7 +222,7 @@ struct CrtpBase {
     }
 
     // Only allow pushing datagrams if not blocked
-    if (!_block_dyn_deque) (dyn(std::forward<Dyns>(dyns)), ...);
+    if (!_block_dyn_deque) (dyn(dyns.d, dyns.x), ...);
   }
 
   /// Start channel1 (12 bit payload)
@@ -1019,33 +1022,6 @@ private:
     else {
       _adr_deque.push_back(adrHigh(_addrs.consist));
       _adr_deque.push_back(adrLow(_addrs.consist));
-    }
-  }
-
-  /// Add generic dyn datagram
-  ///
-  /// \param  d Generic dyn datagram
-  template<std::derived_from<Dyn> Dyns>
-  void dyn(Dyns&& d) {
-    // Subindex ? - generic
-    if constexpr (std::same_as<Dyns, Dyn>) dyn(d.d, d.x);
-    // Subindex 0 or 1 - speed
-    else if constexpr (std::same_as<Dyns, Kmh>) {
-      auto const tmp{d < 512 ? (d < 256 ? d : d - 256) : 255};
-      dyn(static_cast<uint8_t>(tmp), d < 256 ? 0u : 1u);
-    }
-    // Subindex 26 - temperature
-    else if constexpr (std::same_as<Dyns, Temperature>) {
-      auto const tmp{ztl::lerp<Dyn::value_type>(d.d, -50, 205, 0, 255)};
-      dyn(static_cast<uint8_t>(tmp), 26u);
-    }
-    // Subindex 27 - direction status byte
-    else if constexpr (std::same_as<Dyns, DirectionStatusByte>)
-      dyn(static_cast<uint8_t>(d), 27u);
-    // Subindex 46 - track voltage
-    else if constexpr (std::same_as<Dyns, TrackVoltage>) {
-      auto const tmp{std::max<Dyn::value_type>(0, d - 5000)};
-      dyn(static_cast<uint8_t>(tmp / 100), 46u);
     }
   }
 
