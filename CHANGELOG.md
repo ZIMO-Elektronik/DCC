@@ -3,6 +3,7 @@
 ##
 - `tx::CrtpBase` stores packets as either bytes or timings ([#57](https://github.com/ZIMO-Elektronik/DCC/issues/57))
 - Bugfix receiver sends channel 1 replies to broadcast packets ([#60](https://github.com/ZIMO-Elektronik/DCC/issues/60))
+- Bugfix CV29:1 did not work with consist ([#68](https://github.com/ZIMO-Elektronik/DCC/issues/68))
 
 ## 0.41.1
 - Update to ZTL 0.21.0

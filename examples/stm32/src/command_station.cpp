@@ -26,7 +26,8 @@ int main() {
   dcc::Packet packet{};
   for (;;) {
     // Accelerate
-    packet = dcc::make_advanced_operations_speed_packet(3u, 1u << 7u | 42u);
+    packet =
+      dcc::make_advanced_operations_speed_packet(3u, dcc::Forward << 7u | 42u);
     command_station.packet(packet);
     printf("\nCommand station: accelerate to speed step 42\n");
     bsp_write_green_led(true);
@@ -40,7 +41,8 @@ int main() {
     bsp_delay(2000u);
 
     // Decelerate
-    packet = dcc::make_advanced_operations_speed_packet(3u, 1u << 7u | 0u);
+    packet =
+      dcc::make_advanced_operations_speed_packet(3u, dcc::Forward << 7u | 0u);
     command_station.packet(packet);
     printf("Command station: stop\n");
     bsp_write_green_led(false);
