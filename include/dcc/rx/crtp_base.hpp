@@ -631,10 +631,8 @@ private:
   void cvLong(Address::value_type addr, std::span<uint8_t const> bytes) {
     if (addr && addr == _addrs.consist) return;
 
-    countOwnEqualCvPackets();
-
     // Ignore all but the second packet while in service mode
-    if (serviceMode() && _own_equal_cv_packets_count != 2uz) return;
+    if (countOwnEqualCvPackets() != 2uz && serviceMode()) return;
 
     switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
             static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
@@ -670,7 +668,8 @@ private:
   void cvShort(Address::value_type addr, std::span<uint8_t const> bytes) {
     if (addr && addr == _addrs.consist) return;
 
-    countOwnEqualCvPackets();
+    // Ignore all but the second packet
+    if (countOwnEqualCvPackets() != 2uz) return;
 
     switch (bytes[0uz] & 0x0Fu) {
       // Not available for use
@@ -688,7 +687,6 @@ private:
 
       // Extended address 0 and 1 (CV17 and CV18)
       case 0b0100u:
-        if (_own_equal_cv_packets_count != 2uz) return;
         cvWrite(17u - 1u, static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
         cvWrite(18u - 1u, bytes[2uz]);
         cvWrite(29u - 1u, true, 5u);
@@ -696,11 +694,11 @@ private:
 
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
-        if (_own_equal_cv_packets_count != 2uz) return;
         cvWrite(31u - 1u, bytes[1uz]);
         cvWrite(32u - 1u, bytes[2uz]);
         break;
 
+      // Reserved
       case 0b1001u: break;
     }
   }
@@ -843,13 +841,16 @@ private:
   }
 
   /// Count own equal CV packets
-  void countOwnEqualCvPackets() {
+  ///
+  /// \return Own equal CV packets count
+  size_t countOwnEqualCvPackets() {
     if (_last_own_cv_packet == _deque.front()) ++_own_equal_cv_packets_count;
     else {
       _own_equal_cv_packets_count = 1uz;
       _last_own_cv_packet = _deque.front();
       _pom_deque.clear();
     }
+    return _own_equal_cv_packets_count;
   }
 
   /// Reset
