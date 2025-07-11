@@ -835,8 +835,9 @@ private:
   /// \param  dir   Direction
   /// \param  speed Speed
   void directionSpeed(Address::value_type addr, bool dir, int32_t speed) {
-    auto const reversed{addr == _addrs.primary ? _addrs.primary.reversed
-                                               : _addrs.consist.reversed};
+    auto const reversed{addr == _addrs.primary
+                          ? _addrs.primary.reversed
+                          : _addrs.primary.reversed ^ _addrs.consist.reversed};
     impl().direction(addr, reversed ? !dir : dir);
     impl().speed(addr, speed);
   }
