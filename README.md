@@ -343,7 +343,7 @@ private:
 Again, inheriting from the base class isn't sufficient:
 1. After we have instantiated the class we must configure the track signal by calling the `init` method. The method takes `Config` as a parameter and lets us set the number of preamble bits, the bit durations and whether a BiDi cutout should be generated.
     ```cpp
-    // Initializing the command station is optional
+    // Initializing the command station is mandatory
     command_station.init({.num_preamble = 17u,
                           .bit1_duration = 58u,
                           .bit0_duration = 100u,

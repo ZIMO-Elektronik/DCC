@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gtest/gtest.h>
+#include "../utility.hpp"
 #include "tx_mock.hpp"
 
 using namespace ::testing;
@@ -10,6 +11,8 @@ struct TxTest : ::testing::Test {
 protected:
   TxTest();
   virtual ~TxTest();
+
+  void SetUp() override;
 
   dcc::tx::Config _cfg{.num_preamble = DCC_TX_MIN_PREAMBLE_BITS + 1u,
                        .bit1_duration = 59u,

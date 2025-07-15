@@ -151,7 +151,7 @@ private:
         return static_cast<Timings::value_type>(bidi::Timing::TTS1 -
                                                 bidi::Timing::TCS);
 
-      // Channel1 start
+      // Channel 1 start
       case 2uz:
         if constexpr (requires(T t) {
                         { t.biDiChannel1() };
@@ -160,7 +160,7 @@ private:
         return static_cast<Timings::value_type>(bidi::Timing::TTS2 -
                                                 bidi::Timing::TTS1);
 
-      // Channel2 start
+      // Channel 2 start
       case 3uz:
         if constexpr (requires(T t) {
                         { t.biDiChannel2() };

@@ -35,7 +35,7 @@ void decoder_task() {
 void command_station_task(FiFo<dcc::Packet>* fifo) {
   CommandStation command_station;
 
-  // Initializing the command station is optional
+  // Initializing the command station is mandatory
   command_station.init({.num_preamble = DCC_TX_MIN_PREAMBLE_BITS,
                         .bit1_duration = 58u,
                         .bit0_duration = 100u,

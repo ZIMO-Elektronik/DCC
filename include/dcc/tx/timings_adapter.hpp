@@ -20,13 +20,92 @@ namespace dcc::tx {
 
 /// Convert Packet to Timings on-the-fly
 struct TimingsAdapter : std::ranges::view_interface<TimingsAdapter> {
+
+  template<bool Const>
+  struct _iterator {
+    friend _iterator<true>;
+
+    // Types
+    using value_type = Timings::value_type;
+    using size_type = Timings::size_type;
+    using difference_type = Timings::difference_type;
+    using reference = value_type;
+    using pointer = value_type;
+    using iterator_category = std::input_iterator_tag;
+    using timings_adapter_pointer =
+      std::conditional_t<Const, TimingsAdapter const*, TimingsAdapter*>;
+
+    // Construct/copy/destroy
+    constexpr _iterator() = default;
+    constexpr _iterator(timings_adapter_pointer ptr) : _ptr{ptr} {}
+    constexpr _iterator(_iterator const&) = default;
+    constexpr _iterator(_iterator<false> const& rhs) requires Const
+      : _ptr{rhs._ptr} {}
+    constexpr _iterator& operator=(_iterator const&) = default;
+    constexpr _iterator& operator=(_iterator const& rhs) requires Const
+    {
+      _ptr = rhs._ptr;
+      return *this;
+    }
+
+    constexpr _iterator& operator++() {
+      ++_count;
+      return *this;
+    }
+
+    constexpr _iterator operator++(int) {
+      auto retval{*this};
+      ++(*this);
+      return retval;
+    }
+
+    constexpr reference operator*() const {
+      // Preamble
+      auto const& cfg{_ptr->_cfg};
+      auto const preamble_count{cfg.num_preamble * 2uz};
+      if (_count < preamble_count) return cfg.bit1_duration;
+
+      // Count without preamble
+      auto i{_count - preamble_count};
+
+      // Index of current byte
+      auto const& packet{_ptr->_packet};
+      auto const byte_index{
+        static_cast<Packet::size_type>(i / ((1uz + CHAR_BIT) * 2uz))};
+      if (byte_index >= std::size(packet)) return cfg.bit1_duration;
+
+      // Index of current half bit
+      auto const hbit_index{i % ((1uz + CHAR_BIT) * 2uz)};
+      if (hbit_index < 2uz) return cfg.bit0_duration;
+
+      // Index of current bit
+      auto const bit_index{(hbit_index - 2uz) / 2uz};
+      return packet[byte_index] & 1u << (CHAR_BIT - 1uz - bit_index)
+               ? cfg.bit1_duration
+               : cfg.bit0_duration;
+    }
+
+    constexpr bool operator==(std::default_sentinel_t) const {
+      return _count >= _ptr->_max_count;
+    }
+
+  private:
+    timings_adapter_pointer _ptr{};
+    size_type _count{};
+  };
+
+  // Types
   using value_type = Timings::value_type;
   using size_type = Timings::size_type;
   using difference_type = Timings::difference_type;
   using reference = value_type;
+  using const_reference = value_type;
   using pointer = value_type;
-  using iterator_category = std::input_iterator_tag;
+  using const_pointer = value_type;
+  using iterator = _iterator<false>;
+  using const_iterator = _iterator<true>;
 
+  // Construct/copy/destroy
   constexpr TimingsAdapter() = default;
   constexpr TimingsAdapter(Packet const& packet, Config cfg)
     : _packet{packet}, _cfg{cfg},
@@ -41,56 +120,17 @@ struct TimingsAdapter : std::ranges::view_interface<TimingsAdapter> {
     std::ranges::copy(bytes, std::back_inserter(_packet));
   }
 
-  constexpr TimingsAdapter& operator++() {
-    ++_count;
-    return *this;
-  }
-
-  constexpr TimingsAdapter operator++(int) {
-    auto retval{*this};
-    ++(*this);
-    return retval;
-  }
-
-  constexpr reference operator*() const {
-    // Preamble
-    auto const preamble_count{_cfg.num_preamble * 2uz};
-    if (_count < preamble_count) return _cfg.bit1_duration;
-
-    // Count without preamble
-    auto i{_count - preamble_count};
-
-    // Index of current byte
-    auto const byte_index{
-      static_cast<Packet::size_type>(i / ((1uz + CHAR_BIT) * 2uz))};
-    if (byte_index >= std::size(_packet)) return _cfg.bit1_duration;
-
-    // Index of current half bit
-    auto const hbit_index{i % ((1uz + CHAR_BIT) * 2uz)};
-    if (hbit_index < 2uz) return _cfg.bit0_duration;
-
-    // Index of current bit
-    auto const bit_index{(hbit_index - 2uz) / 2uz};
-    return _packet[byte_index] & 1u << (CHAR_BIT - 1uz - bit_index)
-             ? _cfg.bit1_duration
-             : _cfg.bit0_duration;
-  }
-
-  constexpr bool operator==(std::default_sentinel_t) const {
-    return _count >= _max_count;
-  }
-
-  TimingsAdapter& begin() { return *this; }
-  TimingsAdapter const& begin() const { return *this; }
+  // Iterators
+  iterator begin() { return {this}; }
+  const_iterator begin() const { return {this}; }
   std::default_sentinel_t end() { return std::default_sentinel; }
   std::default_sentinel_t end() const { return std::default_sentinel; }
-  std::default_sentinel_t cend() { return std::default_sentinel; }
-  std::default_sentinel_t cend() const { return std::default_sentinel; }
+  const_iterator cbegin() const { return begin(); }
+  std::default_sentinel_t cend() const { return end(); }
 
 private:
   Packet _packet;
   Config _cfg{};
-  size_type _count{};
   size_type _max_count{};
 };
 
