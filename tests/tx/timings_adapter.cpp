@@ -2,9 +2,9 @@
 #include <dcc/dcc.hpp>
 
 static_assert(std::is_trivially_copyable_v<dcc::tx::TimingsAdapter>);
-static_assert(std::input_iterator<dcc::tx::TimingsAdapter>);
 static_assert(std::ranges::range<dcc::tx::TimingsAdapter>);
 static_assert(std::ranges::input_range<dcc::tx::TimingsAdapter>);
+static_assert(std::input_iterator<dcc::tx::TimingsAdapter::iterator>);
 
 TEST(TimingsAdapter, compare_to_packet2timings) {
   {
