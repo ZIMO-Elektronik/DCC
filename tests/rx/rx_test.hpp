@@ -21,9 +21,13 @@ protected:
 
   void EnterServiceMode();
 
-  void ReceiveAndExecuteTwoIdenticalCvWritePackets(uint16_t addr,
-                                                   uint32_t cv_addr,
-                                                   uint8_t byte);
+  void ReceiveAndExecuteTwoIdenticalCvLongWritePackets(uint16_t addr,
+                                                       uint32_t cv_addr,
+                                                       uint8_t byte);
+  void ReceiveAndExecuteTwoIdenticalCvShortWritePackets(uint16_t addr,
+                                                        uint8_t kkkk,
+                                                        uint8_t byte1,
+                                                        uint8_t byte2 = 0u);
 
   void Logon();
 

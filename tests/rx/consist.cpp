@@ -9,7 +9,8 @@ TEST_F(RxTest, consist_shall_not_act_on_cv_manipulation) {
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte)).Times(0);
-  ReceiveAndExecuteTwoIdenticalCvWritePackets(_addrs.consist, cv_addr, byte);
+  ReceiveAndExecuteTwoIdenticalCvLongWritePackets(
+    _addrs.consist, cv_addr, byte);
 }
 
 TEST_F(RxTest, consist_direction) {

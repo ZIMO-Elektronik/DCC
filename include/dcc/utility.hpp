@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <concepts>
 #include <cstdint>
 #include <utility>
@@ -644,6 +645,52 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
+}
+
+/// Make a CV access short form packet for writing CV
+///
+/// \param  addr    Address
+/// \param  kkkk    CV identifier
+/// \param  byte1   First CV value
+/// \param  byte2   Second CV value
+/// \return CV access long form packet for writing CV
+constexpr auto make_cv_access_short_write_packet(Address addr,
+                                                 uint8_t kkkk,
+                                                 uint8_t byte1,
+                                                 uint8_t byte2 = 0u) {
+  assert(kkkk == 0b0010u || // CV23
+         kkkk == 0b0011u || // CV24
+         kkkk == 0b0100u || // CV17/18
+         kkkk == 0b0101u || // CV31/32
+         kkkk == 0b0110u);  // CV19/20
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *last++ = static_cast<uint8_t>(0b1111'0000u | kkkk);
+  *last++ = byte1;
+  if (kkkk == 0b0100u || kkkk == 0b0101u || kkkk == 0b0110u) *last++ = byte2;
+  *last++ = byte1;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make a CV access short form packet for writing CV
+///
+/// \param  addr    Address
+/// \param  kkkk    CV identifier
+/// \param  byte1   First CV value
+/// \param  byte2   Second CV value
+/// \return CV access long form packet for writing CV
+constexpr auto make_cv_access_short_write_packet(Address::value_type addr,
+                                                 uint8_t kkkk,
+                                                 uint8_t byte1,
+                                                 uint8_t byte2 = 0u) {
+  return make_cv_access_short_write_packet(
+    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
+    kkkk,
+    byte1,
+    byte2);
 }
 
 /// Make a LOGON_ENABLE packet
