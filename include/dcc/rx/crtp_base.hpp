@@ -125,7 +125,7 @@ struct CrtpBase {
     _packet_end = false; // Whatever we got, its not packet end anymore
 
     auto const bit{time2bit(time)};
-    if (bit == Invalid) return;
+    if (bit == Invalid) return reset();
 
     // Alternate halfbit <-> bit
     if (_state > Startbit && (_is_halfbit = !_is_halfbit)) return;
@@ -311,6 +311,9 @@ private:
   ///
   /// \retval true
   bool executeService() {
+    // Count own equal packets (required for CV access)
+    countOwnEqualPackets();
+
     // Reset
     if (auto const& packet{_deque.front()}; !packet[0uz])
       ;
@@ -342,6 +345,9 @@ private:
     else if (addr == _addrs.logon) addr = _addrs.primary;
     // Address is not of interest
     else return false;
+
+    // Count own equal packets (required for CV access)
+    countOwnEqualPackets();
 
     switch (decode_instruction(bytes)) {
       case Instruction::UnknownService: /// \todo
@@ -632,7 +638,7 @@ private:
     if (addr && addr == _addrs.consist) return;
 
     // Ignore all but the second packet while in service mode
-    if (countOwnEqualCvPackets() != 2uz && serviceMode()) return;
+    if (_own_equal_packets_count != 2uz && serviceMode()) return;
 
     switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
             static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
@@ -644,9 +650,8 @@ private:
 
       // Write byte
       case 0b11u:
-        if (_own_equal_cv_packets_count < 2uz) return;
-        else if (_own_equal_cv_packets_count == 2uz)
-          cvWrite(cv_addr, bytes[2uz]);
+        if (_own_equal_packets_count < 2uz) return;
+        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bytes[2uz]);
         else cvVerify(cv_addr, bytes[2uz]);
         break;
 
@@ -655,7 +660,7 @@ private:
         auto const pos{bytes[2uz] & 0b111u};
         auto const bit{static_cast<bool>(bytes[2uz] & ztl::make_mask(3u))};
         if (!(bytes[2uz] & ztl::make_mask(4u))) cvVerify(cv_addr, bit, pos);
-        else if (_own_equal_cv_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
+        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
         break;
       }
     }
@@ -669,7 +674,7 @@ private:
     if (addr && addr == _addrs.consist) return;
 
     // Ignore all but the second packet
-    if (countOwnEqualCvPackets() != 2uz) return;
+    if (_own_equal_packets_count != 2uz) return;
 
     switch (bytes[0uz] & 0x0Fu) {
       // Not available for use
@@ -841,16 +846,13 @@ private:
   }
 
   /// Count own equal CV packets
-  ///
-  /// \return Own equal CV packets count
-  size_t countOwnEqualCvPackets() {
-    if (_last_own_cv_packet == _deque.front()) ++_own_equal_cv_packets_count;
+  void countOwnEqualPackets() {
+    if (_last_own_packet == _deque.front()) ++_own_equal_packets_count;
     else {
-      _own_equal_cv_packets_count = 1uz;
-      _last_own_cv_packet = _deque.front();
+      _own_equal_packets_count = 1uz;
+      _last_own_packet = _deque.front();
       _pom_deque.clear();
     }
-    return _own_equal_cv_packets_count;
   }
 
   /// Reset
@@ -1049,7 +1051,7 @@ private:
   void appPom() {
     if (!_ch2_data_enabled) return;
     // Implicitly acknowledge all CV access commands
-    else if (_packet != _last_own_cv_packet)
+    else if (_packet != _last_own_packet)
       impl().transmitBiDi({cbegin(acks), sizeof(acks[0uz])});
     else if (!empty(_pom_deque)) {
       auto const& datagram{_pom_deque.front()};
@@ -1191,15 +1193,15 @@ private:
   ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 2uz> _adr_deque{};
   ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 2uz> _pom_deque{};
 
-  Packet _packet{};             ///< Current packet
-  Packet _last_own_cv_packet{}; ///< Last CV packet for own address
+  Packet _packet{};          ///< Current packet
+  Packet _last_own_packet{}; ///< Last packet for own address
 
   Addresses _addrs{};
 
   size_t _bit_count{};
   size_t _packet_count{};
   size_t _preamble_count{};
-  size_t _own_equal_cv_packets_count{};
+  size_t _own_equal_packets_count{};
   uint8_t _byte{};
   uint8_t _checksum{};    ///< On-the-fly calculated checksum
   uint8_t _index_reg{1u}; ///< Paged mode index register
