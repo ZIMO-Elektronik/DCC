@@ -42,10 +42,10 @@ struct Address {
   enum : uint8_t {
     UnknownService,    ///< Unknown or service (=no address)
     Broadcast,         ///< Broadcast
-    BasicLoco,         ///< Basic loco
-    BasicAccessory,    ///< Basic accessory
-    ExtendedAccessory, ///< Extended accessory
-    ExtendedLoco,      ///< Extended loco
+    BasicLoco,         ///< Basic loco (7 bit)
+    BasicAccessory,    ///< Basic accessory (11 bit)
+    ExtendedAccessory, ///< Extended accessory (11 bit)
+    ExtendedLoco,      ///< Extended loco (14 bit)
     Reserved,          ///< Reserved
     DataTransfer,      ///< Data transfer
     AutomaticLogon,    ///< Automatic logon
@@ -70,9 +70,9 @@ constexpr Address decode_address(InputIt first) {
   else if (*first <= 127u) return {*first, Address::BasicLoco};
   // 128-191
   else if (*first <= 191u) {
-    auto const a7_2{(*first++ & 0b0011'1111u) << 2u};
-    auto const a10_8{(*first & 0b0111'0000u) << 4u};
-    auto const a1_0{(*first & 0b0000'0110u) >> 1u};
+    auto const a7_2{(*first++ & 0x3Fu) << 2u};
+    auto const a10_8{(~*first & 0x70u) << 4u};
+    auto const a1_0{(*first >> 1u) & 0x03u};
     return {static_cast<Address::value_type>(a10_8 | a7_2 | a1_0),
             *first & 0b1000'0000u ? Address::BasicAccessory
                                   : Address::ExtendedAccessory};
@@ -125,21 +125,21 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
     case Address::Broadcast: *first++ = 0u; break;
     case Address::BasicLoco: *first++ = static_cast<uint8_t>(addr); break;
     case Address::BasicAccessory:
-      *first++ =
-        static_cast<uint8_t>(0b1000'0000u | ((addr & 0b1111'1100u) >> 2u));
-      *first++ =
-        static_cast<uint8_t>(0b1000'0000u | (addr & 0b0111'0000'0000u) >> 4u |
-                             (addr & 0b0000'0011u) << 1u);
+      *first++ = static_cast<uint8_t>(0x80u |                     //
+                                      ((addr >> 2u) & 0x3Fu));    // A7-2
+      *first++ = static_cast<uint8_t>(0x80u |                     //
+                                      ((~addr & 0x0700u) >> 4u) | // A10-8
+                                      ((addr & 0x03u) << 1u));    // A1-0
       break;
     case Address::ExtendedAccessory:
-      *first++ =
-        static_cast<uint8_t>(0b1000'0000u | ((addr & 0b1111'1100u) >> 2u));
-      *first++ =
-        static_cast<uint8_t>((addr & 0b0111'0000'0000u) >> 4u |
-                             (addr & 0b0000'0011u) << 1u | 0b0000'0001u);
+      *first++ = static_cast<uint8_t>(0x80u |                     //
+                                      ((addr >> 2u) & 0x3Fu));    // A7-2
+      *first++ = static_cast<uint8_t>(((~addr & 0x0700u) >> 4u) | // A10-8
+                                      ((addr & 0x03u) << 1u) |    // A1-0
+                                      0x01u);                     //
       break;
     case Address::ExtendedLoco:
-      *first++ = static_cast<uint8_t>(0b1100'0000u | addr >> 8u);
+      *first++ = static_cast<uint8_t>(0xC0u | addr >> 8u);
       *first++ = static_cast<uint8_t>(addr);
       break;
     case Address::Reserved: assert(false); break;

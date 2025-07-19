@@ -48,14 +48,14 @@ TEST(address, decode_address) {
     std::array<uint8_t, 2uz> data{0b1011'0011u, 0b1010'0010u};
     EXPECT_EQ(
       dcc::decode_address(cbegin(data)),
-      (dcc::Address{.value = 717u, .type = dcc::Address::BasicAccessory}));
+      (dcc::Address{.value = 1485u, .type = dcc::Address::BasicAccessory}));
   }
 
   {
     std::array<uint8_t, 2uz> data{0b1011'0011u, 0b0010'0011u};
     EXPECT_EQ(
       dcc::decode_address(cbegin(data)),
-      (dcc::Address{.value = 717u, .type = dcc::Address::ExtendedAccessory}));
+      (dcc::Address{.value = 1485u, .type = dcc::Address::ExtendedAccessory}));
   }
 
   {
@@ -102,7 +102,7 @@ TEST(address, encode_address) {
     std::array<uint8_t, 2uz> data{};
     EXPECT_EQ(
       dcc::encode_address(
-        dcc::Address{.value = 717u, .type = dcc::Address::BasicAccessory},
+        dcc::Address{.value = 1485u, .type = dcc::Address::BasicAccessory},
         begin(data)),
       cbegin(data) + 2);
     EXPECT_EQ(data, (decltype(data){0b1011'0011u, 0b1010'0010u}));
@@ -112,7 +112,7 @@ TEST(address, encode_address) {
     std::array<uint8_t, 2uz> data{};
     EXPECT_EQ(
       dcc::encode_address(
-        dcc::Address{.value = 717u, .type = dcc::Address::ExtendedAccessory},
+        dcc::Address{.value = 1485u, .type = dcc::Address::ExtendedAccessory},
         begin(data)),
       cbegin(data) + 2);
     EXPECT_EQ(data, (decltype(data){0b1011'0011u, 0b0010'0011u}));

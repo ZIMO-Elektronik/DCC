@@ -8,6 +8,7 @@
 - Bugfix CV29:1 did not work with consist ([#68](https://github.com/ZIMO-Elektronik/DCC/issues/68))
 - Bugfix CV short access for CV23/24 ([#69](https://github.com/ZIMO-Elektronik/DCC/issues/69))
 - Bugfix idle packet iterator not updated ([#71](https://github.com/ZIMO-Elektronik/DCC/issues/71))
+- Bugfix accessory address encoding ([#74](https://github.com/ZIMO-Elektronik/DCC/issues/74))
 - Bugfix standard compliant CV access ([#75](https://github.com/ZIMO-Elektronik/DCC/issues/75))
 - Bugfix length check packets ([#77](https://github.com/ZIMO-Elektronik/DCC/issues/77))
 - Bugfix consist control decoding ([#82](https://github.com/ZIMO-Elektronik/DCC/issues/82))
