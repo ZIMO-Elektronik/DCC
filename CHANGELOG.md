@@ -3,6 +3,7 @@
 ##
 - `tx::CrtpBase` stores packets as either bytes or timings ([#57](https://github.com/ZIMO-Elektronik/DCC/issues/57))
 - Add `bidi::Dissector` ([#59](https://github.com/ZIMO-Elektronik/DCC/issues/59))
+- Add `DCC_STANDARD_COMPLIANCE` CMake option ([#78](https://github.com/ZIMO-Elektronik/DCC/issues/78))
 - Bugfix receiver sends channel 1 replies to broadcast packets ([#60](https://github.com/ZIMO-Elektronik/DCC/issues/60))
 - Bugfix CV29:1 did not work with consist ([#68](https://github.com/ZIMO-Elektronik/DCC/issues/68))
 - Bugfix CV short access for CV23/24 ([#69](https://github.com/ZIMO-Elektronik/DCC/issues/69))

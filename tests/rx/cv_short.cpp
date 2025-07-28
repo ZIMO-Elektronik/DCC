@@ -1,11 +1,15 @@
 #include "rx_test.hpp"
 
-TEST_F(RxTest, cv_short_cv23_non_standard) {
+TEST_F(RxTest, cv_short_cv23) {
   auto cv23{RandomInterval<uint8_t>(0u, 255u)};
 
   EXPECT_CALL(_mock, writeCv(23u - 1u, cv23));
-  ReceiveAndExecuteTwoIdenticalCvShortWritePackets(
-    _addrs.primary, 0b0010u, cv23);
+  if constexpr (DCC_STANDARD_COMPLIANCE)
+    Receive(
+      dcc::make_cv_access_short_write_packet(_addrs.primary, 0b0010u, cv23));
+  else
+    ReceiveAndExecuteTwoIdenticalCvShortWritePackets(
+      _addrs.primary, 0b0010u, cv23);
   Execute();
 }
 

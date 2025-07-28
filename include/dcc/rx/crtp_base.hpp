@@ -673,25 +673,25 @@ private:
   void cvShort(Address::value_type addr, std::span<uint8_t const> bytes) {
     if (addr && addr == _addrs.consist) return;
 
-    // Ignore all but the second packet
-    if (_own_equal_packets_count != 2uz) return;
-
     switch (bytes[0uz] & 0x0Fu) {
       // Not available for use
       case 0b0000u: break;
 
       // Acceleration adjustment (CV23)
       case 0b0010u:
+        if (_own_equal_packets_count != !DCC_STANDARD_COMPLIANCE + 1uz) return;
         cvWrite(23u - 1u, bytes[1uz]); // Fine if written at once
         break;
 
       // Deceleration adjustment (CV24)
       case 0b0011u:
+        if (_own_equal_packets_count != !DCC_STANDARD_COMPLIANCE + 1uz) return;
         cvWrite(24u - 1u, bytes[1uz]); // Fine if written at once
         break;
 
       // Extended address 0 and 1 (CV17 and CV18)
       case 0b0100u:
+        if (_own_equal_packets_count != 2uz) return;
         cvWrite(17u - 1u, static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
         cvWrite(18u - 1u, bytes[2uz]);
         cvWrite(29u - 1u, true, 5u);
@@ -699,6 +699,7 @@ private:
 
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
+        if (_own_equal_packets_count != 2uz) return;
         cvWrite(31u - 1u, bytes[1uz]);
         cvWrite(32u - 1u, bytes[2uz]);
         break;
