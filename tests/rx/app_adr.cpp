@@ -11,7 +11,7 @@ TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
     // Send whatever packet to get last received address to match primary
-    Receive(dcc::make_function_group_f4_f0_packet(_addrs.primary, 10u));
+    Receive(make_function_group_f4_f0_packet(_addrs.primary, 10u));
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
     Execute();
@@ -35,7 +35,7 @@ TEST_F(RxTest, app_adr_alternate_logon_id1_id2) {
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
     // Send whatever packet to get last received address to match logon
-    Receive(dcc::make_function_group_f4_f0_packet(_addrs.logon, 10u));
+    Receive(make_function_group_f4_f0_packet(_addrs.logon, 10u));
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
     Execute();
@@ -52,7 +52,7 @@ TEST_F(RxTest, app_adr_disabled_with_cv28_0) {
   SetUp();
 
   // Send whatever packet to get last received address to match primary
-  Receive(dcc::make_function_group_f4_f0_packet(_addrs.primary, 10u));
+  Receive(make_function_group_f4_f0_packet(_addrs.primary, 10u));
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
   Execute();
@@ -69,7 +69,7 @@ TEST_F(RxTest, app_adr_consist) {
     make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.consist)))};
 
   // Send whatever packet to get last received address to match consist
-  Receive(dcc::make_function_group_f4_f0_packet(_addrs.consist, 10u));
+  Receive(make_function_group_f4_f0_packet(_addrs.consist, 10u));
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
   Execute();
@@ -95,7 +95,7 @@ TEST_F(RxTest, app_adr_long_consist) {
     encode_datagram(make_datagram<Bits::_12>(2u, _addrs.consist & 0x00FFu))};
 
   // Send whatever packet to get last received address to match consist
-  Receive(dcc::make_function_group_f4_f0_packet(_addrs.consist, 10u));
+  Receive(make_function_group_f4_f0_packet(_addrs.consist, 10u));
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
   Execute();

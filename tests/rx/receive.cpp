@@ -6,7 +6,7 @@ TEST_F(RxTest, invalid_bit_resets_internal_state_machine) {
 
   // Springe invalid timings into the packet
   for (auto timings{dcc::tx::packet2timings(
-         dcc::make_function_group_f4_f0_packet(_addrs.primary, state))};
+         make_function_group_f4_f0_packet(_addrs.primary, state))};
        auto t : timings) {
     _mock.receive(t);
     _mock.receive(RandomInterval<uint32_t>(

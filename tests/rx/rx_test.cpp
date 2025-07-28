@@ -131,3 +131,9 @@ void RxTest::Logon() {
   Receive(
     dcc::make_logon_enable_packet(dcc::AddressGroup::Now, _cid, _session_id));
 }
+
+dcc::Packet RxTest::TinkerWithPacketLength(dcc::Packet packet) const {
+  packet.back() = RandomInterval<uint8_t>(0u, 255u);
+  packet.push_back(dcc::exor({cbegin(packet), cend(packet)}));
+  return packet;
+}

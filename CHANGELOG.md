@@ -9,6 +9,7 @@
 - Bugfix CV short access for CV23/24 ([#69](https://github.com/ZIMO-Elektronik/DCC/issues/69))
 - Bugfix idle packet iterator not updated ([#71](https://github.com/ZIMO-Elektronik/DCC/issues/71))
 - Bugfix standard compliant CV access ([#75](https://github.com/ZIMO-Elektronik/DCC/issues/75))
+- Bugfix length check packets ([#77](https://github.com/ZIMO-Elektronik/DCC/issues/77))
 
 ## 0.41.1
 - Update to ZTL 0.21.0

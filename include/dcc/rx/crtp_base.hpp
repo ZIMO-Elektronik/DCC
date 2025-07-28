@@ -180,8 +180,8 @@ struct CrtpBase {
 
   /// Execute received commands
   ///
-  /// \retval true  Command to own address
-  /// \retval false Command to other address
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
   bool execute() { return executeThreadMode(); }
 
   /// Service mode
@@ -260,20 +260,20 @@ private:
 
   /// Execute in handler mode (interrupt context)
   ///
-  /// \retval true  Command to AutomaticLogon address
-  /// \retval false Command to other address
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
   bool executeHandlerMode() {
-    if (_addrs.received.type != Address::AutomaticLogon) return false;
-    if (size(_packet) <= (6uz + 1uz) || !crc8(_packet))
-      executeAutomaticLogon(_addrs.received,
-                            {cbegin(_packet) + 1, cend(_packet)});
-    return true;
+    if (_addrs.received.type == Address::AutomaticLogon &&
+        (size(_packet) <= (6uz + sizeof(_checksum)) || !crc8(_packet)))
+      return executeAutomaticLogon(_addrs.received,
+                                   {cbegin(_packet) + 1, cend(_packet)});
+    else return false;
   }
 
   /// Execute in thread mode
   ///
-  /// \retval true  Command to own address
-  /// \retval false Command to other address
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
   bool executeThreadMode() {
     if (packetEnd() || empty(_deque)) return false;
     adr();              // Prepare address broadcasts for BiDi channel 1
@@ -287,24 +287,20 @@ private:
 
   /// Execute commands in operations mode
   ///
-  /// \retval true  Command to own address or 0
-  /// \retval false Command to other address
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
   bool executeOperations() {
-    bool retval{};
     auto const& packet{_deque.front()};
     switch (auto const addr{decode_address(packet)}; addr.type) {
       case Address::Broadcast: [[fallthrough]];
       case Address::BasicLoco:
-        retval =
-          executeOperationsAddressed(addr, {cbegin(packet) + 1, cend(packet)});
-        break;
+        return executeOperationsAddressed(addr,
+                                          {cbegin(packet) + 1, cend(packet)});
       case Address::ExtendedLoco:
-        retval =
-          executeOperationsAddressed(addr, {cbegin(packet) + 2, cend(packet)});
-        break;
-      default: break;
+        return executeOperationsAddressed(addr,
+                                          {cbegin(packet) + 2, cend(packet)});
+      default: return false;
     }
-    return retval;
   }
 
   /// Execute commands in service mode
@@ -322,7 +318,9 @@ private:
     // Register mode
     else if (size(packet) == 3uz) registerMode({cbegin(packet), cend(packet)});
     // CvLong
-    else if (size(packet) == 4uz) cvLong(0u, {cbegin(packet), cend(packet)});
+    else if (size(packet) == 4uz && _own_equal_packets_count == 2uz)
+      executeCvLong(0u, {cbegin(packet), cend(packet)});
+
     return true;
   }
 
@@ -330,8 +328,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command to own address or 0
-  /// \retval false Command to other address
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
   bool executeOperationsAddressed(Address addr,
                                   std::span<uint8_t const> bytes) {
     // Address is broadcast
@@ -350,33 +348,31 @@ private:
     countOwnEqualPackets();
 
     switch (decode_instruction(bytes)) {
-      case Instruction::UnknownService: /// \todo
-        break;
       case Instruction::DecoderControl:
-        if (!addr && !bytes[0uz]) serviceMode(true);
-        else decoderControl(bytes);
-        break;
-      case Instruction::ConsistControl: consistControl(bytes); break;
+        if (!addr && !bytes[0uz]) {
+          serviceMode(true);
+          return true;
+        } else return executeDecoderControl(bytes);
+      case Instruction::ConsistControl: return executeConsistControl(bytes);
       case Instruction::AdvancedOperations:
-        advancedOperations(addr, bytes);
-        break;
-      case Instruction::SpeedDirection: speedAndDirection(addr, bytes); break;
-      case Instruction::FunctionGroup: functionGroup(addr, bytes); break;
-      case Instruction::FeatureExpansion: featureExpansion(addr, bytes); break;
-      case Instruction::CvLong: cvLong(addr, bytes); break;
-      case Instruction::CvShort: cvShort(addr, bytes); break;
-      default: break;
+        return executeAdvancedOperations(addr, bytes);
+      case Instruction::SpeedDirection:
+        return executeSpeedDirection(addr, bytes);
+      case Instruction::FunctionGroup: return executeFunctionGroup(addr, bytes);
+      case Instruction::FeatureExpansion:
+        return executeFeatureExpansion(addr, bytes);
+      case Instruction::CvLong: return executeCvLong(addr, bytes);
+      case Instruction::CvShort: return executeCvShort(addr, bytes);
+      default: return false;
     }
-
-    return true;
   }
 
   /// Execute automatic logon
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command to own address or 0
-  /// \retval false Command to other address
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
   bool executeAutomaticLogon(Address addr, std::span<uint8_t const> bytes) {
     if (addr != 254u) return false;
 
@@ -421,25 +417,40 @@ private:
   }
 
   /// Execute decoder control
-  /// \todo
-  void decoderControl(std::span<uint8_t const>) const {}
+  ///
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
+  bool executeDecoderControl(std::span<uint8_t const>) const {
+    /// \todo
+    return false;
+  }
 
   /// Execute consist control
   ///
   /// \param  bytes Raw bytes
-  void consistControl(std::span<uint8_t const> bytes) {
-    cvWrite(19u - 1u, static_cast<uint8_t>(bytes[0uz] << 7u | bytes[1uz]));
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
+  bool executeConsistControl(std::span<uint8_t const> bytes) {
+    if (size(bytes) != 2uz + sizeof(_checksum)) return false;
+
+    if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+      cvWrite(19u - 1u, static_cast<uint8_t>(bytes[0uz] << 7u | bytes[1uz]));
+
+    return true;
   }
 
   /// Execute advanced operations
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void advancedOperations(Address::value_type addr,
-                          std::span<uint8_t const> bytes) {
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
+  bool executeAdvancedOperations(Address::value_type addr,
+                                 std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
       // Speed, direction and function
       case 0b0011'1100u:
+        if (size(bytes) < 3uz + sizeof(_checksum)) return false;
         // F7-F0
         if (size(bytes) > 3uz)
           impl().function(
@@ -456,10 +467,13 @@ private:
         if (size(bytes) > 6uz)
           impl().function(
             addr, 0xFFu << 0u, static_cast<uint32_t>(bytes[5uz] << 24u));
+        // Adjust length before fallthrough
+        bytes = bytes.subspan(0uz, 2uz + sizeof(_checksum));
         [[fallthrough]];
 
       // 126 speed steps (plus 0)
       case 0b0011'1111u: {
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         auto const dir{static_cast<bool>(bytes[1uz] & ztl::make_mask(7u))};
         // Stop
         if (!(bytes[1uz] & 0b0111'1111u)) directionSpeed(addr, dir, Stop);
@@ -474,6 +488,7 @@ private:
 
       // Special operating modes
       case 0b0011'1110u:
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         _man = bytes[1uz] & ztl::make_mask(7u);
         if constexpr (EastWest<T>) {
           if (bytes[1uz] & ztl::make_mask(6u)) // East
@@ -490,21 +505,27 @@ private:
         /// \todo
         break;
     }
+
+    return true;
   }
 
   /// Execute speed and direction
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void speedAndDirection(Address::value_type addr,
-                         std::span<uint8_t const> bytes) {
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
+  bool executeSpeedDirection(Address::value_type addr,
+                             std::span<uint8_t const> bytes) {
+    if (size(bytes) != 1uz + sizeof(_checksum)) return false;
+
     auto const dir{static_cast<bool>(bytes[0uz] & ztl::make_mask(5u))};
     int32_t speed{};
 
     // Stop
     if (!(bytes[0uz] & 0b0000'1111u)) speed = Stop;
     // Emergency stop
-    else if (!(bytes[0uz] & 0b0000'1110u)) return impl().speed(addr, EStop);
+    else if (!(bytes[0uz] & 0b0000'1110u)) speed = EStop;
     else speed = static_cast<int32_t>(bytes[0uz] & 0b0000'1111u) - 1;
 
     // 14 speed steps and F0
@@ -522,7 +543,11 @@ private:
       speed = scale_speed<28>(speed);
     }
 
-    directionSpeed(addr, dir, speed);
+    // Emergency stop ignores direction
+    if (speed == EStop) impl().speed(addr, EStop);
+    else directionSpeed(addr, dir, speed);
+
+    return true;
   }
 
   /// Execute function group
@@ -532,7 +557,12 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void functionGroup(Address::value_type addr, std::span<uint8_t const> bytes) {
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
+  bool executeFunctionGroup(Address::value_type addr,
+                            std::span<uint8_t const> bytes) {
+    if (size(bytes) != 1uz + sizeof(_checksum)) return false;
+
     uint32_t mask{};
     uint32_t state{};
 
@@ -560,6 +590,8 @@ private:
     }
 
     impl().function(addr, mask, state);
+
+    return true;
   }
 
   /// Execute feature expansion
@@ -569,11 +601,14 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void featureExpansion(Address::value_type addr,
-                        std::span<uint8_t const> bytes) {
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
+  bool executeFeatureExpansion(Address::value_type addr,
+                               std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
       // Binary state control instruction long form (3 bytes)
       case 0b1100'0000u:
+        if (size(bytes) != 3uz + sizeof(_checksum)) return false;
         binaryState((static_cast<uint32_t>(bytes[2uz]) << 7u) |
                       (bytes[1uz] & 0b0111'1111u),
                     bytes[1uz] & ztl::make_mask(7u));
@@ -581,25 +616,32 @@ private:
 
       // Binary state control instruction short form (2 bytes)
       case 0b1101'1101u:
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         binaryState((bytes[1uz] & 0b0111'1111u),
                     bytes[1uz] & ztl::make_mask(7u));
         break;
 
       // Time (4 bytes)
-      case 0b1100'0001u: time(bytes); break;
+      case 0b1100'0001u:
+        if (size(bytes) != 4uz + sizeof(_checksum)) return false;
+        time(bytes);
+        break;
 
       // System time (3 bytes)
       case 0b1100'0010u:
+        if (size(bytes) != 3uz + sizeof(_checksum)) return false;
         /// \todo
         break;
 
       // Command station properties (4 bytes)
       case 0b1100'0011u:
+        if (size(bytes) != 4uz + sizeof(_checksum)) return false;
         /// \todo
         break;
 
       // F20-F19-F18-F17-F16-F15-F14-F13
       case 0b1101'1110u:
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         impl().function(addr,
                         ztl::make_mask(20u, 19u, 18u, 17u, 16u, 15u, 14u, 13u),
                         static_cast<uint32_t>(bytes[1uz] << 13u));
@@ -607,26 +649,39 @@ private:
 
       // F28-F27-F26-F25-F24-F23-F22-F21
       case 0b1101'1111u:
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         impl().function(addr,
                         ztl::make_mask(28u, 27u, 26u, 25u, 24u, 23u, 22u, 21u),
                         static_cast<uint32_t>(bytes[1uz] << 21u));
         break;
 
       // F36-F35-F34-F33-F32-F31-F30-F29
-      case 0b1101'1000u: break;
+      case 0b1101'1000u:
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
+        break;
 
       // F44-F43-F42-F41-F40-F39-F38-F37
-      case 0b1101'1001u: break;
+      case 0b1101'1001u:
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
+        break;
 
       // F52-F51-F50-F49-F48-F47-F46-F45
-      case 0b1101'1010u: break;
+      case 0b1101'1010u:
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
+        break;
 
       // F60-F59-F58-F57-F56-F55-F54-F53
-      case 0b1101'1011u: break;
+      case 0b1101'1011u:
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
+        break;
 
       // F68-F67-F66-F65-F64-F63-F62-F61 (>F63 not supported)
-      case 0b1101'1100u: break;
+      case 0b1101'1100u:
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
+        break;
     }
+
+    return true;
   }
 
   /// Execute CV access - long form
@@ -634,11 +689,12 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void cvLong(Address::value_type addr, std::span<uint8_t const> bytes) {
-    if (addr && addr == _addrs.consist) return;
-
-    // Ignore all but the second packet while in service mode
-    if (_own_equal_packets_count != 2uz && serviceMode()) return;
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
+  bool executeCvLong(Address::value_type addr, std::span<uint8_t const> bytes) {
+    if ((size(bytes) != 3uz + sizeof(_checksum)) ||
+        (addr && addr == _addrs.consist))
+      return false;
 
     switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
             static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
@@ -650,7 +706,8 @@ private:
 
       // Write byte
       case 0b11u:
-        if (_own_equal_packets_count < 2uz) return;
+        if (_own_equal_packets_count < 2uz)
+          ;
         else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bytes[2uz]);
         else cvVerify(cv_addr, bytes[2uz]);
         break;
@@ -664,14 +721,19 @@ private:
         break;
       }
     }
+
+    return true;
   }
 
   /// Execute CV access - short form
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  void cvShort(Address::value_type addr, std::span<uint8_t const> bytes) {
-    if (addr && addr == _addrs.consist) return;
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
+  bool executeCvShort(Address::value_type addr,
+                      std::span<uint8_t const> bytes) {
+    if (addr && addr == _addrs.consist) return false;
 
     switch (bytes[0uz] & 0x0Fu) {
       // Not available for use
@@ -679,34 +741,42 @@ private:
 
       // Acceleration adjustment (CV23)
       case 0b0010u:
-        if (_own_equal_packets_count != !DCC_STANDARD_COMPLIANCE + 1uz) return;
-        cvWrite(23u - 1u, bytes[1uz]); // Fine if written at once
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
+        else if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+          cvWrite(23u - 1u, bytes[1uz]);
         break;
 
       // Deceleration adjustment (CV24)
       case 0b0011u:
-        if (_own_equal_packets_count != !DCC_STANDARD_COMPLIANCE + 1uz) return;
-        cvWrite(24u - 1u, bytes[1uz]); // Fine if written at once
+        if (size(bytes) != 2uz + sizeof(_checksum)) return false;
+        else if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+          cvWrite(24u - 1u, bytes[1uz]);
         break;
 
       // Extended address 0 and 1 (CV17 and CV18)
       case 0b0100u:
-        if (_own_equal_packets_count != 2uz) return;
-        cvWrite(17u - 1u, static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
-        cvWrite(18u - 1u, bytes[2uz]);
-        cvWrite(29u - 1u, true, 5u);
+        if (size(bytes) != 3uz + sizeof(_checksum)) return false;
+        else if (_own_equal_packets_count == 2uz) {
+          cvWrite(17u - 1u, static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
+          cvWrite(18u - 1u, bytes[2uz]);
+          cvWrite(29u - 1u, true, 5u);
+        }
         break;
 
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
-        if (_own_equal_packets_count != 2uz) return;
-        cvWrite(31u - 1u, bytes[1uz]);
-        cvWrite(32u - 1u, bytes[2uz]);
+        if (size(bytes) != 3uz + sizeof(_checksum)) return false;
+        else if (_own_equal_packets_count == 2uz) {
+          cvWrite(31u - 1u, bytes[1uz]);
+          cvWrite(32u - 1u, bytes[2uz]);
+        }
         break;
 
       // Reserved
       case 0b1001u: break;
     }
+
+    return true;
   }
 
   /// CV byte and bit verify
@@ -816,8 +886,9 @@ private:
   }
 
   /// Time
-  /// \todo
-  void time(std::span<uint8_t const>) const {}
+  void time(std::span<uint8_t const>) const {
+    /// \todo
+  }
 
   /// Execute binary state
   ///
