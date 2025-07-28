@@ -21,14 +21,6 @@ protected:
 
   void EnterServiceMode();
 
-  void ReceiveAndExecuteTwoIdenticalCvLongWritePackets(uint16_t addr,
-                                                       uint32_t cv_addr,
-                                                       uint8_t byte);
-  void ReceiveAndExecuteTwoIdenticalCvShortWritePackets(uint16_t addr,
-                                                        uint8_t kkkk,
-                                                        uint8_t byte1,
-                                                        uint8_t byte2 = 0u);
-
   void Logon();
 
   dcc::Packet TinkerWithPacketLength(dcc::Packet packet) const;
@@ -38,6 +30,18 @@ protected:
     std::mt19937 gen{std::random_device{}()};
     std::uniform_int_distribution<T> dis{min, max};
     return dis(gen);
+  }
+
+  template<typename T>
+  void ReceiveAndExecute(T&& t) {
+    Receive(std::forward<T>(t));
+    Execute();
+  }
+
+  template<typename T>
+  void ReceiveAndExecuteTwice(T&& t) {
+    ReceiveAndExecute(std::forward<T>(t));
+    ReceiveAndExecute(std::forward<T>(t));
   }
 
   NiceMock<RxMock> _mock;

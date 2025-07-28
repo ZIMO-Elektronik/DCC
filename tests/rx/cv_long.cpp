@@ -13,10 +13,7 @@ TEST_F(RxTest, cv_long_verify_bit_service_mode) {
   // 5 or more identical packets
   EXPECT_CALL(_mock, readCv(cv_addr, bit, position)).WillOnce(Return(bit));
   EXPECT_CALL(_mock, serviceAck());
-  for (auto i{0uz}; i < 5uz; ++i) {
-    Receive(packet);
-    Execute();
-  }
+  for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
 }
 
 TEST_F(RxTest, cv_long_verify_byte_operations_mode) {
@@ -24,8 +21,7 @@ TEST_F(RxTest, cv_long_verify_byte_operations_mode) {
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, 0u));
-  Receive(packet);
-  Execute();
+  ReceiveAndExecute(packet);
 }
 
 TEST_F(RxTest, cv_long_verify_byte_service_mode) {
@@ -37,10 +33,7 @@ TEST_F(RxTest, cv_long_verify_byte_service_mode) {
   // 5 or more identical packets
   EXPECT_CALL(_mock, readCv(cv_addr, 42u)).WillOnce(Return(42u));
   EXPECT_CALL(_mock, serviceAck());
-  for (auto i{0uz}; i < 5uz; ++i) {
-    Receive(packet);
-    Execute();
-  }
+  for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
 }
 
 TEST_F(RxTest, cv_long_ignore_write_bit_operations_mode) {
@@ -53,10 +46,7 @@ TEST_F(RxTest, cv_long_ignore_write_bit_operations_mode) {
 
   // 2 or more identical packets
   EXPECT_CALL(_mock, writeCv(cv_addr, bit, position)).Times(0);
-  for (auto i{0uz}; i < 2uz; ++i) {
-    Receive(packet);
-    Execute();
-  }
+  for (auto i{0uz}; i < 2uz; ++i) ReceiveAndExecute(packet);
 }
 
 TEST_F(RxTest, cv_long_write_bit_service_mode) {
@@ -72,10 +62,7 @@ TEST_F(RxTest, cv_long_write_bit_service_mode) {
   // 5 or more identical packets
   EXPECT_CALL(_mock, writeCv(cv_addr, bit, position)).WillOnce(Return(bit));
   EXPECT_CALL(_mock, serviceAck());
-  for (auto i{0uz}; i < 5uz; ++i) {
-    Receive(packet);
-    Execute();
-  }
+  for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
 }
 
 TEST_F(RxTest, cv_long_write_byte_operations_mode) {
@@ -84,8 +71,8 @@ TEST_F(RxTest, cv_long_write_byte_operations_mode) {
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte));
-  ReceiveAndExecuteTwoIdenticalCvLongWritePackets(
-    _addrs.primary, cv_addr, byte);
+  ReceiveAndExecuteTwice(
+    dcc::make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte));
 }
 
 TEST_F(
@@ -98,16 +85,13 @@ TEST_F(
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte));
 
-  Receive(cv_packet);
-  Execute();
+  ReceiveAndExecute(cv_packet);
 
   auto other_packet_to_different_address{
     dcc::make_function_group_f4_f0_packet(42u, 0b1u)};
-  Receive(other_packet_to_different_address);
-  Execute();
+  ReceiveAndExecute(other_packet_to_different_address);
 
-  Receive(cv_packet);
-  Execute();
+  ReceiveAndExecute(cv_packet);
 }
 
 TEST_F(
@@ -120,16 +104,13 @@ TEST_F(
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte)).Times(0);
 
-  Receive(cv_packet);
-  Execute();
+  ReceiveAndExecute(cv_packet);
 
   auto other_packet_to_same_address{
     make_function_group_f4_f0_packet(_addrs.primary, 0b1u)};
-  Receive(other_packet_to_same_address);
-  Execute();
+  ReceiveAndExecute(other_packet_to_same_address);
 
-  Receive(cv_packet);
-  Execute();
+  ReceiveAndExecute(cv_packet);
 }
 
 TEST_F(RxTest, cv_long_write_byte_service_mode) {
@@ -142,8 +123,5 @@ TEST_F(RxTest, cv_long_write_byte_service_mode) {
 
   // 5 or more identical packets
   EXPECT_CALL(_mock, writeCv(cv_addr, byte));
-  for (auto i{0uz}; i < 5uz; ++i) {
-    Receive(packet);
-    Execute();
-  }
+  for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
 }

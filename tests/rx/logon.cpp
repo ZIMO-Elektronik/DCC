@@ -22,8 +22,7 @@ TEST_F(RxTest, logon_with_new_cid) {
   EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
-  Receive(dcc::make_advanced_operations_speed_packet(1000u, 0u));
-  Execute();
+  ReceiveAndExecute(dcc::make_advanced_operations_speed_packet(1000u, 0u));
 }
 
 // Known CID and session ID <=4 skips logon
@@ -34,8 +33,7 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_le_4) {
   EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
-  Receive(make_advanced_operations_speed_packet(_addrs.logon, 0u));
-  Execute();
+  ReceiveAndExecute(make_advanced_operations_speed_packet(_addrs.logon, 0u));
 }
 
 // Known CID and session ID >4 forces logon
@@ -64,8 +62,7 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_gt_4) {
   EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
-  Receive(dcc::make_advanced_operations_speed_packet(1000u, 0u));
-  Execute();
+  ReceiveAndExecute(dcc::make_advanced_operations_speed_packet(1000u, 0u));
 }
 
 // LOGON_SELECT disables LOGON_ENABLE (and ID15 datagram)

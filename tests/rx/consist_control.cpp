@@ -20,15 +20,8 @@ TEST_F(RxTest, consist_control) {
   auto packet{make_consist_control_packet(_addrs.primary, cv19)};
 
   EXPECT_CALL(_mock, writeCv(19u - 1u, cv19));
-  if constexpr (DCC_STANDARD_COMPLIANCE) {
-    Receive(packet);
-    Execute();
-  } else {
-    Receive(packet);
-    Execute();
-    Receive(packet);
-    Execute();
-  }
+  if constexpr (DCC_STANDARD_COMPLIANCE) ReceiveAndExecute(packet);
+  else ReceiveAndExecuteTwice(packet);
 }
 
 TEST_F(RxTest, consist_control_wrong_packet_length) {
@@ -37,13 +30,6 @@ TEST_F(RxTest, consist_control_wrong_packet_length) {
     TinkerWithPacketLength(make_consist_control_packet(_addrs.primary, cv19))};
 
   EXPECT_CALL(_mock, writeCv(19u - 1u, cv19)).Times(0);
-  if constexpr (DCC_STANDARD_COMPLIANCE) {
-    Receive(packet);
-    Execute();
-  } else {
-    Receive(packet);
-    Execute();
-    Receive(packet);
-    Execute();
-  }
+  if constexpr (DCC_STANDARD_COMPLIANCE) ReceiveAndExecute(packet);
+  else ReceiveAndExecuteTwice(packet);
 }

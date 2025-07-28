@@ -8,8 +8,7 @@ TEST_F(RxTest, app_pom) {
 
   EXPECT_CALL(_mock, readCv(cv_addr, _)).WillRepeatedly(Return(value));
 
-  Receive(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
-  Execute();
+  ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
 
   auto datagram{encode_datagram(make_datagram<Bits::_12>(0u, value))};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
@@ -25,8 +24,7 @@ TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
 
   EXPECT_CALL(_mock, readCv(cv_addr, _)).WillRepeatedly(Return(value));
 
-  Receive(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
-  Execute();
+  ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
   _mock.biDiChannel2();

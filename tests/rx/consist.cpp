@@ -9,8 +9,8 @@ TEST_F(RxTest, consist_shall_not_act_on_cv_manipulation) {
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte)).Times(0);
-  ReceiveAndExecuteTwoIdenticalCvLongWritePackets(
-    _addrs.consist, cv_addr, byte);
+  ReceiveAndExecuteTwice(
+    dcc::make_cv_access_long_write_packet(_addrs.consist, cv_addr, byte));
 }
 
 TEST_F(RxTest, consist_direction) {
@@ -20,9 +20,8 @@ TEST_F(RxTest, consist_direction) {
 
   EXPECT_CALL(_mock, direction(_addrs.consist.value, dcc::Forward));
   EXPECT_CALL(_mock, speed(_addrs.consist.value, _));
-  Receive(make_advanced_operations_speed_packet(_addrs.consist,
-                                                dcc::Forward << 7u | 10u));
-  Execute();
+  ReceiveAndExecute(make_advanced_operations_speed_packet(
+    _addrs.consist, dcc::Forward << 7u | 10u));
 }
 
 TEST_F(RxTest, consist_direction_reversed) {
@@ -32,9 +31,8 @@ TEST_F(RxTest, consist_direction_reversed) {
 
   EXPECT_CALL(_mock, direction(_addrs.consist.value, dcc::Backward));
   EXPECT_CALL(_mock, speed(_addrs.consist.value, _));
-  Receive(make_advanced_operations_speed_packet(_addrs.consist,
-                                                dcc::Forward << 7u | 10u));
-  Execute();
+  ReceiveAndExecute(make_advanced_operations_speed_packet(
+    _addrs.consist, dcc::Forward << 7u | 10u));
 }
 
 TEST_F(RxTest, consist_only_primary_direction_reversed) {
@@ -44,9 +42,8 @@ TEST_F(RxTest, consist_only_primary_direction_reversed) {
 
   EXPECT_CALL(_mock, direction(_addrs.consist.value, dcc::Backward));
   EXPECT_CALL(_mock, speed(_addrs.consist.value, _));
-  Receive(make_advanced_operations_speed_packet(_addrs.consist,
-                                                dcc::Forward << 7u | 10u));
-  Execute();
+  ReceiveAndExecute(make_advanced_operations_speed_packet(
+    _addrs.consist, dcc::Forward << 7u | 10u));
 }
 
 TEST_F(RxTest, consist_and_primary_direction_reversed) {
@@ -56,7 +53,6 @@ TEST_F(RxTest, consist_and_primary_direction_reversed) {
 
   EXPECT_CALL(_mock, direction(_addrs.consist.value, dcc::Forward));
   EXPECT_CALL(_mock, speed(_addrs.consist.value, _));
-  Receive(make_advanced_operations_speed_packet(_addrs.consist,
-                                                dcc::Forward << 7u | 10u));
-  Execute();
+  ReceiveAndExecute(make_advanced_operations_speed_packet(
+    _addrs.consist, dcc::Forward << 7u | 10u));
 }

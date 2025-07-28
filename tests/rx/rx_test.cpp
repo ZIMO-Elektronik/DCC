@@ -101,27 +101,6 @@ void RxTest::EnterServiceMode() {
   Execute();
 }
 
-void RxTest::ReceiveAndExecuteTwoIdenticalCvLongWritePackets(uint16_t addr,
-                                                             uint32_t cv_addr,
-                                                             uint8_t byte) {
-  auto packet{dcc::make_cv_access_long_write_packet(addr, cv_addr, byte)};
-  for (auto i{0uz}; i < 2uz; ++i) {
-    Receive(packet);
-    Execute();
-  }
-}
-
-void RxTest::ReceiveAndExecuteTwoIdenticalCvShortWritePackets(uint16_t addr,
-                                                              uint8_t kkkk,
-                                                              uint8_t byte1,
-                                                              uint8_t byte2) {
-  auto packet{dcc::make_cv_access_short_write_packet(addr, kkkk, byte1, byte2)};
-  for (auto i{0uz}; i < 2uz; ++i) {
-    Receive(packet);
-    Execute();
-  }
-}
-
 void RxTest::Logon() {
   EXPECT_CALL(_mock, readCv(_))
     .WillOnce(Return(_cvs[65300uz - 1uz]))
