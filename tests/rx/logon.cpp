@@ -5,7 +5,7 @@ TEST_F(RxTest, logon_with_new_cid) {
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(3 * 2);
 
   // Enable
-  Receive(dcc::make_logon_enable_packet(
+  Receive(make_logon_enable_packet(
     dcc::AddressGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
   BiDi();
 
@@ -34,7 +34,7 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_le_4) {
   EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
-  Receive(dcc::make_advanced_operations_speed_packet(_addrs.logon, 0u));
+  Receive(make_advanced_operations_speed_packet(_addrs.logon, 0u));
   Execute();
 }
 
@@ -46,8 +46,8 @@ TEST_F(RxTest, logon_with_known_cid_and_session_id_gt_4) {
   // Send multiple times to make sure implementation does not skip logon upon
   // receiving session ID multiple times in a row. That used to be a bug.
   for (auto i{0uz}; i < 10uz; ++i) {
-    Receive(dcc::make_logon_enable_packet(
-      dcc::AddressGroup::Now, _cid, _session_id + 5u));
+    Receive(
+      make_logon_enable_packet(dcc::AddressGroup::Now, _cid, _session_id + 5u));
     BiDi();
   }
 
@@ -73,7 +73,7 @@ TEST_F(RxTest, no_id15_datagram_after_logon_select) {
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(2 * 2);
 
   // Enable
-  Receive(dcc::make_logon_enable_packet(
+  Receive(make_logon_enable_packet(
     dcc::AddressGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
   BiDi();
 
@@ -82,7 +82,7 @@ TEST_F(RxTest, no_id15_datagram_after_logon_select) {
   BiDi();
 
   // Enable (again)
-  Receive(dcc::make_logon_enable_packet(
+  Receive(make_logon_enable_packet(
     dcc::AddressGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
   BiDi();
 }

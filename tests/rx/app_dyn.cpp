@@ -4,7 +4,7 @@ using namespace dcc::bidi;
 
 TEST_F(RxTest, app_dyn) {
   // Send whatever packet to get last received address to match primary
-  Receive(dcc::make_function_group_f4_f0_packet(_addrs.primary, 10u));
+  Receive(make_function_group_f4_f0_packet(_addrs.primary, 10u));
 
   EXPECT_LT(DCC_RX_BIDI_DEQUE_SIZE, 42uz);
 

@@ -21,7 +21,7 @@ TEST_F(RxTest, cv_long_verify_bit_service_mode) {
 
 TEST_F(RxTest, cv_long_verify_byte_operations_mode) {
   auto cv_addr{RandomInterval(0u, smath::pow(2u, 10u) - 1u)};
-  auto packet{dcc::make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
+  auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, 0u));
   Receive(packet);
@@ -48,8 +48,8 @@ TEST_F(RxTest, cv_long_ignore_write_bit_operations_mode) {
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto bit{RandomInterval(0u, 1u)};
   auto position{RandomInterval(0u, 7u)};
-  auto packet{dcc::make_cv_access_long_write_packet(
-    _addrs.primary, cv_addr, bit, position)};
+  auto packet{
+    make_cv_access_long_write_packet(_addrs.primary, cv_addr, bit, position)};
 
   // 2 or more identical packets
   EXPECT_CALL(_mock, writeCv(cv_addr, bit, position)).Times(0);
@@ -94,7 +94,7 @@ TEST_F(
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
   auto cv_packet{
-    dcc::make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
+    make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte));
 
@@ -116,7 +116,7 @@ TEST_F(
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
   auto cv_packet{
-    dcc::make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
+    make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte)).Times(0);
 
@@ -124,7 +124,7 @@ TEST_F(
   Execute();
 
   auto other_packet_to_same_address{
-    dcc::make_function_group_f4_f0_packet(_addrs.primary, 0b1u)};
+    make_function_group_f4_f0_packet(_addrs.primary, 0b1u)};
   Receive(other_packet_to_same_address);
   Execute();
 

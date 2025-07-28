@@ -31,6 +31,8 @@ protected:
 
   void Logon();
 
+  dcc::Packet TinkerWithPacketLength(dcc::Packet packet) const;
+
   template<std::unsigned_integral T>
   static T RandomInterval(T min, T max) {
     std::mt19937 gen{std::random_device{}()};

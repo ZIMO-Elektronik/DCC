@@ -20,8 +20,8 @@ TEST_F(RxTest, consist_direction) {
 
   EXPECT_CALL(_mock, direction(_addrs.consist.value, dcc::Forward));
   EXPECT_CALL(_mock, speed(_addrs.consist.value, _));
-  Receive(dcc::make_advanced_operations_speed_packet(_addrs.consist,
-                                                     dcc::Forward << 7u | 10u));
+  Receive(make_advanced_operations_speed_packet(_addrs.consist,
+                                                dcc::Forward << 7u | 10u));
   Execute();
 }
 
@@ -32,8 +32,8 @@ TEST_F(RxTest, consist_direction_reversed) {
 
   EXPECT_CALL(_mock, direction(_addrs.consist.value, dcc::Backward));
   EXPECT_CALL(_mock, speed(_addrs.consist.value, _));
-  Receive(dcc::make_advanced_operations_speed_packet(_addrs.consist,
-                                                     dcc::Forward << 7u | 10u));
+  Receive(make_advanced_operations_speed_packet(_addrs.consist,
+                                                dcc::Forward << 7u | 10u));
   Execute();
 }
 
@@ -44,8 +44,8 @@ TEST_F(RxTest, consist_only_primary_direction_reversed) {
 
   EXPECT_CALL(_mock, direction(_addrs.consist.value, dcc::Backward));
   EXPECT_CALL(_mock, speed(_addrs.consist.value, _));
-  Receive(dcc::make_advanced_operations_speed_packet(_addrs.consist,
-                                                     dcc::Forward << 7u | 10u));
+  Receive(make_advanced_operations_speed_packet(_addrs.consist,
+                                                dcc::Forward << 7u | 10u));
   Execute();
 }
 
@@ -56,7 +56,7 @@ TEST_F(RxTest, consist_and_primary_direction_reversed) {
 
   EXPECT_CALL(_mock, direction(_addrs.consist.value, dcc::Forward));
   EXPECT_CALL(_mock, speed(_addrs.consist.value, _));
-  Receive(dcc::make_advanced_operations_speed_packet(_addrs.consist,
-                                                     dcc::Forward << 7u | 10u));
+  Receive(make_advanced_operations_speed_packet(_addrs.consist,
+                                                dcc::Forward << 7u | 10u));
   Execute();
 }

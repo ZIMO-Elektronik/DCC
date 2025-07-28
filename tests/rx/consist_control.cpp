@@ -1,0 +1,49 @@
+#include "rx_test.hpp"
+
+TEST_F(RxTest, consist_control) {
+  EXPECT_CALL(_mock, readCv(_))
+    .WillOnce(Return(_cvs[29uz - 1uz]))
+    .WillOnce(Return(_cvs[1uz - 1uz]))
+    .WillOnce(Return(_cvs[19uz - 1uz]))
+    .WillOnce(Return(_cvs[20uz - 1uz]))
+    .WillOnce(Return(_cvs[15uz - 1uz]))
+    .WillOnce(Return(_cvs[16uz - 1uz]))
+    .WillOnce(Return(_cvs[28uz - 1uz]))
+    .WillOnce(Return(_cvs[250uz - 1uz]))
+    .WillOnce(Return(_cvs[251uz - 1uz]))
+    .WillOnce(Return(_cvs[252uz - 1uz]))
+    .WillOnce(Return(_cvs[253uz - 1uz]))
+    .WillOnce(Return(_cvs[65297uz - 1uz]))
+    .WillOnce(Return(_cvs[65298uz - 1uz]))
+    .WillOnce(Return(_cvs[65299uz - 1uz]));
+  auto cv19{RandomInterval<uint8_t>(0u, 255u)};
+  auto packet{make_consist_control_packet(_addrs.primary, cv19)};
+
+  EXPECT_CALL(_mock, writeCv(19u - 1u, cv19));
+  if constexpr (DCC_STANDARD_COMPLIANCE) {
+    Receive(packet);
+    Execute();
+  } else {
+    Receive(packet);
+    Execute();
+    Receive(packet);
+    Execute();
+  }
+}
+
+TEST_F(RxTest, consist_control_wrong_packet_length) {
+  auto cv19{RandomInterval<uint8_t>(0u, 255u)};
+  auto packet{
+    TinkerWithPacketLength(make_consist_control_packet(_addrs.primary, cv19))};
+
+  EXPECT_CALL(_mock, writeCv(19u - 1u, cv19)).Times(0);
+  if constexpr (DCC_STANDARD_COMPLIANCE) {
+    Receive(packet);
+    Execute();
+  } else {
+    Receive(packet);
+    Execute();
+    Receive(packet);
+    Execute();
+  }
+}

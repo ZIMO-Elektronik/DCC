@@ -86,17 +86,45 @@ constexpr int32_t scale_speed(int32_t speed)
     return ztl::lerp<int32_t>(speed, 0, Scale, 0, max);
 }
 
-/// Make an idle packet
+/// Make idle packet
 ///
 /// \return Idle packet
 consteval auto make_idle_packet() { return Packet{0xFFu, 0x00u, 0xFFu}; }
 
-/// Make a reset packet
+/// Make reset packet
 ///
 /// \return Reset packet
 consteval auto make_reset_packet() { return Packet{0x00u, 0x00u, 0x00u}; }
 
-/// Make an advanced operations speed, direction and functions
+/// Make consist control packet
+///
+/// \param  addr  Address
+/// \param  cv19  CV19
+/// \return Consist control packet
+constexpr auto make_consist_control_packet(Address addr, uint8_t cv19) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *last++ = static_cast<uint8_t>(0b0001'0010u | (cv19 >> 7u));
+  *last++ = static_cast<uint8_t>(cv19 & 0b0111'1111u);
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make consist control packet
+///
+/// \param  addr  Address
+/// \param  cv19  CV19
+/// \return Consist control packet
+constexpr auto make_consist_control_packet(Address::value_type addr,
+                                           uint8_t cv19) {
+  return make_consist_control_packet(
+    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco}, cv19);
+}
+
+/// Make advanced operations speed, direction and functions
 ///
 /// \param  addr      Address
 /// \param  rggggggg  Direction and speed byte
@@ -108,6 +136,7 @@ constexpr auto make_advanced_operations_speed_direction_and_functions_packet(
   uint8_t rggggggg,
   uint8_t f7_f0,
   std::unsigned_integral auto... fs) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -120,7 +149,7 @@ constexpr auto make_advanced_operations_speed_direction_and_functions_packet(
   return packet;
 }
 
-/// Make an advanced operations speed, direction and functions
+/// Make advanced operations speed, direction and functions
 ///
 /// \param  addr      Address
 /// \param  rggggggg  Direction and speed byte
@@ -139,13 +168,14 @@ constexpr auto make_advanced_operations_speed_direction_and_functions_packet(
     fs...);
 }
 
-/// Make an advanced operations speed packet
+/// Make advanced operations speed packet
 ///
 /// \param  addr      Address
 /// \param  rggggggg  Direction and speed byte
 /// \return Advanced operations speed packet
 constexpr auto make_advanced_operations_speed_packet(Address addr,
                                                      uint8_t rggggggg) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -156,7 +186,7 @@ constexpr auto make_advanced_operations_speed_packet(Address addr,
   return packet;
 }
 
-/// Make an advanced operations speed packet
+/// Make advanced operations speed packet
 ///
 /// \param  addr      Address
 /// \param  rggggggg  Direction and speed byte
@@ -169,7 +199,8 @@ constexpr auto make_advanced_operations_speed_packet(Address::value_type addr,
 }
 
 /// \todo
-constexpr auto make_advanced_operations_restricted_speed_packet(Address) {
+constexpr auto make_advanced_operations_restricted_speed_packet(Address addr) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   return packet;
 }
@@ -182,7 +213,9 @@ make_advanced_operations_restricted_speed_packet(Address::value_type) {
 }
 
 /// \todo
-constexpr auto make_advanced_operations_analog_function_group_packet(Address) {
+constexpr auto
+make_advanced_operations_analog_function_group_packet(Address addr) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   return packet;
 }
@@ -200,6 +233,7 @@ make_advanced_operations_analog_function_group_packet(Address::value_type) {
 /// \param  rggggg  Direction and speed byte
 /// \return Speed and direction packet
 constexpr auto make_speed_and_direction_packet(Address addr, uint8_t rggggg) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -220,12 +254,13 @@ constexpr auto make_speed_and_direction_packet(Address::value_type addr,
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco}, rggggg);
 }
 
-/// Make a function group packet for F4-F0
+/// Make function group packet for F4-F0
 ///
 /// \param  addr  Address
 /// \param  state F4-F0 state
 /// \return Function group packet for F4-0
 constexpr auto make_function_group_f4_f0_packet(Address addr, uint8_t state) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -236,7 +271,7 @@ constexpr auto make_function_group_f4_f0_packet(Address addr, uint8_t state) {
   return packet;
 }
 
-/// Make a function group packet for F4-F0
+/// Make function group packet for F4-F0
 ///
 /// \param  addr  Address
 /// \param  state F4-F0 state
@@ -247,12 +282,13 @@ constexpr auto make_function_group_f4_f0_packet(Address::value_type addr,
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco}, state);
 }
 
-/// Make a function group packet for F8-F5
+/// Make function group packet for F8-F5
 ///
 /// \param  addr  Address
 /// \param  state F8-F5 state
 /// \return Function group packet for F8-F5
 constexpr auto make_function_group_f8_f5_packet(Address addr, uint8_t state) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -262,7 +298,7 @@ constexpr auto make_function_group_f8_f5_packet(Address addr, uint8_t state) {
   return packet;
 }
 
-/// Make a function group packet for F8-F5
+/// Make function group packet for F8-F5
 ///
 /// \param  addr  Address
 /// \param  state F8-F5 state
@@ -273,12 +309,13 @@ constexpr auto make_function_group_f8_f5_packet(Address::value_type addr,
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco}, state);
 }
 
-/// Make a function group packet for F12-F9
+/// Make function group packet for F12-F9
 ///
 /// \param  addr    Address
 /// \param  f12_f9  F12-F9 state
 /// \return Function group packet for F12-F9
 constexpr auto make_function_group_f12_f9_packet(Address addr, uint8_t f12_f9) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -288,7 +325,7 @@ constexpr auto make_function_group_f12_f9_packet(Address addr, uint8_t f12_f9) {
   return packet;
 }
 
-/// Make a function group packet for F12-F9
+/// Make function group packet for F12-F9
 ///
 /// \param  addr    Address
 /// \param  f12_f9  F12-F9 state
@@ -299,13 +336,14 @@ constexpr auto make_function_group_f12_f9_packet(Address::value_type addr,
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco}, f12_f9);
 }
 
-/// Make a feature expansion packet for F20-F13
+/// Make feature expansion packet for F20-F13
 ///
 /// \param  addr    Address
 /// \param  f20_f13 F20-F13 state
 /// \return Feature expansion packet for F20-F13
 constexpr auto make_feature_expansion_f20_f13_packet(Address addr,
                                                      uint8_t f20_f13) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -316,7 +354,7 @@ constexpr auto make_feature_expansion_f20_f13_packet(Address addr,
   return packet;
 }
 
-/// Make a feature expansion packet for F20-F13
+/// Make feature expansion packet for F20-F13
 ///
 /// \param  addr    Address
 /// \param  f20_f13 F20-F13 state
@@ -327,13 +365,14 @@ constexpr auto make_feature_expansion_f20_f13_packet(Address::value_type addr,
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco}, f20_f13);
 }
 
-/// Make a feature expansion packet for F28-F21
+/// Make feature expansion packet for F28-F21
 ///
 /// \param  addr    Address
 /// \param  f28_f21 F28-F21 state
 /// \return Feature expansion packet for F28-F21
 constexpr auto make_feature_expansion_f28_f21_packet(Address addr,
                                                      uint8_t f28_f21) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -344,7 +383,7 @@ constexpr auto make_feature_expansion_f28_f21_packet(Address addr,
   return packet;
 }
 
-/// Make a feature expansion packet for F28-F21
+/// Make feature expansion packet for F28-F21
 ///
 /// \param  addr    Address
 /// \param  f28_f21 F28-F21 state
@@ -355,12 +394,13 @@ constexpr auto make_feature_expansion_f28_f21_packet(Address::value_type addr,
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco}, f28_f21);
 }
 
-/// Make a binary state short packet
+/// Make binary state short packet
 ///
 /// \param  addr      Address
 /// \param  dlllllll  Binary state low byte and number
 /// \return Binary state short packet
 constexpr auto make_binary_state_short_packet(Address addr, uint8_t dlllllll) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -371,7 +411,7 @@ constexpr auto make_binary_state_short_packet(Address addr, uint8_t dlllllll) {
   return packet;
 }
 
-/// Make a binary state short packet
+/// Make binary state short packet
 ///
 /// \param  addr      Address
 /// \param  dlllllll  Binary state low byte and number
@@ -383,7 +423,7 @@ constexpr auto make_binary_state_short_packet(Address::value_type addr,
     dlllllll);
 }
 
-/// Make a binary state long packet
+/// Make binary state long packet
 ///
 /// \param  addr      Address
 /// \param  dlllllll  Binary state low byte and number
@@ -392,6 +432,7 @@ constexpr auto make_binary_state_short_packet(Address::value_type addr,
 constexpr auto make_binary_state_long_packet(Address addr,
                                              uint8_t dlllllll,
                                              uint8_t hhhhhhhh) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -403,7 +444,7 @@ constexpr auto make_binary_state_long_packet(Address addr,
   return packet;
 }
 
-/// Make a binary state long packet
+/// Make binary state long packet
 ///
 /// \param  addr      Address
 /// \param  dlllllll  Binary state low byte and number
@@ -418,7 +459,7 @@ constexpr auto make_binary_state_long_packet(Address::value_type addr,
     hhhhhhhh);
 }
 
-/// Make a CV access long form packet for verifying CV
+/// Make CV access long form packet for verifying CV
 ///
 /// \param  addr    Address
 /// \param  cv_addr CV address
@@ -438,7 +479,7 @@ constexpr auto make_cv_access_long_verify_packet(Address addr,
   return packet;
 }
 
-/// Make a CV access long form packet for verifying CV
+/// Make CV access long form packet for verifying CV
 ///
 /// \param  addr    Address
 /// \param  cv_addr CV address
@@ -453,7 +494,7 @@ constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
     byte);
 }
 
-/// Make a CV access long form packet for writing CV
+/// Make CV access long form packet for writing CV
 ///
 /// \param  addr    Address
 /// \param  cv_addr CV address
@@ -472,7 +513,7 @@ make_cv_access_long_write_packet(Address addr, uint32_t cv_addr, uint8_t byte) {
   return packet;
 }
 
-/// Make a CV access long form packet for writing CV
+/// Make CV access long form packet for writing CV
 ///
 /// \param  addr    Address
 /// \param  cv_addr CV address
@@ -487,7 +528,7 @@ constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
     byte);
 }
 
-/// Make a CV access long form packet for verifying CV bit
+/// Make CV access long form packet for verifying CV bit
 ///
 /// \param  addr    Address
 /// \param  cv_addr CV address
@@ -510,7 +551,7 @@ constexpr auto make_cv_access_long_verify_packet(Address addr,
   return packet;
 }
 
-/// Make a CV access long form packet for verifying CV bit
+/// Make CV access long form packet for verifying CV bit
 ///
 /// \param  addr    Address
 /// \param  cv_addr CV address
@@ -528,7 +569,7 @@ constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
     pos);
 }
 
-/// Make a CV access long form packet for writing CV bit
+/// Make CV access long form packet for writing CV bit
 ///
 /// \param  addr    Address
 /// \param  cv_addr CV address
@@ -551,7 +592,7 @@ constexpr auto make_cv_access_long_write_packet(Address addr,
   return packet;
 }
 
-/// Make a CV access long form packet for writing CV bit
+/// Make CV access long form packet for writing CV bit
 ///
 /// \param  addr    Address
 /// \param  cv_addr CV address
@@ -569,7 +610,7 @@ constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
     pos);
 }
 
-/// Make a CV access long form service packet for verifying CV
+/// Make CV access long form service packet for verifying CV
 ///
 /// \param  cv_addr CV address
 /// \param  byte    CV value
@@ -587,7 +628,7 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
   return packet;
 }
 
-/// Make a CV access long form service packet for writing CV
+/// Make CV access long form service packet for writing CV
 ///
 /// \param  cv_addr CV address
 /// \param  byte    CV value
@@ -605,7 +646,7 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   return packet;
 }
 
-/// Make a CV access long form service packet for verifying CV bit
+/// Make CV access long form service packet for verifying CV bit
 ///
 /// \param  cv_addr CV address
 /// \param  bit     Bit
@@ -626,7 +667,7 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
   return packet;
 }
 
-/// Make a CV access long form service packet for writing CV bit
+/// Make CV access long form service packet for writing CV bit
 ///
 /// \param  cv_addr CV address
 /// \param  bit     Bit
@@ -647,7 +688,7 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   return packet;
 }
 
-/// Make a CV access short form packet for writing CV
+/// Make CV access short form packet for writing CV
 ///
 /// \param  addr    Address
 /// \param  kkkk    CV identifier
@@ -658,6 +699,7 @@ constexpr auto make_cv_access_short_write_packet(Address addr,
                                                  uint8_t kkkk,
                                                  uint8_t byte1,
                                                  uint8_t byte2 = 0u) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   assert(kkkk == 0b0010u || // CV23
          kkkk == 0b0011u || // CV24
          kkkk == 0b0100u || // CV17/18
@@ -669,13 +711,12 @@ constexpr auto make_cv_access_short_write_packet(Address addr,
   *last++ = static_cast<uint8_t>(0b1111'0000u | kkkk);
   *last++ = byte1;
   if (kkkk == 0b0100u || kkkk == 0b0101u || kkkk == 0b0110u) *last++ = byte2;
-  *last++ = byte1;
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
-/// Make a CV access short form packet for writing CV
+/// Make CV access short form packet for writing CV
 ///
 /// \param  addr    Address
 /// \param  kkkk    CV identifier
@@ -693,7 +734,7 @@ constexpr auto make_cv_access_short_write_packet(Address::value_type addr,
     byte2);
 }
 
-/// Make a LOGON_ENABLE packet
+/// Make LOGON_ENABLE packet
 ///
 /// \param  gg          Address group
 /// \param  cid         Command station ID
@@ -712,7 +753,7 @@ make_logon_enable_packet(AddressGroup gg, uint16_t cid, uint8_t session_id) {
   return packet;
 }
 
-/// Make a LOGON_SELECT packet
+/// Make LOGON_SELECT packet
 ///
 /// \param  manufacturer_id Manufacturer ID
 /// \param  did             Unique ID
@@ -734,7 +775,7 @@ constexpr auto make_logon_select_packet(uint16_t manufacturer_id,
   return packet;
 }
 
-/// Make a LOGON_ASSIGN packet
+/// Make LOGON_ASSIGN packet
 ///
 /// \param  manufacturer_id Manufacturer ID
 /// \param  did             Unique ID
@@ -753,6 +794,24 @@ constexpr auto make_logon_assign_packet(uint16_t manufacturer_id,
   *last = dcc::crc8({first, last});
   ++last;
   *last = dcc::exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make basic accessory packet
+///
+/// \param  addr  Address
+/// \param  r     Select pair of outputs
+/// \param  d     State
+/// \return Basic accessory packet
+constexpr auto make_basic_accessory_packet(Address addr, bool r, bool d) {
+  assert(addr.type == Address::BasicAccessory ||
+         addr.type == Address::ExtendedAccessory);
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *(first + 1) = static_cast<uint8_t>(*(first + 1) | (d << 3u) | (r << 0u));
+  *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
