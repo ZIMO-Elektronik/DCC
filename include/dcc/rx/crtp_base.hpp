@@ -433,8 +433,15 @@ private:
   bool executeConsistControl(std::span<uint8_t const> bytes) {
     if (size(bytes) != 2uz + sizeof(_checksum)) return false;
 
-    if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
-      cvWrite(19u - 1u, static_cast<uint8_t>(bytes[0uz] << 7u | bytes[1uz]));
+    switch (bytes[0uz] & 0x0Fu) {
+      case 0b0000'0010u: [[fallthrough]];
+      case 0b0000'0011u:
+        if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+          cvWrite(19u - 1u,
+                  static_cast<uint8_t>(bytes[0uz] << 7u | bytes[1uz]));
+        break;
+      default: return false;
+    }
 
     return true;
   }
