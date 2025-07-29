@@ -1,6 +1,6 @@
 # Changelog
 
-##
+## 0.42.0
 - `tx::CrtpBase` stores packets as either bytes or timings ([#57](https://github.com/ZIMO-Elektronik/DCC/issues/57))
 - Add `bidi::Dissector` ([#59](https://github.com/ZIMO-Elektronik/DCC/issues/59))
 - Add `DCC_STANDARD_COMPLIANCE` CMake option ([#78](https://github.com/ZIMO-Elektronik/DCC/issues/78))
@@ -10,6 +10,7 @@
 - Bugfix idle packet iterator not updated ([#71](https://github.com/ZIMO-Elektronik/DCC/issues/71))
 - Bugfix standard compliant CV access ([#75](https://github.com/ZIMO-Elektronik/DCC/issues/75))
 - Bugfix length check packets ([#77](https://github.com/ZIMO-Elektronik/DCC/issues/77))
+- Bugfix consist control decoding ([#82](https://github.com/ZIMO-Elektronik/DCC/issues/82))
 
 ## 0.41.1
 - Update to ZTL 0.21.0
