@@ -358,6 +358,13 @@ Again, inheriting from the base class isn't sufficient:
                           .bit1_duration = 58u,
                           .bit0_duration = 100u,
                           .flags = {.bidi = true}});
+
+    // Optionally, you can also specify the packet that should be sent as soon as the internal deque is empty (e.g. reset for service mode)
+    command_station.init({.num_preamble = 17u,
+                          .bit1_duration = 58u,
+                          .bit0_duration = 100u,
+                          .flags = {.bidi = false}},
+                         dcc::make_reset_packet());
     ```
 
 2. The DCC signal must be generated as output. A transmitter usually uses an H-bridge for this, in which the left and right sides are switched at dedicated times. The switching times are best maintained with a hardware timer interrupt. The times between the interrupts, i.e. the periods, correspond to the return value of the `transmit` method. Each time a new period is returned, the hardware timer must be reloaded with it. In order to comply with the standard timings, it is advisable to assign this interrupt a very high priority.
