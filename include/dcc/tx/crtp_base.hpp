@@ -36,17 +36,18 @@ struct CrtpBase {
 
   /// Initialize
   ///
-  /// \param  cfg Configuration
-  void init(Config cfg = {}) {
+  /// \param  cfg     Configuration
+  /// \param  packet  Packet to send as soon as deque is empty
+  void init(Config cfg = {}, Packet const& packet = make_idle_packet()) {
     assert(cfg.num_preamble >= DCC_TX_MIN_PREAMBLE_BITS &&                 //
            cfg.num_preamble <= DCC_TX_MAX_PREAMBLE_BITS &&                 //
            cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max && //
            cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);  //
     _cfg = cfg;
     if constexpr (std::same_as<D, Packet>)
-      _idle_packet = TimingsAdapter{make_idle_packet(), _cfg};
+      _idle_packet = TimingsAdapter{packet, _cfg};
     else if constexpr (std::same_as<D, Timings>)
-      _idle_packet = bytes2timings(make_idle_packet(), _cfg);
+      _idle_packet = bytes2timings(packet, _cfg);
     _first = begin(_idle_packet);
     _last = cend(_idle_packet);
   }
