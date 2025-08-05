@@ -485,7 +485,8 @@ private:
         // Stop
         if (!(bytes[1uz] & 0b0111'1111u)) directionSpeed(addr, dir, Stop);
         // Emergency stop
-        else if (!(bytes[1uz] & 0b0111'1110u)) impl().speed(addr, EStop);
+        else if (!(bytes[1uz] & 0b0111'1110u)) directionSpeed(addr, dir, EStop);
+        // 126 speed steps
         else {
           auto const speed{scale_speed<126>((bytes[1uz] & 0b0111'1111) - 1)};
           directionSpeed(addr, dir, speed);
@@ -533,26 +534,27 @@ private:
     if (!(bytes[0uz] & 0b0000'1111u)) speed = Stop;
     // Emergency stop
     else if (!(bytes[0uz] & 0b0000'1110u)) speed = EStop;
+    // 14 speed steps
     else speed = static_cast<int32_t>(bytes[0uz] & 0b0000'1111u) - 1;
 
-    // 14 speed steps and F0
+    // ...and F0
     if (_f0_exception) {
       speed = scale_speed<14>(speed);
-      auto const mask{ztl::make_mask(0u)};
-      auto const state{bytes[0uz] & ztl::make_mask(4u) ? ztl::make_mask(0u)
-                                                       : 0u};
-      impl().function(addr, mask, state);
+      if (addr) {
+        auto const mask{ztl::make_mask(0u)};
+        auto const state{bytes[0uz] & ztl::make_mask(4u) ? ztl::make_mask(0u)
+                                                         : 0u};
+        impl().function(addr, mask, state);
+      }
     }
     // 28 speed steps with intermediate
-    else {
+    else if (speed != EStop) {
       speed <<= 1u;
       if (speed && !(bytes[0uz] & ztl::make_mask(4u))) --speed;
       speed = scale_speed<28>(speed);
     }
 
-    // Emergency stop ignores direction
-    if (speed == EStop) impl().speed(addr, EStop);
-    else directionSpeed(addr, dir, speed);
+    directionSpeed(addr, dir, speed);
 
     return true;
   }
@@ -917,10 +919,13 @@ private:
   /// \param  dir   Direction
   /// \param  speed Speed
   void directionSpeed(Address::value_type addr, bool dir, int32_t speed) {
-    auto const reversed{addr == _addrs.primary
-                          ? _addrs.primary.reversed
-                          : _addrs.primary.reversed ^ _addrs.consist.reversed};
-    impl().direction(addr, reversed ? !dir : dir);
+    // Ignore direction on broadcast
+    if (addr) {
+      auto const reversed{addr == _addrs.primary ? _addrs.primary.reversed
+                                                 : _addrs.primary.reversed ^
+                                                     _addrs.consist.reversed};
+      impl().direction(addr, reversed ? !dir : dir);
+    }
     impl().speed(addr, speed);
   }
 
