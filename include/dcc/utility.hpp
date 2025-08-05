@@ -75,8 +75,8 @@ template<int32_t Scale>
 constexpr int32_t scale_speed(int32_t speed)
   requires(Scale == 14 || Scale == 28 || Scale == 126)
 {
-  // Zero stays zero
-  if (!speed) return 0;
+  // EStop and Stop stay the same
+  if (speed <= Stop) return speed;
   // One shares the same internal minimum across all scales
   constexpr int32_t max{255}, min{ztl::lerp<int32_t>(1, 0, 126, 0, max)};
   if (speed == 1) return min;
