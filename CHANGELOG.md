@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.42.1
+- Bugfix wrong EStop decoding ([#86](https://github.com/ZIMO-Elektronik/DCC/issues/86))
+- Bugfix ignore F0 exceptions on broadcasts ([#87](https://github.com/ZIMO-Elektronik/DCC/issues/87))
+
 ## 0.42.0
 - `tx::CrtpBase` stores packets as either bytes or timings ([#57](https://github.com/ZIMO-Elektronik/DCC/issues/57))
 - Add `bidi::Dissector` ([#59](https://github.com/ZIMO-Elektronik/DCC/issues/59))
