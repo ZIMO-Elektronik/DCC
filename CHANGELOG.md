@@ -3,6 +3,7 @@
 ## 0.43.0
 - Remove `DCC_STANDARD_COMPLIANCE` CMake option
 - Add `DCC_RX_MIN_CV_WRITE_PACKETS` CMake option
+- Keep track of last CV access packet for app:pom ([#90](https://github.com/ZIMO-Elektronik/DCC/issues/90))
 
 ## 0.42.1
 - Bugfix wrong EStop decoding ([#86](https://github.com/ZIMO-Elektronik/DCC/issues/86))
