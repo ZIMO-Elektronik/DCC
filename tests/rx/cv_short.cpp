@@ -6,8 +6,7 @@ TEST_F(RxTest, cv_short_cv23) {
     dcc::make_cv_access_short_write_packet(_addrs.primary, 0b0010u, cv23)};
 
   EXPECT_CALL(_mock, writeCv(23u - 1u, cv23));
-  if constexpr (DCC_STANDARD_COMPLIANCE) ReceiveAndExecute(packet);
-  else ReceiveAndExecuteTwice(packet);
+  ReceiveAndExecute(packet);
 }
 
 TEST_F(RxTest, cv_short_cv31_32) {

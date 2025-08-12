@@ -20,8 +20,7 @@ TEST_F(RxTest, consist_control) {
   auto packet{make_consist_control_packet(_addrs.primary, cv19)};
 
   EXPECT_CALL(_mock, writeCv(19u - 1u, cv19));
-  if constexpr (DCC_STANDARD_COMPLIANCE) ReceiveAndExecute(packet);
-  else ReceiveAndExecuteTwice(packet);
+  ReceiveAndExecute(packet);
 }
 
 TEST_F(RxTest, consist_control_wrong_packet_length) {
@@ -30,8 +29,7 @@ TEST_F(RxTest, consist_control_wrong_packet_length) {
     TinkerWithPacketLength(make_consist_control_packet(_addrs.primary, cv19))};
 
   EXPECT_CALL(_mock, writeCv(19u - 1u, cv19)).Times(0);
-  if constexpr (DCC_STANDARD_COMPLIANCE) ReceiveAndExecute(packet);
-  else ReceiveAndExecuteTwice(packet);
+  ReceiveAndExecute(packet);
 }
 
 // https://github.com/ZIMO-Elektronik/DCC/issues/82
@@ -39,6 +37,5 @@ TEST_F(RxTest, consist_control_wrong_encoding) {
   dcc::Packet packet{static_cast<uint8_t>(_addrs.primary), 0x16u, 0x15u, 0x00u};
 
   EXPECT_CALL(_mock, writeCv(19u - 1u, _)).Times(0);
-  if constexpr (DCC_STANDARD_COMPLIANCE) ReceiveAndExecute(packet);
-  else ReceiveAndExecuteTwice(packet);
+  ReceiveAndExecute(packet);
 }

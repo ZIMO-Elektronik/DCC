@@ -48,13 +48,6 @@ The DCC protocol is defined by various standards published by the [National Mode
 | [S-9.2.1.1 Advanced Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1.1_advanced_extended_packet_formats.pdf)                              | [RCN-218 DCC - Protokoll DCC-A - Automatische Anmeldung](https://normen.railcommunity.de/RCN-218.pdf)                    |
 | [S-9.2.2 Configuration Variables For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.2_decoder_cvs_2012.07.pdf)                | [RCN-225 DCC - Protokoll Konfigurationsvariablen](https://normen.railcommunity.de/RCN-225.pdf)                           |
 
-## Deviations from the Standard
-- The consist control command requires two identical programming packets to program CV19 although this is not required by either [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) (chapter 2.4.1) or [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.1.4).
-- **All** CV access short form commands require two identical programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](https://normen.railcommunity.de/RCN-214.pdf) (chapter 3) and [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.7.2).
-
-> [!NOTE]  
-> Standards compliance can be enforced with the CMake option `DCC_STANDARD_COMPLIANCE`. However, this option is disabled by default.
-
 ## Features
 - Platform-independent (apart from the ESP32 RMT encoder)
 - Standard-compliant decoding within the bit duration tolerances
@@ -126,13 +119,13 @@ This library is meant to be consumed with CMake,
 
 ```cmake
 # Either by including it with CPM
-cpmaddpackage("gh:ZIMO-Elektronik/DCC@0.42.1")
+cpmaddpackage("gh:ZIMO-Elektronik/DCC@0.43.0")
 
 # or the FetchContent module
 FetchContent_Declare(
   DCC
   GIT_REPOSITORY "https://github.com/ZIMO-Elektronik/DCC"
-  GIT_TAG v0.42.1)
+  GIT_TAG v0.43.0)
 
 target_link_libraries(YourTarget PRIVATE DCC::DCC)
 ```
@@ -141,7 +134,7 @@ or, on [ESP32 platforms](https://www.espressif.com/en/products/socs/esp32), with
 ```yaml
 dependencies:
   zimo-elektronik/dcc:
-    version: "0.42.1"
+    version: "0.43.0"
 ```
 
 A number of [options](CMakeLists.txt) are provided to configure various sizes such as the receiver deque length or the maximum packet length. When RAM becomes scarce, deque lengths can be reduced. On the other hand, if the processing of the commands is too slow and cannot be done every few milliseconds, it can make sense to lengthen the deques and batch process several commands at once. Otherwise, we recommend sticking with the defaults.
@@ -200,7 +193,7 @@ dcc> Address 3: set speed 18
 On [ESP32 platforms](https://www.espressif.com/en/products/socs/esp32) examples from the [examples](https://github.com/ZIMO-Elektronik/DCC/raw/master/examples) subfolder can be built directly using the [IDF Frontend](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/tools/idf-py.html).
 
 ```sh
-idf.py create-project-from-example "zimo-elektronik/dcc^0.42.1:esp32"
+idf.py create-project-from-example "zimo-elektronik/dcc^0.43.0:esp32"
 ```
 
 #### STM32

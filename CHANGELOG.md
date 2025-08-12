@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.43.0
+- Remove `DCC_STANDARD_COMPLIANCE` CMake option
+- Add `DCC_RX_MIN_CV_WRITE_PACKETS` CMake option
+
 ## 0.42.1
 - Bugfix wrong EStop decoding ([#86](https://github.com/ZIMO-Elektronik/DCC/issues/86))
 - Bugfix ignore F0 exceptions on broadcasts ([#87](https://github.com/ZIMO-Elektronik/DCC/issues/87))

@@ -436,7 +436,7 @@ private:
     switch (bytes[0uz] & 0x0Fu) {
       case 0b0000'0010u: [[fallthrough]];
       case 0b0000'0011u:
-        if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+        if (!(bytes[1uz] & ztl::make_mask(7u)))
           cvWrite(19u - 1u,
                   static_cast<uint8_t>(bytes[0uz] << 7u | bytes[1uz]));
         break;
@@ -715,9 +715,13 @@ private:
 
       // Write byte
       case 0b11u:
-        if (_own_equal_packets_count < 2uz)
+        // Not enough packets
+        if (_own_equal_packets_count < DCC_RX_MIN_CV_WRITE_PACKETS)
           ;
-        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bytes[2uz]);
+        // Write once
+        else if (_own_equal_packets_count == DCC_RX_MIN_CV_WRITE_PACKETS)
+          cvWrite(cv_addr, bytes[2uz]);
+        // ...otherwise just verify
         else cvVerify(cv_addr, bytes[2uz]);
         break;
 
@@ -726,7 +730,8 @@ private:
         auto const pos{bytes[2uz] & 0b111u};
         auto const bit{static_cast<bool>(bytes[2uz] & ztl::make_mask(3u))};
         if (!(bytes[2uz] & ztl::make_mask(4u))) cvVerify(cv_addr, bit, pos);
-        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
+        else if (_own_equal_packets_count == DCC_RX_MIN_CV_WRITE_PACKETS)
+          cvWrite(cv_addr, bit, pos);
         break;
       }
     }
@@ -751,21 +756,19 @@ private:
       // Acceleration adjustment (CV23)
       case 0b0010u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
-          cvWrite(23u - 1u, bytes[1uz]);
+        else cvWrite(23u - 1u, bytes[1uz]);
         break;
 
       // Deceleration adjustment (CV24)
       case 0b0011u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
-          cvWrite(24u - 1u, bytes[1uz]);
+        else cvWrite(24u - 1u, bytes[1uz]);
         break;
 
       // Extended address 0 and 1 (CV17 and CV18)
       case 0b0100u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == 2uz) {
+        else if (_own_equal_packets_count == DCC_RX_MIN_CV_WRITE_PACKETS) {
           cvWrite(17u - 1u, static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
           cvWrite(18u - 1u, bytes[2uz]);
           cvWrite(29u - 1u, true, 5u);
@@ -775,7 +778,7 @@ private:
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == 2uz) {
+        else if (_own_equal_packets_count == DCC_RX_MIN_CV_WRITE_PACKETS) {
           cvWrite(31u - 1u, bytes[1uz]);
           cvWrite(32u - 1u, bytes[2uz]);
         }
@@ -929,7 +932,7 @@ private:
     impl().speed(addr, speed);
   }
 
-  /// Count own equal CV packets
+  /// Count own equal packets
   void countOwnEqualPackets() {
     if (_last_own_packet == _deque.front()) ++_own_equal_packets_count;
     else {
@@ -1135,9 +1138,9 @@ private:
   void appPom() {
     if (!_ch2_data_enabled) return;
     // Implicitly acknowledge all CV access commands
-    else if (_packet != _last_own_packet)
+    else if (empty(_pom_deque))
       impl().transmitBiDi({cbegin(acks), sizeof(acks[0uz])});
-    else if (!empty(_pom_deque)) {
+    else {
       auto const& datagram{_pom_deque.front()};
       std::copy(cbegin(datagram), cend(datagram), begin(_ch2));
       impl().transmitBiDi({cbegin(_ch2), size(datagram)});
@@ -1275,7 +1278,7 @@ private:
   ztl::inplace_deque<Datagram<datagram_size<Bits::_48>>, 1uz> _logon_deque{};
   ztl::inplace_deque<Datagram<datagram_size<Bits::_36>>, 1uz> _tos_deque{};
   ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 2uz> _adr_deque{};
-  ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 2uz> _pom_deque{};
+  ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 1uz> _pom_deque{};
 
   Packet _packet{};          ///< Current packet
   Packet _last_own_packet{}; ///< Last packet for own address
@@ -1298,7 +1301,7 @@ private:
     std::chrono::time_point<std::chrono::system_clock> init;
     std::chrono::time_point<std::chrono::system_clock> packet;
     std::chrono::time_point<std::chrono::system_clock> tos;
-  } _tps;
+  } _tps{};
 
   std::array<uint8_t, 4uz> _did{};
 
