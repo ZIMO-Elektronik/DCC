@@ -436,7 +436,8 @@ private:
     switch (bytes[0uz] & 0x0Fu) {
       case 0b0000'0010u: [[fallthrough]];
       case 0b0000'0011u:
-        if (!(bytes[1uz] & ztl::make_mask(7u)))
+        if (!(bytes[1uz] & ztl::make_mask(7u)) &&
+            _own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
           cvWrite(19u - 1u,
                   static_cast<uint8_t>(bytes[0uz] << 7u | bytes[1uz]));
         break;
@@ -719,12 +720,10 @@ private:
       // Write byte
       case 0b11u:
         // Not enough packets
-        if (_own_equal_packets_count < DCC_RX_MIN_CV_WRITE_PACKETS)
+        if (_own_equal_packets_count < 2uz)
           ;
         // Write once
-        else if (_own_equal_packets_count == DCC_RX_MIN_CV_WRITE_PACKETS ||
-                 serviceMode())
-          cvWrite(cv_addr, bytes[2uz]);
+        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bytes[2uz]);
         // ...otherwise just verify
         else cvVerify(cv_addr, bytes[2uz]);
         break;
@@ -734,9 +733,7 @@ private:
         auto const pos{bytes[2uz] & 0b111u};
         auto const bit{static_cast<bool>(bytes[2uz] & ztl::make_mask(3u))};
         if (!(bytes[2uz] & ztl::make_mask(4u))) cvVerify(cv_addr, bit, pos);
-        else if (_own_equal_packets_count == DCC_RX_MIN_CV_WRITE_PACKETS ||
-                 serviceMode())
-          cvWrite(cv_addr, bit, pos);
+        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
         break;
       }
     }
@@ -761,19 +758,21 @@ private:
       // Acceleration adjustment (CV23)
       case 0b0010u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        else cvWrite(23u - 1u, bytes[1uz]);
+        else if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+          cvWrite(23u - 1u, bytes[1uz]);
         break;
 
       // Deceleration adjustment (CV24)
       case 0b0011u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        else cvWrite(24u - 1u, bytes[1uz]);
+        else if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+          cvWrite(24u - 1u, bytes[1uz]);
         break;
 
       // Extended address 0 and 1 (CV17 and CV18)
       case 0b0100u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == DCC_RX_MIN_CV_WRITE_PACKETS) {
+        else if (_own_equal_packets_count == 2uz) {
           cvWrite(17u - 1u, static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
           cvWrite(18u - 1u, bytes[2uz]);
           cvWrite(29u - 1u, true, 5u);
@@ -783,7 +782,7 @@ private:
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == DCC_RX_MIN_CV_WRITE_PACKETS) {
+        else if (_own_equal_packets_count == 2uz) {
           cvWrite(31u - 1u, bytes[1uz]);
           cvWrite(32u - 1u, bytes[2uz]);
         }
