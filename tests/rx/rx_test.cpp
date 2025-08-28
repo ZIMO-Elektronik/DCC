@@ -9,21 +9,25 @@ RxTest::RxTest() {
   _cvs[15uz - 1uz] = 0u;           // Lock
   _cvs[16uz - 1uz] = 0u;           // Lock compare
   _cvs[28uz - 1uz] = 0b1000'0011u; // RailCom
-  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0u] =
-    static_cast<uint8_t>(_did >> 24u); // Decoder ID 1
-  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1u] =
-    static_cast<uint8_t>(_did >> 16u); // Decoder ID 2
-  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2u] =
-    static_cast<uint8_t>(_did >> 8u); // Decoder ID 3
-  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3u] =
-    static_cast<uint8_t>(_did >> 0u);                     // Decoder ID 4
-  _cvs[65297uz - 1uz] = static_cast<uint8_t>(_cid >> 8u); // CID high byte
-  _cvs[65298uz - 1uz] = static_cast<uint8_t>(_cid >> 0u); // CID low byte
-  _cvs[65299uz - 1uz] = _sid;                             // Session ID
-  _cvs[65300uz - 1uz] = static_cast<uint8_t>(
-    0b1100'0000u | _addrs.logon >> 8u); // Logon address high byte
-  _cvs[65301uz - 1uz] =
-    static_cast<uint8_t>(_addrs.logon >> 0u); // Logon address low byte
+
+  // Decoder ID
+  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz] = static_cast<uint8_t>(_did >> 24u);
+  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz] = static_cast<uint8_t>(_did >> 16u);
+  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz] = static_cast<uint8_t>(_did >> 8u);
+  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz] = static_cast<uint8_t>(_did >> 0u);
+
+  // CID
+  _cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz] = static_cast<uint8_t>(_cid >> 8u);
+  _cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz] = static_cast<uint8_t>(_cid >> 0u);
+
+  // SID
+  _cvs[DCC_RX_LOGON_SID_CV_ADDRESS] = _sid;
+
+  // Logon address
+  _cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz] =
+    static_cast<uint8_t>(0b1100'0000u | _addrs.logon >> 8u);
+  _cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz] =
+    static_cast<uint8_t>(_addrs.logon >> 0u);
 }
 
 RxTest::~RxTest() {}
@@ -44,13 +48,13 @@ void RxTest::SetUp() {
         .WillOnce(Return(_cvs[15uz - 1uz]))
         .WillOnce(Return(_cvs[16uz - 1uz]))
         .WillOnce(Return(_cvs[28uz - 1uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0u]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1u]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2u]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3u]))
-        .WillOnce(Return(_cvs[65297uz - 1uz]))
-        .WillOnce(Return(_cvs[65298uz - 1uz]))
-        .WillOnce(Return(_cvs[65299uz - 1uz]));
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_SID_CV_ADDRESS]));
       _mock.init();
     });
   }
@@ -65,13 +69,13 @@ void RxTest::SetUp() {
         .WillOnce(Return(_cvs[15uz - 1uz]))
         .WillOnce(Return(_cvs[16uz - 1uz]))
         .WillOnce(Return(_cvs[28uz - 1uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0u]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1u]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2u]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3u]))
-        .WillOnce(Return(_cvs[65297uz - 1uz]))
-        .WillOnce(Return(_cvs[65298uz - 1uz]))
-        .WillOnce(Return(_cvs[65299uz - 1uz]));
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz]))
+        .WillOnce(Return(_cvs[DCC_RX_LOGON_SID_CV_ADDRESS]));
       _mock.init();
     });
   }
@@ -106,10 +110,10 @@ void RxTest::EnterServiceMode() {
 }
 
 void RxTest::Logon() {
-  EXPECT_CALL(_mock, readCv(65300u - 1u))
-    .WillRepeatedly(Return(_cvs[65300uz - 1uz]));
-  EXPECT_CALL(_mock, readCv(65301u - 1u))
-    .WillRepeatedly(Return(_cvs[65301uz - 1uz]));
+  EXPECT_CALL(_mock, readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u))
+    .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz]));
+  EXPECT_CALL(_mock, readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u))
+    .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]));
 
   // Enable
   Receive(dcc::make_logon_enable_packet(dcc::AddressGroup::Now, _cid, _sid));

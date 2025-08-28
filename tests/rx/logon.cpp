@@ -39,8 +39,8 @@ TEST_F(RxTest, logon_with_known_cid_and_sid) {
 // Known CID and session ID incremented by 1 skips logon
 TEST_F(RxTest, logon_with_known_cid_and_sid_plus_1) {
   EXPECT_CALL(_mock, readCv(_))
-    .WillOnce(Return(_cvs[65300uz - 1uz]))
-    .WillOnce(Return(_cvs[65301uz - 1uz]));
+    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz]))
+    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]));
 
   // Enable
   Receive(
@@ -85,10 +85,10 @@ TEST_F(RxTest, logon_with_known_cid_and_sid_plus_2) {
 TEST_F(
   RxTest,
   no_id15_datagram_after_logon_select_as_long_as_cid_and_sid_stay_the_same) {
-  EXPECT_CALL(_mock, readCv(65300u - 1u))
-    .WillRepeatedly(Return(_cvs[65300uz - 1uz]));
-  EXPECT_CALL(_mock, readCv(65301u - 1u))
-    .WillRepeatedly(Return(_cvs[65301uz - 1uz]));
+  EXPECT_CALL(_mock, readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u))
+    .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz]));
+  EXPECT_CALL(_mock, readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u))
+    .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]));
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(3 * 2);
 

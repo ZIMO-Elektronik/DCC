@@ -98,8 +98,9 @@ struct CrtpBase {
             impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 2u),
             impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 3u)};
     _cids.front() = static_cast<decltype(_cids)::value_type>(
-      (impl().readCv(65297u - 1u) << 8u) | impl().readCv(65298u - 1u));
-    _session_ids.front() = impl().readCv(65299u - 1u);
+      (impl().readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 0u) << 8u) |
+      impl().readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 1u));
+    _sids.front() = impl().readCv(DCC_RX_LOGON_SID_CV_ADDRESS);
 
     // Initialization time point
     _tps.init = std::chrono::system_clock::now();
@@ -407,8 +408,8 @@ private:
       case 0b1111'0000u: {
         auto const gg{static_cast<AddressGroup>(bytes[0uz] & 0b11u)};
         auto const cid{data2uint16(&bytes[1uz])};
-        auto const session_id{bytes[3uz]};
-        logonEnable(gg, cid, session_id);
+        auto const sid{bytes[3uz]};
+        logonEnable(gg, cid, sid);
         break;
       }
     }
@@ -999,28 +1000,27 @@ private:
 
   /// Logon enable
   ///
-  /// \param  gg          Address group
-  /// \param  cid         Command station ID
-  /// \param  session_id  Session ID
-  void logonEnable(AddressGroup gg, uint16_t cid, uint8_t session_id) {
+  /// \param  gg  Address group
+  /// \param  cid Command station ID
+  /// \param  sid Session ID
+  void logonEnable(AddressGroup gg, uint16_t cid, uint8_t sid) {
     // Already got selected and CID/SID didn't change
-    if (_logon_selected && _cids.back() == cid &&
-        _session_ids.back() == session_id)
-      return;
+    if (_logon_selected && _cids.back() == cid && _sids.back() == sid) return;
     // ...otherwise clear selected
     else _logon_selected = false;
 
     // Store new CID and session ID
     _cids.back() = cid;
-    _session_ids.back() = session_id;
+    _sids.back() = sid;
 
     // Skip logon if CID equal and diff between session IDs <=1
     if (auto const skip{_cids.back() == _cids.front() &&
-                        static_cast<uint8_t>(_session_ids.back() -
-                                             _session_ids.front()) <= 1u}) {
+                        static_cast<uint8_t>(_sids.back() - _sids.front()) <=
+                          1u}) {
       _logon_selected = _logon_assigned = _logon_store = true;
-      std::array const cv65300_65301{impl().readCv(65300u - 1u),
-                                     impl().readCv(65301u - 1u)};
+      std::array const cv65300_65301{
+        impl().readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u),
+        impl().readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u)};
       _addrs.logon = decode_address(cv65300_65301);
       return;
     }
@@ -1242,16 +1242,18 @@ private:
     impl().writeCv(20u - 1u, 0u);
 
     _cids.front() = _cids.back();
-    impl().writeCv(65297u - 1u, static_cast<uint8_t>(_cids.back() >> 8u));
-    impl().writeCv(65298u - 1u, static_cast<uint8_t>(_cids.back()));
+    impl().writeCv(DCC_RX_LOGON_CID_CV_ADDRESS + 0u,
+                   static_cast<uint8_t>(_cids.back() >> 8u));
+    impl().writeCv(DCC_RX_LOGON_CID_CV_ADDRESS + 1u,
+                   static_cast<uint8_t>(_cids.back()));
 
-    _session_ids.front() = _session_ids.back();
-    impl().writeCv(65299u - 1u, _session_ids.back());
+    _sids.front() = _sids.back();
+    impl().writeCv(DCC_RX_LOGON_SID_CV_ADDRESS, _sids.back());
 
     std::array<uint8_t, 2uz> cv65300_65301;
     encode_address(_addrs.logon, begin(cv65300_65301));
-    impl().writeCv(65300u - 1u, cv65300_65301[0uz]);
-    impl().writeCv(65301u - 1u, cv65300_65301[1uz]);
+    impl().writeCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u, cv65300_65301[0uz]);
+    impl().writeCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u, cv65300_65301[1uz]);
   }
 
   /// Update quality of service (roughly every second)
@@ -1323,8 +1325,8 @@ private:
   Backoff _logon_backoff{};
   Backoff _tos_backoff{};
 
-  std::array<uint16_t, 2uz> _cids{};       ///< Central ID
-  std::array<uint8_t, 2uz> _session_ids{}; ///< Session ID
+  std::array<uint16_t, 2uz> _cids{}; ///< Central ID
+  std::array<uint8_t, 2uz> _sids{};  ///< Session ID
 
   uint8_t _qos{}; ///< Quality of service
 
