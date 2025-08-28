@@ -122,20 +122,20 @@ The DCC protocol is defined by various standards published by the [National Mode
   - for building [ESP32](https://www.espressif.com/en/products/socs/esp32) [RMT](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) encoder example
     - [ESP-IDF](https://github.com/espressif/esp-idf) ( >= 5.0.3 )
   - for building [STM32](https://www.st.com/en/microcontrollers-microprocessors/stm32-32-bit-arm-cortex-mcus.html) example
-    - [arm-none-eabi-gcc](https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases) ( >= 12.2.0 )
+    - [arm-none-eabi-gcc](https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases) ( >= 14.1.0 )
 
 ### Installation
 This library is meant to be consumed with CMake,
 
 ```cmake
 # Either by including it with CPM
-cpmaddpackage("gh:ZIMO-Elektronik/DCC@0.43.0")
+cpmaddpackage("gh:ZIMO-Elektronik/DCC@0.44.0")
 
 # or the FetchContent module
 FetchContent_Declare(
   DCC
   GIT_REPOSITORY "https://github.com/ZIMO-Elektronik/DCC"
-  GIT_TAG v0.43.0)
+  GIT_TAG v0.44.0)
 
 target_link_libraries(YourTarget PRIVATE DCC::DCC)
 ```
@@ -144,7 +144,7 @@ or, on [ESP32 platforms](https://www.espressif.com/en/products/socs/esp32), with
 ```yaml
 dependencies:
   zimo-elektronik/dcc:
-    version: "0.43.0"
+    version: "0.44.0"
 ```
 
 A number of [options](CMakeLists.txt) are provided to configure various sizes such as the receiver deque length or the maximum packet length. When RAM becomes scarce, deque lengths can be reduced. On the other hand, if the processing of the commands is too slow and cannot be done every few milliseconds, it can make sense to lengthen the deques and batch process several commands at once. Otherwise, we recommend sticking with the defaults.
@@ -203,7 +203,7 @@ dcc> Address 3: set speed 18
 On [ESP32 platforms](https://www.espressif.com/en/products/socs/esp32) examples from the [examples](https://github.com/ZIMO-Elektronik/DCC/raw/master/examples) subfolder can be built directly using the [IDF Frontend](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/tools/idf-py.html).
 
 ```sh
-idf.py create-project-from-example "zimo-elektronik/dcc^0.43.0:esp32"
+idf.py create-project-from-example "zimo-elektronik/dcc^0.44.0:esp32"
 ```
 
 #### STM32
