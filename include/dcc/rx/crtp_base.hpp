@@ -93,10 +93,10 @@ struct CrtpBase {
       impl().highCurrentBiDi(cv28 & ztl::make_mask(6u));
 
     // IDs
-    _did = {impl().readCv(250u - 1u),
-            impl().readCv(251u - 1u),
-            impl().readCv(252u - 1u),
-            impl().readCv(253u - 1u)};
+    _did = {impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 0u),
+            impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 1u),
+            impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 2u),
+            impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 3u)};
     _cids.front() = static_cast<decltype(_cids)::value_type>(
       (impl().readCv(65297u - 1u) << 8u) | impl().readCv(65298u - 1u));
     _session_ids.front() = impl().readCv(65299u - 1u);
@@ -374,7 +374,7 @@ private:
   /// \retval true  Command accepted
   /// \retval false Command rejected
   bool executeAutomaticLogon(Address addr, std::span<uint8_t const> bytes) {
-    if (addr != 254u) return false;
+    if (!_logon_enabled || addr != 254u) return false;
 
     switch (bytes[0uz] & 0xF0u) {
       // SELECT
@@ -1003,30 +1003,30 @@ private:
   /// \param  cid         Command station ID
   /// \param  session_id  Session ID
   void logonEnable(AddressGroup gg, uint16_t cid, uint8_t session_id) {
-    if (!_logon_enabled || _logon_selected) return;
+    // Already got selected and CID/SID didn't change
+    if (_logon_selected && _cids.back() == cid &&
+        _session_ids.back() == session_id)
+      return;
+    // ...otherwise clear selected
+    else _logon_selected = false;
 
     // Store new CID and session ID
     _cids.back() = cid;
     _session_ids.back() = session_id;
 
-    // Exceptions
-    if (_cids.back() == _cids.front()) {
-      // Difference decides whether fast logon or skip
-      auto const session_id_diff{
-        static_cast<uint32_t>(_session_ids.back() - _session_ids.front())};
-      auto const skip{session_id_diff <= 4u};
-      _logon_selected = _logon_assigned = _logon_store = skip;
-
-      // Skip logon if diff between session IDs is <=4
-      if (skip) {
-        std::array const cv65300_65301{impl().readCv(65300u - 1u),
-                                       impl().readCv(65301u - 1u)};
-        _addrs.logon = decode_address(cv65300_65301);
-        return;
-      }
-      // Force new logon if diff is >4
-      else
-        _addrs.logon = 0u;
+    // Skip logon if CID equal and diff between session IDs <=1
+    if (auto const skip{_cids.back() == _cids.front() &&
+                        static_cast<uint8_t>(_session_ids.back() -
+                                             _session_ids.front()) <= 1u}) {
+      _logon_selected = _logon_assigned = _logon_store = true;
+      std::array const cv65300_65301{impl().readCv(65300u - 1u),
+                                     impl().readCv(65301u - 1u)};
+      _addrs.logon = decode_address(cv65300_65301);
+      return;
+    }
+    // ...otherwise force new logon
+    else {
+      _addrs.logon = 0u;
     }
 
     switch (gg) {
@@ -1051,8 +1051,7 @@ private:
   ///
   /// \param  did Unique ID
   void logonSelect(std::span<uint8_t const, 4uz> did) {
-    if (!_logon_enabled || _logon_assigned || !std::ranges::equal(did, _did))
-      return;
+    if (_logon_assigned || !std::ranges::equal(did, _did)) return;
     _logon_selected = true;
     std::array<uint8_t, 5uz> data{
       static_cast<uint8_t>(ztl::make_mask(7u) | (_addrs.primary >> 8u)),
@@ -1078,7 +1077,7 @@ private:
   void logonAssign(std::span<uint8_t const, 4uz> did,
                    AddressAssign bb,
                    Address addr) {
-    if (!_logon_enabled || !std::ranges::equal(did, _did)) return;
+    if (!std::ranges::equal(did, _did)) return;
     _logon_assigned = _logon_store = true;
     _addrs.consist = 0u;
     _addrs.logon = addr;
@@ -1248,8 +1247,11 @@ private:
 
     _session_ids.front() = _session_ids.back();
     impl().writeCv(65299u - 1u, _session_ids.back());
-    impl().writeCv(65300u - 1u, static_cast<uint8_t>(_addrs.logon >> 8u));
-    impl().writeCv(65301u - 1u, static_cast<uint8_t>(_addrs.logon));
+
+    std::array<uint8_t, 2uz> cv65300_65301;
+    encode_address(_addrs.logon, begin(cv65300_65301));
+    impl().writeCv(65300u - 1u, cv65300_65301[0uz]);
+    impl().writeCv(65301u - 1u, cv65300_65301[1uz]);
   }
 
   /// Update quality of service (roughly every second)
