@@ -52,7 +52,7 @@ protected:
   std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
   uint32_t _did{0xAABBCCDDu};
   uint16_t _cid{0xABCDu};
-  uint8_t _session_id{0x2Au};
+  uint8_t _sid{0x2Au};
 };
 
 MATCHER_P(DatagramMatcher, datagram, "") {

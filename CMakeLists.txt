@@ -25,12 +25,25 @@ project(
   VERSION ${VERSION_FROM_GIT}
   LANGUAGES ASM C CXX)
 
+option(DCC_STANDARD_COMPLIANCE "Standard compliance" OFF)
 set(DCC_MANUFACTURER_ID
     145u
     CACHE STRING "Manufacturer ID")
 set(DCC_MAX_PACKET_SIZE
     18u
     CACHE STRING "Maximum size of a packet in bytes")
+set(DCC_RX_LOGON_DID_CV_ADDRESS
+    249u
+    CACHE STRING "First CV address of decoder ID")
+set(DCC_RX_LOGON_CID_CV_ADDRESS
+    65296u
+    CACHE STRING "First CV address of last CID")
+set(DCC_RX_LOGON_SID_CV_ADDRESS
+    65298u
+    CACHE STRING "First CV address of last SID")
+set(DCC_RX_LOGON_ADDRESS_CV_ADDRESS
+    65299u
+    CACHE STRING "First CV address of last logon address")
 set(DCC_RX_MIN_PREAMBLE_BITS
     10u
     CACHE STRING "Minimum number of preambel bits of decoder")
@@ -46,9 +59,6 @@ set(DCC_RX_MIN_BIT_0_TIMING
 set(DCC_RX_MAX_BIT_0_TIMING
     119u
     CACHE STRING "Maximum duration of a 0 bit of decoder")
-set(DCC_RX_MIN_CV_WRITE_PACKETS
-    2u
-    CACHE STRING "Minimum number of required CV write packets")
 set(DCC_RX_DEQUE_SIZE
     31u
     CACHE STRING "Size of the receiver deque of decoder")
@@ -90,14 +100,18 @@ target_compile_features(DCC INTERFACE cxx_std_23)
 
 target_compile_definitions(
   DCC
-  INTERFACE DCC_MANUFACTURER_ID=${DCC_MANUFACTURER_ID}
+  INTERFACE DCC_STANDARD_COMPLIANCE=$<BOOL:${DCC_STANDARD_COMPLIANCE}>
+            DCC_MANUFACTURER_ID=${DCC_MANUFACTURER_ID}
             DCC_MAX_PACKET_SIZE=${DCC_MAX_PACKET_SIZE}
+            DCC_RX_LOGON_DID_CV_ADDRESS=${DCC_RX_LOGON_DID_CV_ADDRESS}
+            DCC_RX_LOGON_CID_CV_ADDRESS=${DCC_RX_LOGON_CID_CV_ADDRESS}
+            DCC_RX_LOGON_SID_CV_ADDRESS=${DCC_RX_LOGON_SID_CV_ADDRESS}
+            DCC_RX_LOGON_ADDRESS_CV_ADDRESS=${DCC_RX_LOGON_ADDRESS_CV_ADDRESS}
             DCC_RX_MIN_PREAMBLE_BITS=${DCC_RX_MIN_PREAMBLE_BITS}
             DCC_RX_MIN_BIT_1_TIMING=${DCC_RX_MIN_BIT_1_TIMING}
             DCC_RX_MAX_BIT_1_TIMING=${DCC_RX_MAX_BIT_1_TIMING}
             DCC_RX_MIN_BIT_0_TIMING=${DCC_RX_MIN_BIT_0_TIMING}
             DCC_RX_MAX_BIT_0_TIMING=${DCC_RX_MAX_BIT_0_TIMING}
-            DCC_RX_MIN_CV_WRITE_PACKETS=${DCC_RX_MIN_CV_WRITE_PACKETS}
             DCC_RX_DEQUE_SIZE=${DCC_RX_DEQUE_SIZE}
             DCC_RX_BIDI_DEQUE_SIZE=${DCC_RX_BIDI_DEQUE_SIZE}
             DCC_TX_MIN_PREAMBLE_BITS=${DCC_TX_MIN_PREAMBLE_BITS}

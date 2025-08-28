@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.44.0
+- Revert remove `DCC_RX_MIN_CV_WRITE_PACKETS` and add `DCC_STANDARD_COMPLIANCE` CMake option
+- Add `DCC_RX_LOGON_DID_CV_ADDRESS`, `DCC_RX_LOGON_CID_CV_ADDRESS`, `DCC_RX_LOGON_SID_CV_ADDRESS` and `DCC_RX_LOGON_ADDRESS_CV_ADDRESS` CMake options
+- Bugfix logon address de-/encoding ([#91](https://github.com/ZIMO-Elektronik/DCC/issues/91))
+- Bugfix standard compliant LOGON_ENABLE ([#93](https://github.com/ZIMO-Elektronik/DCC/issues/93))
+
 ## 0.43.0
 - Remove `DCC_STANDARD_COMPLIANCE` CMake option
 - Add `DCC_RX_MIN_CV_WRITE_PACKETS` CMake option
@@ -14,7 +20,7 @@
 - Add `bidi::Dissector` ([#59](https://github.com/ZIMO-Elektronik/DCC/issues/59))
 - Add `DCC_STANDARD_COMPLIANCE` CMake option ([#78](https://github.com/ZIMO-Elektronik/DCC/issues/78))
 - Bugfix receiver sends channel 1 replies to broadcast packets ([#60](https://github.com/ZIMO-Elektronik/DCC/issues/60))
-- Bugfix CV29:1 did not work with consist ([#68](https://github.com/ZIMO-Elektronik/DCC/issues/68))
+- Bugfix CV29:0 did not work with consist ([#68](https://github.com/ZIMO-Elektronik/DCC/issues/68))
 - Bugfix CV short access for CV23/24 ([#69](https://github.com/ZIMO-Elektronik/DCC/issues/69))
 - Bugfix idle packet iterator not updated ([#71](https://github.com/ZIMO-Elektronik/DCC/issues/71))
 - Bugfix accessory address encoding ([#74](https://github.com/ZIMO-Elektronik/DCC/issues/74))

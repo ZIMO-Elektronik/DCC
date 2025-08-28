@@ -48,6 +48,16 @@ The DCC protocol is defined by various standards published by the [National Mode
 | [S-9.2.1.1 Advanced Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1.1_advanced_extended_packet_formats.pdf)                              | [RCN-218 DCC - Protokoll DCC-A - Automatische Anmeldung](https://normen.railcommunity.de/RCN-218.pdf)                    |
 | [S-9.2.2 Configuration Variables For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.2_decoder_cvs_2012.07.pdf)                | [RCN-225 DCC - Protokoll Konfigurationsvariablen](https://normen.railcommunity.de/RCN-225.pdf)                           |
 
+## Deviations from the Standard
+- The consist control command requires two identical programming packets to program CV19 although this is not required by either [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) (chapter 2.4.1) or [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.1.4).
+- **All** CV access short form commands require two identical programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](https://normen.railcommunity.de/RCN-214.pdf) (chapter 3) and [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.7.2).
+- [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) specific
+  - The 4-byte ID of a decoder (DID) must be available. By default this library uses CV250-253. To change the address of these CVs use the CMake option `DCC_RX_LOGON_DID_CV_ADDRESS`.
+  - During logon, the decoder must be able to store 2 bytes central ID (CID), 1 byte session ID (SID), and 2 bytes logon address. By default this library uses CV17-21 in the RailCom block (CV31=0 and CV32=255). To change the addresses for these CVs use the CMake options `DCC_RX_LOGON_CID_CV_ADDRESS`, `DCC_RX_LOGON_SID_CV_ADDRESS`, and `DCC_RX_LOGON_ADDRESS_CV_ADDRESS`.
+
+> [!NOTE]  
+> Standards compliance can be enforced with the CMake option `DCC_STANDARD_COMPLIANCE`. However, this option is disabled by default.
+
 ## Features
 - Platform-independent (apart from the ESP32 RMT encoder)
 - Standard-compliant decoding within the bit duration tolerances
