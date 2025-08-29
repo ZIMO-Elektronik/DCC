@@ -1009,14 +1009,17 @@ private:
     // ...otherwise clear selected
     else _logon_selected = false;
 
-    // Store new CID and session ID
+    // Store new CID and SID
     _cids.back() = cid;
     _sids.back() = sid;
 
-    // Skip logon if CID equal and diff between session IDs <=1
+    // Skip logon if
+    // - CIDs are equal and
+    // - SIDs are equal if not yet logon assigned or
+    // - difference between SIDs is <=1 if already logon assigned
     if (auto const skip{_cids.back() == _cids.front() &&
                         static_cast<uint8_t>(_sids.back() - _sids.front()) <=
-                          1u}) {
+                          _logon_assigned}) {
       _logon_selected = _logon_assigned = _logon_store = true;
       std::array const cv65300_65301{
         impl().readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u),
@@ -1026,7 +1029,8 @@ private:
     }
     // ...otherwise force new logon
     else {
-      _addrs.logon = 0u;
+      _logon_assigned = false;
+      _addrs.logon = {};
     }
 
     switch (gg) {
