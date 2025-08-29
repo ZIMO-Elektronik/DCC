@@ -1,7 +1,19 @@
 #include "rx_test.hpp"
 
-// New CID forces new logon
-TEST_F(RxTest, logon_with_new_cid) {
+// Known CID skips logon
+TEST_F(RxTest, skip_logon_with_known_cid) {
+  Logon();
+
+  // Execute commands to logon address
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
+  ReceiveAndExecute(
+    dcc::make_advanced_operations_speed_packet(_addrs.logon, 0u));
+}
+
+// Unknown CID forces logon
+TEST_F(RxTest, logon_with_unknown_cid) {
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(3 * 2);
 
   // Enable
@@ -13,72 +25,64 @@ TEST_F(RxTest, logon_with_new_cid) {
   Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
-  // Assign address 1000
+  // Assign address 1001
   Receive(dcc::make_logon_assign_packet(
-    DCC_MANUFACTURER_ID, _did, (0b11 << 14u) | 1000u));
+    DCC_MANUFACTURER_ID, _did, (0b11 << 14u) | 1001u));
   BiDi();
 
-  // Execute commands to address 1000
+  // Execute commands to address 1001
   EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
-  ReceiveAndExecute(dcc::make_advanced_operations_speed_packet(1000u, 0u));
+  ReceiveAndExecute(dcc::make_advanced_operations_speed_packet(1001u, 0u));
 }
 
-// Known CID and session ID skips logon
-TEST_F(RxTest, logon_with_known_cid_and_sid) {
-  Logon();
-
-  // Execute commands to address 1000
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
-  ReceiveAndExecute(make_advanced_operations_speed_packet(_addrs.logon, 0u));
-}
-
-// Known CID and session ID incremented by 1 skips logon
-TEST_F(RxTest, logon_with_known_cid_and_sid_plus_1) {
-  EXPECT_CALL(_mock, readCv(_))
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz]))
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]));
+// Known CID and unknown SID doesn't skip logon
+TEST_F(RxTest, no_logon_with_known_cid_and_unknown_sid) {
+  EXPECT_CALL(_mock, readCv(_)).Times(0);
 
   // Enable
   Receive(
     dcc::make_logon_enable_packet(dcc::AddressGroup::Now, _cid, _sid + 1u));
 
-  // Execute commands to address 1000
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
+  // Execute commands to logon address
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(0);
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, false)).Times(0);
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, _)).Times(0);
   ReceiveAndExecute(make_advanced_operations_speed_packet(_addrs.logon, 0u));
 }
 
-// Known CID and session ID incremented by >1 forces logon
-TEST_F(RxTest, logon_with_known_cid_and_sid_plus_2) {
-  EXPECT_CALL(_mock, transmitBiDi(_)).Times(AtLeast(3 * 2));
+// Known CID and SID incremented by >1 forces relogon
+TEST_F(RxTest, force_new_logon_with_known_cid_and_sid_plus_2) {
+  Logon();
+
+  // Execute commands to logon address
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
+  ReceiveAndExecute(
+    dcc::make_advanced_operations_speed_packet(_addrs.logon, 0u));
+
+  EXPECT_CALL(_mock, transmitBiDi(_)).Times(3 * 2);
 
   // Enable
-  // Send multiple times to make sure implementation does not skip logon upon
-  // receiving session ID multiple times in a row. That used to be a bug.
-  for (auto i{0uz}; i < 10uz; ++i) {
-    Receive(make_logon_enable_packet(dcc::AddressGroup::Now, _cid, _sid + 2u));
-    BiDi();
-  }
+  Receive(make_logon_enable_packet(dcc::AddressGroup::Now, _cid, _sid + 2u));
+  BiDi();
 
   // Select
   Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
-  // Assign address 1000
+  // Assign address 1001
   Receive(dcc::make_logon_assign_packet(
-    DCC_MANUFACTURER_ID, _did, (0b11 << 14u) | 1000u));
+    DCC_MANUFACTURER_ID, _did, (0b11 << 14u) | 1001u));
   BiDi();
 
-  // Execute commands to address 1000
+  // Execute commands to address 1001
   EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
-  ReceiveAndExecute(dcc::make_advanced_operations_speed_packet(1000u, 0u));
+  ReceiveAndExecute(dcc::make_advanced_operations_speed_packet(1001u, 0u));
 }
 
 // LOGON_SELECT disables LOGON_ENABLE (and ID15 datagram)
