@@ -468,6 +468,11 @@ constexpr auto make_binary_state_long_packet(Address::value_type addr,
 constexpr auto make_cv_access_long_verify_packet(Address addr,
                                                  uint32_t cv_addr,
                                                  uint8_t byte = 0u) {
+  assert(addr.type == Address::Broadcast ||        //
+         addr.type == Address::BasicLoco ||        //
+         addr.type == Address::ExtendedLoco ||     //
+         addr.type == Address::BasicAccessory ||   //
+         addr.type == Address::ExtendedAccessory); //
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -479,21 +484,6 @@ constexpr auto make_cv_access_long_verify_packet(Address addr,
   return packet;
 }
 
-/// Make CV access long form packet for verifying CV
-///
-/// \param  addr    Address
-/// \param  cv_addr CV address
-/// \param  byte    CV value
-/// \return CV access long form packet for verifying CV
-constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
-                                                 uint32_t cv_addr,
-                                                 uint8_t byte = 0u) {
-  return make_cv_access_long_verify_packet(
-    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
-    cv_addr,
-    byte);
-}
-
 /// Make CV access long form packet for writing CV
 ///
 /// \param  addr    Address
@@ -502,6 +492,11 @@ constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
 /// \return CV access long form packet for writing CV
 constexpr auto
 make_cv_access_long_write_packet(Address addr, uint32_t cv_addr, uint8_t byte) {
+  assert(addr.type == Address::Broadcast ||        //
+         addr.type == Address::BasicLoco ||        //
+         addr.type == Address::ExtendedLoco ||     //
+         addr.type == Address::BasicAccessory ||   //
+         addr.type == Address::ExtendedAccessory); //
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -511,21 +506,6 @@ make_cv_access_long_write_packet(Address addr, uint32_t cv_addr, uint8_t byte) {
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
-}
-
-/// Make CV access long form packet for writing CV
-///
-/// \param  addr    Address
-/// \param  cv_addr CV address
-/// \param  byte    CV value
-/// \return CV access long form packet for writing CV
-constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
-                                                uint32_t cv_addr,
-                                                uint8_t byte) {
-  return make_cv_access_long_write_packet(
-    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
-    cv_addr,
-    byte);
 }
 
 /// Make CV access long form packet for verifying CV bit
@@ -539,6 +519,11 @@ constexpr auto make_cv_access_long_verify_packet(Address addr,
                                                  uint32_t cv_addr,
                                                  bool bit,
                                                  uint32_t pos) {
+  assert(addr.type == Address::Broadcast ||        //
+         addr.type == Address::BasicLoco ||        //
+         addr.type == Address::ExtendedLoco ||     //
+         addr.type == Address::BasicAccessory ||   //
+         addr.type == Address::ExtendedAccessory); //
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -549,24 +534,6 @@ constexpr auto make_cv_access_long_verify_packet(Address addr,
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
-}
-
-/// Make CV access long form packet for verifying CV bit
-///
-/// \param  addr    Address
-/// \param  cv_addr CV address
-/// \param  bit     Bit
-/// \param  pos     Bit position
-/// \return CV access long form packet for verifying CV bit
-constexpr auto make_cv_access_long_verify_packet(Address::value_type addr,
-                                                 uint32_t cv_addr,
-                                                 bool bit,
-                                                 uint32_t pos) {
-  return make_cv_access_long_verify_packet(
-    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
-    cv_addr,
-    bit,
-    pos);
 }
 
 /// Make CV access long form packet for writing CV bit
@@ -580,6 +547,11 @@ constexpr auto make_cv_access_long_write_packet(Address addr,
                                                 uint32_t cv_addr,
                                                 bool bit,
                                                 uint32_t pos) {
+  assert(addr.type == Address::Broadcast ||        //
+         addr.type == Address::BasicLoco ||        //
+         addr.type == Address::ExtendedLoco ||     //
+         addr.type == Address::BasicAccessory ||   //
+         addr.type == Address::ExtendedAccessory); //
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -590,24 +562,6 @@ constexpr auto make_cv_access_long_write_packet(Address addr,
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
-}
-
-/// Make CV access long form packet for writing CV bit
-///
-/// \param  addr    Address
-/// \param  cv_addr CV address
-/// \param  bit     Bit
-/// \param  pos     Bit position
-/// \return CV access long form packet for writing CV bit
-constexpr auto make_cv_access_long_write_packet(Address::value_type addr,
-                                                uint32_t cv_addr,
-                                                bool bit,
-                                                uint32_t pos) {
-  return make_cv_access_long_write_packet(
-    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
-    cv_addr,
-    bit,
-    pos);
 }
 
 /// Make CV access long form service packet for verifying CV

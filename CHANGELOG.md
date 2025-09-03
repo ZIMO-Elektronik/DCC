@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.44.2
+- Bugfix remove `make_cv_access_long_*` functions which only take `Address::value_type` ([#96](https://github.com/ZIMO-Elektronik/DCC/issues/96))
+
 ## 0.44.1
 - Bugfix logon must distinguish between cold and warm start ([#94](https://github.com/ZIMO-Elektronik/DCC/issues/94))
 
