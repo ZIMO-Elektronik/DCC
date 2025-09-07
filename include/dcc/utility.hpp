@@ -759,12 +759,39 @@ constexpr auto make_logon_assign_packet(uint16_t manufacturer_id,
 /// \param  d     State
 /// \return Basic accessory packet
 constexpr auto make_basic_accessory_packet(Address addr, bool r, bool d) {
+  assert(addr.type == Address::BasicAccessory);
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *(first + 1) = static_cast<uint8_t>(*(first + 1) | (d << 3u) | (r << 0u));
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make basic accessory packet
+///
+/// \param  addr  Address
+/// \param  r     Select pair of outputs
+/// \param  d     State
+/// \return Basic accessory packet
+constexpr auto
+make_basic_accessory_packet(Address::value_type addr, bool r, bool d) {
+  return make_basic_accessory_packet({addr, Address::BasicAccessory}, r, d);
+}
+
+/// Make accessory NOP packet
+///
+/// \param  addr  Address
+/// \return Accessory NOP packet
+constexpr auto make_accessory_nop_packet(Address addr) {
   assert(addr.type == Address::BasicAccessory ||
          addr.type == Address::ExtendedAccessory);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
-  *(first + 1) = static_cast<uint8_t>(*(first + 1) | (d << 3u) | (r << 0u));
+  packet[1uz] = static_cast<uint8_t>((packet[1uz] & 0b0111'0110) | 0b000'1000 |
+                                     (addr.type == Address::ExtendedAccessory));
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;

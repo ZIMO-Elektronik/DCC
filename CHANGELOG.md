@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.44.3
+- Add app:pom for accessory decoders to `bidi::Dissector` ([#98](https://github.com/ZIMO-Elektronik/DCC/issues/98))
+
 ## 0.44.2
 - Bugfix remove `make_cv_access_long_*` functions which only take `Address::value_type` ([#96](https://github.com/ZIMO-Elektronik/DCC/issues/96))
 

@@ -23,6 +23,7 @@
 #include "app/ext.hpp"
 #include "app/info.hpp"
 #include "app/pom.hpp"
+#include "app/srq.hpp"
 #include "app/xpom.hpp"
 #include "app/zeit.hpp"
 #include "channel.hpp"
@@ -43,7 +44,8 @@ struct Dissector : std::ranges::view_interface<Dissector> {
                                   app::Xpom,                    // app:xpom
                                   app::CvAuto,                  // app:CV-auto
                                   app::Block,                   // app:block
-                                  app::Zeit>;                   // app:zeit
+                                  app::Zeit,                    // app:zeit
+                                  app::Srq>;                    // app:srq
   using size_type = ztl::smallest_unsigned_t<CHAR_BIT * bundled_channels_size>;
   using difference_type = std::make_signed_t<size_type>;
   using reference = value_type;
@@ -55,9 +57,11 @@ struct Dissector : std::ranges::view_interface<Dissector> {
     : _encoded{encoded}, _addr{addr} {
     if (validate()) {
       _decoded = decode_datagram(_encoded);
-      _i =
-        static_cast<size_type>((_encoded[0uz] == 0u) + (_encoded[1uz] == 0u));
-    } else _i = std::numeric_limits<size_type>::max();
+      _i = static_cast<size_type>(
+        (_encoded[0uz] == 0u) +
+        (_encoded[1uz] == 0u)); // No channel 1 data if first two bytes are 0
+    } else
+      _i = std::numeric_limits<size_type>::max(); // No channel 1 and 2 data
   }
   constexpr Dissector(Datagram<> encoded, Packet packet)
     : Dissector{encoded, decode_address(packet)} {}
@@ -82,7 +86,8 @@ struct Dissector : std::ranges::view_interface<Dissector> {
 
     auto const bit_count{std::size(dg) * 6uz - 4uz};
     auto const id{static_cast<uint8_t>(dg.front() >> 2u)};
-    auto const d{make_data(dg) & ((1ull << bit_count) - 1ull)};
+    auto const data{make_data(dg)};
+    auto const d{data & ((1ull << bit_count) - 1ull)};
 
     switch (_addr.type) {
       case Address::BasicLoco: [[fallthrough]];
@@ -107,6 +112,16 @@ struct Dissector : std::ranges::view_interface<Dissector> {
           case app::Block::id: return app::Block{};
           default: return {};
         }
+
+      case Address::BasicAccessory: [[fallthrough]];
+      case Address::ExtendedAccessory:
+        // app:srq
+        if (!_i) return app::Srq{.d = static_cast<decltype(app::Srq::d)>(data)};
+        // others
+        else switch (id) {
+            case app::Pom::id: return app::Pom{.d = static_cast<uint8_t>(d)};
+            default: return {};
+          }
 
       default: return {};
     }
@@ -158,6 +173,16 @@ private:
           case app::Block::id: return {&_decoded[_i], datagram_size<Bits::_36>};
           default: return {};
         }
+
+      case Address::BasicAccessory: [[fallthrough]];
+      case Address::ExtendedAccessory:
+        // app:srq
+        if (!_i) return {&_decoded[_i], datagram_size<Bits::_12>};
+        // others
+        else switch (_decoded[_i] >> 2u) {
+            case app::Pom::id: return {&_decoded[_i], datagram_size<Bits::_12>};
+            default: return {};
+          }
 
       default: return {};
     }
