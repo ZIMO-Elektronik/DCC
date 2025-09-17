@@ -1074,10 +1074,9 @@ private:
 
   /// Logon assign
   ///
-  /// \param  did                       Unique ID
-  /// \param  bb                        Address assign
-  /// \param  addr                      Assigned address
-  /// \param  overwrite_primary_address Overwrite primary address
+  /// \param  did   Unique ID
+  /// \param  bb    Address assign
+  /// \param  addr  Assigned address
   void logonAssign(std::span<uint8_t const, 4uz> did,
                    AddressAssign bb,
                    Address addr) {
