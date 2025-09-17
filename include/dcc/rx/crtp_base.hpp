@@ -389,14 +389,16 @@ private:
       case 0b1110'0000u: {
         auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
         auto const bb{static_cast<AddressAssign>(bytes[6uz] >> 6u)};
+        std::array const cv17_cv18{
+          static_cast<uint8_t>(0b1100'0000u | bytes[6uz]), bytes[7uz]};
         // Multi-function decoders (extended address)
         if (auto const a13_8{bytes[6uz] & 0x3Fu}; a13_8 < 0x28u)
-          logonAssign(did, bb, decode_address(&bytes[6uz]));
+          logonAssign(did, bb, decode_address(&cv17_cv18[0uz]));
         // Accessory decoder
         else if (a13_8 < 0x38u) break;
         // Multi-function decoders (basic address)
         else if (a13_8 < 0x39u)
-          logonAssign(did, bb, decode_address(&bytes[7uz]));
+          logonAssign(did, bb, decode_address(&cv17_cv18[1uz]));
         // Reserved
         else if (a13_8 < 0x3Fu) break;
         // FW update
