@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.44.4
+- Bugfix RCN-218 address encoding for permanent assign during LOGON_ASSIGN ([#100](https://github.com/ZIMO-Elektronik/DCC/issues/100))
+
 ## 0.44.3
 - Add app:pom for accessory decoders to `bidi::Dissector` ([#98](https://github.com/ZIMO-Elektronik/DCC/issues/98))
 
