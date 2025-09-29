@@ -1086,7 +1086,7 @@ private:
     _logon_assigned = _logon_store = true;
     _addrs.consist = 0u;
     _addrs.logon = addr;
-    if (addr && bb == AddressAssign::Permanent) _addrs.primary = addr;
+    if (bb == AddressAssign::Permanent && addr) _addrs.primary = addr;
     static constexpr std::array<uint8_t, 5uz> data{
       13u << 4u | 0u, 0u, 0u, 0u, 0u};
     assert(!full(_logon_deque));

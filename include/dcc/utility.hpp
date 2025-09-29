@@ -473,6 +473,7 @@ constexpr auto make_cv_access_long_verify_packet(Address addr,
          addr.type == Address::ExtendedLoco ||     //
          addr.type == Address::BasicAccessory ||   //
          addr.type == Address::ExtendedAccessory); //
+  assert(cv_addr < smath::pow(2u, 10u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -497,6 +498,7 @@ make_cv_access_long_write_packet(Address addr, uint32_t cv_addr, uint8_t byte) {
          addr.type == Address::ExtendedLoco ||     //
          addr.type == Address::BasicAccessory ||   //
          addr.type == Address::ExtendedAccessory); //
+  assert(cv_addr < smath::pow(2u, 10u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -524,6 +526,7 @@ constexpr auto make_cv_access_long_verify_packet(Address addr,
          addr.type == Address::ExtendedLoco ||     //
          addr.type == Address::BasicAccessory ||   //
          addr.type == Address::ExtendedAccessory); //
+  assert(cv_addr < smath::pow(2u, 10u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -552,6 +555,7 @@ constexpr auto make_cv_access_long_write_packet(Address addr,
          addr.type == Address::ExtendedLoco ||     //
          addr.type == Address::BasicAccessory ||   //
          addr.type == Address::ExtendedAccessory); //
+  assert(cv_addr < smath::pow(2u, 10u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -571,6 +575,7 @@ constexpr auto make_cv_access_long_write_packet(Address addr,
 /// \return CV access long form service packet for verifying CV
 constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
                                                          uint8_t byte) {
+  assert(cv_addr < smath::pow(2u, 10u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{first};
@@ -589,6 +594,7 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
 /// \return CV access long form service packet for writing CV
 constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
                                                         uint8_t byte) {
+  assert(cv_addr < smath::pow(2u, 10u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{first};
@@ -609,6 +615,7 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
 constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
                                                          bool bit,
                                                          uint32_t pos) {
+  assert(cv_addr < smath::pow(2u, 10u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{first};
@@ -630,6 +637,7 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
 constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
                                                         bool bit,
                                                         uint32_t pos) {
+  assert(cv_addr < smath::pow(2u, 10u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{first};
@@ -733,18 +741,39 @@ constexpr auto make_logon_select_packet(uint16_t manufacturer_id,
 ///
 /// \param  manufacturer_id Manufacturer ID
 /// \param  did             Unique ID
-/// \param  addr            Address (own encoding!)
+/// \param  addr            Address
+/// \param  bb              Assign bits
 /// \return LOGON_ASSIGN packet
-constexpr auto make_logon_assign_packet(uint16_t manufacturer_id,
-                                        uint32_t did,
-                                        uint16_t addr) {
+constexpr auto
+make_logon_assign_packet(uint16_t manufacturer_id,
+                         uint32_t did,
+                         Address addr,
+                         AddressAssign bb = AddressAssign::Temporary) {
+  assert(manufacturer_id < smath::pow(2u, 12u));
+  assert(addr.type == Address::BasicLoco ||        //
+         addr.type == Address::ExtendedLoco ||     //
+         addr.type == Address::BasicAccessory ||   //
+         addr.type == Address::ExtendedAccessory); //
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address({254u, Address::AutomaticLogon}, first)};
   *last++ = static_cast<uint8_t>(0b1110'0000u | (manufacturer_id >> 8u));
   *last++ = static_cast<uint8_t>(manufacturer_id);
   last = uint32_2data(did, last);
-  last = uint16_2data(addr, last);
+  switch (addr.type) {
+    case Address::BasicLoco:
+      last = encode_address(addr, ++last);
+      packet[7uz] = static_cast<uint8_t>(std::to_underlying(bb) << 6u) | 0x38u;
+      break;
+    case Address::ExtendedLoco:
+      last = encode_address(addr, last);
+      packet[7uz] =
+        static_cast<uint8_t>(std::to_underlying(bb) << 6u) | packet[7uz];
+      break;
+    case Address::BasicAccessory: assert(false); break;
+    case Address::ExtendedAccessory: assert(false); break;
+    default: assert(false); break;
+  }
   *last = dcc::crc8({first, last});
   ++last;
   *last = dcc::exor({first, last});
