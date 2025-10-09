@@ -6,7 +6,11 @@ TEST_F(RxTest, app_pom) {
   auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
   auto value{RandomInterval<uint8_t>(0u, 255u)};
 
-  EXPECT_CALL(_mock, readCv(cv_addr, _)).WillRepeatedly(Return(value));
+  EXPECT_CALL(_mock,
+              readCv(Matcher<uint32_t>(cv_addr),
+                     Matcher<uint8_t>(_),
+                     Matcher<std::function<void(uint8_t)>>(_)))
+    .WillOnce(InvokeArgument<2uz>(value));
 
   ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
 
@@ -22,7 +26,11 @@ TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
   auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
   auto value{RandomInterval<uint8_t>(0u, 255u)};
 
-  EXPECT_CALL(_mock, readCv(cv_addr, _)).WillRepeatedly(Return(value));
+  EXPECT_CALL(_mock,
+              readCv(Matcher<uint32_t>(cv_addr),
+                     Matcher<uint8_t>(_),
+                     Matcher<std::function<void(uint8_t)>>(_)))
+    .WillOnce(InvokeArgument<2uz>(value));
 
   ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
 
@@ -34,7 +42,11 @@ TEST_F(RxTest, app_pom_only_sent_on_cv_access_packets) {
   auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
   auto value{RandomInterval<uint8_t>(0u, 255u)};
 
-  EXPECT_CALL(_mock, readCv(cv_addr, _)).WillRepeatedly(Return(value));
+  EXPECT_CALL(_mock,
+              readCv(Matcher<uint32_t>(cv_addr),
+                     Matcher<uint8_t>(_),
+                     Matcher<std::function<void(uint8_t)>>(_)))
+    .WillOnce(InvokeArgument<2uz>(value));
 
   ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
 

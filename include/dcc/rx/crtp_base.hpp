@@ -860,9 +860,9 @@ private:
       if (!serviceMode()) pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
-    if (serviceMode() || !AsyncReadable<T>)
+    if (serviceMode() || !AsyncWritable<T>)
       std::invoke(cb, impl().writeCv(cv_addr, byte));
-    else if constexpr (AsyncReadable<T>) impl().writeCv(cv_addr, byte, cb);
+    else if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, byte, cb);
   }
 
   /// CV bit write

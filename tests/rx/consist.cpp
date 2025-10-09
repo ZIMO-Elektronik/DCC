@@ -8,7 +8,11 @@ TEST_F(RxTest, consist_shall_not_act_on_cv_manipulation) {
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
 
-  EXPECT_CALL(_mock, writeCv(cv_addr, byte)).Times(0);
+  EXPECT_CALL(_mock,
+              writeCv(Matcher<uint32_t>(cv_addr),
+                      Matcher<uint8_t>(byte),
+                      Matcher<std::function<void(uint8_t)>>(_)))
+    .Times(0);
   ReceiveAndExecuteTwice(
     dcc::make_cv_access_long_write_packet(_addrs.consist, cv_addr, byte));
 }
