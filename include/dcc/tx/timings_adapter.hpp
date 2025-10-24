@@ -121,12 +121,14 @@ struct TimingsAdapter : std::ranges::view_interface<TimingsAdapter> {
   }
 
   // Iterators
-  iterator begin() { return {this}; }
-  const_iterator begin() const { return {this}; }
-  std::default_sentinel_t end() { return std::default_sentinel; }
-  std::default_sentinel_t end() const { return std::default_sentinel; }
-  const_iterator cbegin() const { return begin(); }
-  std::default_sentinel_t cend() const { return end(); }
+  constexpr iterator begin() { return {this}; }
+  constexpr const_iterator begin() const { return {this}; }
+  constexpr std::default_sentinel_t end() { return std::default_sentinel; }
+  constexpr std::default_sentinel_t end() const {
+    return std::default_sentinel;
+  }
+  constexpr const_iterator cbegin() const { return begin(); }
+  constexpr std::default_sentinel_t cend() const { return end(); }
 
 private:
   Packet _packet;
