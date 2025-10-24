@@ -8,16 +8,59 @@ on:
 
 jobs:
   arm-none-eabi-gcc:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/arm-none-eabi-gcc.yml@v0.1.0
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/arm-none-eabi-gcc.yml@v0.2.0
     with:
       arch: -mcpu=cortex-m7
       target: DCCStm32Decoder DCCStm32CommandStation
 
-  esp-elf-gcc:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.1.0
+  esp-elf-gcc-master:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.2.0
     with:
       path: examples/esp32
+      esp_idf_version: master
+      target: esp32
+
+  esp-elf-gcc-v5-5-1:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.2.0
+    with:
+      path: examples/esp32
+      esp_idf_version: v5.5.1
+      target: esp32
+
+  esp-elf-gcc-v5-4-3:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.2.0
+    with:
+      path: examples/esp32
+      esp_idf_version: v5.4.3
+      target: esp32
+
+  esp-elf-gcc-v5-3-4:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.2.0
+    with:
+      path: examples/esp32
+      esp_idf_version: v5.3.4
+      target: esp32
+
+  esp-elf-gcc-v5-2-6:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.2.0
+    with:
+      path: examples/esp32
+      esp_idf_version: v5.2.6
+      target: esp32
+
+  esp-elf-gcc-v5-1-6:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.2.0
+    with:
+      path: examples/esp32
+      esp_idf_version: v5.1.6
+      target: esp32
+
+  esp-elf-gcc-v5-0-9:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/esp-elf-gcc.yml@v0.2.0
+    with:
+      path: examples/esp32
+      esp_idf_version: v5.0.9
       target: esp32
 
   x86_64-linux-gnu-gcc:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.1.0
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.2.0

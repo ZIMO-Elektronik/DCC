@@ -58,3 +58,31 @@ TEST_F(RxTest, app_pom_only_sent_on_cv_access_packets) {
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
   _mock.biDiChannel2();
 }
+
+// https://github.com/ZIMO-Elektronik/DCC/issues/105
+TEST_F(RxTest, app_pom_clear_internal_queue_on_unknown_cv_access_packet) {
+  auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
+  auto value{RandomInterval<uint8_t>(0u, 255u)};
+
+  EXPECT_CALL(_mock,
+              readCv(Matcher<uint32_t>(cv_addr),
+                     Matcher<uint8_t>(_),
+                     Matcher<std::function<void(uint8_t)>>(_)))
+    .WillOnce(InvokeArgument<2uz>(value));
+
+  ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
+
+  // AAt this point in time there is an ID0 datagram in the internal queue
+  // Now send a new CV access command without invoking the callback. This
+  // simulates a delay in a real application.
+  EXPECT_CALL(_mock,
+              readCv(Matcher<uint32_t>(cv_addr + 1u),
+                     Matcher<uint8_t>(_),
+                     Matcher<std::function<void(uint8_t)>>(_)));
+
+  ReceiveAndExecute(
+    make_cv_access_long_verify_packet(_addrs.primary, cv_addr + 1u));
+
+  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(dcc::bidi::acks))).Times(1);
+  _mock.biDiChannel2();
+}

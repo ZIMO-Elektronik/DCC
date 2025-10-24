@@ -710,7 +710,10 @@ private:
       return false;
 
     // Store packet for app:pom
-    _pom.packet = _deque.front();
+    if (_pom.packet != _deque.front()) {
+      _pom.deque.clear();
+      _pom.packet = _deque.front();
+    }
 
     switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
             static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
