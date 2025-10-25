@@ -34,7 +34,7 @@ RxTest::~RxTest() {}
 
 void RxTest::SetUp() {
   // Extended address
-  if (_cvs[29uz - 1uz] & ztl::make_mask(5u)) {
+  if (_cvs[29uz - 1uz] & ztl::mask<5u>) {
     /// \note
     /// This is weird... but not having the EXPECT_CALL inside a lambda makes
     /// GCC 14.2.1 hang.

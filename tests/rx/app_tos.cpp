@@ -30,7 +30,7 @@ TEST_F(RxTest, app_tos_basic_address) {
 TEST_F(RxTest, app_tos_extended_address) {
   _addrs.primary = {.value = 3000u, .type = dcc::Address::ExtendedLoco};
   dcc::encode_address(_addrs.primary, begin(_cvs) + 17 - 1);
-  _cvs[29uz - 1uz] = _cvs[29uz - 1uz] | ztl::make_mask(5u);
+  _cvs[29uz - 1uz] = _cvs[29uz - 1uz] | ztl::mask<5u>;
   SetUp();
 
   // Make sure to get past backoff (see RCN-218)

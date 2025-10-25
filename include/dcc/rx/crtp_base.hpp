@@ -53,7 +53,7 @@ struct CrtpBase {
   void init() {
     // Primary address
     auto const cv29{impl().readCv(29u - 1u)};
-    if (cv29 & ztl::make_mask(5u)) {
+    if (cv29 & ztl::mask<5u>) {
       std::array const cv17_cv18{impl().readCv(17u - 1u),
                                  impl().readCv(18u - 1u)};
       _addrs.primary = decode_address(cv17_cv18);
@@ -61,7 +61,7 @@ struct CrtpBase {
       auto const cv1{impl().readCv(1u - 1u)};
       _addrs.primary = decode_address(&cv1);
     }
-    _addrs.primary.reversed = cv29 & ztl::make_mask(0u);
+    _addrs.primary.reversed = cv29 & ztl::mask<0u>;
 
     // Consist address
     auto const cv19{impl().readCv(19u - 1u)};
@@ -70,10 +70,10 @@ struct CrtpBase {
                             (cv19 & 0b0111'1111u)};
     _addrs.consist = {static_cast<Address::value_type>(consist_addr),
                       Address::ExtendedLoco};
-    _addrs.consist.reversed = cv19 & ztl::make_mask(7u);
+    _addrs.consist.reversed = cv19 & ztl::mask<7u>;
 
     // Legacy exception for F0
-    _f0_exception = !(cv29 & ztl::make_mask(1u));
+    _f0_exception = !(cv29 & ztl::mask<1u>);
 
     // Decoder lock
     auto const cv15{impl().readCv(15u - 1u)};
@@ -81,16 +81,14 @@ struct CrtpBase {
     _cvs_locked = cv15 != cv16 && cv15 && cv16;
 
     // BiDi
-    auto const bidi_enabled{static_cast<bool>(cv29 & ztl::make_mask(3u))};
-    auto const ch2_consist_enabled{
-      static_cast<bool>(cv20 & ztl::make_mask(7u))};
+    auto const bidi_enabled{static_cast<bool>(cv29 & ztl::mask<3u>)};
+    auto const ch2_consist_enabled{static_cast<bool>(cv20 & ztl::mask<7u>)};
     auto const cv28{impl().readCv(28u - 1u)};
-    _ch1_addr_enabled = bidi_enabled && (cv28 & ztl::make_mask(0u));
-    _ch2_data_enabled = bidi_enabled && (cv28 & ztl::make_mask(1u));
-    _logon_enabled = bidi_enabled && (cv28 & ztl::make_mask(7u));
+    _ch1_addr_enabled = bidi_enabled && (cv28 & ztl::mask<0u>);
+    _ch2_data_enabled = bidi_enabled && (cv28 & ztl::mask<1u>);
+    _logon_enabled = bidi_enabled && (cv28 & ztl::mask<7u>);
     _ch2_consist_enabled = bidi_enabled && ch2_consist_enabled;
-    if constexpr (HighCurrent<T>)
-      impl().highCurrentBiDi(cv28 & ztl::make_mask(6u));
+    if constexpr (HighCurrent<T>) impl().highCurrentBiDi(cv28 & ztl::mask<6u>);
 
     // IDs
     _did = {impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 0u),
@@ -439,7 +437,7 @@ private:
     switch (bytes[0uz] & 0x0Fu) {
       case 0b0000'0010u: [[fallthrough]];
       case 0b0000'0011u:
-        if (!(bytes[1uz] & ztl::make_mask(7u)) &&
+        if (!(bytes[1uz] & ztl::mask<7u>) &&
             _own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
           cvWrite(19u - 1u,
                   static_cast<uint8_t>(bytes[0uz] << 7u | bytes[1uz]));
@@ -485,7 +483,7 @@ private:
       // 126 speed steps (plus 0)
       case 0b0011'1111u: {
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        auto const dir{static_cast<bool>(bytes[1uz] & ztl::make_mask(7u))};
+        auto const dir{static_cast<bool>(bytes[1uz] & ztl::mask<7u>)};
         // Stop
         if (!(bytes[1uz] & 0b0111'1111u)) directionSpeed(addr, dir, Stop);
         // Emergency stop
@@ -501,11 +499,11 @@ private:
       // Special operating modes
       case 0b0011'1110u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        _man = bytes[1uz] & ztl::make_mask(7u);
+        _man = bytes[1uz] & ztl::mask<7u>;
         if constexpr (EastWest<T>) {
-          if (bytes[1uz] & ztl::make_mask(6u)) // East
+          if (bytes[1uz] & ztl::mask<6u>) // East
             impl().eastWestDirection(addr, East);
-          else if (ztl::make_mask(5u)) // West
+          else if (ztl::mask<5u>) // West
             impl().eastWestDirection(addr, West);
           else // Neither
             impl().eastWestDirection(addr, std::nullopt);
@@ -531,7 +529,7 @@ private:
                              std::span<uint8_t const> bytes) {
     if (size(bytes) != 1uz + sizeof(_checksum)) return false;
 
-    auto const dir{static_cast<bool>(bytes[0uz] & ztl::make_mask(5u))};
+    auto const dir{static_cast<bool>(bytes[0uz] & ztl::mask<5u>)};
     int32_t speed{};
 
     // Stop
@@ -545,16 +543,15 @@ private:
     if (_f0_exception) {
       speed = scale_speed<14>(speed);
       if (addr) {
-        auto const mask{ztl::make_mask(0u)};
-        auto const state{bytes[0uz] & ztl::make_mask(4u) ? ztl::make_mask(0u)
-                                                         : 0u};
+        auto const mask{ztl::mask<0u>};
+        auto const state{bytes[0uz] & ztl::mask<4u> ? ztl::mask<0u> : 0u};
         impl().function(addr, mask, state);
       }
     }
     // 28 speed steps with intermediate
     else if (speed != EStop) {
       speed <<= 1u;
-      if (speed && !(bytes[0uz] & ztl::make_mask(4u))) --speed;
+      if (speed && !(bytes[0uz] & ztl::mask<4u>)) --speed;
       speed = scale_speed<28>(speed);
     }
 
@@ -583,21 +580,20 @@ private:
       case 0b1000'0000u: [[fallthrough]];
       case 0b1001'0000u:
         // x-x-x-F0-F4-F3-F2-F1
-        mask = _f0_exception ? ztl::make_mask(4u, 3u, 2u, 1u)
-                             : ztl::make_mask(4u, 3u, 2u, 1u, 0u);
-        state =
-          (bytes[0uz] & 0xFu) << 1u | (bytes[0uz] & ztl::make_mask(4u)) >> 4u;
+        mask = _f0_exception ? ztl::mask<4u, 3u, 2u, 1u>
+                             : ztl::mask<4u, 3u, 2u, 1u, 0u>;
+        state = (bytes[0uz] & 0xFu) << 1u | (bytes[0uz] & ztl::mask<4u>) >> 4u;
         break;
 
       case 0b1011'0000u:
         // x-x-x-x-F8-F7-F6-F5
-        mask = ztl::make_mask(8u, 7u, 6u, 5u);
+        mask = ztl::mask<8u, 7u, 6u, 5u>;
         state = (bytes[0uz] & 0x0Fu) << 5u;
         break;
 
       case 0b1010'0000u:
         // x-x-x-x-F12-F11-F10-F9
-        mask = ztl::make_mask(12u, 11u, 10u, 9u);
+        mask = ztl::mask<12u, 11u, 10u, 9u>;
         state = (bytes[0uz] & 0x0Fu) << 9u;
         break;
     }
@@ -624,14 +620,13 @@ private:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
         binaryState((static_cast<uint32_t>(bytes[2uz]) << 7u) |
                       (bytes[1uz] & 0b0111'1111u),
-                    bytes[1uz] & ztl::make_mask(7u));
+                    bytes[1uz] & ztl::mask<7u>);
         break;
 
       // Binary state control instruction short form (2 bytes)
       case 0b1101'1101u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        binaryState((bytes[1uz] & 0b0111'1111u),
-                    bytes[1uz] & ztl::make_mask(7u));
+        binaryState((bytes[1uz] & 0b0111'1111u), bytes[1uz] & ztl::mask<7u>);
         break;
 
       // Time (4 bytes)
@@ -656,7 +651,7 @@ private:
       case 0b1101'1110u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         impl().function(addr,
-                        ztl::make_mask(20u, 19u, 18u, 17u, 16u, 15u, 14u, 13u),
+                        ztl::mask<20u, 19u, 18u, 17u, 16u, 15u, 14u, 13u>,
                         static_cast<uint32_t>(bytes[1uz] << 13u));
         break;
 
@@ -664,7 +659,7 @@ private:
       case 0b1101'1111u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         impl().function(addr,
-                        ztl::make_mask(28u, 27u, 26u, 25u, 24u, 23u, 22u, 21u),
+                        ztl::mask<28u, 27u, 26u, 25u, 24u, 23u, 22u, 21u>,
                         static_cast<uint32_t>(bytes[1uz] << 21u));
         break;
 
@@ -737,8 +732,8 @@ private:
       // Bit manipulation
       case 0b10u: {
         auto const pos{bytes[2uz] & 0b111u};
-        auto const bit{static_cast<bool>(bytes[2uz] & ztl::make_mask(3u))};
-        if (!(bytes[2uz] & ztl::make_mask(4u))) cvVerify(cv_addr, bit, pos);
+        auto const bit{static_cast<bool>(bytes[2uz] & ztl::mask<3u>)};
+        if (!(bytes[2uz] & ztl::mask<4u>)) cvVerify(cv_addr, bit, pos);
         else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
         break;
       }
@@ -1063,7 +1058,7 @@ private:
     if (_logon_assigned || !std::ranges::equal(did, _did)) return;
     _logon_selected = true;
     std::array<uint8_t, 5uz> data{
-      static_cast<uint8_t>(ztl::make_mask(7u) | (_addrs.primary >> 8u)),
+      static_cast<uint8_t>(ztl::mask<7u> | (_addrs.primary >> 8u)),
       static_cast<uint8_t>(_addrs.primary),
       0u,
       0u,
