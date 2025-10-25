@@ -1,7 +1,10 @@
 # Changelog
 
+## 0.44.6
+- Bugfix PoM queue not cleared on new CV access packet ([#105](https://github.com/ZIMO-Elektronik/DCC/issues/105))
+
 ## 0.44.5
-- Bugfix `make_logon_assign_packet`  ([#102](https://github.com/ZIMO-Elektronik/DCC/issues/102))
+- Bugfix `make_logon_assign_packet` ([#102](https://github.com/ZIMO-Elektronik/DCC/issues/102))
 
 ## 0.44.4
 - Bugfix RCN-218 address encoding for permanent assign during LOGON_ASSIGN ([#100](https://github.com/ZIMO-Elektronik/DCC/issues/100))

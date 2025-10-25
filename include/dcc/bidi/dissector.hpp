@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <bit>
 #include <climits>
 #include <variant>
 #include <ztl/limits.hpp>
@@ -131,21 +132,25 @@ struct Dissector : std::ranges::view_interface<Dissector> {
     return _i >= bundled_channels_size || !_encoded[_i];
   }
 
-  Dissector& begin() { return *this; }
-  Dissector const& begin() const { return *this; }
-  std::default_sentinel_t end() { return std::default_sentinel; }
-  std::default_sentinel_t end() const { return std::default_sentinel; }
-  std::default_sentinel_t cend() { return std::default_sentinel; }
-  std::default_sentinel_t cend() const { return std::default_sentinel; }
+  constexpr Dissector& begin() { return *this; }
+  constexpr Dissector const& begin() const { return *this; }
+  constexpr std::default_sentinel_t end() { return std::default_sentinel; }
+  constexpr std::default_sentinel_t end() const {
+    return std::default_sentinel;
+  }
+  constexpr std::default_sentinel_t cend() { return std::default_sentinel; }
+  constexpr std::default_sentinel_t cend() const {
+    return std::default_sentinel;
+  }
 
 private:
-  bool validate() const {
+  constexpr bool validate() const {
     return std::ranges::all_of(_encoded, [](uint8_t b) {
       return !b || std::popcount(b) == CHAR_BIT / 2;
     });
   }
 
-  std::span<uint8_t const> next() const {
+  constexpr std::span<uint8_t const> next() const {
     // No more data
     if (!_encoded[_i]) return {};
 

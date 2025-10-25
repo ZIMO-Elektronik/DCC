@@ -710,7 +710,10 @@ private:
       return false;
 
     // Store packet for app:pom
-    _pom.packet = _deque.front();
+    if (_pom.packet != _deque.front()) {
+      _pom.deque.clear();
+      _pom.packet = _deque.front();
+    }
 
     switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
             static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
@@ -860,9 +863,9 @@ private:
       if (!serviceMode()) pom(red_byte);
       else if (byte == red_byte) impl().serviceAck();
     }};
-    if (serviceMode() || !AsyncReadable<T>)
+    if (serviceMode() || !AsyncWritable<T>)
       std::invoke(cb, impl().writeCv(cv_addr, byte));
-    else if constexpr (AsyncReadable<T>) impl().writeCv(cv_addr, byte, cb);
+    else if constexpr (AsyncWritable<T>) impl().writeCv(cv_addr, byte, cb);
   }
 
   /// CV bit write

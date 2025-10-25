@@ -2,13 +2,26 @@ cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 include(FetchContent)
 
 if(ESP_PLATFORM)
-  file(GLOB_RECURSE SRC src/*.c)
-  idf_component_register(SRCS ${SRC} INCLUDE_DIRS include REQUIRES driver)
+  # >5.3.0 requires esp_driver_rmt
+  if(IDF_VERSION_MAJOR GREATER 5 OR (IDF_VERSION_MAJOR EQUAL 5
+                                     AND IDF_VERSION_MINOR GREATER_EQUAL 3))
+    set(ESP_DRIVER_RMT_COMPONENT esp_driver_rmt)
+  endif()
+  idf_component_register(
+    SRCS
+    src/rmt_dcc_encoder.c
+    INCLUDE_DIRS
+    include
+    REQUIRES
+    driver
+    ${ESP_DRIVER_RMT_COMPONENT})
+
   # Change OUTPUT_NAME from DCC to lib__idf_DCC to avoid conflicts
   set_target_properties(${COMPONENT_LIB} PROPERTIES PREFIX "")
   set_target_properties(
     ${COMPONENT_LIB} PROPERTIES OUTPUT_NAME
                                 ${CMAKE_STATIC_LIBRARY_PREFIX}${COMPONENT_LIB})
+
   target_link_libraries(${COMPONENT_LIB} PUBLIC DCC)
 endif()
 
@@ -131,6 +144,7 @@ else()
 endif()
 
 target_common_warnings(DCC INTERFACE)
+target_compile_options(DCC INTERFACE "$<$<BOOL:${ESP_PLATFORM}>:-Wno-error>")
 
 if(NOT TARGET static_math)
   cpmaddpackage(
