@@ -49,8 +49,8 @@ The DCC protocol is defined by various standards published by the [National Mode
 | [S-9.2.2 Configuration Variables For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.2_decoder_cvs_2012.07.pdf)                | [RCN-225 DCC - Protokoll Konfigurationsvariablen](https://normen.railcommunity.de/RCN-225.pdf)                           |
 
 ## Deviations from the Standard
-- The consist control command requires two identical programming packets to program CV19 although this is not required by either [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) (chapter 2.4.1) or [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.1.4).
-- **All** CV access short form commands require two identical programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](https://normen.railcommunity.de/RCN-214.pdf) (chapter 3) and [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.7.2).
+- The consist control command requires **two identical** programming packets to program CV19 although this is not required by either [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) (chapter 2.4.1) or [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.1.4).
+- **All** CV access short form commands require **two identical** programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](https://normen.railcommunity.de/RCN-214.pdf) (chapter 3) and [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.7.2).
 - [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) specific
   - The 4-byte ID of a decoder (DID) must be available. By default this library uses CV250-253. To change the address of these CVs use the CMake option `DCC_RX_LOGON_DID_CV_ADDRESS`.
   - During logon, the decoder must be able to store 2 bytes central ID (CID), 1 byte session ID (SID), and 2 bytes logon address. By default this library uses CV17-21 in the RailCom block (CV31=0 and CV32=255). To change the addresses for these CVs use the CMake options `DCC_RX_LOGON_CID_CV_ADDRESS`, `DCC_RX_LOGON_SID_CV_ADDRESS`, and `DCC_RX_LOGON_ADDRESS_CV_ADDRESS`.
@@ -303,9 +303,7 @@ Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enou
         vTaskDelay(pdMS_TO_TICKS(5u));
       }
     }
-    ```    
-> [!WARNING]  
-> During the BiDi cutout, execution is temporarily blocked and may return immediately.
+    ```
 
 #### Optional
 There are various optional methods that can be implemented if required. One of them are asynchronous CV methods that contain a callback as the last parameter. These methods allow to return immediately and execute the callback at a later point in time. Another addition can enable or disable high-current BiDi if the corresponding bit is set in CV29. And last but not least, the east-west direction according to [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) is supported.
@@ -323,6 +321,17 @@ There are various optional methods that can be implemented if required. One of t
   // Set east-west direction
   void eastWestDirection(uint32_t addr, std::optional<bool> dir);
 ```
+
+#### Phases
+If the command station supports BiDi, each frame consists of a packet and a subsequent BiDi cutout.
+![transmission](https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/transmission.png)
+
+This distinction is important because the receiver prevents both
+- commands from being executed during a cutout and
+- datagrams from being sent during a command.
+
+> [!IMPORTANT]  
+> That means the methods `execute`, `biDiChannel1` and `biDiChannel2` can only be called in their respective phase. If called outside of the phase, they return immediately.
 
 ### Transmitter
 As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::CrtpBase`. There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.
