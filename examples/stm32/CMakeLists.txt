@@ -37,6 +37,9 @@ function(add_stm32_target TARGET)
       ${STM32CubeH7_SOURCE_DIR}/Projects/NUCLEO-H743ZI/Applications/FreeRTOS/FreeRTOS_MPU/Src/system_stm32h7xx.c
   )
 
+  target_common_warnings(${TARGET} PRIVATE)
+  target_common_errors(${TARGET} PRIVATE)
+
   target_link_libraries(${TARGET} PRIVATE DCC::DCC)
 
   target_link_libraries(

@@ -37,76 +37,56 @@ void RxTest::SetUp() {
   if (_cvs[29uz - 1uz] & ztl::mask<5u>) {
     /// \note
     /// This is weird... but not having the EXPECT_CALL inside a lambda makes
-    /// GCC 14.2.1 hang.
+    /// GCC 14.2.1 (and 15.2.1) hang.
     std::invoke([this] {
-      EXPECT_CALL(_mock, readCv(_))
-        .WillOnce(Return(_cvs[29uz - 1uz]))
-        .WillOnce(Return(_cvs[17uz - 1uz]))
-        .WillOnce(Return(_cvs[18uz - 1uz]))
-        .WillOnce(Return(_cvs[19uz - 1uz]))
-        .WillOnce(Return(_cvs[20uz - 1uz]))
-        .WillOnce(Return(_cvs[15uz - 1uz]))
-        .WillOnce(Return(_cvs[16uz - 1uz]))
-        .WillOnce(Return(_cvs[28uz - 1uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_SID_CV_ADDRESS]));
+      EXTENDED_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE();
       _mock.init();
     });
   }
   // Basic address
   else {
     std::invoke([this] {
-      EXPECT_CALL(_mock, readCv(_))
-        .WillOnce(Return(_cvs[29uz - 1uz]))
-        .WillOnce(Return(_cvs[1uz - 1uz]))
-        .WillOnce(Return(_cvs[19uz - 1uz]))
-        .WillOnce(Return(_cvs[20uz - 1uz]))
-        .WillOnce(Return(_cvs[15uz - 1uz]))
-        .WillOnce(Return(_cvs[16uz - 1uz]))
-        .WillOnce(Return(_cvs[28uz - 1uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz]))
-        .WillOnce(Return(_cvs[DCC_RX_LOGON_SID_CV_ADDRESS]));
+      BASIC_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE();
       _mock.init();
     });
   }
 }
 
-void RxTest::Receive(dcc::Packet const& packet) {
-  Receive(dcc::tx::packet2timings(packet));
-}
-
-void RxTest::Receive(dcc::tx::Timings const& timings) {
+RxTest* RxTest::Receive(dcc::Packet const& packet) {
+  auto timings{dcc::tx::packet2timings(packet)};
   std::ranges::for_each_n(cbegin(timings),
                           size(timings),
                           [this](uint32_t time) { _mock.receive(time); });
+  return this;
 }
 
-void RxTest::Execute() {
+RxTest* RxTest::BiDiChannel1() {
+  _mock.biDiChannel1();
+  return this;
+}
+
+RxTest* RxTest::BiDiChannel2() {
+  _mock.biDiChannel2();
+  return this;
+}
+
+RxTest* RxTest::BiDi() { return BiDiChannel1()->BiDiChannel2(); }
+
+RxTest* RxTest::LeaveCutout() {
   // Receive additional preamble bit before calling execute to avoid being
   // inside a cutout and getting execution blocked!
   _mock.receive(dcc::rx::Timing::Bit1);
-  _mock.execute();
+  return this;
 }
 
-void RxTest::BiDi() {
-  _mock.biDiChannel1();
-  _mock.biDiChannel2();
+RxTest* RxTest::Execute() {
+  _mock.execute();
+  return this;
 }
 
 void RxTest::EnterServiceMode() {
   EXPECT_CALL(_mock, serviceModeHook(true));
-  Receive(dcc::make_reset_packet());
-  Execute();
+  Receive(dcc::make_reset_packet())->LeaveCutout()->Execute();
 }
 
 void RxTest::Logon() {

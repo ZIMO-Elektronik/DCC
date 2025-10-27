@@ -8,7 +8,6 @@ using namespace ::testing;
 
 // Transmit test fixture
 struct TxTest : ::testing::Test {
-protected:
   TxTest();
   virtual ~TxTest();
 

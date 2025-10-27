@@ -17,7 +17,9 @@ extern "C" void app_main() {
                                       .mem_block_symbols =
                                         SOC_RMT_CHANNELS_PER_GROUP *
                                         SOC_RMT_MEM_WORDS_PER_CHANNEL,
-                                      .trans_queue_depth = 2uz};
+                                      .trans_queue_depth = 2uz,
+                                      .intr_priority = 0,
+                                      .flags = {}};
   rmt_channel_handle_t rmt_channel{};
   ESP_ERROR_CHECK(rmt_new_tx_channel(&chan_config, &rmt_channel));
   ESP_ERROR_CHECK(rmt_enable(rmt_channel));

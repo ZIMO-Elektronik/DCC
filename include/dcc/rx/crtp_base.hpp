@@ -100,6 +100,12 @@ struct CrtpBase {
       impl().readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 1u));
     _sids.front() = impl().readCv(DCC_RX_LOGON_SID_CV_ADDRESS);
 
+    // Logon address
+    std::array const logon_addr_cvs{
+      impl().readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u),
+      impl().readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u)};
+    _addrs.logon = decode_address(logon_addr_cvs);
+
     // Initialization time point
     _tps.init = std::chrono::system_clock::now();
   }
@@ -226,6 +232,7 @@ struct CrtpBase {
 
   /// Start channel1 (12 bit payload)
   void biDiChannel1() {
+    if (!packetEnd()) return;
     switch (_addrs.received.type) {
       case Address::BasicLoco: [[fallthrough]];
       case Address::ExtendedLoco: appAdr(); break;
@@ -236,6 +243,7 @@ struct CrtpBase {
 
   /// Start channel2 (36 bit payload)
   void biDiChannel2() {
+    if (!packetEnd()) return;
     switch (_addrs.received.type) {
       case Address::Broadcast: appTos(); break;
       case Address::BasicLoco: [[fallthrough]];
@@ -336,10 +344,10 @@ private:
       ;
     // Address is primary or consist and logon ain't assigned
     else if ((addr == _addrs.primary || addr == _addrs.consist) &&
-             !_addrs.logon)
+             !_logon_assigned)
       ;
-    // Address is logon, pretend it's primary from here on
-    else if (addr == _addrs.logon) addr = _addrs.primary;
+    // Address is logon and logon assigned, pretend it's primary from here on
+    else if (addr == _addrs.logon && _logon_assigned) addr = _addrs.primary;
     // Address is not of interest
     else return false;
 
@@ -1021,10 +1029,6 @@ private:
                         static_cast<uint8_t>(_sids.back() - _sids.front()) <=
                           _logon_assigned}) {
       _logon_selected = _logon_assigned = _logon_store = true;
-      std::array const cv65300_65301{
-        impl().readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u),
-        impl().readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u)};
-      _addrs.logon = decode_address(cv65300_65301);
       return;
     }
     // ...otherwise force new logon
@@ -1098,7 +1102,7 @@ private:
   void adr() {
     if (!_ch1_addr_enabled || !empty(_adr_deque)) return;
     // Active address is logon
-    else if (_addrs.logon) {
+    else if (_logon_assigned) {
       _adr_deque.push_back(adrHigh(_addrs.logon));
       _adr_deque.push_back(adrLow(_addrs.logon));
     }

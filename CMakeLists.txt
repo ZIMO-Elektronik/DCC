@@ -28,7 +28,7 @@ endif()
 FetchContent_Declare(
   CMakeModules
   GIT_REPOSITORY "https://github.com/ZIMO-Elektronik/CMakeModules"
-  GIT_TAG v0.9.5
+  GIT_TAG v0.10.0
   SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
 FetchContent_MakeAvailable(CMakeModules)
 
@@ -59,7 +59,7 @@ set(DCC_RX_LOGON_ADDRESS_CV_ADDRESS
     CACHE STRING "First CV address of last logon address")
 set(DCC_RX_MIN_PREAMBLE_BITS
     10u
-    CACHE STRING "Minimum number of preambel bits of decoder")
+    CACHE STRING "Minimum number of preamble bits of decoder")
 set(DCC_RX_MIN_BIT_1_TIMING
     52u
     CACHE STRING "Minimum duration of a 1 bit of decoder")
@@ -80,10 +80,10 @@ set(DCC_RX_BIDI_DEQUE_SIZE
     CACHE STRING "Size of the sender deque of decoder")
 set(DCC_TX_MIN_PREAMBLE_BITS
     17u
-    CACHE STRING "Minimum number of preambel bits of command station")
+    CACHE STRING "Minimum number of preamble bits of command station")
 set(DCC_TX_MAX_PREAMBLE_BITS
     30u
-    CACHE STRING "Maximum number of preambel bits of command station")
+    CACHE STRING "Maximum number of preamble bits of command station")
 set(DCC_TX_MIN_BIT_1_TIMING
     56u
     CACHE STRING "Minimum duration of a 1 bit of command station")
@@ -137,14 +137,14 @@ target_compile_definitions(
             DCC_TX_MAX_BIDI_BIT_TIMING=${DCC_TX_MAX_BIDI_BIT_TIMING}
             DCC_TX_DEQUE_SIZE=${DCC_TX_DEQUE_SIZE})
 
-if(PROJECT_IS_TOP_LEVEL)
+# https://github.com/espressif/esp-idf/issues/17773
+if(PROJECT_IS_TOP_LEVEL AND NOT ESP_PLATFORM)
   target_include_directories(DCC INTERFACE include)
+  target_common_warnings(DCC INTERFACE)
+  target_common_errors(DCC INTERFACE)
 else()
   target_include_directories(DCC SYSTEM INTERFACE include)
 endif()
-
-target_common_warnings(DCC INTERFACE)
-target_compile_options(DCC INTERFACE "$<$<BOOL:${ESP_PLATFORM}>:-Wno-error>")
 
 if(NOT TARGET static_math)
   cpmaddpackage(
@@ -162,7 +162,7 @@ if(NOT TARGET static_math)
 endif()
 
 if(NOT TARGET ZTL::ZTL)
-  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.23.0")
+  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.23.1")
 endif()
 
 target_link_libraries(DCC INTERFACE static_math ZTL::ZTL)

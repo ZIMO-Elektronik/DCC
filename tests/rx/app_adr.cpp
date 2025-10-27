@@ -8,17 +8,18 @@ TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
   auto adr_low{encode_datagram(
     make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.primary)))};
 
+  // Send whatever packet to get last received address to match primary
+  auto packet{make_function_group_f4_f0_packet(_addrs.primary, 10u)};
+  Receive(packet);
+
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
-    // Send whatever packet to get last received address to match primary
-    Receive(make_function_group_f4_f0_packet(_addrs.primary, 10u));
+    LeaveCutout()->Execute()->Receive(packet);
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
-    Execute();
     _mock.biDiChannel1();
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
-    Execute();
     _mock.biDiChannel1();
   }
 }
@@ -32,17 +33,18 @@ TEST_F(RxTest, app_adr_alternate_logon_id1_id2) {
   auto adr_low{
     encode_datagram(make_datagram<Bits::_12>(2u, _addrs.logon & 0x00FFu))};
 
+  // Send whatever packet to get last received address to match primary
+  auto packet{make_function_group_f4_f0_packet(_addrs.primary, 10u)};
+  Receive(packet);
+
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
-    // Send whatever packet to get last received address to match logon
-    Receive(make_function_group_f4_f0_packet(_addrs.logon, 10u));
+    LeaveCutout()->Execute()->Receive(packet);
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
-    Execute();
     _mock.biDiChannel1();
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
-    Execute();
     _mock.biDiChannel1();
   }
 }
@@ -59,7 +61,7 @@ TEST_F(RxTest, app_adr_disabled_with_cv28_0) {
   _mock.biDiChannel1();
 }
 
-TEST_F(RxTest, app_adr_consist) {
+TEST_F(RxTest, app_adr_alternate_consist_id1_id2) {
   _cvs[19uz - 1uz] = static_cast<uint8_t>(_addrs.consist);
   SetUp();
 
@@ -68,19 +70,23 @@ TEST_F(RxTest, app_adr_consist) {
   auto adr_low{encode_datagram(
     make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.consist)))};
 
-  // Send whatever packet to get last received address to match consist
-  Receive(make_function_group_f4_f0_packet(_addrs.consist, 10u));
+  // Send whatever packet to get last received address to match primary
+  auto packet{make_function_group_f4_f0_packet(_addrs.consist, 10u)};
+  Receive(packet);
 
-  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
-  Execute();
-  _mock.biDiChannel1();
+  InSequence s;
+  for (auto i{0uz}; i < 10uz; ++i) {
+    LeaveCutout()->Execute()->Receive(packet);
 
-  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
-  Execute();
-  _mock.biDiChannel1();
+    EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
+    _mock.biDiChannel1();
+
+    EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
+    _mock.biDiChannel1();
+  }
 }
 
-TEST_F(RxTest, app_adr_long_consist) {
+TEST_F(RxTest, app_adr_alternate_long_consist_id1_id2) {
   _cvs[19uz - 1uz] = 83u;
   _cvs[20uz - 1uz] = 12u;
   _addrs.consist = static_cast<dcc::Address::value_type>(
@@ -94,16 +100,20 @@ TEST_F(RxTest, app_adr_long_consist) {
   auto adr_low{
     encode_datagram(make_datagram<Bits::_12>(2u, _addrs.consist & 0x00FFu))};
 
-  // Send whatever packet to get last received address to match consist
-  Receive(make_function_group_f4_f0_packet(_addrs.consist, 10u));
+  // Send whatever packet to get last received address to match primary
+  auto packet{make_function_group_f4_f0_packet(_addrs.consist, 10u)};
+  Receive(packet);
 
-  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
-  Execute();
-  _mock.biDiChannel1();
+  InSequence s;
+  for (auto i{0uz}; i < 10uz; ++i) {
+    LeaveCutout()->Execute()->Receive(packet);
 
-  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
-  Execute();
-  _mock.biDiChannel1();
+    EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
+    _mock.biDiChannel1();
+
+    EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
+    _mock.biDiChannel1();
+  }
 }
 
 TEST_F(RxTest, app_adr_broadcast) {
@@ -112,17 +122,18 @@ TEST_F(RxTest, app_adr_broadcast) {
   auto adr_low{encode_datagram(
     make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.primary)))};
 
+  // Broadcast
+  auto packet{dcc::make_speed_and_direction_packet(0u, 0u)};
+  Receive(packet);
+
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
-    // Broadcast
-    Receive(dcc::make_speed_and_direction_packet(0u, 0u));
+    LeaveCutout()->Execute()->Receive(packet);
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(0);
-    Execute();
     _mock.biDiChannel1();
 
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(0);
-    Execute();
     _mock.biDiChannel1();
   }
 }

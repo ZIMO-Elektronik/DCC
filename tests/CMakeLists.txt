@@ -6,8 +6,7 @@ add_executable(DCCTests ${SRC})
 sanitize(address,undefined)
 
 target_common_warnings(DCCTests PRIVATE)
-
-target_compile_options(DCC INTERFACE -Werror;-Wno-error=deprecated-declarations)
+target_common_errors(DCCTests PRIVATE -Werror)
 
 cpmaddpackage(
   NAME

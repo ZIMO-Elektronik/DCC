@@ -12,7 +12,8 @@ TEST_F(RxTest, app_pom) {
                      Matcher<std::function<void(uint8_t)>>(_)))
     .WillOnce(InvokeArgument<2uz>(value));
 
-  ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
+  auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
+  Receive(packet)->LeaveCutout()->Execute()->Receive(packet);
 
   auto datagram{encode_datagram(make_datagram<Bits::_12>(0u, value))};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
@@ -32,7 +33,8 @@ TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
                      Matcher<std::function<void(uint8_t)>>(_)))
     .WillOnce(InvokeArgument<2uz>(value));
 
-  ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
+  auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
+  Receive(packet)->LeaveCutout()->Execute()->Receive(packet);
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
   _mock.biDiChannel2();
@@ -48,11 +50,12 @@ TEST_F(RxTest, app_pom_only_sent_on_cv_access_packets) {
                      Matcher<std::function<void(uint8_t)>>(_)))
     .WillOnce(InvokeArgument<2uz>(value));
 
-  ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
+  auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
+  Receive(packet)->LeaveCutout()->Execute();
 
   auto other_packet_to_same_address{
     make_function_group_f4_f0_packet(_addrs.primary, 0b1u)};
-  ReceiveAndExecute(other_packet_to_same_address);
+  Receive(other_packet_to_same_address);
 
   auto datagram{encode_datagram(make_datagram<Bits::_12>(0u, value))};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
@@ -70,9 +73,10 @@ TEST_F(RxTest, app_pom_clear_internal_queue_on_unknown_cv_access_packet) {
                      Matcher<std::function<void(uint8_t)>>(_)))
     .WillOnce(InvokeArgument<2uz>(value));
 
-  ReceiveAndExecute(make_cv_access_long_verify_packet(_addrs.primary, cv_addr));
+  auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
+  Receive(packet)->LeaveCutout()->Execute();
 
-  // AAt this point in time there is an ID0 datagram in the internal queue
+  // At this point in time there is an ID0 datagram in the internal queue.
   // Now send a new CV access command without invoking the callback. This
   // simulates a delay in a real application.
   EXPECT_CALL(_mock,
@@ -80,8 +84,9 @@ TEST_F(RxTest, app_pom_clear_internal_queue_on_unknown_cv_access_packet) {
                      Matcher<uint8_t>(_),
                      Matcher<std::function<void(uint8_t)>>(_)));
 
-  ReceiveAndExecute(
-    make_cv_access_long_verify_packet(_addrs.primary, cv_addr + 1u));
+  auto other_cv_packet{
+    make_cv_access_long_verify_packet(_addrs.primary, cv_addr + 1u)};
+  Receive(other_cv_packet)->LeaveCutout()->Execute()->Receive(other_cv_packet);
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(dcc::bidi::acks))).Times(1);
   _mock.biDiChannel2();
