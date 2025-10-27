@@ -10,8 +10,9 @@ TEST_F(RxTest, app_tos_basic_address) {
   SetUp();
 
   // Make sure to get past backoff (see RCN-218)
-  for (auto i{0u}; i < 30.0 / 10E-3; ++i)
-    ReceiveAndExecute(dcc::make_binary_state_short_packet(0u, 2u));
+  for (auto i{0.0}; i < 30.0 / 10E-3; ++i)
+    LeaveCutout()->Execute()->Receive(
+      dcc::make_binary_state_short_packet(0u, 2u));
 
   // Make datagram
   auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0u))};
@@ -34,8 +35,9 @@ TEST_F(RxTest, app_tos_extended_address) {
   SetUp();
 
   // Make sure to get past backoff (see RCN-218)
-  for (auto i{0u}; i < 30.0 / 10E-3; ++i)
-    ReceiveAndExecute(dcc::make_binary_state_short_packet(0u, 2u));
+  for (auto i{0.0}; i < 30.0 / 10E-3; ++i)
+    LeaveCutout()->Execute()->Receive(
+      dcc::make_binary_state_short_packet(0u, 2u));
 
   // Make datagram
   auto adr_high{encode_datagram(
@@ -58,8 +60,9 @@ TEST_F(
   SetUp();
 
   // Make sure to get past backoff (see RCN-218)
-  for (auto i{0u}; i < 30.0 / 10E-3; ++i)
-    ReceiveAndExecute(dcc::make_binary_state_short_packet(0u, 2u));
+  for (auto i{0.0}; i < 30.0 / 10E-3; ++i)
+    LeaveCutout()->Execute()->Receive(
+      dcc::make_binary_state_short_packet(0u, 2u));
 
   // Make datagram
   auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0u))};
@@ -77,8 +80,9 @@ TEST_F(
   std::this_thread::sleep_for(1s);
 
   // Make sure to get past backoff (see RCN-218)
-  for (auto i{0u}; i < 30.0 / 10E-3; ++i)
-    ReceiveAndExecute(dcc::make_binary_state_short_packet(0u, 2u));
+  for (auto i{0.0}; i < 30.0 / 10E-3; ++i)
+    LeaveCutout()->Execute()->Receive(
+      dcc::make_binary_state_short_packet(0u, 2u));
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   _mock.biDiChannel2();

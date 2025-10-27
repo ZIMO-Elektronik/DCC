@@ -9,10 +9,10 @@ TEST_F(RxTest, app_dyn) {
   EXPECT_LT(DCC_RX_BIDI_DEQUE_SIZE, 42uz);
 
   // Add more datagrams than would fit the queue
-  for (auto i{0u}; i < 42u; ++i)
+  for (auto i{0uz}; i < 42u; ++i)
     _mock.datagram(DirectionStatusByte{static_cast<uint8_t>(i)});
 
-  auto i{0u};
+  auto i{0uz};
 
   {
     // First datagram after deque release is always QoS
@@ -68,7 +68,7 @@ TEST_F(RxTest, dont_transmit_following_foreign_address) {
   Receive(dcc::make_function_group_f4_f0_packet(1817u, 10u));
 
   // Add more datagrams than would fit the queue
-  for (auto i{0u}; i < 42u; ++i)
+  for (auto i{0uz}; i < 42u; ++i)
     _mock.datagram(DirectionStatusByte{static_cast<uint8_t>(i)});
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);

@@ -1,21 +1,7 @@
 #include "rx_test.hpp"
 
 TEST_F(RxTest, consist_control) {
-  EXPECT_CALL(_mock, readCv(_))
-    .WillOnce(Return(_cvs[29uz - 1uz]))
-    .WillOnce(Return(_cvs[1uz - 1uz]))
-    .WillOnce(Return(_cvs[19uz - 1uz]))
-    .WillOnce(Return(_cvs[20uz - 1uz]))
-    .WillOnce(Return(_cvs[15uz - 1uz]))
-    .WillOnce(Return(_cvs[16uz - 1uz]))
-    .WillOnce(Return(_cvs[28uz - 1uz]))
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz]))
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz]))
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz]))
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz]))
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz]))
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz]))
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_SID_CV_ADDRESS]));
+  BASIC_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE();
   auto cv19{RandomInterval<uint8_t>(0u, 255u)};
   auto packet{make_consist_control_packet(_addrs.primary, cv19)};
 

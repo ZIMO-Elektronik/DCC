@@ -5,7 +5,6 @@
 #include <dcc/dcc.hpp>
 
 struct BackoffTest : ::testing::Test {
-protected:
   BackoffTest();
   virtual ~BackoffTest();
 
