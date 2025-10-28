@@ -1,0 +1,242 @@
+@startuml
+
+mode compact
+scale 300 as 50 pixels
+hide time-axis
+
+binary "P" as P
+P is 50 pixels height
+
+binary "N" as N
+N is 50 pixels height
+
+concise " " as RX
+
+@P
+0 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
+
++100 is low
++100 is high
+
++100 is low
++100 is high
++100 is low
++100 is high
++100 is low
++100 is high
++100 is low
++100 is high
++100 is low
++100 is high
++100 is low
++100 is high
++58 is low
++58 is high
++58 is low
++58 is high
+
++100 is low
++100 is high
+
++58 is low
++58 is high
++100 is low
++100 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++100 is low
++100 is high
++100 is low
++100 is high
+
++100 is low
++100 is high
+
++58 is low
++58 is high
++100 is low
++100 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
+
++58 is low
++58 is high
+
++29 is low
++451 is high
+
++58 is low
+6792 is high
+
+@N
+0 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
+
++100 is high
++100 is low
+
++100 is high
++100 is low
++100 is high
++100 is low
++100 is high
++100 is low
++100 is high
++100 is low
++100 is high
++100 is low
++100 is high
++100 is low
++58 is high
++58 is low
++58 is high
++58 is low
+
++100 is high
++100 is low
+
++58 is high
++58 is low
++100 is high
++100 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++100 is high
++100 is low
++100 is high
++100 is low
+
++100 is high
++100 is low
+
++58 is high
++58 is low
++100 is high
++100 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
++58 is high
++58 is low
+
++58 is high
++58 is low
+
++29 is low
++451 is low
+
++58 is high
+6792 is low
+
+@RX
+0 is Preamble
++1972 is {hidden}
++200 is "Basic Loco Address (0x03)"
++1432 is {hidden}
++200 is "Function Group (0xBC)"
++1180 is {hidden}
++200 is "Error Detection (0xBF)"
++1012 is {hidden}
++116 is "BiDi"
++480 is {hidden}
+
+highlight 0 to 6312 #APPLICATION:execute
+highlight 6312 to 6792 #BUSINESS:biDiChannel1\nbiDiChannel2
+
+@enduml

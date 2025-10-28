@@ -30,6 +30,12 @@
       "type": "shell",
       "isBackground": true,
       "command": "./build/tests/DCCTests"
+    },
+    {
+      "label": "Run PlantUML",
+      "type": "shell",
+      "isBackground": true,
+      "command": "plantuml -o ./images ./data/transmission.pu"
     }
   ]
 }
