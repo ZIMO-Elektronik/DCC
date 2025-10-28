@@ -2,13 +2,14 @@
 
 ##
 - Block `rx::CrtpBase::biDiChannel1` and `rx::CrtpBase::biDiChannel2` outside of BiDi cutout ([#110](https://github.com/ZIMO-Elektronik/DCC/issues/110))
+- Bugfix [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) explicitly requires that ID0 datagrams must follow any packet ([#113](https://github.com/ZIMO-Elektronik/DCC/issues/113))
 
 ## 0.44.5
 - Bugfix `make_logon_assign_packet` ([#102](https://github.com/ZIMO-Elektronik/DCC/issues/102))
 - Bugfix PoM queue not cleared on new CV access packet ([#105](https://github.com/ZIMO-Elektronik/DCC/issues/105))
 
 ## 0.44.4
-- Bugfix RCN-218 address encoding for permanent assign during LOGON_ASSIGN ([#100](https://github.com/ZIMO-Elektronik/DCC/issues/100))
+- Bugfix [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) address encoding for permanent assign during LOGON_ASSIGN ([#100](https://github.com/ZIMO-Elektronik/DCC/issues/100))
 
 ## 0.44.3
 - Add app:pom for accessory decoders to `bidi::Dissector` ([#98](https://github.com/ZIMO-Elektronik/DCC/issues/98))
@@ -130,9 +131,9 @@
 - Remove optional mduEntry
 - Bugfix standard compliant CV28
   - Logon must be enabled by CV28:7 and ignores CV28:1 and CV28:0
-- Bugfix standard compliant RCN-217
+- Bugfix standard compliant [RCN-217](https://normen.railcommunity.de/RCN-217.pdf)
   - Reply with active address in channel 1 (instead of just primary)
-- Bugfix standard compliant RCN-218
+- Bugfix standard compliant [RCN-218](https://normen.railcommunity.de/RCN-218.pdf)
   - Logon address is only temporary
 
 ## 0.32.0
@@ -216,7 +217,7 @@
 - LOGON_ASSIGN CRC must be calculated before 6/8 encoding
 
 ## 0.21.0
-- Mainline RCN-218
+- Mainline [RCN-218](https://normen.railcommunity.de/RCN-218.pdf)
 - LOGON_ENABLE does not have CRC
 - LOGON_SELECT uses 6/8 encoding
 
@@ -224,7 +225,7 @@
 - Add proprietary CV20
 
 ## 0.20.0
-- Minimal implementation of (crippled) RCN-218
+- Minimal implementation of (crippled) [RCN-218](https://normen.railcommunity.de/RCN-218.pdf)
 - Update to ZTL 0.15.0
 
 ## 0.19.0
