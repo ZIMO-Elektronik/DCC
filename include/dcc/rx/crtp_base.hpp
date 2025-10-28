@@ -172,6 +172,7 @@ struct CrtpBase {
           _packet_end = true;
           ++_packet_count;
           _addrs.received = decode_address(_packet);
+          _instr = decode_instruction(_packet);
           if (!executeHandlerMode()) _deque.push_back(_packet);
         }
         // Immediately clear received address and invalid packet
@@ -250,8 +251,8 @@ struct CrtpBase {
       case Address::ExtendedLoco:
         if (_addrs.received ==
             (_logon_assigned ? _addrs.logon : _addrs.primary))
-          decode_instruction(_packet) == Instruction::CvLong ? appPom()
-                                                             : appDyn();
+          !empty(_pom.deque) || _instr == Instruction::CvLong ? appPom()
+                                                              : appDyn();
         else if (_addrs.received == _addrs.consist && _ch2_consist_enabled)
           appDyn();
         break;
@@ -1147,7 +1148,8 @@ private:
   void appPom() {
     if (!_ch2_data_enabled) return;
     // Deque contains data for this packet
-    else if (_packet == _pom.packet && !empty(_pom.deque)) {
+    else if (!empty(_pom.deque) &&
+             (_instr != Instruction::CvLong || _packet == _pom.packet)) {
       auto const& datagram{_pom.deque.front()};
       std::copy(cbegin(datagram), cend(datagram), begin(_ch2));
       impl().transmitBiDi({cbegin(_ch2), size(datagram)});
@@ -1309,6 +1311,7 @@ private:
   size_t _packet_count{};
   size_t _preamble_count{};
   size_t _own_equal_packets_count{};
+  Instruction _instr{}; ///< Current instruction
   uint8_t _byte{};
   uint8_t _checksum{};    ///< On-the-fly calculated checksum
   uint8_t _index_reg{1u}; ///< Paged mode index register
