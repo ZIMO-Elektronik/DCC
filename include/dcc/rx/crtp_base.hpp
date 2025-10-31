@@ -627,7 +627,8 @@ private:
       // Binary state control instruction long form (3 bytes)
       case 0b1100'0000u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        binaryState((static_cast<uint32_t>(bytes[2uz]) << 7u) |
+        binaryState(addr,
+                    (static_cast<uint32_t>(bytes[2uz]) << 7u) |
                       (bytes[1uz] & 0b0111'1111u),
                     bytes[1uz] & ztl::mask<7u>);
         break;
@@ -635,7 +636,8 @@ private:
       // Binary state control instruction short form (2 bytes)
       case 0b1101'1101u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        binaryState((bytes[1uz] & 0b0111'1111u), bytes[1uz] & ztl::mask<7u>);
+        binaryState(
+          addr, (bytes[1uz] & 0b0111'1111u), bytes[1uz] & ztl::mask<7u>);
         break;
 
       // Time (4 bytes)
@@ -709,43 +711,62 @@ private:
   /// \retval true  Command accepted
   /// \retval false Command rejected
   bool executeCvLong(Address::value_type addr, std::span<uint8_t const> bytes) {
-    if ((size(bytes) != 3uz + sizeof(_checksum)) ||
+    if (size(bytes) < 3uz + sizeof(_checksum) ||
+        size(bytes) > 8uz + sizeof(_checksum) ||
         (addr && addr == _addrs.consist))
       return false;
 
-    // Store packet for app:pom
-    if (_pom.packet != _deque.front()) {
-      _pom.deque.clear();
-      _pom.packet = _deque.front();
-    }
+    // Type
+    auto const kk{bytes[0uz] >> 2u & 0b11u};
 
-    switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
-            static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
-      // Reserved
-      case 0b00u: break;
-
-      // Verify byte
-      case 0b01u: cvVerify(cv_addr, bytes[2uz]); break;
-
-      // Write byte
-      case 0b11u:
-        // Not enough packets
-        if (_own_equal_packets_count < 2uz)
-          ;
-        // Write once
-        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bytes[2uz]);
-        // ...otherwise just verify
-        else cvVerify(cv_addr, bytes[2uz]);
-        break;
-
-      // Bit manipulation
-      case 0b10u: {
-        auto const pos{bytes[2uz] & 0b111u};
-        auto const bit{static_cast<bool>(bytes[2uz] & ztl::mask<3u>)};
-        if (!(bytes[2uz] & ztl::mask<4u>)) cvVerify(cv_addr, bit, pos);
-        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
-        break;
+    // POM
+    if (size(bytes) == 3uz + sizeof(_checksum)) {
+      // Store packet for app:pom
+      if (_pom.packet != _deque.front()) {
+        _pom.deque.clear();
+        _pom.packet = _deque.front();
       }
+
+      // CV address
+      uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
+
+      switch (kk) {
+        // Reserved
+        case 0b00u: break;
+
+        // Verify byte
+        case 0b01u: cvVerify(cv_addr, bytes[2uz]); break;
+
+        // Write byte
+        case 0b11u:
+          // Not enough packets
+          if (_own_equal_packets_count < 2uz)
+            ;
+          // Write once
+          else if (_own_equal_packets_count == 2uz)
+            cvWrite(cv_addr, bytes[2uz]);
+          // ...otherwise just verify
+          else cvVerify(cv_addr, bytes[2uz]);
+          break;
+
+        // Bit manipulation
+        case 0b10u: {
+          auto const pos{bytes[2uz] & 0b111u};
+          auto const bit{static_cast<bool>(bytes[2uz] & ztl::mask<3u>)};
+          if (!(bytes[2uz] & ztl::mask<4u>)) cvVerify(cv_addr, bit, pos);
+          else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
+          break;
+        }
+      }
+    }
+    // XPOM
+    else {
+      // Sequence number
+      [[maybe_unused]] auto const ss{bytes[0uz] & 0b11u};
+
+      // CV address
+      [[maybe_unused]] auto const cv_addr{static_cast<uint32_t>(
+        bytes[0uz] << 16u | bytes[1uz] << 8u | bytes[2uz] << 0u)};
     }
 
     return true;
@@ -761,7 +782,10 @@ private:
                       std::span<uint8_t const> bytes) {
     if (addr && addr == _addrs.consist) return false;
 
-    switch (bytes[0uz] & 0x0Fu) {
+    // Type
+    auto const kkkk{bytes[0uz] & 0x0Fu};
+
+    switch (kkkk) {
       // Not available for use
       case 0b0000u: break;
 
@@ -809,7 +833,7 @@ private:
   ///
   /// \param  cv_addr CV address
   /// \param  ts...   CV value or bit and bit position
-  void cvVerify(uint32_t cv_addr, auto... ts) {
+  void cvVerify(uint32_t cv_addr, std::unsigned_integral auto... ts) {
     if (_cvs_locked) return;
     cvVerifyImpl(cv_addr, ts...);
   }
@@ -842,7 +866,7 @@ private:
   ///
   /// \param  cv_addr CV address
   /// \param  ts...   CV value or bit and bit position
-  void cvWrite(uint32_t cv_addr, auto... ts) {
+  void cvWrite(uint32_t cv_addr, std::unsigned_integral auto... ts) {
     if (_cvs_locked && cv_addr != 15u - 1u) return;
     cvWriteImpl(cv_addr, ts...);
     static constexpr std::array<uint8_t, 9uz> cvs{1u - 1u,
@@ -918,9 +942,10 @@ private:
 
   /// Execute binary state
   ///
+  /// \param  addr  Address
   /// \param  xf    Number of binary state
   /// \param  state Binary state
-  void binaryState(uint32_t xf, bool state) {
+  void binaryState(Address::value_type, uint32_t xf, bool state) {
     switch (xf) {
       case 2u:
         if (!state) tipOffSearch();
