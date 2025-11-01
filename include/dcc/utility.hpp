@@ -27,43 +27,53 @@ namespace dcc {
 
 /// Data to uint16_t
 ///
-/// \param  data  Pointer to data
-/// \return uint16_t from data
-constexpr auto data2uint16(uint8_t const* data) {
-  return static_cast<uint16_t>(data[0uz] << 8u | data[1uz] << 0u);
+/// \tparam RandomIt  std::random_access_iterator
+/// \param  first     Beginning of the source range
+/// \return uint16_t
+template<std::random_access_iterator RandomIt>
+requires(sizeof(std::iter_value_t<RandomIt>) == 1uz)
+constexpr auto data2uint16(RandomIt first) {
+  return static_cast<uint16_t>(first[0uz] << 8u | first[1uz] << 0u);
+}
+
+/// uint16 to data
+///
+/// \tparam OutputIt  std::output_iterator
+/// \param  hword     Half-word to convert
+/// \param  out       Beginning of the destination range
+/// \return Output iterator one past the last element copied
+template<std::output_iterator<uint8_t> OutputIt>
+constexpr auto uint16_2data(uint16_t hword, OutputIt out) {
+  *out++ = static_cast<uint8_t>(hword >> 8u);
+  *out++ = static_cast<uint8_t>(hword >> 0u);
+  return out;
 }
 
 /// Data to uint32_t
 ///
-/// \param  data  Pointer to data
-/// \return uint32_t from data
-constexpr auto data2uint32(uint8_t const* data) {
-  return static_cast<uint32_t>(data[0uz] << 24u | data[1uz] << 16u |
-                               data[2uz] << 8u | data[3uz] << 0u);
-}
-
-/// uint16_t to data
-///
-/// \param  hword Half-word to convert
-/// \param  data  Pointer to write to
-/// \return Pointer after last element
-constexpr auto uint16_2data(uint16_t hword, uint8_t* data) {
-  *data++ = static_cast<uint8_t>((hword & 0xFF00u) >> 8u);
-  *data++ = static_cast<uint8_t>((hword & 0x00FFu) >> 0u);
-  return data;
+/// \tparam RandomIt  std::random_access_iterator
+/// \param  first     Beginning of the source range
+/// \return uint32_t
+template<std::random_access_iterator RandomIt>
+requires(sizeof(std::iter_value_t<RandomIt>) == 1uz)
+constexpr auto data2uint32(RandomIt first) {
+  return static_cast<uint32_t>(first[0uz] << 24u | first[1uz] << 16u |
+                               first[2uz] << 8u | first[3uz] << 0u);
 }
 
 /// uint32_t to data
 ///
-/// \param  word  Word to convert
-/// \param  data  Pointer to write to
-/// \return Pointer after last element
-constexpr auto uint32_2data(uint32_t word, uint8_t* data) {
-  *data++ = static_cast<uint8_t>((word & 0xFF00'0000u) >> 24u);
-  *data++ = static_cast<uint8_t>((word & 0x00FF'0000u) >> 16u);
-  *data++ = static_cast<uint8_t>((word & 0x0000'FF00u) >> 8u);
-  *data++ = static_cast<uint8_t>((word & 0x0000'00FFu) >> 0u);
-  return data;
+/// \tparam OutputIt  std::output_iterator
+/// \param  word      Word to convert
+/// \param  out       Beginning of the destination range
+/// \return Output iterator one past the last element copied
+template<std::output_iterator<uint8_t> OutputIt>
+constexpr auto uint32_2data(uint32_t word, OutputIt out) {
+  *out++ = static_cast<uint8_t>(word >> 24u);
+  *out++ = static_cast<uint8_t>(word >> 16u);
+  *out++ = static_cast<uint8_t>(word >> 8u);
+  *out++ = static_cast<uint8_t>(word >> 0u);
+  return out;
 }
 
 /// Scale speed from 14, 28 or 126 steps to 255

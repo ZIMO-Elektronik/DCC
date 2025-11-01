@@ -36,6 +36,12 @@
       "type": "shell",
       "isBackground": true,
       "command": "plantuml -o ./images ./data/transmission.pu"
+    },
+    {
+      "label": "Run Python http.server",
+      "type": "shell",
+      "isBackground": true,
+      "command": "python -m http.server --directory ${workspaceFolder}/build/examples/analyzer --bind 127.0.0.1"
     }
   ]
 }
