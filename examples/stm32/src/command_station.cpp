@@ -27,14 +27,14 @@ int main() {
   for (;;) {
     // Accelerate
     packet =
-      dcc::make_advanced_operations_speed_packet(3u, dcc::Forward << 7u | 42u);
+      dcc::make_128_speed_step_control_packet(3u, dcc::Forward << 7u | 42u);
     command_station.packet(packet);
     printf("\nCommand station: accelerate to speed step 42\n");
     bsp_write_green_led(true);
     bsp_delay(2000u);
 
     // Set function F3
-    packet = dcc::make_function_group_f4_f0_packet(3u, 0b0'1000u);
+    packet = dcc::make_f0_f4_packet(3u, 0b0'1000u);
     command_station.packet(packet);
     printf("Command station: set function F3\n");
     bsp_write_yellow_led(true);
@@ -42,14 +42,14 @@ int main() {
 
     // Decelerate
     packet =
-      dcc::make_advanced_operations_speed_packet(3u, dcc::Forward << 7u | 0u);
+      dcc::make_128_speed_step_control_packet(3u, dcc::Forward << 7u | 0u);
     command_station.packet(packet);
     printf("Command station: stop\n");
     bsp_write_green_led(false);
     bsp_delay(2000u);
 
     // Clear function
-    packet = dcc::make_function_group_f4_f0_packet(3u, 0b0'0000u);
+    packet = dcc::make_f0_f4_packet(3u, 0b0'0000u);
     command_station.packet(packet);
     printf("Command station: clear function F3\n");
     bsp_write_yellow_led(false);

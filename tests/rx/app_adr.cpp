@@ -9,7 +9,7 @@ TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
     make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.primary)))};
 
   // Send whatever packet to get last received address to match primary
-  auto packet{make_function_group_f4_f0_packet(_addrs.primary, 10u)};
+  auto packet{make_f0_f4_packet(_addrs.primary, 10u)};
   Receive(packet);
 
   InSequence s;
@@ -34,7 +34,7 @@ TEST_F(RxTest, app_adr_alternate_logon_id1_id2) {
     encode_datagram(make_datagram<Bits::_12>(2u, _addrs.logon & 0x00FFu))};
 
   // Send whatever packet to get last received address to match primary
-  auto packet{make_function_group_f4_f0_packet(_addrs.primary, 10u)};
+  auto packet{make_f0_f4_packet(_addrs.primary, 10u)};
   Receive(packet);
 
   InSequence s;
@@ -54,7 +54,7 @@ TEST_F(RxTest, app_adr_disabled_with_cv28_0) {
   SetUp();
 
   // Send whatever packet to get last received address to match primary
-  Receive(make_function_group_f4_f0_packet(_addrs.primary, 10u));
+  Receive(make_f0_f4_packet(_addrs.primary, 10u));
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
   Execute();
@@ -71,7 +71,7 @@ TEST_F(RxTest, app_adr_alternate_consist_id1_id2) {
     make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.consist)))};
 
   // Send whatever packet to get last received address to match primary
-  auto packet{make_function_group_f4_f0_packet(_addrs.consist, 10u)};
+  auto packet{make_f0_f4_packet(_addrs.consist, 10u)};
   Receive(packet);
 
   InSequence s;
@@ -101,7 +101,7 @@ TEST_F(RxTest, app_adr_alternate_long_consist_id1_id2) {
     encode_datagram(make_datagram<Bits::_12>(2u, _addrs.consist & 0x00FFu))};
 
   // Send whatever packet to get last received address to match primary
-  auto packet{make_function_group_f4_f0_packet(_addrs.consist, 10u)};
+  auto packet{make_f0_f4_packet(_addrs.consist, 10u)};
   Receive(packet);
 
   InSequence s;

@@ -251,8 +251,8 @@ struct CrtpBase {
       case Address::ExtendedLoco:
         if (_addrs.received ==
             (_logon_assigned ? _addrs.logon : _addrs.primary))
-          !empty(_pom.deque) || _instr == Instruction::CvLong ? appPom()
-                                                              : appDyn();
+          !empty(_pom.deque) || _instr == Instruction::CvAccess ? appPom()
+                                                                : appDyn();
         else if (_addrs.received == _addrs.consist && _ch2_consist_enabled)
           appDyn();
         break;
@@ -325,9 +325,9 @@ private:
     else if ((packet[0uz] & 0xF0u) != 0b0111'0000u) serviceMode(false);
     // Register mode
     else if (size(packet) == 3uz) registerMode({cbegin(packet), cend(packet)});
-    // CvLong
+    // CV access
     else if (size(packet) == 4uz && _own_equal_packets_count == 2uz)
-      executeCvLong(0u, {cbegin(packet), cend(packet)});
+      executeCvAccessLong(0u, {cbegin(packet), cend(packet)});
 
     return true;
   }
@@ -369,8 +369,7 @@ private:
       case Instruction::FunctionGroup: return executeFunctionGroup(addr, bytes);
       case Instruction::FeatureExpansion:
         return executeFeatureExpansion(addr, bytes);
-      case Instruction::CvLong: return executeCvLong(addr, bytes);
-      case Instruction::CvShort: return executeCvShort(addr, bytes);
+      case Instruction::CvAccess: return executeCvAccess(addr, bytes);
       default: return false;
     }
   }
@@ -395,15 +394,15 @@ private:
       // LOGON_ASSIGN
       case 0b1110'0000u: {
         auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
-        auto const bb{static_cast<AddressAssign>(bytes[6uz] >> 6u)};
+        auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
         std::array const cv17_cv18{
           static_cast<uint8_t>(0b1100'0000u | bytes[6uz]), bytes[7uz]};
-        // Multi-function decoders (extended address)
+        // Extended loco
         if (auto const a13_8{bytes[6uz] & 0x3Fu}; a13_8 < 0x28u)
           logonAssign(did, bb, decode_address(&cv17_cv18[0uz]));
-        // Accessory decoder
+        // Accessory
         else if (a13_8 < 0x38u) break;
-        // Multi-function decoders (basic address)
+        // Basic loco
         else if (a13_8 < 0x39u)
           logonAssign(did, bb, decode_address(&cv17_cv18[1uz]));
         // Reserved
@@ -415,7 +414,7 @@ private:
 
       // LOGON_ENABLE
       case 0b1111'0000u: {
-        auto const gg{static_cast<AddressGroup>(bytes[0uz] & 0b11u)};
+        auto const gg{static_cast<LogonGroup>(bytes[0uz] & 0b11u)};
         auto const cid{data2uint16(&bytes[1uz])};
         auto const sid{bytes[3uz]};
         logonEnable(gg, cid, sid);
@@ -489,19 +488,12 @@ private:
         bytes = bytes.subspan(0uz, 2uz + sizeof(_checksum));
         [[fallthrough]];
 
-      // 126 speed steps (plus 0)
+      // 126 speed steps
       case 0b0011'1111u: {
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         auto const dir{static_cast<bool>(bytes[1uz] & ztl::mask<7u>)};
-        // Stop
-        if (!(bytes[1uz] & 0b0111'1111u)) directionSpeed(addr, dir, Stop);
-        // Emergency stop
-        else if (!(bytes[1uz] & 0b0111'1110u)) directionSpeed(addr, dir, EStop);
-        // 126 speed steps
-        else {
-          auto const speed{scale_speed<126>((bytes[1uz] & 0b0111'1111) - 1)};
-          directionSpeed(addr, dir, speed);
-        }
+        auto const speed{scale_speed<126>(decode_rggggggg(bytes[1uz]))};
+        directionSpeed(addr, dir, speed);
         break;
       }
 
@@ -541,28 +533,19 @@ private:
     auto const dir{static_cast<bool>(bytes[0uz] & ztl::mask<5u>)};
     int32_t speed{};
 
-    // Stop
-    if (!(bytes[0uz] & 0b0000'1111u)) speed = Stop;
-    // Emergency stop
-    else if (!(bytes[0uz] & 0b0000'1110u)) speed = EStop;
     // 14 speed steps
-    else speed = static_cast<int32_t>(bytes[0uz] & 0b0000'1111u) - 1;
-
-    // ...and F0
     if (_f0_exception) {
-      speed = scale_speed<14>(speed);
+      speed = scale_speed<14>(decode_rggggg(bytes[0uz], false));
+      // F0
       if (addr) {
-        auto const mask{ztl::mask<0u>};
+        constexpr auto mask{ztl::mask<0u>};
         auto const state{bytes[0uz] & ztl::mask<4u> ? ztl::mask<0u> : 0u};
         impl().function(addr, mask, state);
       }
     }
-    // 28 speed steps with intermediate
-    else if (speed != EStop) {
-      speed <<= 1u;
-      if (speed && !(bytes[0uz] & ztl::mask<4u>)) --speed;
-      speed = scale_speed<28>(speed);
-    }
+    // 28 speed steps
+    else
+      speed = scale_speed<28>(decode_rggggg(bytes[0uz], true));
 
     directionSpeed(addr, dir, speed);
 
@@ -627,7 +610,8 @@ private:
       // Binary state control instruction long form (3 bytes)
       case 0b1100'0000u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        binaryState((static_cast<uint32_t>(bytes[2uz]) << 7u) |
+        binaryState(addr,
+                    (static_cast<uint32_t>(bytes[2uz]) << 7u) |
                       (bytes[1uz] & 0b0111'1111u),
                     bytes[1uz] & ztl::mask<7u>);
         break;
@@ -635,7 +619,8 @@ private:
       // Binary state control instruction short form (2 bytes)
       case 0b1101'1101u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        binaryState((bytes[1uz] & 0b0111'1111u), bytes[1uz] & ztl::mask<7u>);
+        binaryState(
+          addr, (bytes[1uz] & 0b0111'1111u), bytes[1uz] & ztl::mask<7u>);
         break;
 
       // Time (4 bytes)
@@ -701,51 +686,82 @@ private:
     return true;
   }
 
-  /// Execute CV access - long form
-  ///
+  /// Execute CV access
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
   /// \retval true  Command accepted
   /// \retval false Command rejected
-  bool executeCvLong(Address::value_type addr, std::span<uint8_t const> bytes) {
-    if ((size(bytes) != 3uz + sizeof(_checksum)) ||
+  bool executeCvAccess(Address::value_type addr,
+                       std::span<uint8_t const> bytes) {
+    return bytes[0uz] & ztl::mask<4u> ? executeCvAccessShort(addr, bytes)
+                                      : executeCvAccessLong(addr, bytes);
+  }
+
+  /// Execute CV access - long form
+  ///
+  /// \param  addr  Address
+  /// \param  bytes Raw bytes
+  /// \retval true  Command accepted
+  /// \retval false Command rejected
+  bool executeCvAccessLong(Address::value_type addr,
+                           std::span<uint8_t const> bytes) {
+    if (size(bytes) < 3uz + sizeof(_checksum) ||
+        size(bytes) > 8uz + sizeof(_checksum) ||
         (addr && addr == _addrs.consist))
       return false;
 
-    // Store packet for app:pom
-    if (_pom.packet != _deque.front()) {
-      _pom.deque.clear();
-      _pom.packet = _deque.front();
-    }
+    // Type
+    auto const kk{bytes[0uz] >> 2u & 0b11u};
 
-    switch (uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
-            static_cast<uint32_t>(bytes[0uz]) >> 2u & 0b11u) {
-      // Reserved
-      case 0b00u: break;
-
-      // Verify byte
-      case 0b01u: cvVerify(cv_addr, bytes[2uz]); break;
-
-      // Write byte
-      case 0b11u:
-        // Not enough packets
-        if (_own_equal_packets_count < 2uz)
-          ;
-        // Write once
-        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bytes[2uz]);
-        // ...otherwise just verify
-        else cvVerify(cv_addr, bytes[2uz]);
-        break;
-
-      // Bit manipulation
-      case 0b10u: {
-        auto const pos{bytes[2uz] & 0b111u};
-        auto const bit{static_cast<bool>(bytes[2uz] & ztl::mask<3u>)};
-        if (!(bytes[2uz] & ztl::mask<4u>)) cvVerify(cv_addr, bit, pos);
-        else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
-        break;
+    // POM
+    if (size(bytes) == 3uz + sizeof(_checksum)) {
+      // Store packet for app:pom
+      if (_pom.packet != _deque.front()) {
+        _pom.deque.clear();
+        _pom.packet = _deque.front();
       }
+
+      // CV address
+      uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
+
+      switch (kk) {
+        // Reserved
+        case 0b00u: break;
+
+        // Verify byte
+        case 0b01u: cvVerify(cv_addr, bytes[2uz]); break;
+
+        // Write byte
+        case 0b11u:
+          // Not enough packets
+          if (_own_equal_packets_count < 2uz)
+            ;
+          // Write once
+          else if (_own_equal_packets_count == 2uz)
+            cvWrite(cv_addr, bytes[2uz]);
+          // ...otherwise just verify
+          else cvVerify(cv_addr, bytes[2uz]);
+          break;
+
+        // Bit manipulation
+        case 0b10u: {
+          auto const pos{bytes[2uz] & 0b111u};
+          auto const bit{static_cast<bool>(bytes[2uz] & ztl::mask<3u>)};
+          if (!(bytes[2uz] & ztl::mask<4u>)) cvVerify(cv_addr, bit, pos);
+          else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
+          break;
+        }
+      }
+    }
+    // XPOM
+    else {
+      // Sequence number
+      [[maybe_unused]] auto const ss{bytes[0uz] & 0b11u};
+
+      // CV address
+      [[maybe_unused]] auto const cv_addr{static_cast<uint32_t>(
+        bytes[0uz] << 16u | bytes[1uz] << 8u | bytes[2uz] << 0u)};
     }
 
     return true;
@@ -757,11 +773,14 @@ private:
   /// \param  bytes Raw bytes
   /// \retval true  Command accepted
   /// \retval false Command rejected
-  bool executeCvShort(Address::value_type addr,
-                      std::span<uint8_t const> bytes) {
+  bool executeCvAccessShort(Address::value_type addr,
+                            std::span<uint8_t const> bytes) {
     if (addr && addr == _addrs.consist) return false;
 
-    switch (bytes[0uz] & 0x0Fu) {
+    // Type
+    auto const kkkk{bytes[0uz] & 0x0Fu};
+
+    switch (kkkk) {
       // Not available for use
       case 0b0000u: break;
 
@@ -809,7 +828,7 @@ private:
   ///
   /// \param  cv_addr CV address
   /// \param  ts...   CV value or bit and bit position
-  void cvVerify(uint32_t cv_addr, auto... ts) {
+  void cvVerify(uint32_t cv_addr, std::unsigned_integral auto... ts) {
     if (_cvs_locked) return;
     cvVerifyImpl(cv_addr, ts...);
   }
@@ -842,7 +861,7 @@ private:
   ///
   /// \param  cv_addr CV address
   /// \param  ts...   CV value or bit and bit position
-  void cvWrite(uint32_t cv_addr, auto... ts) {
+  void cvWrite(uint32_t cv_addr, std::unsigned_integral auto... ts) {
     if (_cvs_locked && cv_addr != 15u - 1u) return;
     cvWriteImpl(cv_addr, ts...);
     static constexpr std::array<uint8_t, 9uz> cvs{1u - 1u,
@@ -918,9 +937,10 @@ private:
 
   /// Execute binary state
   ///
+  /// \param  addr  Address
   /// \param  xf    Number of binary state
   /// \param  state Binary state
-  void binaryState(uint32_t xf, bool state) {
+  void binaryState(Address::value_type, uint32_t xf, bool state) {
     switch (xf) {
       case 2u:
         if (!state) tipOffSearch();
@@ -1009,10 +1029,10 @@ private:
 
   /// Logon enable
   ///
-  /// \param  gg  Address group
+  /// \param  gg  Logon group
   /// \param  cid Command station ID
   /// \param  sid Session ID
-  void logonEnable(AddressGroup gg, uint16_t cid, uint8_t sid) {
+  void logonEnable(LogonGroup gg, uint16_t cid, uint8_t sid) {
     // Already got selected and CID/SID didn't change
     if (_logon_selected && _cids.back() == cid && _sids.back() == sid) return;
     // ...otherwise clear selected
@@ -1039,10 +1059,10 @@ private:
     }
 
     switch (gg) {
-      case AddressGroup::All: [[fallthrough]]; // All decoders
-      case AddressGroup::Loco: break;          // Multi-function decoders
-      case AddressGroup::Acc: return;          // Accessory decoder
-      case AddressGroup::Now: _logon_backoff.now(); break; // No backoff
+      case LogonGroup::All: [[fallthrough]];             // All decoders
+      case LogonGroup::Loco: break;                      // Loco decoders
+      case LogonGroup::Acc: return;                      // Accessory decoder
+      case LogonGroup::Now: _logon_backoff.now(); break; // No backoff
     }
 
     if (_logon_backoff) return;
@@ -1080,16 +1100,16 @@ private:
   /// Logon assign
   ///
   /// \param  did   Unique ID
-  /// \param  bb    Address assign
+  /// \param  bb    Logon binding behavior
   /// \param  addr  Assigned address
   void logonAssign(std::span<uint8_t const, 4uz> did,
-                   AddressAssign bb,
+                   LogonBindingBehavior bb,
                    Address addr) {
     if (!std::ranges::equal(did, _did)) return;
     _logon_assigned = _logon_store = true;
     _addrs.consist = 0u;
     _addrs.logon = addr;
-    if (bb == AddressAssign::Permanent && addr) _addrs.primary = addr;
+    if (bb == LogonBindingBehavior::Permanent && addr) _addrs.primary = addr;
     static constexpr std::array<uint8_t, 5uz> data{
       13u << 4u | 0u, 0u, 0u, 0u, 0u};
     assert(!full(_logon_deque));
@@ -1149,7 +1169,7 @@ private:
     if (!_ch2_data_enabled) return;
     // Deque contains data for this packet
     else if (!empty(_pom.deque) &&
-             (_instr != Instruction::CvLong || _packet == _pom.packet)) {
+             (_instr != Instruction::CvAccess || _packet == _pom.packet)) {
       auto const& datagram{_pom.deque.front()};
       std::copy(cbegin(datagram), cend(datagram), begin(_ch2));
       impl().transmitBiDi({cbegin(_ch2), size(datagram)});
