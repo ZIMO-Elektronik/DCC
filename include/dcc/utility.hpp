@@ -187,10 +187,10 @@ constexpr auto make_set_advanced_addressing_packet(Address::value_type addr,
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco}, cv29_5);
 }
 
-/// Make decoder control - decoder acknowledgement request
+/// Make decoder control - decoder acknowledgement request packet
 ///
 /// \param  addr  Address
-/// \return Decoder control - decoder acknowledgement request
+/// \return Decoder control - decoder acknowledgement request packet
 constexpr auto make_ack_request_packet(Address addr) {
   assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
@@ -202,10 +202,10 @@ constexpr auto make_ack_request_packet(Address addr) {
   return packet;
 }
 
-/// Make decoder control - decoder acknowledgement request
+/// Make decoder control - decoder acknowledgement request packet
 ///
 /// \param  addr  Address
-/// \return Decoder control - decoder acknowledgement request
+/// \return Decoder control - decoder acknowledgement request packet
 constexpr auto make_ack_request_packet(Address::value_type addr) {
   return make_ack_request_packet(
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco});
@@ -239,7 +239,7 @@ constexpr auto make_set_consist_address_packet(Address::value_type addr,
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco}, cv19);
 }
 
-/// Make advanced operations - speed, direction and functions
+/// Make advanced operations - speed, direction and functions packet
 ///
 /// \tparam Fs...     Type of functions
 /// \param  addr      Address
@@ -263,7 +263,7 @@ constexpr auto make_speed_direction_and_functions_packet(Address addr,
   return packet;
 }
 
-/// Make advanced operations - speed, direction and functions
+/// Make advanced operations - speed, direction and functions packet
 ///
 /// \tparam Fs...     Type of functions
 /// \param  addr      Address
@@ -280,17 +280,40 @@ constexpr auto make_speed_direction_and_functions_packet(
     fs...);
 }
 
-/// \todo
-constexpr auto make_analog_function_group_packet(Address addr) {
+/// Make advanced operations - analog function group packet
+///
+/// \param  addr      Address
+/// \param  ssssssss  Analog channel
+/// \param  dddddddd  Analog amplitude
+/// \return Advanced operations - analog function group packet
+constexpr auto make_analog_function_group_packet(Address addr,
+                                                 uint8_t ssssssss,
+                                                 uint8_t dddddddd) {
   assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *last++ = 0b0011'1101u;
+  *last++ = ssssssss;
+  *last++ = dddddddd;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
 
-/// \todo
-constexpr auto make_analog_function_group_packet(Address::value_type) {
-  Packet packet{};
-  return packet;
+/// Make advanced operations - analog function group packet
+///
+/// \param  addr      Address
+/// \param  ssssssss  Analog channel
+/// \param  dddddddd  Analog amplitude
+/// \return Advanced operations - analog function group packet
+constexpr auto make_analog_function_group_packet(Address::value_type addr,
+                                                 uint8_t ssssssss,
+                                                 uint8_t dddddddd) {
+  return make_analog_function_group_packet(
+    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
+    ssssssss,
+    dddddddd);
 }
 
 /// \todo sonderbetriebsarten

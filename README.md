@@ -178,7 +178,7 @@ Commands available:
         This help message
  - exit
         Quit the session
- - address <Address [0-16383] [default:3]>
+ - address <Address [0-10239] [default:3]>
         Set address all commands are sent to
  - direction_speed <Direction [1 forward, 0 backward]> <Speed [0-127]>
         Set direction and speed

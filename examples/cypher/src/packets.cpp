@@ -327,12 +327,33 @@ void advanced_operations_special_operating_modes(
 
 //
 void advanced_operations_128_speed_step_control(
-  State::Packet& packet, std::span<uint8_t const> bytes) {}
+  State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - 128 Speed Step Control";
+  packet.desc_strs.back() +=
+    "\n- Direction=" +
+    std::to_string(static_cast<bool>(bytes[1uz] & ztl::mask<7u>));
+  packet.desc_strs.back() +=
+    std::string{"\n- Speed="} +
+    speed_labels[static_cast<size_t>(dcc::decode_rggggggg(bytes[1uz]) + 1)];
+  packet.pattern_str += " 0 00111111 0 RGGG-GGGG";
+}
 
 //
 void speed_and_direction(State::Packet& packet,
                          std::span<uint8_t const> bytes) {
   packet.desc_strs.push_back("Speed & Direction");
+  packet.desc_strs.back() +=
+    "\n- Direction=" +
+    std::to_string(static_cast<bool>(bytes[0uz] & ztl::mask<5u>));
+  packet.desc_strs.back() +=
+    std::string{"\n- Speed="} +
+    speed_labels[static_cast<size_t>(dcc::decode_rggggg(bytes[0uz], true) + 1)];
+  packet.desc_strs.back() +=
+    std::string{" or Speed="} +
+    speed_labels[static_cast<size_t>(dcc::decode_rggggg(bytes[0uz], false) +
+                                     1)] +
+    " and F0=" + std::to_string(static_cast<bool>(bytes[0uz] & ztl::mask<4u>));
+  packet.pattern_str += " 0 01RGGGGG";
 }
 
 //

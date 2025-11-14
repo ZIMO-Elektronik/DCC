@@ -69,7 +69,7 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
                  cli::Cli::cout() << "Set address to " << a << std::endl;
                },
                "Set address all commands are sent to",
-               {"Address [0-16383] [default:3]"});
+               {"Address [0-10239] [default:3]"});
 
   // Set direction and speed
   root->Insert("direction_speed",

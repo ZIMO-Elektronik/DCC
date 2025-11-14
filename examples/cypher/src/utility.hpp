@@ -2,7 +2,10 @@
 
 #include <imgui.h>
 #include <array>
+#include <concepts>
 #include <cstdint>
+#include <dcc/dcc.hpp>
+#include <random>
 #include <string>
 
 #define STRINGIFY(x) #x
@@ -43,6 +46,38 @@ inline constexpr std::array speed_labels{
   "99",    "100",  "101", "102", "103", "104", "105", "106", "107", "108",
   "109",   "110",  "111", "112", "113", "114", "115", "116", "117", "118",
   "119",   "120",  "121", "122", "123", "124", "125", "126"};
+
+//
+template<std::unsigned_integral T>
+constexpr T random_interval(T min, T max) {
+  std::mt19937 gen{std::random_device{}()};
+  std::uniform_int_distribution<T> dis{min, max};
+  return dis(gen);
+}
+
+//
+constexpr auto random_basic_loco() {
+  return dcc::Address{.value = random_interval<uint16_t>(1u, 127u),
+                      .type = dcc::Address::BasicLoco};
+}
+
+//
+constexpr auto random_extended_loco() {
+  return dcc::Address{.value = random_interval<uint16_t>(1u, 10239u),
+                      .type = dcc::Address::ExtendedLoco};
+}
+
+//
+constexpr auto random_basic_accessory() {
+  return dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
+                      .type = dcc::Address::BasicAccessory};
+}
+
+//
+constexpr auto random_extended_accessory() {
+  return dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
+                      .type = dcc::Address::ExtendedAccessory};
+}
 
 namespace ImGui {
 
