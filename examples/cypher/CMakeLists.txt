@@ -85,9 +85,3 @@ target_include_directories(implot SYSTEM PUBLIC ${implot_SOURCE_DIR})
 target_link_libraries(implot PUBLIC imgui)
 
 target_link_libraries(DCCypher PRIVATE DCC::DCC imgui implot)
-
-add_custom_command(
-  TARGET DCCypher
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/favicon.ico
-          ${CMAKE_CURRENT_BINARY_DIR}/favicon.ico)
