@@ -6,6 +6,24 @@
 #include <cstdint>
 #include <cstdlib>
 
+//
+dcc::Address random_loco_address() {
+  return random_interval(0, 1)
+           ? dcc::Address{.value = random_interval<uint16_t>(1u, 127u),
+                          .type = dcc::Address::BasicLoco}
+           : dcc::Address{.value = random_interval<uint16_t>(1u, 10239u),
+                          .type = dcc::Address::ExtendedLoco};
+}
+
+//
+dcc::Address random_accessory_address() {
+  return random_interval(0, 1)
+           ? dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
+                          .type = dcc::Address::BasicAccessory}
+           : dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
+                          .type = dcc::Address::ExtendedAccessory};
+}
+
 namespace ImGui {
 
 //

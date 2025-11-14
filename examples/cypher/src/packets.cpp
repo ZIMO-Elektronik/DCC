@@ -7,18 +7,12 @@
 #include <numeric>
 #include "utility.hpp"
 
-// 2 grün
-// 3 lila
-// 5 gelb
-// 9 rot
-// 4 orange
-// 8 weiß
-#define PRE_COL ImPlot::GetColormapColor(8)
-#define START_COL ImPlot::GetColormapColor(2)
-#define ADDR_COL ImPlot::GetColormapColor(5)
-#define DATA_COL ImPlot::GetColormapColor(4)
-#define END_COL ImPlot::GetColormapColor(9)
-#define CHECKSUM_COL ImPlot::GetColormapColor(3)
+#define PRE_COL ImPlot::GetColormapColor(8)      // white
+#define START_COL ImPlot::GetColormapColor(2)    // green
+#define ADDR_COL ImPlot::GetColormapColor(5)     // yellow
+#define DATA_COL ImPlot::GetColormapColor(4)     // orange
+#define END_COL ImPlot::GetColormapColor(9)      // red
+#define CHECKSUM_COL ImPlot::GetColormapColor(3) // violet
 
 #if defined(__EMSCRIPTEN__)
 #  include <emscripten.h>
@@ -271,8 +265,8 @@ void consist_control_set_consist_address(State::Packet& packet,
   packet.desc_strs.back() += " - Set Consist Address";
   packet.desc_strs.back() +=
     "\n- R=" + std::to_string(bytes[0uz] & ztl::mask<0u>);
-  packet.desc_strs.back() += "\n- A=" + std::to_string(bytes[1uz]);
-  packet.pattern_str += " 0 0001001R 0 0AAA-AAAA";
+  packet.desc_strs.back() += "\n- Address=" + std::to_string(bytes[1uz]);
+  packet.pattern_str += " 0 0001001R 0 0AAAAAAA";
 }
 
 //
@@ -319,11 +313,31 @@ void advanced_operations_speed_direction_and_function(
 //
 void advanced_operations_analog_function_group(State::Packet& packet,
                                                std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - Analog Function Group";
+  packet.desc_strs.back() +=
+    std::string{"\n- Channel="} + analog_labels[bytes[1uz]];
+  packet.desc_strs.back() +=
+    std::string{"\n- Value="} + std::to_string(bytes[2uz]);
+  packet.pattern_str += " 0 00111101 0 SSSSSSSS 0 DDDDDDDD";
 }
 
 //
 void advanced_operations_special_operating_modes(
-  State::Packet& packet, std::span<uint8_t const> bytes) {}
+  State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - Special Operating Modes";
+  packet.desc_strs.back() +=
+    std::string{"\n- Consist="} + consist_labels[(bytes[1uz] >> 2u) & 0b11u];
+  packet.desc_strs.back() +=
+    "\n- Shunting=" +
+    std::to_string(static_cast<bool>(bytes[1uz] & ztl::mask<4u>));
+  packet.desc_strs.back() +=
+    "\n- West=" + std::to_string(static_cast<bool>(bytes[1uz] & ztl::mask<5u>));
+  packet.desc_strs.back() +=
+    "\n- East=" + std::to_string(static_cast<bool>(bytes[1uz] & ztl::mask<6u>));
+  packet.desc_strs.back() +=
+    "\n- MAN=" + std::to_string(static_cast<bool>(bytes[1uz] & ztl::mask<7u>));
+  packet.pattern_str += " 0 00111110 0 DDDDDD00";
+}
 
 //
 void advanced_operations_128_speed_step_control(
@@ -421,15 +435,57 @@ void feature_expansion(State::Packet& packet, std::span<uint8_t const> bytes) {
 
 //
 void feature_expansion_binary_state_control_long_form(
-  State::Packet& packet, std::span<uint8_t const> bytes) {}
+  State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - Binary State Control Long Form";
+  packet.desc_strs.back() +=
+    "\n- Address=" + std::to_string(bytes[2uz] << 7u | (bytes[1uz] & 0x7Fu));
+  packet.desc_strs.back() +=
+    "\n- State=" +
+    std::to_string(static_cast<bool>(bytes[1uz] & ztl::mask<7u>));
+  packet.pattern_str += " 0 11000000 0 DLLLLLLL 0 HHHHHHHH";
+}
 
 //
 void feature_expansion_time_and_date(State::Packet& packet,
-                                     std::span<uint8_t const> bytes) {}
+                                     std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - Time and Date";
+  switch (bytes[1uz] >> 6u) {
+    case 0b00u:
+      packet.desc_strs.back() += "\n- Minutes=" + std::to_string(bytes[1uz]);
+      packet.desc_strs.back() +=
+        std::string{"\n- Weekday="} + weekday_labels[bytes[2uz] >> 5u];
+      packet.desc_strs.back() +=
+        "\n- Hours=" + std::to_string(bytes[2uz] & 0x1Fu);
+      packet.desc_strs.back() +=
+        "\n- Abrupt Update=" +
+        std::to_string(static_cast<bool>(bytes[3uz] & ztl::mask<7u>));
+      packet.desc_strs.back() +=
+        "\n- Factor=" + std::to_string(bytes[3uz] & 0x3Fu);
+      packet.pattern_str += " 0 11000001 0 00MMMMMM 0 WWWHHHHH 0 U0BBBBBB";
+      break;
+    case 0b01u:
+      packet.desc_strs.back() +=
+        "\n- Day=" + std::to_string(bytes[1uz] & 0x1Fu);
+      packet.desc_strs.back() +=
+        "\n- Month=" + std::to_string(bytes[2uz] >> 4u);
+      packet.desc_strs.back() +=
+        "\n- Year=" + std::to_string((bytes[2uz] & 0x0Fu) << 8u | bytes[3uz]);
+      packet.pattern_str += " 0 11000001 0 010TTTTT 0 MMMMYYYY 0 YYYYYYYY";
+      break;
+    case 0b10u:
+      packet.pattern_str += " 0 11000001 0 10111111 0 SEEEEEMM 0 MMMMMMMM";
+      break;
+  }
+}
 
 //
 void feature_expansion_system_time(State::Packet& packet,
-                                   std::span<uint8_t const> bytes) {}
+                                   std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - System Time";
+  packet.desc_strs.back() +=
+    "\n- Milliseconds=" + std::to_string(bytes[1uz] << 8u | bytes[2uz]);
+  packet.pattern_str += " 0 11000010 0 MMMMMMMM 0 MMMMMMMM";
+}
 
 //
 void feature_expansion_command_station_properties_identifier(
@@ -477,7 +533,15 @@ void feature_expansion_f61_f68(State::Packet& packet,
 
 //
 void feature_expansion_binary_state_control_short_form(
-  State::Packet& packet, std::span<uint8_t const> bytes) {}
+  State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - Binary State Control Short Form";
+  packet.desc_strs.back() +=
+    "\n- Address=" + std::to_string(bytes[1uz] & 0x7Fu);
+  packet.desc_strs.back() +=
+    "\n- State=" +
+    std::to_string(static_cast<bool>(bytes[1uz] & ztl::mask<7u>));
+  packet.pattern_str += " 0 11011101 0 DLLLLLLL";
+}
 
 //
 void feature_expansion_f13_f20(State::Packet& packet,

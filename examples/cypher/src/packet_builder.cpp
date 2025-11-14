@@ -115,14 +115,6 @@ void feature_expansion_time_and_date(State& state) {
         "[hh::mm]", ImGuiDataType_U8, data(time), 2, nullptr, nullptr, "%02u");
       time[0uz] = std::clamp<uint8_t>(time[0uz], 0u, 23u);
       time[1uz] = std::clamp<uint8_t>(time[1uz], 0u, 59u);
-      static constexpr std::array weekdays{"Monday",
-                                           "Tuesday",
-                                           "Wednesday",
-                                           "Thursday",
-                                           "Friday",
-                                           "Saturday",
-                                           "Sunday",
-                                           "Not Supported"};
       static constexpr uint8_t weekday_min{0u};
       static constexpr uint8_t weekday_max{7u};
       static uint8_t weekday{};
@@ -131,7 +123,7 @@ void feature_expansion_time_and_date(State& state) {
                           &weekday,
                           &weekday_min,
                           &weekday_max,
-                          weekdays[weekday]);
+                          weekday_labels[weekday]);
       static constexpr uint8_t acc_min{0u};
       static constexpr uint8_t acc_max{63u};
       static uint8_t acc{1};
@@ -511,12 +503,33 @@ void advanced_operations_speed_direction_and_function(State& state,
 void advanced_operations_analog_function_group(State& state,
                                                dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
+  static int ssssssss{};
+  ImGui::Combo("Channel", &ssssssss, data(analog_labels), ssize(analog_labels));
+  static uint8_t dddddddd{};
+  ImGui::InputScalar("Value", ImGuiDataType_U8, &dddddddd);
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back({.bytes = dcc::make_analog_function_group_packet(
+                               addr, ssssssss, dddddddd)});
 }
 
 ///
 void advanced_operations_special_operating_modes(State& state,
                                                  dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
+  static int cc{};
+  ImGui::Combo("Consist", &cc, data(consist_labels), ssize(consist_labels));
+  static bool shunting{};
+  ImGui::Checkbox("Shunting", &shunting);
+  static bool west{};
+  ImGui::Checkbox("West", &west);
+  static bool east{};
+  ImGui::Checkbox("East", &west);
+  static bool man{};
+  ImGui::Checkbox("MAN", &man);
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.bytes = dcc::make_special_operating_modes(
+         addr, static_cast<dcc::Consist>(cc), shunting, west, east, man)});
 }
 
 //
@@ -528,7 +541,7 @@ void advanced_operations_128_speed_step_control(State& state,
   ImGui::Checkbox("Direction", &r);
   static constexpr int8_t const min{-1};
   static constexpr int8_t const max{126};
-  static int8_t speed{0};
+  static int8_t speed{};
   speed = std::clamp(speed, min, max);
   ImGui::SliderScalar("Speed",
                       ImGuiDataType_S8,
@@ -684,7 +697,7 @@ void feature_expansion_binary_state_control_long_form(State& state,
   ImGui::SeparatorText("Parameters");
   static bool d{};
   ImGui::Checkbox("State", &d);
-  static uint16_t bin_addr{0u};
+  static uint16_t bin_addr{};
   ImGui::InputScalar("Address", ImGuiDataType_U16, &bin_addr);
   bin_addr = std::clamp<uint8_t>(bin_addr, 0u, 32767u);
   ImGui::SeparatorText("Done");

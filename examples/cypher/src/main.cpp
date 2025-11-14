@@ -4,11 +4,11 @@
 #include <imgui_impl_sdl2.h>
 #include <implot.h>
 #include <cstdio>
-#include <dcc/dcc.hpp>
 #include "about.hpp"
 #include "config.hpp"
 #include "datagram_builder.hpp"
 #include "datagrams.hpp"
+#include "demo.hpp"
 #include "layout.hpp"
 #include "menu.hpp"
 #include "packet_builder.hpp"
@@ -114,68 +114,7 @@ int main(int, char*[]) {
                           .show_datagrams = true,
                           .show_about = false}};
 
-  // Decoder Control
-  state.packets.push_back(
-    {.bytes = dcc::make_reset_packet(random_basic_loco())});
-  state.packets.push_back(
-    {.bytes = dcc::make_hard_reset_packet(random_extended_loco())});
-  state.packets.push_back(
-    {.bytes = dcc::make_factory_test_packet(random_basic_loco(), true)});
-  state.packets.push_back({.bytes = dcc::make_set_advanced_addressing_packet(
-                             random_extended_loco(), true)});
-  state.packets.push_back(
-    {.bytes = dcc::make_ack_request_packet(random_basic_loco())});
-
-  // Consist Control
-  state.packets.push_back({.bytes = dcc::make_set_consist_address_packet(
-                             random_extended_loco(), 1u << 7u | 42u)});
-
-  // Advanced operations
-  state.packets.push_back(
-    {.bytes = dcc::make_speed_direction_and_functions_packet(
-       random_basic_loco(), 1u << 7u | 0u, 0b0000'0001u)});
-  state.packets.push_back(
-    {.bytes = dcc::make_speed_direction_and_functions_packet(
-       random_extended_loco(), 0u << 7u | 1u, 0b0000'0001u, 0b0000'0011u)});
-  state.packets.push_back(
-    {.bytes =
-       dcc::make_speed_direction_and_functions_packet(random_basic_loco(),
-                                                      1u << 7u | 100u,
-                                                      0b0000'0001u,
-                                                      0b0000'0011u,
-                                                      0b0000'0111u)});
-  state.packets.push_back({.bytes = dcc::make_analog_function_group_packet(
-                             random_extended_loco(),
-                             random_interval<uint8_t>(0u, 255u),
-                             random_interval<uint8_t>(0u, 255u))});
-
-  // Speed & direction
-  state.packets.push_back({.bytes = dcc::make_speed_and_direction_packet(
-                             random_extended_loco(), 1u << 5u | 23u)});
-
-  // Function group
-  state.packets.push_back(
-    {.bytes = dcc::make_f0_f4_packet(random_extended_loco(), 0b0001'0000u)});
-  state.packets.push_back(
-    {.bytes = dcc::make_f9_f12_packet(random_basic_loco(), 0b0000'0110u)});
-  state.packets.push_back(
-    {.bytes = dcc::make_f5_f8_packet(random_extended_loco(), 0b0000'1001u)});
-
-  // Feature expansion
-  state.packets.push_back(
-    {.bytes = dcc::make_f29_f36_packet(random_extended_loco(), 0b1000'0000u)});
-  state.packets.push_back(
-    {.bytes = dcc::make_f37_f44_packet(random_basic_loco(), 0b0100'0000u)});
-  state.packets.push_back(
-    {.bytes = dcc::make_f45_f52_packet(random_extended_loco(), 0b0010'0000u)});
-  state.packets.push_back(
-    {.bytes = dcc::make_f53_f60_packet(random_basic_loco(), 0b0001'0000u)});
-  state.packets.push_back(
-    {.bytes = dcc::make_f61_f68_packet(random_extended_loco(), 0b0000'1000u)});
-  state.packets.push_back(
-    {.bytes = dcc::make_f13_f20_packet(random_basic_loco(), 0b0000'0100u)});
-  state.packets.push_back(
-    {.bytes = dcc::make_f21_f28_packet(random_extended_loco(), 0b0000'0010u)});
+  demo(state);
 
   // Main loop
   bool done{false};

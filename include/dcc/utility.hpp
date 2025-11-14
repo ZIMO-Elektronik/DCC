@@ -283,8 +283,8 @@ constexpr auto make_speed_direction_and_functions_packet(
 /// Make advanced operations - analog function group packet
 ///
 /// \param  addr      Address
-/// \param  ssssssss  Analog channel
-/// \param  dddddddd  Analog amplitude
+/// \param  ssssssss  Channel
+/// \param  dddddddd  Value
 /// \return Advanced operations - analog function group packet
 constexpr auto make_analog_function_group_packet(Address addr,
                                                  uint8_t ssssssss,
@@ -304,8 +304,8 @@ constexpr auto make_analog_function_group_packet(Address addr,
 /// Make advanced operations - analog function group packet
 ///
 /// \param  addr      Address
-/// \param  ssssssss  Analog channel
-/// \param  dddddddd  Analog amplitude
+/// \param  ssssssss  Channel
+/// \param  dddddddd  Value
 /// \return Advanced operations - analog function group packet
 constexpr auto make_analog_function_group_packet(Address::value_type addr,
                                                  uint8_t ssssssss,
@@ -316,7 +316,59 @@ constexpr auto make_analog_function_group_packet(Address::value_type addr,
     dddddddd);
 }
 
-/// \todo sonderbetriebsarten
+enum struct Consist : uint8_t {
+  NotPart = 0b00u,
+  Leading = 0b10u,
+  Middle = 0b01u,
+  Read = 0b11u
+};
+
+/// Make advanced operations - special operating modes packet
+///
+/// \param  addr      Address
+/// \param  cc        Position in a consist
+/// \param  shunting  Shunting function
+/// \param  west      West bit
+/// \param  east      East bit
+/// \param  man       MAN function
+/// \return Advanced operations - special operating modes packet
+constexpr auto make_special_operating_modes(
+  Address addr, Consist cc, bool shunting, bool west, bool east, bool man) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *last++ = 0b0011'1110u;
+  *last++ = static_cast<uint8_t>(man << 7u | east << 6u | west << 5u |
+                                 shunting << 4u | std::to_underlying(cc) << 2u);
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make advanced operations - special operating modes packet
+///
+/// \param  addr      Address
+/// \param  cc        Position in a consist
+/// \param  shunting  Shunting function
+/// \param  west      West bit
+/// \param  east      East bit
+/// \param  man       MAN function
+/// \return Advanced operations - special operating modes packet
+constexpr auto make_special_operating_modes(Address::value_type addr,
+                                            Consist cc,
+                                            bool shunting,
+                                            bool west,
+                                            bool east,
+                                            bool man) {
+  return make_special_operating_modes(
+    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
+    cc,
+    shunting,
+    west,
+    east,
+    man);
+}
 
 /// Make advanced operations - 128 speed step control packet
 ///
