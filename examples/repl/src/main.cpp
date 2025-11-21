@@ -69,12 +69,12 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
                  cli::Cli::cout() << "Set address to " << a << std::endl;
                },
                "Set address all commands are sent to",
-               {"Address [0-16383] [default:3]"});
+               {"Address [0-10239] [default:3]"});
 
   // Set direction and speed
   root->Insert("direction_speed",
                [&](std::ostream&, bool dir, uint8_t speed) {
-                 auto const packet{dcc::make_advanced_operations_speed_packet(
+                 auto const packet{dcc::make_128_speed_step_control_packet(
                    addr, dir << 7u | speed)};
                  fifo->push_back(packet);
                },
@@ -84,8 +84,7 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   // Set F4-F0
   root->Insert("f4-f0",
                [&](std::ostream&, uint8_t state) {
-                 auto const packet{
-                   dcc::make_function_group_f4_f0_packet(addr, state)};
+                 auto const packet{dcc::make_f0_f4_packet(addr, state)};
                  fifo->push_back(packet);
                },
                "Functions F4-F0",
@@ -94,8 +93,7 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   // Set F8-F5
   root->Insert("f8-f5",
                [&](std::ostream&, uint8_t state) {
-                 auto const packet{
-                   dcc::make_function_group_f8_f5_packet(addr, state)};
+                 auto const packet{dcc::make_f5_f8_packet(addr, state)};
                  fifo->push_back(packet);
                },
                "Functions F8-F5",

@@ -96,7 +96,7 @@ void RxTest::Logon() {
     .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]));
 
   // Enable
-  Receive(dcc::make_logon_enable_packet(dcc::AddressGroup::Now, _cid, _sid));
+  Receive(dcc::make_logon_enable_packet(dcc::LogonGroup::Now, _cid, _sid));
 }
 
 dcc::Packet RxTest::TinkerWithPacketLength(dcc::Packet packet) const {

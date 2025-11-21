@@ -63,6 +63,7 @@ struct Address {
 /// \param  first   Beginning of the range to decode from
 /// \return Address
 template<std::input_iterator InputIt>
+requires(sizeof(std::iter_value_t<InputIt>) == 1uz)
 constexpr Address decode_address(InputIt first) {
   // 0
   if (*first == 0u) return {*first, Address::Broadcast};
