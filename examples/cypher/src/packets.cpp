@@ -376,8 +376,8 @@ void function_group(State::Packet& packet, std::span<uint8_t const> bytes) {
   switch (bytes[0uz] & 0xF0u) {
     case 0b1000'0000u: [[fallthrough]];
     case 0b1001'0000u: return function_group_f0_f4(packet, bytes);
-    case 0b1011'0000u: return function_group_f9_f12(packet, bytes);
-    case 0b1010'0000u: return function_group_f5_f8(packet, bytes);
+    case 0b1010'0000u: return function_group_f9_f12(packet, bytes);
+    case 0b1011'0000u: return function_group_f5_f8(packet, bytes);
   }
 }
 

@@ -577,16 +577,16 @@ private:
         state = (bytes[0uz] & 0xFu) << 1u | (bytes[0uz] & ztl::mask<4u>) >> 4u;
         break;
 
-      case 0b1011'0000u:
-        // x-x-x-x-F8-F7-F6-F5
-        mask = ztl::mask<8u, 7u, 6u, 5u>;
-        state = (bytes[0uz] & 0x0Fu) << 5u;
-        break;
-
       case 0b1010'0000u:
         // x-x-x-x-F12-F11-F10-F9
         mask = ztl::mask<12u, 11u, 10u, 9u>;
         state = (bytes[0uz] & 0x0Fu) << 9u;
+        break;
+
+      case 0b1011'0000u:
+        // x-x-x-x-F8-F7-F6-F5
+        mask = ztl::mask<8u, 7u, 6u, 5u>;
+        state = (bytes[0uz] & 0x0Fu) << 5u;
         break;
     }
 
