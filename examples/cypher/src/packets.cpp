@@ -66,6 +66,7 @@ void eval(State& state, State::Packet& packet);
       void cv_access_long_form(State::Packet& packet, std::span<uint8_t const> bytes);
       void cv_access_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
       void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes);
+    void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const> bytes);
   void checksum(State::Packet& packet);
   void highlights(State::Packet& packet);
   void tags(State::Packet& packet);
@@ -169,22 +170,30 @@ void instruction(State::Packet& packet) {
   auto first{dcc::encode_address(addr, begin(packet.bytes))};
   std::span<uint8_t const> bytes{first, cend(packet.bytes)};
   if (empty(bytes)) return;
-  switch (dcc::decode_instruction(bytes)) {
-    case dcc::Instruction::UnknownService: return unknown(packet, bytes);
-    case dcc::Instruction::DecoderControl:
-      return decoder_control(packet, bytes);
-    case dcc::Instruction::ConsistControl:
-      return consist_control(packet, bytes);
-    case dcc::Instruction::AdvancedOperations:
-      return advanced_operations(packet, bytes);
-    case dcc::Instruction::SpeedDirection:
-      return speed_and_direction(packet, bytes);
-    case dcc::Instruction::FunctionGroup: return function_group(packet, bytes);
-    case dcc::Instruction::FeatureExpansion:
-      return feature_expansion(packet, bytes);
-    case dcc::Instruction::CvAccess: return cv_access(packet, bytes);
-    case dcc::Instruction::Logon: break;
-  }
+  if (addr.type == dcc::Address::Broadcast ||
+      addr.type == dcc::Address::BasicLoco ||
+      addr.type == dcc::Address::ExtendedLoco)
+    switch (dcc::decode_instruction(bytes)) {
+      case dcc::Instruction::UnknownService: return unknown(packet, bytes);
+      case dcc::Instruction::DecoderControl:
+        return decoder_control(packet, bytes);
+      case dcc::Instruction::ConsistControl:
+        return consist_control(packet, bytes);
+      case dcc::Instruction::AdvancedOperations:
+        return advanced_operations(packet, bytes);
+      case dcc::Instruction::SpeedDirection:
+        return speed_and_direction(packet, bytes);
+      case dcc::Instruction::FunctionGroup:
+        return function_group(packet, bytes);
+      case dcc::Instruction::FeatureExpansion:
+        return feature_expansion(packet, bytes);
+      case dcc::Instruction::CvAccess: return cv_access(packet, bytes);
+      case dcc::Instruction::Logon: break;
+    }
+  else if (addr.type == dcc::Address::BasicAccessory ||
+           addr.type == dcc::Address::ExtendedAccessory)
+    ;
+  else if (addr.type == dcc::Address::Idle) digital_decoder_idle(packet, bytes);
 }
 
 //
@@ -574,6 +583,13 @@ void cv_access_short_form(State::Packet& packet,
 
 //
 void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {}
+
+//
+void digital_decoder_idle(State::Packet& packet,
+                          std::span<uint8_t const> bytes) {
+  packet.desc_strs.push_back("Digital Decoder Idle");
+  packet.pattern_str += " 0 00000000";
+}
 
 //
 void checksum(State::Packet& packet) {
