@@ -1,9 +1,10 @@
 # Changelog
 
-##
+## 0.45.0
 - Block `rx::CrtpBase::biDiChannel1` and `rx::CrtpBase::biDiChannel2` outside of BiDi cutout ([#110](https://github.com/ZIMO-Elektronik/DCC/issues/110))
 - Bugfix [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) explicitly requires that ID0 datagrams must follow any packet ([#113](https://github.com/ZIMO-Elektronik/DCC/issues/113))
 - Bugfix CV access packets are answered with 2x ACKs as long as busy ([#114](https://github.com/ZIMO-Elektronik/DCC/issues/114))
+- Bugfix unknown BiDi ID causes out of bounds access ([#130](https://github.com/ZIMO-Elektronik/DCC/issues/130))
 
 ## 0.44.5
 - Bugfix `make_logon_assign_packet` ([#102](https://github.com/ZIMO-Elektronik/DCC/issues/102))

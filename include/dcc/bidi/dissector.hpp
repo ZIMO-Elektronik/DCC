@@ -129,7 +129,7 @@ struct Dissector : std::ranges::view_interface<Dissector> {
   }
 
   constexpr bool operator==(std::default_sentinel_t) const {
-    return _i >= bundled_channels_size || !_encoded[_i];
+    return _i >= bundled_channels_size || !_encoded[_i] || std::empty(next());
   }
 
   constexpr Dissector& begin() { return *this; }

@@ -147,3 +147,12 @@ TEST(Dissector, invalid) {
     EXPECT_EQ(expected, result);
   }
 }
+
+TEST(Dissector, unknown_id) {
+  {
+    dcc::Packet packet{0x03u, 0x3Fu, 0x80u, 0xBCu};
+    Datagram<> datagram{0x2Du, 0xCAu, 0x59u, 0x96u, 0x66u, 0x5Au, 0xACu, 0xACu};
+    Dissector dissector{datagram, packet};
+    EXPECT_EQ(cbegin(dissector), cend(dissector));
+  }
+}
