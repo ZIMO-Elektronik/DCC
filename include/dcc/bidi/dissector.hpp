@@ -47,7 +47,7 @@ struct Dissector : std::ranges::view_interface<Dissector> {
                                   app::Block,                   // app:block
                                   app::Zeit,                    // app:zeit
                                   app::Srq>;                    // app:srq
-  using size_type = ztl::smallest_unsigned_t<CHAR_BIT * bundled_channels_size>;
+  using size_type = ztl::smallest_unsigned_t<bundled_channels_size>;
   using difference_type = std::make_signed_t<size_type>;
   using reference = value_type;
   using pointer = value_type;
