@@ -328,7 +328,6 @@ constexpr T random_interval(T min = std::numeric_limits<T>::min(),
   return dis(gen);
 }
 
-std::string get_query_param(std::string const& url, std::string const& param);
 dcc::Address random_loco_address();
 dcc::Address random_accessory_address();
 

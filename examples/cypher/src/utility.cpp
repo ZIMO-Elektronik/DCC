@@ -7,18 +7,6 @@
 #include <cstdlib>
 
 //
-std::string get_query_param(std::string const& url, std::string const& param) {
-  auto const pattern{param + "="};
-  auto const start_pos{url.find(pattern)};
-  if (start_pos == std::string::npos) return {};
-  auto const end_pos{url.find("?", start_pos)};
-  return end_pos == std::string::npos
-           ? url.substr(start_pos + size(pattern))
-           : url.substr(start_pos + size(pattern),
-                        end_pos - size(pattern) - 1uz);
-}
-
-//
 dcc::Address random_loco_address() {
   return random_interval(0, 1)
            ? dcc::Address{.value = random_interval<uint16_t>(1u, 127u),

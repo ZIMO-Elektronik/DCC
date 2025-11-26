@@ -8,7 +8,6 @@
 #include "config.hpp"
 #include "datagram_builder.hpp"
 #include "datagrams.hpp"
-#include "demo.hpp"
 #include "layout.hpp"
 #include "menu.hpp"
 #include "packet_builder.hpp"
@@ -115,7 +114,7 @@ int main(int, char*[]) {
                           .show_datagrams = true,
                           .show_about = false}};
 
-  demo(state);
+  //
   query(state);
 
   // Main loop
