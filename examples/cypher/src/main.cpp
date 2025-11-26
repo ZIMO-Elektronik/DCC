@@ -14,6 +14,7 @@
 #include "packet_builder.hpp"
 #include "packets.hpp"
 #include "platform.hpp"
+#include "query.hpp"
 #include "state.hpp"
 #include "style.hpp"
 #include "utility.hpp"
@@ -115,6 +116,7 @@ int main(int, char*[]) {
                           .show_about = false}};
 
   demo(state);
+  query(state);
 
   // Main loop
   bool done{false};

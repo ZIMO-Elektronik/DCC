@@ -14,13 +14,6 @@
 #define END_COL ImPlot::GetColormapColor(9)      // red
 #define CHECKSUM_COL ImPlot::GetColormapColor(3) // violet
 
-#if defined(__EMSCRIPTEN__)
-#  include <emscripten.h>
-EM_JS(char const*, get_query, (), {
-  return stringToNewUTF8(window.location.search);
-});
-#endif
-
 namespace {
 
 namespace eval {
@@ -850,13 +843,6 @@ void plot(State::Packet& packet) {
 
 //
 void packets(State& state) {
-#if defined(__EMSCRIPTEN__)
-  if (static char const* query{}; !query) {
-    query = get_query();
-    printf("Query string: %s\n", query);
-  }
-#endif
-
   if (!state.windows.show_packets) return;
 
   if (ImGui::Begin("Packets", &state.windows.show_packets)) {
