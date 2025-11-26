@@ -9,7 +9,9 @@ namespace {
 EM_JS(char const*, get_query, (), {
   return stringToNewUTF8(window.location.search);
 });
-EM_JS(char const*, get_url, (), { return window.location.href; });
+EM_JS(char const*, get_url, (), {
+  return stringToNewUTF8(window.location.href);
+});
 #else
 char const* get_query() { return ""; }
 char const* get_url() { return "https://zimo-elektronik.github.io/DCC/"; }
