@@ -952,8 +952,8 @@ namespace user_defined {
 //
 void user_defined(State& state) {
   ImGui::SeparatorText("Data");
-  static dcc::Packet packet{0u};
-  if (ImGui::Button("-") && size(packet) > 1uz) packet.pop_back();
+  static dcc::Packet packet{0u, 0u};
+  if (ImGui::Button("-") && size(packet) > 2uz) packet.pop_back();
   ImGui::SameLine();
   if (ImGui::Button("+") && size(packet) < packet.max_size())
     packet.push_back(0u);
