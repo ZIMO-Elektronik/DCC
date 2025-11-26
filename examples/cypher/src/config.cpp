@@ -39,6 +39,7 @@ void config(State& state) {
 
     ImGui::SeparatorText("Share");
     if (ImGui::Button("To clipboard")) {
+      ImGui::SetClipboardText("");
       ImGui::LogToClipboard();
       ImGui::LogText("%s", to_query(state).c_str());
       ImGui::LogFinish();
