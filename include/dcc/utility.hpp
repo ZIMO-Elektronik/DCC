@@ -556,7 +556,7 @@ constexpr auto make_binary_state_long_packet(Address::value_type addr,
 /// \return Feature expansion - time packet
 constexpr auto make_time_packet(
   uint8_t weekday, uint8_t hour, uint8_t min, uint8_t acc, bool update) {
-  assert(weekday <= 7u && hour <= 23u && min <= 58 && acc <= 63u);
+  assert(weekday <= 7u && hour <= 23u && min <= 59 && acc <= 63u);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address({0u, Address::Broadcast}, first)};
