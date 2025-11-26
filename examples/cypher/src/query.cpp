@@ -10,9 +10,7 @@ EM_JS(char const*, get_query, (), {
   return stringToNewUTF8(window.location.search);
 });
 #else
-char const* get_query() {
-  return "?packets=FF00FF_3A1C71_12AB34?datagrams=FF1234FF";
-}
+char const* get_query() { return ""; }
 #endif
 
 //
@@ -29,20 +27,13 @@ std::string get_query_param(std::string const& url, std::string const& param) {
 
 //
 auto to_vector(std::string const& values) {
-  auto const hexval{[](auto c) -> uint8_t {
-    if (c >= '0' && c <= '9') return static_cast<uint8_t>(c - '0');
-    if (c >= 'A' && c <= 'F') return static_cast<uint8_t>(c - 'A' + 10u);
-    if (c >= 'a' && c <= 'f') return static_cast<uint8_t>(c - 'a' + 10u);
-    return 0u;
-  }};
   std::vector<std::vector<uint8_t>> retval;
   for (auto value : values | std::views::split('_')) {
     if (auto const count{size(value)}; count < 2uz || count % 2uz) continue;
     std::vector<uint8_t> v;
     for (auto i{0uz}; i < size(value); i += 2uz) {
-      auto const hi{value[i]};
-      auto const lo{value[i + 1uz]};
-      v.push_back((hexval(hi) << 4u) | hexval(lo));
+      std::string const hex{value[i], value[i + 1uz]};
+      v.push_back(static_cast<uint8_t>(std::stoi(hex, nullptr, 16)));
     }
     retval.push_back(v);
   }
