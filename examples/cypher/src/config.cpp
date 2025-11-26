@@ -1,6 +1,7 @@
 #include "config.hpp"
 #include <imgui.h>
 #include <dcc/dcc.hpp>
+#include "query.hpp"
 
 void config(State& state) {
   if (!state.windows.show_config) return;
@@ -8,6 +9,7 @@ void config(State& state) {
   if (ImGui::Begin("Config",
                    &state.windows.show_config,
                    ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::SeparatorText("Signal");
     uint8_t min{DCC_TX_MIN_PREAMBLE_BITS};
     uint8_t max{DCC_TX_MAX_PREAMBLE_BITS};
     ImGui::SliderScalar("Preamble bits",
@@ -34,6 +36,15 @@ void config(State& state) {
                         &min,
                         &max,
                         "%u");
+
+    ImGui::SeparatorText("Share");
+    if (ImGui::Button("To clipboard")) {
+      ImGui::LogToClipboard();
+      ImGui::LogText("%s", to_query(state).c_str());
+      ImGui::LogFinish();
+    }
+    if (ImGui::Button("From clipboard"))
+      from_query(state, ImGui::GetClipboardText());
   }
   ImGui::End();
 }

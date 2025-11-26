@@ -59,18 +59,27 @@ auto vector2datagram(std::vector<uint8_t> v) {
 
 } // namespace
 
-void query(State& state) {
-  std::string url{get_query()};
+//
+void query(State& state) { from_query(state, get_query()); }
 
-  if (auto const param{get_query_param(url, "demo")}; size(param)) demo(state);
+//
+void from_query(State& state, std::string const& url) {
+  if (auto const param{get_query_param(url, "demo")}; size(param)) {
+    state.packets.clear();
+    state.datagrams.clear();
+    demo(state);
+    return;
+  }
 
   if (auto const param{get_query_param(url, "packets")}; size(param)) {
+    state.packets.clear();
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
       state.packets.push_back({.bytes = vector2packet(v)});
   }
 
   if (auto const param{get_query_param(url, "datagrams")}; size(param)) {
+    state.datagrams.clear();
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
       state.datagrams.push_back({.bytes = vector2datagram(v)});
@@ -78,7 +87,7 @@ void query(State& state) {
 }
 
 //
-std::string build_query(State& state) {
+std::string to_query(State& state) {
   std::string retval{get_url()};
 
   if (size(state.packets)) {
