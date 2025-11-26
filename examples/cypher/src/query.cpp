@@ -9,8 +9,10 @@ namespace {
 EM_JS(char const*, get_query, (), {
   return stringToNewUTF8(window.location.search);
 });
+EM_JS(char const*, get_url, (), { return window.location.href; });
 #else
 char const* get_query() { return ""; }
+char const* get_url() { return "https://zimo-elektronik.github.io/DCC/"; }
 #endif
 
 //
@@ -29,7 +31,7 @@ std::string get_query_param(std::string const& url, std::string const& param) {
 auto to_vector(std::string const& values) {
   std::vector<std::vector<uint8_t>> retval;
   for (auto value : values | std::views::split('_')) {
-    if (auto const count{size(value)}; count < 2uz || count % 2uz) continue;
+    if (auto const count{size(value)}; count < 4uz || count % 2uz) continue;
     std::vector<uint8_t> v;
     for (auto i{0uz}; i < size(value); i += 2uz) {
       std::string const hex{value[i], value[i + 1uz]};
@@ -73,4 +75,29 @@ void query(State& state) {
     for (auto const& v : vs)
       state.datagrams.push_back({.bytes = vector2datagram(v)});
   }
+}
+
+//
+std::string build_query(State& state) {
+  std::string retval{get_url()};
+
+  if (size(state.packets)) {
+    retval += "?packets=";
+    for (auto packet : state.packets) {
+      for (auto b : packet.bytes) retval += std::format("{:02X}", b);
+      retval += '_';
+    }
+    retval.pop_back();
+  }
+
+  if (size(state.datagrams)) {
+    retval += "?datagrams=";
+    for (auto datagram : state.datagrams) {
+      for (auto b : datagram.bytes) retval += std::format("{:02X}", b);
+      retval += '_';
+    }
+    retval.pop_back();
+  }
+
+  return retval;
 }

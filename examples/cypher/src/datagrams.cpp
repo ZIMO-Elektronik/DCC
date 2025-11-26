@@ -1,5 +1,6 @@
 #include "datagrams.hpp"
 #include <imgui.h>
+#include "query.hpp"
 
 void datagrams(State& state) {
   if (!state.windows.show_datagrams) return;
@@ -9,7 +10,8 @@ void datagrams(State& state) {
 
     if (ImGui::Button("Copy \"Hello, world!\" to clipboard")) {
       ImGui::LogToClipboard();
-      ImGui::LogText("Hello, world!");
+      auto STR = build_query(state);
+      ImGui::LogText("%s", STR.c_str());
       ImGui::LogFinish();
     }
   }
