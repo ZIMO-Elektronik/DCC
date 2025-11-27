@@ -108,64 +108,71 @@ void eval(State& state, State::Packet& packet) {
 
 //
 void preamble(State::Packet& packet) {
-  packet.pattern_str += std::string(packet.cfg.num_preamble, 'S') + " 0";
+  packet.pattern_str += std::string(packet.cfg.num_preamble, 'S');
 }
 
 //
 void address(State::Packet& packet) {
-  auto const addr{dcc::decode_address(packet.bytes)};
+  auto const addr{packet.service_mode
+                    ? dcc::Address{.type = dcc::Address::UnknownService}
+                    : dcc::decode_address(packet.bytes)};
   switch (addr.type) {
     case dcc::Address::UnknownService:
       packet.desc_strs.push_back("Service");
       break;
     case dcc::Address::Broadcast:
       packet.desc_strs.push_back("Broadcast " + std::to_string(addr));
-      packet.pattern_str += " 00000000";
+      packet.pattern_str += " 0 00000000";
       break;
     case dcc::Address::BasicLoco:
       packet.desc_strs.push_back("Basic Loco " + std::to_string(addr));
-      packet.pattern_str += " 0AAAAAAA";
+      packet.pattern_str += " 0 0AAAAAAA";
       break;
     case dcc::Address::BasicAccessory:
       packet.desc_strs.push_back("Basic Accessory " + std::to_string(addr));
-      packet.pattern_str += " 10AAAAAA 0 1AAA-DAAR";
+      packet.pattern_str += " 0 10AAAAAA 0 1AAA-DAAR";
       break;
     case dcc::Address::ExtendedAccessory:
       packet.desc_strs.push_back("Extended Accessory " + std::to_string(addr));
-      packet.pattern_str += " 10AAAAAA 0 0AAA0AA1";
+      packet.pattern_str += " 0 10AAAAAA 0 0AAA0AA1";
       break;
     case dcc::Address::ExtendedLoco:
       packet.desc_strs.push_back("Extended Loco " + std::to_string(addr));
-      packet.pattern_str += " 11AAAAAA 0 AAAAAAAA";
+      packet.pattern_str += " 0 11AAAAAA 0 AAAAAAAA";
       break;
     case dcc::Address::Reserved:
       packet.desc_strs.push_back("Reserved" + std::to_string(addr));
-      packet.pattern_str += " 11x1xxx";
+      packet.pattern_str += " 0 11x1xxx";
       break;
     case dcc::Address::DataTransfer:
       packet.desc_strs.push_back("Data Transfer" + std::to_string(addr));
-      packet.pattern_str += " 11111101";
+      packet.pattern_str += " 0 11111101";
       break;
     case dcc::Address::AutomaticLogon:
       packet.desc_strs.push_back("Automatic Logon" + std::to_string(addr));
-      packet.pattern_str += " 11111110";
+      packet.pattern_str += " 0 11111110";
       break;
     case dcc::Address::Idle:
       packet.desc_strs.push_back("Idle " + std::to_string(addr));
-      packet.pattern_str += " 11111111";
+      packet.pattern_str += " 0 11111111";
       break;
   }
 }
 
 //
 void instruction(State::Packet& packet) {
-  auto const addr{dcc::decode_address(packet.bytes)};
+  auto const addr{packet.service_mode
+                    ? dcc::Address{.type = dcc::Address::UnknownService}
+                    : dcc::decode_address(packet.bytes)};
   auto first{dcc::encode_address(addr, begin(packet.bytes))};
   std::span<uint8_t const> bytes{first, cend(packet.bytes)};
   if (empty(bytes)) return;
-  if (addr.type == dcc::Address::Broadcast ||
-      addr.type == dcc::Address::BasicLoco ||
-      addr.type == dcc::Address::ExtendedLoco)
+  if (addr.type == dcc::Address::UnknownService) {
+    packet.desc_strs.push_back("CV Access - Long Form");
+    cv_access_long_form(packet, bytes);
+  } else if (addr.type == dcc::Address::Broadcast ||
+             addr.type == dcc::Address::BasicLoco ||
+             addr.type == dcc::Address::ExtendedLoco)
     switch (dcc::decode_instruction(bytes)) {
       case dcc::Instruction::UnknownService: return unknown(packet, bytes);
       case dcc::Instruction::DecoderControl:
@@ -351,7 +358,7 @@ void advanced_operations_128_speed_step_control(
   packet.desc_strs.back() +=
     std::string{"\n- Speed="} +
     speed_labels[static_cast<size_t>(dcc::decode_rggggggg(bytes[1uz]) + 1)];
-  packet.pattern_str += " 0 00111111 0 RGGG-GGGG";
+  packet.pattern_str += " 0 00111111 0 RGGGGGGG";
 }
 
 //
@@ -580,7 +587,9 @@ void cv_access_long_form(State::Packet& packet,
       packet.desc_strs.back() += kk == 0b01u ? "\n- Verify CV" : "\n- Write CV";
       packet.desc_strs.back() +=
         std::to_string(cv_addr + 1u) + "=" + std::to_string(bytes[2uz]);
-      packet.pattern_str += " 0 1110KKVV 0 VVVVVVVV 0 DDDDDDDD";
+      packet.pattern_str += packet.service_mode
+                              ? " 0 0111KKVV 0 VVVVVVVV 0 DDDDDDDD"
+                              : " 0 1110KKVV 0 VVVVVVVV 0 DDDDDDDD";
       break;
     case 0b10u:
       auto const pos{bytes[2uz] & 0b111u};
@@ -590,7 +599,9 @@ void cv_access_long_form(State::Packet& packet,
       packet.desc_strs.back() += std::to_string(cv_addr + 1u) + ":" +
                                  std::to_string(pos) + "=" +
                                  std::to_string(bit);
-      packet.pattern_str += " 0 111010VV 0 VVVVVVVV 0 111KDBBB";
+      packet.pattern_str += packet.service_mode
+                              ? " 0 111010VV 0 VVVVVVVV 0 111KDBBB"
+                              : " 0 011110VV 0 VVVVVVVV 0 111KDBBB";
       break;
   }
 }
@@ -685,26 +696,27 @@ void highlights(State::Packet& packet) {
   }
 
   // Address
-  for (; k < addr_count; ++k) {
-    // Space
-    ++j;
+  if (!packet.service_mode)
+    for (; k < addr_count; ++k) {
+      // Space
+      ++j;
 
-    // Startbit
-    packet.plots.highlights[i++] = {
-      START_COL,
-      hgl_str +
-        std::string(size(packet.pattern_str), ' ').replace(j++, 1uz, 1uz, '^')};
-
-    // Space
-    ++j;
-
-    //
-    for (auto l{0uz}; l < CHAR_BIT; ++l)
+      // Startbit
       packet.plots.highlights[i++] = {
-        ADDR_COL,
+        START_COL,
         hgl_str + std::string(size(packet.pattern_str), ' ')
                     .replace(j++, 1uz, 1uz, '^')};
-  }
+
+      // Space
+      ++j;
+
+      //
+      for (auto l{0uz}; l < CHAR_BIT; ++l)
+        packet.plots.highlights[i++] = {
+          ADDR_COL,
+          hgl_str + std::string(size(packet.pattern_str), ' ')
+                      .replace(j++, 1uz, 1uz, '^')};
+    }
 
   // Data
   for (; k < size(packet.bytes) - 1uz; ++k) {
@@ -762,7 +774,9 @@ void highlights(State::Packet& packet) {
 
 //
 void tags(State::Packet& packet) {
-  auto const addr{dcc::decode_address(packet.bytes)};
+  auto const addr{packet.service_mode
+                    ? dcc::Address{.type = dcc::Address::UnknownService}
+                    : dcc::decode_address(packet.bytes)};
   auto first{dcc::encode_address(addr, begin(packet.bytes))};
   std::span<uint8_t const> bytes{first, cend(packet.bytes)};
 
@@ -770,20 +784,21 @@ void tags(State::Packet& packet) {
 
   double t{0.0};
   packet.plots.tags.push_back({t, PRE_COL, "Preamble"});
-
   t += 2.0 * (num_preamble * bit1_duration + bit0_duration);
-  packet.plots.tags.push_back({t, ADDR_COL, "Address"});
 
-  t += std::accumulate(
-    begin(packet.bytes),
-    first,
-    0.0,
-    [bit1_duration, bit0_duration](double a, uint8_t b) {
-      return a + 2.0 * (bit0_duration + (std::popcount(b) * bit1_duration) +
-                        ((CHAR_BIT - std::popcount(b)) * bit0_duration));
-    });
+  if (!packet.service_mode) {
+    packet.plots.tags.push_back({t, ADDR_COL, "Address"});
+    t += std::accumulate(
+      begin(packet.bytes),
+      first,
+      0.0,
+      [bit1_duration, bit0_duration](double a, uint8_t b) {
+        return a + 2.0 * (bit0_duration + (std::popcount(b) * bit1_duration) +
+                          ((CHAR_BIT - std::popcount(b)) * bit0_duration));
+      });
+  }
+
   packet.plots.tags.push_back({t, DATA_COL, "Data"});
-
   t += std::accumulate(
     first,
     end(packet.bytes) - 1,
@@ -792,6 +807,7 @@ void tags(State::Packet& packet) {
       return a + 2.0 * (bit0_duration + (std::popcount(b) * bit1_duration) +
                         ((CHAR_BIT - std::popcount(b)) * bit0_duration));
     });
+
   packet.plots.tags.push_back({t, CHECKSUM_COL, "Checksum"});
 }
 

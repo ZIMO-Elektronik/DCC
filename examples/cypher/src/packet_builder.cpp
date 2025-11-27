@@ -894,15 +894,15 @@ void cv_access_long_form(State& state, dcc::Address addr) {
       if (!strcmp(instrs[static_cast<size_t>(i)], "Byte Verify"))
         state.packets.push_back(
           {.bytes =
-             addr
-               ? dcc::make_cv_access_long_verify_packet(addr, cv_addr, cv)
-               : dcc::make_cv_access_long_verify_service_packet(cv_addr, cv)});
+             addr ? dcc::make_cv_access_long_verify_packet(addr, cv_addr, cv)
+                  : dcc::make_cv_access_long_verify_service_packet(cv_addr, cv),
+           .service_mode = !addr});
       else
         state.packets.push_back(
           {.bytes =
-             addr
-               ? dcc::make_cv_access_long_write_packet(addr, cv_addr, cv)
-               : dcc::make_cv_access_long_write_service_packet(cv_addr, cv)});
+             addr ? dcc::make_cv_access_long_write_packet(addr, cv_addr, cv)
+                  : dcc::make_cv_access_long_write_service_packet(cv_addr, cv),
+           .service_mode = !addr});
     }
   } else if (!strcmp(instrs[static_cast<size_t>(i)], "Bit Verify") ||
              !strcmp(instrs[static_cast<size_t>(i)], "Bit Write")) {
@@ -919,13 +919,15 @@ void cv_access_long_form(State& state, dcc::Address addr) {
           {.bytes = addr ? dcc::make_cv_access_long_verify_packet(
                              addr, cv_addr, bit, pos)
                          : dcc::make_cv_access_long_verify_service_packet(
-                             cv_addr, bit, pos)});
+                             cv_addr, bit, pos),
+           .service_mode = !addr});
       else
         state.packets.push_back(
           {.bytes = addr ? dcc::make_cv_access_long_write_packet(
                              addr, cv_addr, bit, pos)
                          : dcc::make_cv_access_long_write_service_packet(
-                             cv_addr, bit, pos)});
+                             cv_addr, bit, pos),
+           .service_mode = !addr});
     }
   }
 }

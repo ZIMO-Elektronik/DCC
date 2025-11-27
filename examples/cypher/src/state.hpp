@@ -34,6 +34,7 @@ struct State {
       std::vector<std::tuple<double, ImColor, std::string>> tags{};
     } plots{};
     dcc::tx::Config cfg{};
+    bool service_mode{};
     bool show{true};
   };
 
