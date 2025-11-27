@@ -95,6 +95,7 @@ std::string to_query(State& state) {
   if (size(state.packets)) {
     retval += "?packets=";
     for (auto packet : state.packets) {
+      if (!packet.show) continue;
       for (auto b : packet.bytes) retval += std::format("{:02X}", b);
       retval += '_';
     }
@@ -104,6 +105,7 @@ std::string to_query(State& state) {
   if (size(state.datagrams)) {
     retval += "?datagrams=";
     for (auto datagram : state.datagrams) {
+      if (!datagram.show) continue;
       for (auto b : datagram.bytes) retval += std::format("{:02X}", b);
       retval += '_';
     }

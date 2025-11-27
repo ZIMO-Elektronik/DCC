@@ -298,13 +298,13 @@ void advanced_operations_speed_direction_and_function(
     std::string{"\n- Speed="} +
     speed_labels[static_cast<size_t>(dcc::decode_rggggggg(bytes[1uz]) + 1)];
   packet.desc_strs.back() += "\n- F7-F0=" + std::format("{:08b}", bytes[2uz]);
-  if (size(bytes) >= 4uz)
+  if (size(bytes) >= 4uz + 1uz)
     packet.desc_strs.back() +=
       "\n- F15-F8=" + std::format("{:08b}", bytes[3uz]);
-  if (size(bytes) >= 5uz)
+  if (size(bytes) >= 5uz + 1uz)
     packet.desc_strs.back() +=
       "\n- F23-F16=" + std::format("{:08b}", bytes[4uz]);
-  if (size(bytes) >= 6uz)
+  if (size(bytes) >= 6uz + 1uz)
     packet.desc_strs.back() +=
       "\n- F31-F24=" + std::format("{:08b}", bytes[4uz]);
   packet.pattern_str += " 0 00111100 0 RGGGGGGG 0 DDDDDDDD";
