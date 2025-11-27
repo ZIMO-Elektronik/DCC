@@ -872,11 +872,87 @@ void cv_access(State& state, dcc::Address addr) {
 //
 void cv_access_long_form(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
+  static uint16_t cv_addr{};
+  ImGui::InputScalar("CV Address", ImGuiDataType_U16, &cv_addr);
+  static constexpr std::array instrs{
+    "", "Byte Verify", "Byte Write", "Bit Verify", "Bit Write"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+  if (!strcmp(instrs[static_cast<size_t>(i)], "Byte Verify") ||
+      !strcmp(instrs[static_cast<size_t>(i)], "Byte Write")) {
+    static uint8_t cv{};
+    ImGui::InputScalar("CV Value", ImGuiDataType_U8, &cv);
+    auto const fp{
+      !strcmp(instrs[static_cast<size_t>(i)], "Byte Verify")
+        ? static_cast<dcc::Packet (*)(dcc::Address, uint32_t, uint8_t)>(
+            dcc::make_cv_access_long_verify_packet)
+        : static_cast<dcc::Packet (*)(dcc::Address, uint32_t, uint8_t)>(
+            dcc::make_cv_access_long_write_packet)};
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back({.bytes = fp(addr, cv_addr, cv)});
+  } else if (!strcmp(instrs[static_cast<size_t>(i)], "Bit Verify") ||
+             !strcmp(instrs[static_cast<size_t>(i)], "Bit Write")) {
+    static bool bit{};
+    ImGui::Checkbox("Bit", &bit);
+    static constexpr uint8_t const min{};
+    static constexpr uint8_t const max{7u};
+    static uint8_t pos{};
+    ImGui::SliderScalar("Position", ImGuiDataType_U8, &pos, &max, &min);
+    auto const fp{
+      !strcmp(instrs[static_cast<size_t>(i)], "Byte Verify")
+        ? static_cast<dcc::Packet (*)(dcc::Address, uint32_t, bool, uint32_t)>(
+            dcc::make_cv_access_long_verify_packet)
+        : static_cast<dcc::Packet (*)(dcc::Address, uint32_t, bool, uint32_t)>(
+            dcc::make_cv_access_long_write_packet)};
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back({.bytes = fp(addr, cv_addr, bit, pos)});
+  }
 }
 
 //
 void cv_access_short_form(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
+  static constexpr std::array instr{"",
+                                    "Acceleration Adjustment Value (CV23)",
+                                    "Deceleration Adjustment Value (CV24)",
+                                    "Long Address (CV17, 18 and 29)",
+                                    "Indexed CVs (CV31 and 32)",
+                                    "Long Consist Address (CV19 and 20)"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(instr), ssize(instr));
+  static std::array<uint8_t, 2uz> cvs{};
+  uint8_t kkkk{};
+  if (!strcmp(instr[static_cast<size_t>(i)],
+              "Acceleration Adjustment Value (CV23)")) {
+    kkkk = 0b0010u;
+    ImGui::InputScalar("CV23", ImGuiDataType_U8, &cvs[0uz]);
+  } else if (!strcmp(instr[static_cast<size_t>(i)],
+                     "Deceleration Adjustment Value (CV24)")) {
+    kkkk = 0b0011u;
+    ImGui::InputScalar("CV24", ImGuiDataType_U8, &cvs[0uz]);
+  } else if (!strcmp(instr[static_cast<size_t>(i)],
+                     "Long Address (CV17, 18 and 29)")) {
+    kkkk = 0b0100u;
+    ImGui::InputScalar("CV17", ImGuiDataType_U8, &cvs[0uz]);
+    ImGui::InputScalar("CV18", ImGuiDataType_U8, &cvs[1uz]);
+  } else if (!strcmp(instr[static_cast<size_t>(i)],
+                     "Indexed CVs (CV31 and 32)")) {
+    kkkk = 0b0101u;
+    ImGui::InputScalar("CV31", ImGuiDataType_U8, &cvs[0uz]);
+    ImGui::InputScalar("CV32", ImGuiDataType_U8, &cvs[1uz]);
+  } else if (!strcmp(instr[static_cast<size_t>(i)],
+                     "Long Consist Address (CV19 and 20)")) {
+    kkkk = 0b0110u;
+    ImGui::InputScalar("CV19", ImGuiDataType_U8, &cvs[0uz]);
+    ImGui::InputScalar("CV20", ImGuiDataType_U8, &cvs[1uz]);
+  }
+  if (!kkkk) return;
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back({.bytes = dcc::make_cv_access_short_write_packet(
+                               addr, kkkk, cvs[0uz], cvs[1uz])});
 }
 
 //

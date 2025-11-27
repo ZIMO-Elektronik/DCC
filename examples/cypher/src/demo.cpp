@@ -117,8 +117,47 @@ void add_packets(State& state) {
   state.packets.push_back(
     {.bytes = dcc::make_f21_f28_packet(random_loco_address(),
                                        random_interval<uint8_t>())});
-  // CV long
-  // CV short
+
+  // CV access
+  state.packets.push_back({.bytes = dcc::make_cv_access_long_verify_packet(
+                             random_loco_address(),
+                             random_interval<uint16_t>(0u, 1023u),
+                             random_interval<uint8_t>())});
+  state.packets.push_back({.bytes = dcc::make_cv_access_long_write_packet(
+                             random_loco_address(),
+                             random_interval<uint16_t>(0u, 1023u),
+                             random_interval<uint8_t>())});
+  state.packets.push_back({.bytes = dcc::make_cv_access_long_verify_packet(
+                             random_loco_address(),
+                             random_interval<uint16_t>(0u, 1023u),
+                             random_interval(0, 1),
+                             random_interval<uint8_t>(0u, 7u))});
+  state.packets.push_back({.bytes = dcc::make_cv_access_long_write_packet(
+                             random_loco_address(),
+                             random_interval<uint16_t>(0u, 1023u),
+                             random_interval(0, 1),
+                             random_interval<uint8_t>(0u, 7u))});
+  state.packets.push_back(
+    {.bytes = make_cv_access_short_write_packet(
+       random_loco_address(), 0b0010u, random_interval<uint8_t>())});
+  state.packets.push_back(
+    {.bytes = make_cv_access_short_write_packet(
+       random_loco_address(), 0b0011u, random_interval<uint8_t>())});
+  state.packets.push_back(
+    {.bytes = make_cv_access_short_write_packet(random_loco_address(),
+                                                0b0100u,
+                                                random_interval<uint8_t>(),
+                                                random_interval<uint8_t>())});
+  state.packets.push_back(
+    {.bytes = make_cv_access_short_write_packet(random_loco_address(),
+                                                0b0101u,
+                                                random_interval<uint8_t>(),
+                                                random_interval<uint8_t>())});
+  state.packets.push_back(
+    {.bytes = make_cv_access_short_write_packet(random_loco_address(),
+                                                0b0110u,
+                                                random_interval<uint8_t>(),
+                                                random_interval<uint8_t>())});
 }
 
 void add_datagrams(State& state) {}

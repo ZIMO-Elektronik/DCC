@@ -564,15 +564,71 @@ void feature_expansion_f21_f28(State::Packet& packet,
 //
 void cv_access(State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.desc_strs.push_back("CV Access");
+  if (bytes[0uz] & ztl::mask<4u>) cv_access_short_form(packet, bytes);
+  else cv_access_long_form(packet, bytes);
 }
 
 //
 void cv_access_long_form(State::Packet& packet,
-                         std::span<uint8_t const> bytes) {}
+                         std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - Long Form";
+  auto const kk{bytes[0uz] >> 2u & 0b11u};
+  auto const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
+  switch (kk) {
+    case 0b01u: [[fallthrough]];
+    case 0b11u:
+      packet.desc_strs.back() += kk == 0b01u ? "\n- Verify CV" : "\n- Write CV";
+      packet.desc_strs.back() +=
+        std::to_string(cv_addr + 1u) + "=" + std::to_string(bytes[2uz]);
+      packet.pattern_str += " 0 1110KKVV 0 VVVVVVVV 0 DDDDDDDD";
+      break;
+    case 0b10u:
+      auto const pos{bytes[2uz] & 0b111u};
+      auto const bit{static_cast<bool>(bytes[2uz] & ztl::mask<3u>)};
+      packet.desc_strs.back() +=
+        bytes[2uz] & ztl::mask<4u> ? "\n- Verify CV" : "\n- Write CV";
+      packet.desc_strs.back() += std::to_string(cv_addr + 1u) + ":" +
+                                 std::to_string(pos) + "=" +
+                                 std::to_string(bit);
+      packet.pattern_str += " 0 111010VV 0 VVVVVVVV 0 111KDBBB";
+      break;
+  }
+}
 
 //
 void cv_access_short_form(State::Packet& packet,
-                          std::span<uint8_t const> bytes) {}
+                          std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - Short Form";
+  auto const kkkk{bytes[0uz] & 0x0Fu};
+  switch (kkkk) {
+    case 0b0010u:
+      packet.desc_strs.back() += "\n- Write CV23=" + std::to_string(bytes[1uz]);
+      packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD";
+      break;
+    case 0b0011u:
+      packet.desc_strs.back() += "\n- Write CV24=" + std::to_string(bytes[1uz]);
+      packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD";
+      break;
+    case 0b0100u:
+      packet.desc_strs.back() +=
+        "\n- Write CV17=" + std::to_string(bytes[1uz]) +
+        " CV18=" + std::to_string(bytes[2uz]);
+      packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD 0 DDDDDDDD";
+      break;
+    case 0b0101u:
+      packet.desc_strs.back() +=
+        "\n- Write CV31=" + std::to_string(bytes[1uz]) +
+        " CV32=" + std::to_string(bytes[2uz]);
+      packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD 0 DDDDDDDD";
+      break;
+    case 0b0110u:
+      packet.desc_strs.back() +=
+        "\n- Write CV19=" + std::to_string(bytes[1uz]) +
+        " CV20=" + std::to_string(bytes[2uz]);
+      packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD 0 DDDDDDDD";
+      break;
+  }
+}
 
 //
 void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {}
