@@ -857,16 +857,23 @@ void feature_expansion_f21_f28(State& state, dcc::Address addr) {
 //
 void cv_access(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
-  static constexpr std::array instrs{
-    "", "CV Access Long Form", "CV Access Short Form", "CV Access XPOM"};
-  static int i{};
-  ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
-  if (!strcmp(instrs[static_cast<size_t>(i)], "CV Access Long Form"))
-    cv_access_long_form(state, addr);
-  else if (!strcmp(instrs[static_cast<size_t>(i)], "CV Access Short Form"))
-    cv_access_short_form(state, addr);
-  else if (!strcmp(instrs[static_cast<size_t>(i)], "CV Access XPOM"))
-    cv_access_xpom(state, addr);
+  if (addr) {
+    static constexpr std::array instrs{"", "Long Form", "Short Form", "XPOM"};
+    static int i{};
+    ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+    if (!strcmp(instrs[static_cast<size_t>(i)], "Long Form"))
+      cv_access_long_form(state, addr);
+    else if (!strcmp(instrs[static_cast<size_t>(i)], "Short Form"))
+      cv_access_short_form(state, addr);
+    else if (!strcmp(instrs[static_cast<size_t>(i)], "XPOM"))
+      cv_access_xpom(state, addr);
+  } else {
+    static constexpr std::array instrs{"", "Long Form"};
+    static int i{};
+    ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+    if (!strcmp(instrs[static_cast<size_t>(i)], "Long Form"))
+      cv_access_long_form(state, addr);
+  }
 }
 
 //
@@ -882,15 +889,21 @@ void cv_access_long_form(State& state, dcc::Address addr) {
       !strcmp(instrs[static_cast<size_t>(i)], "Byte Write")) {
     static uint8_t cv{};
     ImGui::InputScalar("CV Value", ImGuiDataType_U8, &cv);
-    auto const fp{
-      !strcmp(instrs[static_cast<size_t>(i)], "Byte Verify")
-        ? static_cast<dcc::Packet (*)(dcc::Address, uint32_t, uint8_t)>(
-            dcc::make_cv_access_long_verify_packet)
-        : static_cast<dcc::Packet (*)(dcc::Address, uint32_t, uint8_t)>(
-            dcc::make_cv_access_long_write_packet)};
     ImGui::SeparatorText("Done");
-    if (ImGui::Button("Push to Packets"))
-      state.packets.push_back({.bytes = fp(addr, cv_addr, cv)});
+    if (ImGui::Button("Push to Packets")) {
+      if (!strcmp(instrs[static_cast<size_t>(i)], "Byte Verify"))
+        state.packets.push_back(
+          {.bytes =
+             addr
+               ? dcc::make_cv_access_long_verify_packet(addr, cv_addr, cv)
+               : dcc::make_cv_access_long_verify_service_packet(cv_addr, cv)});
+      else
+        state.packets.push_back(
+          {.bytes =
+             addr
+               ? dcc::make_cv_access_long_write_packet(addr, cv_addr, cv)
+               : dcc::make_cv_access_long_write_service_packet(cv_addr, cv)});
+    }
   } else if (!strcmp(instrs[static_cast<size_t>(i)], "Bit Verify") ||
              !strcmp(instrs[static_cast<size_t>(i)], "Bit Write")) {
     static bool bit{};
@@ -899,15 +912,21 @@ void cv_access_long_form(State& state, dcc::Address addr) {
     static constexpr uint8_t const max{7u};
     static uint8_t pos{};
     ImGui::SliderScalar("Position", ImGuiDataType_U8, &pos, &max, &min);
-    auto const fp{
-      !strcmp(instrs[static_cast<size_t>(i)], "Byte Verify")
-        ? static_cast<dcc::Packet (*)(dcc::Address, uint32_t, bool, uint32_t)>(
-            dcc::make_cv_access_long_verify_packet)
-        : static_cast<dcc::Packet (*)(dcc::Address, uint32_t, bool, uint32_t)>(
-            dcc::make_cv_access_long_write_packet)};
     ImGui::SeparatorText("Done");
-    if (ImGui::Button("Push to Packets"))
-      state.packets.push_back({.bytes = fp(addr, cv_addr, bit, pos)});
+    if (ImGui::Button("Push to Packets")) {
+      if (!strcmp(instrs[static_cast<size_t>(i)], "Bit Verify"))
+        state.packets.push_back(
+          {.bytes = addr ? dcc::make_cv_access_long_verify_packet(
+                             addr, cv_addr, bit, pos)
+                         : dcc::make_cv_access_long_verify_service_packet(
+                             cv_addr, bit, pos)});
+      else
+        state.packets.push_back(
+          {.bytes = addr ? dcc::make_cv_access_long_write_packet(
+                             addr, cv_addr, bit, pos)
+                         : dcc::make_cv_access_long_write_service_packet(
+                             cv_addr, bit, pos)});
+    }
   }
 }
 
@@ -958,6 +977,7 @@ void cv_access_short_form(State& state, dcc::Address addr) {
 //
 void cv_access_xpom(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
+  ImGui::Text("\\todo");
 }
 
 } // namespace loco
@@ -1017,7 +1037,15 @@ void digital_decoder_idle(State& state) {
 
 namespace service {
 
-void service(State& state) { ImGui::Text("\\todo"); }
+//
+void service(State& state) {
+  ImGui::SeparatorText("Instruction");
+  static constexpr std::array instrs{"", "CV Access"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+  if (!strcmp(instrs[static_cast<size_t>(i)], "CV Access"))
+    ::loco::cv_access(state, {.type = dcc::Address::UnknownService});
+}
 
 } // namespace service
 
