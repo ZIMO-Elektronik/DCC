@@ -988,13 +988,45 @@ void extended(State& state);
 // clang-format on
 
 //
-void basic(State&) { ImGui::Text("\\todo"); }
+void basic(State& state) {
+  ImGui::SeparatorText("Address");
+  static dcc::Address::value_type addr{3};
+  ImGui::InputScalar(UNIQUE_LABEL(), ImGuiDataType_U16, &addr);
+  addr = std::clamp<dcc::Address::value_type>(addr, 0u, 2047u);
+  ImGui::SeparatorText("Parameters");
+  static bool d{};
+  ImGui::Checkbox("D", &d);
+  ImGui::SameLine();
+  static bool r{};
+  ImGui::Checkbox("R", &r);
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.bytes = dcc::make_basic_accessory_packet(addr, r, d)});
+}
 
 //
-void extended(State&) { ImGui::Text("\\todo"); }
+void extended(State& state) {
+  ImGui::SeparatorText("Address");
+  static dcc::Address::value_type addr{3};
+  ImGui::InputScalar(UNIQUE_LABEL(), ImGuiDataType_U16, &addr);
+  addr = std::clamp<dcc::Address::value_type>(addr, 0u, 2047u);
+  accessory(state, {.value = addr, .type = dcc::Address::ExtendedAccessory});
+}
 
 //
-void accessory(State&, dcc::Address) { ImGui::Text("\\todo"); }
+void accessory(State& state, dcc::Address addr) {
+  ImGui::SeparatorText("Instruction");
+  static constexpr std::array instrs{"",
+                                     "Decoder Control",
+                                     "Consist Control",
+                                     "Advanced Operations",
+                                     "Speed & Direction",
+                                     "Function Group",
+                                     "Feature Expansion",
+                                     "CV Access"};
+  static int i{};
+}
 
 } // namespace accessory
 

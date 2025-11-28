@@ -130,11 +130,11 @@ void address(State::Packet& packet) {
       break;
     case dcc::Address::BasicAccessory:
       packet.desc_strs.push_back("Basic Accessory " + std::to_string(addr));
-      packet.pattern_str += " 0 10AAAAAA 0 1AAA-DAAR";
+      packet.pattern_str += " 0 10AAAAAA 0 1ÂÂÂDAAR";
       break;
     case dcc::Address::ExtendedAccessory:
       packet.desc_strs.push_back("Extended Accessory " + std::to_string(addr));
-      packet.pattern_str += " 0 10AAAAAA 0 0AAA0AA1";
+      packet.pattern_str += " 0 10AAAAAA 0 0ÂÂÂ0AA1";
       break;
     case dcc::Address::ExtendedLoco:
       packet.desc_strs.push_back("Extended Loco " + std::to_string(addr));
