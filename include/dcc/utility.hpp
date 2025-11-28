@@ -13,6 +13,7 @@
 #include <cassert>
 #include <concepts>
 #include <cstdint>
+#include <cstring>
 #include <utility>
 #include <ztl/math.hpp>
 #include "address.hpp"
@@ -20,6 +21,10 @@
 #include "exor.hpp"
 #include "instruction.hpp"
 #include "packet.hpp"
+
+#if __has_include(<stdfloat>)
+#  include <stdfloat>
+#endif
 
 namespace dcc {
 
@@ -589,6 +594,25 @@ constexpr auto make_date_packet(uint8_t day, uint8_t month, uint16_t year) {
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
+
+#if defined(__STDCPP_FLOAT16_T__)
+/// Make feature expansion - time scale packet
+///
+/// \param  scale
+/// \return Feature expansion - time scale packet
+constexpr auto make_time_scale_packet(std::float16_t scale) {
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({0u, Address::Broadcast}, first)};
+  *last++ = 0b1100'0001u;
+  *last++ = 0b1011'1111u;
+  memcpy(&scale, last, sizeof(scale));
+  last += sizeof(scale);
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+#endif
 
 /// Make feature expansion - system time packet
 ///

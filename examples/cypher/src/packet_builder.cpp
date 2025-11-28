@@ -104,66 +104,59 @@ void feature_expansion(State& state) {
 //
 void feature_expansion_time_and_date(State& state) {
   ImGui::SeparatorText("Parameters");
-  static constexpr std::array chrono_type{"", "Time", "Date", "Scale"};
+  static constexpr std::array chrono_type{"", "Time", "Date", "Time Scale"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(chrono_type), ssize(chrono_type));
-  switch (i) {
-    case 0: return;
-    case 1: {
-      static std::array<uint8_t, 2uz> time{};
-      ImGui::InputScalarN(
-        "[hh::mm]", ImGuiDataType_U8, data(time), 2, nullptr, nullptr, "%02u");
-      time[0uz] = std::clamp<uint8_t>(time[0uz], 0u, 23u);
-      time[1uz] = std::clamp<uint8_t>(time[1uz], 0u, 59u);
-      static constexpr uint8_t weekday_min{0u};
-      static constexpr uint8_t weekday_max{7u};
-      static uint8_t weekday{};
-      ImGui::SliderScalar("Weekday",
-                          ImGuiDataType_U8,
-                          &weekday,
-                          &weekday_min,
-                          &weekday_max,
-                          weekday_labels[weekday]);
-      static constexpr uint8_t acc_min{0u};
-      static constexpr uint8_t acc_max{63u};
-      static uint8_t acc{1};
-      ImGui::SliderScalar(
-        "Factor", ImGuiDataType_U8, &acc, &acc_min, &acc_max, "%u");
-      static bool update{};
-      ImGui::Checkbox("Abrupt Update", &update);
-      ImGui::SeparatorText("Done");
-      if (ImGui::Button("Push to Packets"))
-        state.packets.push_back(
-          {.bytes = dcc::make_time_packet(
-             weekday, time[0uz], time[1uz], acc, update)});
-      break;
-    }
-    case 2: {
-      static std::array<uint16_t, 3uz> date{24u, 3u, 1989u};
-      ImGui::InputScalarN("[dd::mm:yyyy]",
-                          ImGuiDataType_U16,
-                          data(date),
-                          3,
-                          nullptr,
-                          nullptr,
-                          "%02u");
-      date[0uz] = std::clamp<uint16_t>(date[0uz], 1u, 31u);
-      date[1uz] = std::clamp<uint16_t>(date[1uz], 1u, 12u);
-      date[2uz] = std::clamp<uint16_t>(date[2uz], 0u, 4095u);
-      ImGui::SeparatorText("Done");
-      if (ImGui::Button("Push to Packets"))
-        state.packets.push_back(
-          {.bytes = dcc::make_date_packet(static_cast<uint8_t>(date[0uz]),
-                                          static_cast<uint8_t>(date[1uz]),
-                                          date[2uz])});
-      break;
-    }
-    case 3: {
-      ImGui::Text("\\todo");
-      // static float acc{};
-      // ImGui::InputFloat("Acc. Factor", &acc);
-      break;
-    }
+  if (!strcmp(chrono_type[static_cast<size_t>(i)], "Time")) {
+    static std::array<uint8_t, 2uz> time{};
+    ImGui::InputScalarN(
+      "[hh::mm]", ImGuiDataType_U8, data(time), 2, nullptr, nullptr, "%02u");
+    time[0uz] = std::clamp<uint8_t>(time[0uz], 0u, 23u);
+    time[1uz] = std::clamp<uint8_t>(time[1uz], 0u, 59u);
+    static constexpr uint8_t weekday_min{0u};
+    static constexpr uint8_t weekday_max{7u};
+    static uint8_t weekday{};
+    ImGui::SliderScalar("Weekday",
+                        ImGuiDataType_U8,
+                        &weekday,
+                        &weekday_min,
+                        &weekday_max,
+                        weekday_labels[weekday]);
+    static constexpr uint8_t acc_min{0u};
+    static constexpr uint8_t acc_max{63u};
+    static uint8_t acc{1};
+    ImGui::SliderScalar(
+      "Factor", ImGuiDataType_U8, &acc, &acc_min, &acc_max, "%u");
+    static bool update{};
+    ImGui::Checkbox("Abrupt Update", &update);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back({.bytes = dcc::make_time_packet(
+                                 weekday, time[0uz], time[1uz], acc, update)});
+  } else if (!strcmp(chrono_type[static_cast<size_t>(i)], "Date")) {
+    static std::array<uint16_t, 3uz> date{24u, 3u, 1989u};
+    ImGui::InputScalarN("[dd::mm:yyyy]",
+                        ImGuiDataType_U16,
+                        data(date),
+                        3,
+                        nullptr,
+                        nullptr,
+                        "%02u");
+    date[0uz] = std::clamp<uint16_t>(date[0uz], 1u, 31u);
+    date[1uz] = std::clamp<uint16_t>(date[1uz], 1u, 12u);
+    date[2uz] = std::clamp<uint16_t>(date[2uz], 0u, 4095u);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back(
+        {.bytes = dcc::make_date_packet(static_cast<uint8_t>(date[0uz]),
+                                        static_cast<uint8_t>(date[1uz]),
+                                        date[2uz])});
+  } else if (!strcmp(chrono_type[static_cast<size_t>(i)], "Time Scale")) {
+    static float scale{};
+    ImGui::InputFloat("Time Scale", &scale);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back({.bytes = dcc::make_time_scale_packet(scale)});
   }
 }
 
