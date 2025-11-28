@@ -619,7 +619,7 @@ constexpr auto make_time_scale_packet(std::float16_t scale) {
 ///
 /// \param  f32 float32_t
 /// \return float16_t
-inline uint16_t float32_to_float16(float f32) {
+constexpr uint16_t float32_to_float16(float f32) {
   uint32_t x;
   memcpy(&x, &f32, sizeof(x));
 
@@ -682,7 +682,7 @@ inline uint16_t float32_to_float16(float f32) {
 ///
 /// \param  f16 float16_t
 /// \return float32_t
-inline float float16_to_float32(uint16_t f16) {
+constexpr float float16_to_float32(uint16_t f16) {
   uint32_t const sign{(f16 & 0x8000u) << 16u};
   uint32_t exp{(f16 >> 10u) & 0x1Fu};
   uint32_t mant{f16 & 0x3FFu};
