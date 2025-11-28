@@ -605,7 +605,7 @@ void cv_access_long_form(State::Packet& packet,
       auto const pos{bytes[2uz] & 0b111u};
       auto const bit{static_cast<bool>(bytes[2uz] & ztl::mask<3u>)};
       packet.desc_strs.back() +=
-        bytes[2uz] & ztl::mask<4u> ? "\n- Verify CV" : "\n- Write CV";
+        bytes[2uz] & ztl::mask<4u> ? "\n- Write CV" : "\n- Verify CV";
       packet.desc_strs.back() += std::to_string(cv_addr + 1u) + ":" +
                                  std::to_string(pos) + "=" +
                                  std::to_string(bit);

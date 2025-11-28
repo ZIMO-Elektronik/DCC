@@ -106,6 +106,7 @@ The DCC protocol is defined by various standards published by the [National Mode
     - CV access
       - Long form :ballot_box_with_check:
       - Short form :ballot_box_with_check:
+      - XPOM :negative_squared_cross_mark:
   - Accessory decoders
     - Currently not supported :negative_squared_cross_mark:
   - Idle
