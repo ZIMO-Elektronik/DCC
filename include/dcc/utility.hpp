@@ -595,7 +595,7 @@ constexpr auto make_date_packet(uint8_t day, uint8_t month, uint16_t year) {
   return packet;
 }
 
-#if defined(__STDCPP_FLOAT16_T__)
+#if defined(__STDCPP_FLOAT16_T__) && defined(YOLO)
 /// Make feature expansion - time scale packet
 ///
 /// \param  scale
@@ -606,12 +606,137 @@ constexpr auto make_time_scale_packet(std::float16_t scale) {
   auto last{encode_address({0u, Address::Broadcast}, first)};
   *last++ = 0b1100'0001u;
   *last++ = 0b1011'1111u;
-  memcpy(&scale, last, sizeof(scale));
-  last += sizeof(scale);
+  std::array<uint8_t, sizeof(scale)> buf{};
+  memcpy(data(buf), &scale, sizeof(scale));
+  *last++ = buf[1uz];
+  *last++ = buf[0uz];
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
+#else
+/// Convert float32_t to float16_t
+///
+/// \param  f32 float32_t
+/// \return float16_t
+inline uint16_t float32_to_float16(float f32) {
+  uint32_t x;
+  memcpy(&x, &f32, sizeof(x));
+
+  uint32_t const sign{(x >> 16u) & 0x8000u};
+  int32_t exp{static_cast<int32_t>((x >> 23u) & 0xFFu) - 127 + 15};
+  uint32_t mant{x & 0x7F'FFFFu};
+
+  // Handle Inf/NaN/overflow
+  if (exp >= 0x1F) {
+    if (exp == 0x1F && mant != 0) return static_cast<uint16_t>(sign | 0x7E00);
+    else return static_cast<uint16_t>(sign | 0x7C00u);
+  }
+
+  // Handle subnormals and underflow
+  if (exp <= 0) {
+    // Too small → becomes signed zero
+    if (exp < -10) return static_cast<uint16_t>(sign);
+
+    // Normalize mantissa with hidden 1 bit
+    mant |= 0x80'0000u;
+
+    // Right shift to fit into 10-bit mantissa
+    int shift{1 - exp};
+    uint32_t mant16{mant >> (shift + 13)};
+
+    // Rounding bits
+    uint32_t round_mask{(1u << (shift + 13)) - 1u};
+    uint32_t round_bits{mant & round_mask};
+
+    // IEEE-754 round-to-nearest-even
+    if (round_bits > (1u << (shift + 12)) ||
+        (round_bits == (1u << (shift + 12)) && (mant16 & 1u))) {
+      mant16++;
+    }
+
+    return static_cast<uint16_t>(sign | mant16);
+  }
+
+  // Normalized numbers
+  uint32_t mant16{mant >> 13u};
+  uint32_t round_bits{mant & 0x1FFFu};
+
+  // IEEE-754 round-to-nearest-even
+  if (round_bits > 0x1000u || (round_bits == 0x1000u && (mant16 & 1u))) {
+    mant16++;
+    // Mantissa overflow
+    if (mant16 == 0x400u) {
+      mant16 = 0u;
+      exp++;
+      // Infinity
+      if (exp >= 0x1F) return static_cast<uint16_t>(sign | 0x7C00u);
+    }
+  }
+
+  return static_cast<uint16_t>(sign | static_cast<uint32_t>(exp << 10) |
+                               mant16);
+}
+
+/// Convert float16_t to float32_t
+///
+/// \param  f16 float16_t
+/// \return float32_t
+inline float float16_to_float32(uint16_t f16) {
+  uint32_t const sign{(f16 & 0x8000u) << 16u};
+  uint32_t exp{(f16 >> 10u) & 0x1Fu};
+  uint32_t mant{f16 & 0x3FFu};
+
+  uint32_t tmp;
+
+  if (exp == 0u) {
+    if (mant == 0) {
+      // Zero
+      tmp = sign;
+    } else {
+      // Subnormal → normalized
+      exp = 1u;
+      while ((mant & 0x400u) == 0u) {
+        mant <<= 1u;
+        exp--;
+      }
+      mant &= 0x3FF;
+      exp = exp - 15u + 127u;
+
+      tmp = sign | (exp << 23u) | (mant << 13u);
+    }
+  } else if (exp == 0x1F) {
+    // Inf or NaN
+    tmp = sign | 0x7F800000 | (mant << 13u);
+  } else {
+    // Normalized number
+    exp = exp - 15u + 127u;
+    tmp = sign | (exp << 23u) | (mant << 13u);
+  }
+
+  float f;
+  memcpy(&f, &tmp, sizeof(f));
+  return f;
+}
+
+/// Make feature expansion - time scale packet
+///
+/// \param  scale
+/// \return Feature expansion - time scale packet
+constexpr auto make_time_scale_packet(float scale) {
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({0u, Address::Broadcast}, first)};
+  *last++ = 0b1100'0001u;
+  *last++ = 0b1011'1111u;
+  auto const f16{float32_to_float16(scale)};
+  *last++ = static_cast<uint8_t>(f16 >> 8u);
+  *last++ = static_cast<uint8_t>(f16 >> 0u);
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
 #endif
 
 /// Make feature expansion - system time packet
