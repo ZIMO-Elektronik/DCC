@@ -16,12 +16,15 @@ dcc::Address random_loco_address() {
 }
 
 //
-dcc::Address random_accessory_address() {
-  return random_interval(0, 1)
-           ? dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
-                          .type = dcc::Address::BasicAccessory}
-           : dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
-                          .type = dcc::Address::ExtendedAccessory};
+dcc::Address random_basic_accessory_address() {
+  return dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
+                      .type = dcc::Address::BasicAccessory};
+}
+
+//
+dcc::Address random_extended_accessory_address() {
+  return dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
+                      .type = dcc::Address::ExtendedAccessory};
 }
 
 namespace ImGui {

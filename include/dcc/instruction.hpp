@@ -328,8 +328,8 @@ constexpr Instruction decode_instruction(std::span<uint8_t const> bytes) {
 /// \param  packet  Packet
 /// \return Instruction
 constexpr Instruction decode_instruction(Packet const& packet) {
-  auto const offset{packet[0uz] >= 128u && packet[0uz] <= 252u};
-  return decode_instruction(cbegin(packet) + 1 + offset);
+  auto const offset{packet[0uz] >= 128u && packet[0uz] <= 252u ? 2 : 1};
+  return decode_instruction(cbegin(packet) + offset);
 }
 
 } // namespace dcc

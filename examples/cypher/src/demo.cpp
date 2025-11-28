@@ -160,6 +160,8 @@ void add_packets(State& state) {
                                                 0b0110u,
                                                 random_interval<uint8_t>(),
                                                 random_interval<uint8_t>())});
+
+  // Service
   state.packets.push_back(
     {.bytes = dcc::make_cv_access_long_verify_service_packet(
        random_interval<uint16_t>(0u, 1023u), random_interval<uint8_t>()),
@@ -180,6 +182,15 @@ void add_packets(State& state) {
        random_interval(0, 1),
        random_interval<uint8_t>(0u, 7u)),
      .service_mode = true});
+
+  // Accessories
+  state.packets.push_back(
+    {.bytes = dcc::make_basic_accessory_packet(random_basic_accessory_address(),
+                                               random_interval(0, 1),
+                                               random_interval(0, 1))});
+  state.packets.push_back(
+    {.bytes = dcc::make_extended_accessory_packet(
+       random_extended_accessory_address(), random_interval<uint8_t>())});
 }
 
 void add_datagrams(State& state) {}

@@ -1349,6 +1349,47 @@ make_basic_accessory_packet(Address::value_type addr, bool r, bool d) {
   return make_basic_accessory_packet({addr, Address::BasicAccessory}, r, d);
 }
 
+/// Make extended accessory packet
+///
+/// \param  addr      Address
+/// \param  dddddddd  State
+/// \return Extended accessory packet
+constexpr auto make_extended_accessory_packet(Address addr, uint8_t dddddddd) {
+  assert(addr.type == Address::ExtendedAccessory);
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *last++ = dddddddd;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make extended accessory packet
+///
+/// \param  addr    Address
+/// \param  r       Select pair of outputs
+/// \param  zzzzzzz Switch-on time
+/// \return Extended accessory packet
+constexpr auto
+make_extended_accessory_packet(Address addr, bool r, uint8_t zzzzzzz) {
+  return make_extended_accessory_packet(
+    addr, static_cast<uint8_t>(r << 7u | zzzzzzz));
+}
+
+/// Make extended accessory packet
+///
+/// \param  addr    Address
+/// \param  r       Select pair of outputs
+/// \param  zzzzzzz Switch-on time
+/// \return Extended accessory packet
+constexpr auto make_extended_accessory_packet(Address::value_type addr,
+                                              bool r,
+                                              uint8_t zzzzzzz) {
+  return make_extended_accessory_packet(
+    {addr, Address::ExtendedAccessory}, r, zzzzzzz);
+}
+
 /// Make accessory NOP packet
 ///
 /// \param  addr  Address

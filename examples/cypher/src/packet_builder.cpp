@@ -985,30 +985,24 @@ namespace accessory {
 void basic(State& state);
 void extended(State& state);
   void accessory(State& state, dcc::Address addr);
+    void basic_accessory_decoder_control(State& state, dcc::Address addr);
+    void extended_accessory_decoder_control(State& state, dcc::Address addr);
+    void nop_for_basic_and_extended_accessory(State& state, dcc::Address addr);
 // clang-format on
 
 //
 void basic(State& state) {
   ImGui::SeparatorText("Address");
-  static dcc::Address::value_type addr{3};
+  static dcc::Address::value_type addr{12};
   ImGui::InputScalar(UNIQUE_LABEL(), ImGuiDataType_U16, &addr);
   addr = std::clamp<dcc::Address::value_type>(addr, 0u, 2047u);
-  ImGui::SeparatorText("Parameters");
-  static bool d{};
-  ImGui::Checkbox("D", &d);
-  ImGui::SameLine();
-  static bool r{};
-  ImGui::Checkbox("R", &r);
-  ImGui::SeparatorText("Done");
-  if (ImGui::Button("Push to Packets"))
-    state.packets.push_back(
-      {.bytes = dcc::make_basic_accessory_packet(addr, r, d)});
+  accessory(state, {.value = addr, .type = dcc::Address::BasicAccessory});
 }
 
 //
 void extended(State& state) {
   ImGui::SeparatorText("Address");
-  static dcc::Address::value_type addr{3};
+  static dcc::Address::value_type addr{12};
   ImGui::InputScalar(UNIQUE_LABEL(), ImGuiDataType_U16, &addr);
   addr = std::clamp<dcc::Address::value_type>(addr, 0u, 2047u);
   accessory(state, {.value = addr, .type = dcc::Address::ExtendedAccessory});
@@ -1017,15 +1011,82 @@ void extended(State& state) {
 //
 void accessory(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Instruction");
-  static constexpr std::array instrs{"",
-                                     "Decoder Control",
-                                     "Consist Control",
-                                     "Advanced Operations",
-                                     "Speed & Direction",
-                                     "Function Group",
-                                     "Feature Expansion",
-                                     "CV Access"};
+  if (addr.type == dcc::Address::BasicAccessory) {
+    static constexpr std::array instrs{
+      "", "Basic Accessory Decoder Control", "NOP"};
+    static int i{};
+    ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+    if (!strcmp(instrs[static_cast<size_t>(i)],
+                "Basic Accessory Decoder Control"))
+      basic_accessory_decoder_control(state, addr);
+    else if (!strcmp(instrs[static_cast<size_t>(i)], "NOP"))
+      nop_for_basic_and_extended_accessory(state, addr);
+  } else if (addr.type == dcc::Address::ExtendedAccessory) {
+    static constexpr std::array instrs{
+      "", "Extended Accessory Decoder Control", "NOP"};
+    static int i{};
+    ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+    if (!strcmp(instrs[static_cast<size_t>(i)],
+                "Extended Accessory Decoder Control"))
+      extended_accessory_decoder_control(state, addr);
+    else if (!strcmp(instrs[static_cast<size_t>(i)], "NOP"))
+      nop_for_basic_and_extended_accessory(state, addr);
+  }
+}
+
+//
+void basic_accessory_decoder_control(State& state, dcc::Address addr) {
+  ImGui::SeparatorText("Parameters");
+  static bool r{};
+  ImGui::Checkbox("R", &r);
+  ImGui::SameLine();
+  static bool d{};
+  ImGui::Checkbox("D", &d);
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.bytes = dcc::make_basic_accessory_packet(addr, r, d)});
+}
+
+//
+void extended_accessory_decoder_control(State& state, dcc::Address addr) {
+  ImGui::SeparatorText("Parameters");
+  static constexpr std::array type{"", "Signal", "Switching Time"};
   static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(type), ssize(type));
+  if (!strcmp(type[static_cast<size_t>(i)], "Signal")) {
+    static uint8_t dddddddd{};
+    ImGui::InputScalar("State", ImGuiDataType_U8, &dddddddd);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back(
+        {.bytes = dcc::make_extended_accessory_packet(addr, dddddddd)});
+  } else if (!strcmp(type[static_cast<size_t>(i)], "Switching Time")) {
+    static bool r{};
+    ImGui::Checkbox("R", &r);
+    static constexpr uint8_t min{0u};
+    static constexpr uint8_t max{127u};
+    static uint8_t zzzzzzz{};
+    ImGui::SliderScalar("[s]",
+                        ImGuiDataType_U8,
+                        &zzzzzzz,
+                        &min,
+                        &max,
+                        switch_on_time_labels[zzzzzzz]);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back(
+        {.bytes = dcc::make_extended_accessory_packet(addr, r, zzzzzzz)});
+  }
+}
+
+//
+void nop_for_basic_and_extended_accessory(State& state, dcc::Address addr) {
+  ImGui::SeparatorText("Parameters");
+  ImGui::Text("None");
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back({.bytes = dcc::make_accessory_nop_packet(addr)});
 }
 
 } // namespace accessory

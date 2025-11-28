@@ -60,6 +60,9 @@ void eval(State& state, State::Packet& packet);
       void cv_access_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
       void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes);
     void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const> bytes);
+    void basic_accessory_decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
+    void extended_accessory_decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
+    void nop_for_basic_and_extended_accessory(State::Packet& packet, std::span<uint8_t const> bytes);
   void checksum(State::Packet& packet);
   void highlights(State::Packet& packet);
   void tags(State::Packet& packet);
@@ -164,10 +167,11 @@ void instruction(State::Packet& packet) {
   auto const addr{packet.service_mode
                     ? dcc::Address{.type = dcc::Address::UnknownService}
                     : dcc::decode_address(packet.bytes)};
-  auto first{dcc::encode_address(addr, begin(packet.bytes))};
+  auto first{cbegin(packet.bytes) +
+             (packet.bytes[0uz] >= 128u && packet.bytes[0uz] <= 252u ? 2 : 1)};
   std::span<uint8_t const> bytes{first, cend(packet.bytes)};
   if (empty(bytes)) return;
-  if (addr.type == dcc::Address::UnknownService) {
+  else if (addr.type == dcc::Address::UnknownService) {
     packet.desc_strs.push_back("CV Access - Long Form");
     cv_access_long_form(packet, bytes);
   } else if (addr.type == dcc::Address::Broadcast ||
@@ -190,9 +194,10 @@ void instruction(State::Packet& packet) {
       case dcc::Instruction::CvAccess: return cv_access(packet, bytes);
       case dcc::Instruction::Logon: break;
     }
-  else if (addr.type == dcc::Address::BasicAccessory ||
-           addr.type == dcc::Address::ExtendedAccessory)
-    ;
+  else if (addr.type == dcc::Address::BasicAccessory)
+    basic_accessory_decoder_control(packet, bytes);
+  else if (addr.type == dcc::Address::ExtendedAccessory)
+    extended_accessory_decoder_control(packet, bytes);
   else if (addr.type == dcc::Address::Idle) digital_decoder_idle(packet, bytes);
 }
 
@@ -662,6 +667,28 @@ void digital_decoder_idle(State::Packet& packet,
 }
 
 //
+void basic_accessory_decoder_control(State::Packet& packet,
+                                     std::span<uint8_t const> bytes) {
+  packet.desc_strs.push_back("Basic Accessory Decoder Control");
+  packet.desc_strs.back() +=
+    "\n - R=" +
+    std::to_string(static_cast<bool>(packet.bytes[1uz] & ztl::mask<0u>)) +
+    " D=" +
+    std::to_string(static_cast<bool>(packet.bytes[1uz] & ztl::mask<3u>));
+}
+
+//
+void extended_accessory_decoder_control(State::Packet& packet,
+                                        std::span<uint8_t const> bytes) {
+  packet.desc_strs.push_back("Extended Accessory Decoder Control");
+  packet.desc_strs.back() += "\n - State=" + std::format("{:08b}", bytes[0uz]);
+  packet.desc_strs.back() +=
+    " or R=" + std::to_string(static_cast<bool>(bytes[0uz] & ztl::mask<7u>)) +
+    +" and Time=" + switch_on_time_labels[bytes[0uz] & 0x7Fu];
+  packet.pattern_str += " 0 DDDDDDDD";
+}
+
+//
 void checksum(State::Packet& packet) {
   packet.desc_strs.push_back("Checksum");
   // Add missing bytes
@@ -676,7 +703,8 @@ void checksum(State::Packet& packet) {
 //
 void highlights(State::Packet& packet) {
   auto const addr{dcc::decode_address(packet.bytes)};
-  auto first{dcc::encode_address(addr, begin(packet.bytes))};
+  auto first{cbegin(packet.bytes) +
+             (packet.bytes[0uz] >= 128u && packet.bytes[0uz] <= 252u ? 2 : 1)};
   auto const addr_count{static_cast<size_t>(first - cbegin(packet.bytes))};
   std::span<uint8_t const> bytes{first, cend(packet.bytes)};
 
@@ -787,7 +815,8 @@ void tags(State::Packet& packet) {
   auto const addr{packet.service_mode
                     ? dcc::Address{.type = dcc::Address::UnknownService}
                     : dcc::decode_address(packet.bytes)};
-  auto first{dcc::encode_address(addr, begin(packet.bytes))};
+  auto first{cbegin(packet.bytes) +
+             (packet.bytes[0uz] >= 128u && packet.bytes[0uz] <= 252u ? 2 : 1)};
   std::span<uint8_t const> bytes{first, cend(packet.bytes)};
 
   auto const [num_preamble, bit1_duration, bit0_duration, flags]{packet.cfg};
@@ -799,7 +828,7 @@ void tags(State::Packet& packet) {
   if (!packet.service_mode) {
     packet.plots.tags.push_back({t, ADDR_COL, "Address"});
     t += std::accumulate(
-      begin(packet.bytes),
+      cbegin(packet.bytes),
       first,
       0.0,
       [bit1_duration, bit0_duration](double a, uint8_t b) {
@@ -811,7 +840,7 @@ void tags(State::Packet& packet) {
   packet.plots.tags.push_back({t, DATA_COL, "Data"});
   t += std::accumulate(
     first,
-    end(packet.bytes) - 1,
+    cend(packet.bytes) - 1,
     0.0,
     [bit1_duration, bit0_duration](double a, uint8_t b) {
       return a + 2.0 * (bit0_duration + (std::popcount(b) * bit1_duration) +
