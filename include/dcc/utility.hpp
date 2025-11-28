@@ -642,7 +642,7 @@ constexpr uint16_t float32_to_float16(float f32) {
     mant |= 0x80'0000u;
 
     // Right shift to fit into 10-bit mantissa
-    int shift{1 - exp};
+    int const shift{1 - exp};
     uint32_t mant16{mant >> (shift + 13)};
 
     // Rounding bits
@@ -660,7 +660,7 @@ constexpr uint16_t float32_to_float16(float f32) {
 
   // Normalized numbers
   uint32_t mant16{mant >> 13u};
-  uint32_t round_bits{mant & 0x1FFFu};
+  uint32_t const round_bits{mant & 0x1FFFu};
 
   // IEEE-754 round-to-nearest-even
   if (round_bits > 0x1000u || (round_bits == 0x1000u && (mant16 & 1u))) {
@@ -687,13 +687,12 @@ constexpr float float16_to_float32(uint16_t f16) {
   uint32_t exp{(f16 >> 10u) & 0x1Fu};
   uint32_t mant{f16 & 0x3FFu};
 
-  uint32_t tmp;
+  uint32_t tmp{};
 
   if (exp == 0u) {
-    if (mant == 0) {
-      // Zero
-      tmp = sign;
-    } else {
+    // Zero
+    if (mant == 0) tmp = sign;
+    else {
       // Subnormal → normalized
       exp = 1u;
       while ((mant & 0x400u) == 0u) {
@@ -702,19 +701,19 @@ constexpr float float16_to_float32(uint16_t f16) {
       }
       mant &= 0x3FF;
       exp = exp - 15u + 127u;
-
       tmp = sign | (exp << 23u) | (mant << 13u);
     }
-  } else if (exp == 0x1F) {
-    // Inf or NaN
+  }
+  // Inf or NaN
+  else if (exp == 0x1F)
     tmp = sign | 0x7F800000 | (mant << 13u);
-  } else {
-    // Normalized number
+  // Normalized number
+  else {
     exp = exp - 15u + 127u;
     tmp = sign | (exp << 23u) | (mant << 13u);
   }
 
-  float f;
+  float f{};
   memcpy(&f, &tmp, sizeof(f));
   return f;
 }
