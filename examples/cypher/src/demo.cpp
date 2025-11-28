@@ -89,9 +89,11 @@ void add_packets(State& state) {
     {.bytes = dcc::make_date_packet(random_interval<uint8_t>(1u, 7u),
                                     random_interval<uint8_t>(1u, 12u),
                                     random_interval<uint16_t>(0u, 4095u))});
+  state.packets.push_back({.bytes = dcc::make_time_scale_packet(
+                             random_interval<float>(-100.0f, 100.0f))});
   state.packets.push_back(
     {.bytes = dcc::make_system_time_packet(random_interval<uint16_t>())});
-  // Command station properties identifier
+  /// \todo Command station properties identifier
   state.packets.push_back(
     {.bytes = dcc::make_f29_f36_packet(random_loco_address(),
                                        random_interval<uint8_t>())});
