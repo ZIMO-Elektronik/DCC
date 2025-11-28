@@ -482,9 +482,16 @@ void feature_expansion_time_and_date(State::Packet& packet,
       packet.pattern_str += " 0 11000001 0 010TTTTT 0 MMMMYYYY 0 YYYYYYYY";
       break;
     case 0b10u:
+#if defined(__STDCPP_FLOAT16_T__)
+      std::float16_t f16;
+      std::array buf{bytes[3uz], bytes[2uz]};
+      memcpy(&f16, data(buf), sizeof(f16));
+#else
+      auto const f16{
+        dcc::float16_to_float32(bytes[2uz] << 8u | bytes[3uz] << 0u)};
+#endif
       packet.desc_strs.back() +=
-        "\n- Time Scale=" + std::to_string(dcc::float16_to_float32(
-                              bytes[2uz] << 8u | bytes[3uz] << 0u));
+        "\n- Time Scale=" + std::to_string(static_cast<float>(f16));
       packet.pattern_str += " 0 11000001 0 10111111 0 SEEEEEMM 0 MMMMMMMM";
       break;
   }

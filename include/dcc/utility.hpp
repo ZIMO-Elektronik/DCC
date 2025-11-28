@@ -595,7 +595,7 @@ constexpr auto make_date_packet(uint8_t day, uint8_t month, uint16_t year) {
   return packet;
 }
 
-#if defined(__STDCPP_FLOAT16_T__) && defined(YOLO)
+#if defined(__STDCPP_FLOAT16_T__)
 /// Make feature expansion - time scale packet
 ///
 /// \param  scale
