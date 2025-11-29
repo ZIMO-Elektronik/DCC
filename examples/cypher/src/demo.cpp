@@ -4,7 +4,7 @@
 
 namespace {
 
-void add_packets(State& state) {
+void add_loco_packets(State& state) {
   // Decoder Control
   state.packets.push_back(
     {.bytes = dcc::make_reset_packet(random_loco_address())});
@@ -160,30 +160,10 @@ void add_packets(State& state) {
                                                 0b0110u,
                                                 random_interval<uint8_t>(),
                                                 random_interval<uint8_t>())});
+}
 
-  // Service
-  state.packets.push_back(
-    {.bytes = dcc::make_cv_access_long_verify_service_packet(
-       random_interval<uint16_t>(0u, 1023u), random_interval<uint8_t>()),
-     .service_mode = true});
-  state.packets.push_back(
-    {.bytes = dcc::make_cv_access_long_write_service_packet(
-       random_interval<uint16_t>(0u, 1023u), random_interval<uint8_t>()),
-     .service_mode = true});
-  state.packets.push_back(
-    {.bytes = dcc::make_cv_access_long_verify_service_packet(
-       random_interval<uint16_t>(0u, 1023u),
-       random_interval(0, 1),
-       random_interval<uint8_t>(0u, 7u)),
-     .service_mode = true});
-  state.packets.push_back(
-    {.bytes = dcc::make_cv_access_long_write_service_packet(
-       random_interval<uint16_t>(0u, 1023u),
-       random_interval(0, 1),
-       random_interval<uint8_t>(0u, 7u)),
-     .service_mode = true});
-
-  // Accessories
+//
+void add_accessory_packets(State& state) {
   state.packets.push_back(
     {.bytes = dcc::make_basic_accessory_packet(random_basic_accessory_address(),
                                                random_interval(0, 1),
@@ -191,13 +171,48 @@ void add_packets(State& state) {
   state.packets.push_back(
     {.bytes = dcc::make_extended_accessory_packet(
        random_extended_accessory_address(), random_interval<uint8_t>())});
+  state.packets.push_back({.bytes = dcc::make_accessory_nop_packet(
+                             random_basic_accessory_address())});
+  state.packets.push_back({.bytes = dcc::make_accessory_nop_packet(
+                             random_extended_accessory_address())});
 }
 
-void add_datagrams(State& state) {}
+//
+void add_service_packets(State& state) {
+  state.packets.push_back(
+    {.bytes = dcc::make_cv_access_long_verify_service_packet(
+       random_interval<uint16_t>(0u, 1023u), random_interval<uint8_t>()),
+     .service_mode = true});
+  state.packets.push_back(
+    {.bytes = dcc::make_cv_access_long_write_service_packet(
+       random_interval<uint16_t>(0u, 1023u), random_interval<uint8_t>()),
+     .service_mode = true});
+  state.packets.push_back(
+    {.bytes = dcc::make_cv_access_long_verify_service_packet(
+       random_interval<uint16_t>(0u, 1023u),
+       random_interval(0, 1),
+       random_interval<uint8_t>(0u, 7u)),
+     .service_mode = true});
+  state.packets.push_back(
+    {.bytes = dcc::make_cv_access_long_write_service_packet(
+       random_interval<uint16_t>(0u, 1023u),
+       random_interval(0, 1),
+       random_interval<uint8_t>(0u, 7u)),
+     .service_mode = true});
+}
+
+//
+void add_loco_datagrams(State& state) {}
+
+//
+void add_accessory_datagrams(State& state) {}
 
 } // namespace
 
 void demo(State& state) {
-  add_packets(state);
-  add_datagrams(state);
+  add_loco_packets(state);
+  add_accessory_packets(state);
+  add_service_packets(state);
+  add_loco_datagrams(state);
+  add_accessory_datagrams(state);
 }

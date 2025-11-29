@@ -195,9 +195,13 @@ void instruction(State::Packet& packet) {
       case dcc::Instruction::Logon: break;
     }
   else if (addr.type == dcc::Address::BasicAccessory)
-    basic_accessory_decoder_control(packet, bytes);
+    packet.bytes[1uz] & ztl::mask<7u>
+      ? basic_accessory_decoder_control(packet, bytes)
+      : nop_for_basic_and_extended_accessory(packet, bytes);
   else if (addr.type == dcc::Address::ExtendedAccessory)
-    extended_accessory_decoder_control(packet, bytes);
+    packet.bytes[1uz] & ztl::mask<3u>
+      ? nop_for_basic_and_extended_accessory(packet, bytes)
+      : extended_accessory_decoder_control(packet, bytes);
   else if (addr.type == dcc::Address::Idle) digital_decoder_idle(packet, bytes);
 }
 
@@ -668,7 +672,7 @@ void digital_decoder_idle(State::Packet& packet,
 
 //
 void basic_accessory_decoder_control(State::Packet& packet,
-                                     std::span<uint8_t const> bytes) {
+                                     std::span<uint8_t const>) {
   packet.desc_strs.push_back("Basic Accessory Decoder Control");
   packet.desc_strs.back() +=
     "\n - R=" +
@@ -686,6 +690,12 @@ void extended_accessory_decoder_control(State::Packet& packet,
     " or R=" + std::to_string(static_cast<bool>(bytes[0uz] & ztl::mask<7u>)) +
     +" and Time=" + switch_on_time_labels[bytes[0uz] & 0x7Fu];
   packet.pattern_str += " 0 DDDDDDDD";
+}
+
+//
+void nop_for_basic_and_extended_accessory(State::Packet& packet,
+                                          std::span<uint8_t const> bytes) {
+  packet.desc_strs.push_back("NOP for Basic and Extended Accessory Decoder");
 }
 
 //
