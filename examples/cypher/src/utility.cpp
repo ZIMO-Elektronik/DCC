@@ -64,7 +64,8 @@ bool InputBinary(char const* label,
 bool BinaryTable(char const* label,
                  uint8_t* p_data,
                  int rows,
-                 ImGuiInputTextFlags flags) {
+                 ImGuiInputTextFlags flags,
+                 int numbering_offset) {
   if (ImGui::BeginTable(label, 4, ImGuiTableFlags_RowBg)) {
     ImGui::TableSetupColumn("#", ImGuiTableColumnFlags_WidthFixed);
     ImGui::TableSetupColumn("Bin", ImGuiTableColumnFlags_WidthStretch);
@@ -74,7 +75,7 @@ bool BinaryTable(char const* label,
     for (int i{}; i < rows; ++i) {
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
-      ImGui::TextUnformatted(std::to_string(i).c_str());
+      ImGui::TextUnformatted(std::to_string(numbering_offset + i).c_str());
       ImGui::TableNextColumn();
       ImGui::SetNextItemWidth(-FLT_MIN);
       ImGui::InputBinary(UNIQUE_LABEL(i),

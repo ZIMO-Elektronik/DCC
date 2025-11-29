@@ -7,6 +7,13 @@
 #include <numeric>
 #include "utility.hpp"
 
+#define PRE_COL ImPlot::GetColormapColor(8)      // white
+#define START_COL ImPlot::GetColormapColor(2)    // green
+#define ADDR_COL ImPlot::GetColormapColor(5)     // yellow
+#define DATA_COL ImPlot::GetColormapColor(4)     // orange
+#define END_COL ImPlot::GetColormapColor(9)      // red
+#define CHECKSUM_COL ImPlot::GetColormapColor(3) // violet
+
 namespace {
 
 namespace eval {

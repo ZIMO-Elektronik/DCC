@@ -4,6 +4,18 @@
 #include <implot_internal.h>
 #include "utility.hpp"
 
+#define PRE_COL ImPlot::GetColormapColor(8)      // white
+#define START_COL ImPlot::GetColormapColor(2)    // green
+#define ADDR_COL ImPlot::GetColormapColor(5)     // yellow
+#define DATA_COL ImPlot::GetColormapColor(4)     // orange
+#define END_COL ImPlot::GetColormapColor(9)      // red
+#define CHECKSUM_COL ImPlot::GetColormapColor(3) // violet
+
+#define TCS_COL ImPlot::GetColormapColor(2)  // green
+#define TTS1_COL ImPlot::GetColormapColor(5) // yellow
+#define TTS2_COL ImPlot::GetColormapColor(4) // orange
+#define TCE_COL ImPlot::GetColormapColor(9)  // red
+
 namespace {
 
 using namespace dcc::bidi;
@@ -12,6 +24,7 @@ namespace eval {
 
 // clang-format off
 void eval(State& state, State::Datagram& datagram);
+  void tags(State::Datagram& datagram);
 // clang-format on
 
 void eval(State& state, State::Datagram& datagram) {
@@ -38,10 +51,13 @@ void eval(State& state, State::Datagram& datagram) {
     datagram.plots.t_p.push_back(i * datagram.cfg.bidibit_duration);
     datagram.plots.p.push_back(!bit);
   }
+  datagram.plots.t_p.push_back(Timing::TCEMax);
+  datagram.plots.p.push_back(1.0);
 
   // BiDi
+  static constexpr auto scale{0.5};
   datagram.plots.t_b.push_back(0.0);
-  datagram.plots.b.push_back(1.0);
+  datagram.plots.b.push_back(1.0 * scale);
   for (auto i{0uz}; i < bundled_channels_size; ++i) {
     auto offset{i < 2uz ? Timing::TTS1
                         : Timing::TTS2 - channel1_size * 10u * 4u};
@@ -52,7 +68,7 @@ void eval(State& state, State::Datagram& datagram) {
 
     // Startbit
     datagram.plots.t_b.push_back(offset + 0u * 4u);
-    datagram.plots.b.push_back(1.0);
+    datagram.plots.b.push_back(1.0 * scale);
     datagram.plots.t_b.push_back(offset + 0u * 4u);
     datagram.plots.b.push_back(0.0);
     datagram.plots.t_b.push_back(offset + 1u * 4u);
@@ -62,26 +78,35 @@ void eval(State& state, State::Datagram& datagram) {
     for (auto j{1uz}; j <= CHAR_BIT; ++j) {
       bit = static_cast<bool>(b & (1u << (j - 1u)));
       datagram.plots.t_b.push_back(offset + j * 4u);
-      datagram.plots.b.push_back(bit);
+      datagram.plots.b.push_back(bit * scale);
       datagram.plots.t_b.push_back(offset + (j + 1) * 4u);
-      datagram.plots.b.push_back(bit);
+      datagram.plots.b.push_back(bit * scale);
     }
 
     // Stopbit
     datagram.plots.t_b.push_back(offset + 9u * 4u);
-    datagram.plots.b.push_back(bit);
+    datagram.plots.b.push_back(bit * scale);
     datagram.plots.t_b.push_back(offset + 9u * 4u);
-    datagram.plots.b.push_back(1.0);
+    datagram.plots.b.push_back(1.0 * scale);
     datagram.plots.t_b.push_back(offset + 10u * 4u);
-    datagram.plots.b.push_back(1.0);
+    datagram.plots.b.push_back(1.0 * scale);
   }
 
   datagram.plots.t_b.push_back(datagram.plots.t_p.back());
-  datagram.plots.b.push_back(1.0);
-
-  printf("%d\n", size(datagram.plots.b));
+  datagram.plots.b.push_back(1.0 * scale);
 
   datagram.desc_strs.push_back(" REMOVOOOVE ME ");
+
+  tags(datagram);
+}
+
+//
+void tags(State::Datagram& datagram) {
+  datagram.plots.tags.push_back(
+    {datagram.cfg.bidibit_duration / 2u, TCS_COL, "TCS"});
+  datagram.plots.tags.push_back({Timing::TTS1, TTS1_COL, "TTS1"});
+  datagram.plots.tags.push_back({Timing::TTS2, TTS2_COL, "TTS2"});
+  datagram.plots.tags.push_back({Timing::TCEMax, TCE_COL, "TCE"});
 }
 
 } // namespace eval
@@ -130,10 +155,16 @@ void description(State::Datagram& datagram) {
 
 //
 void data(State::Datagram& datagram) {
+  auto const first{
+    std::ranges::find_if(datagram.bytes, [](uint8_t b) { return b; })};
+  auto const last{
+    std::ranges::find_if(datagram.bytes, [](uint8_t b) { return !b; })};
+  auto const offset{first - cbegin(datagram.bytes)};
   ImGui::BinaryTable(UNIQUE_LABEL(),
-                     data(datagram.bytes),
-                     ssize(datagram.bytes),
-                     ImGuiInputTextFlags_ReadOnly);
+                     data(datagram.bytes) + offset,
+                     last - first,
+                     ImGuiInputTextFlags_ReadOnly,
+                     offset);
 }
 
 //
@@ -159,6 +190,15 @@ void plot(State::Datagram& datagram) {
                      data(datagram.plots.t_b),
                      data(datagram.plots.b),
                      static_cast<int>(ssize(datagram.plots.t_b)));
+
+    // Tags
+    for (auto const& [x, col, str] : datagram.plots.tags)
+      ImPlot::TagX(x, col, "%s", str.c_str());
+
+    // Highlight
+    if (ImPlot::IsPlotHovered()) {
+      ImPlotPoint const mouse{ImPlot::GetPlotMousePos()};
+    }
   }
 
   ImPlot::EndPlot();

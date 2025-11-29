@@ -8,14 +8,6 @@
 #include <random>
 #include <string>
 
-// Colors
-#define PRE_COL ImPlot::GetColormapColor(8)      // white
-#define START_COL ImPlot::GetColormapColor(2)    // green
-#define ADDR_COL ImPlot::GetColormapColor(5)     // yellow
-#define DATA_COL ImPlot::GetColormapColor(4)     // orange
-#define END_COL ImPlot::GetColormapColor(9)      // red
-#define CHECKSUM_COL ImPlot::GetColormapColor(3) // violet
-
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
@@ -376,6 +368,7 @@ bool InputBinary(char const* label,
 bool BinaryTable(char const* label,
                  uint8_t* p_data,
                  int rows,
-                 ImGuiInputTextFlags flags = ImGuiInputTextFlags_None);
+                 ImGuiInputTextFlags flags = ImGuiInputTextFlags_None,
+                 int numbering_offset = 0);
 
 } // namespace ImGui
