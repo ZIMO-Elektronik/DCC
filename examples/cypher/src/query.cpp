@@ -67,25 +67,26 @@ void query(State& state) { from_query(state, get_query()); }
 //
 void from_query(State& state, std::string const& url) {
   if (auto const param{get_query_param(url, "demo")}; size(param)) {
-    state.op_packets.clear();
-    state.serv_packets.clear();
+    state.operations_packets.clear();
+    state.service_packets.clear();
     state.loco_datagrams.clear();
     demo(state);
     return;
   }
 
-  if (auto const param{get_query_param(url, "op_packets")}; size(param)) {
-    state.op_packets.clear();
+  if (auto const param{get_query_param(url, "operations_packets")};
+      size(param)) {
+    state.operations_packets.clear();
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
-      state.op_packets.push_back({.bytes = vector2packet(v)});
+      state.operations_packets.push_back({.bytes = vector2packet(v)});
   }
 
-  if (auto const param{get_query_param(url, "serv_packets")}; size(param)) {
-    state.serv_packets.clear();
+  if (auto const param{get_query_param(url, "service_packets")}; size(param)) {
+    state.service_packets.clear();
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
-      state.serv_packets.push_back({.bytes = vector2packet(v)});
+      state.service_packets.push_back({.bytes = vector2packet(v)});
   }
 
   if (auto const param{get_query_param(url, "loco_datagrams")}; size(param)) {
@@ -95,11 +96,12 @@ void from_query(State& state, std::string const& url) {
       state.loco_datagrams.push_back({.bytes = vector2datagram(v)});
   }
 
-  if (auto const param{get_query_param(url, "accy_datagrams")}; size(param)) {
-    state.accy_datagrams.clear();
+  if (auto const param{get_query_param(url, "accessory_datagrams")};
+      size(param)) {
+    state.accessory_datagrams.clear();
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
-      state.accy_datagrams.push_back({.bytes = vector2datagram(v)});
+      state.accessory_datagrams.push_back({.bytes = vector2datagram(v)});
   }
 }
 
@@ -107,9 +109,9 @@ void from_query(State& state, std::string const& url) {
 std::string to_query(State& state) {
   std::string retval{get_url()};
 
-  if (size(state.op_packets)) {
-    retval += "?op_packets=";
-    for (auto packet : state.op_packets) {
+  if (size(state.operations_packets)) {
+    retval += "?operations_packets=";
+    for (auto packet : state.operations_packets) {
       if (!packet.show) continue;
       for (auto b : packet.bytes) retval += std::format("{:02X}", b);
       retval += '_';
@@ -117,9 +119,9 @@ std::string to_query(State& state) {
     retval.pop_back();
   }
 
-  if (size(state.serv_packets)) {
-    retval += "?serv_packets=";
-    for (auto packet : state.serv_packets) {
+  if (size(state.service_packets)) {
+    retval += "?service_packets=";
+    for (auto packet : state.service_packets) {
       if (!packet.show) continue;
       for (auto b : packet.bytes) retval += std::format("{:02X}", b);
       retval += '_';
@@ -137,9 +139,9 @@ std::string to_query(State& state) {
     retval.pop_back();
   }
 
-  if (size(state.accy_datagrams)) {
-    retval += "?accy_datagrams=";
-    for (auto datagram : state.accy_datagrams) {
+  if (size(state.accessory_datagrams)) {
+    retval += "?accessory_datagrams=";
+    for (auto datagram : state.accessory_datagrams) {
       if (!datagram.show) continue;
       for (auto b : datagram.bytes) retval += std::format("{:02X}", b);
       retval += '_';

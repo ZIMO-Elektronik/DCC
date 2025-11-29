@@ -38,10 +38,10 @@ struct State {
   };
 
   // Operations mode packets
-  std::list<Packet> op_packets{};
+  std::list<Packet> operations_packets{};
 
   // Service mode packets
-  std::list<Packet> serv_packets{};
+  std::list<Packet> service_packets{};
 
   //
   struct Datagram {
@@ -54,5 +54,5 @@ struct State {
   std::list<Datagram> loco_datagrams{};
 
   // Accessory datagrams
-  std::list<Datagram> accy_datagrams{};
+  std::list<Datagram> accessory_datagrams{};
 };

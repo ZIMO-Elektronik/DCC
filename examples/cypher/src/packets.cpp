@@ -997,12 +997,12 @@ void packets(State& state) {
     if (ImGui::BeginTabBar(UNIQUE_LABEL())) {
       size_t i{};
 
-      for (auto& packet : state.op_packets) {
+      for (auto& packet : state.operations_packets) {
         eval::eval(state, packet, false);
         tab::tab(packet, i++);
       }
 
-      for (auto& packet : state.serv_packets) {
+      for (auto& packet : state.service_packets) {
         eval::eval(state, packet, true);
         tab::tab(packet, i++);
       }
