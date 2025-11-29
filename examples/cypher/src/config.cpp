@@ -37,6 +37,15 @@ void config(State& state) {
                         &max,
                         "%u");
 
+    min = 57u;
+    max = 61u;
+    ImGui::SliderScalar("Bit BiDi duration [us]",
+                        ImGuiDataType_U8,
+                        &state.cfg.bidibit_duration,
+                        &min,
+                        &max,
+                        "%u");
+
     ImGui::SeparatorText("Share");
     if (ImGui::Button("To clipboard")) {
       ImGui::SetClipboardText("");

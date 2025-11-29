@@ -824,7 +824,9 @@ void tags(State::Packet& packet, bool service_mode) {
              (packet.bytes[0uz] >= 128u && packet.bytes[0uz] <= 252u ? 2 : 1)};
   std::span<uint8_t const> bytes{first, cend(packet.bytes)};
 
-  auto const [num_preamble, bit1_duration, bit0_duration, flags]{packet.cfg};
+  auto const num_preamble{packet.cfg.num_preamble};
+  auto const bit1_duration{packet.cfg.bit1_duration};
+  auto const bit0_duration{packet.cfg.bit0_duration};
 
   double t{0.0};
   packet.plots.tags.push_back({t, PRE_COL, "Preamble"});

@@ -177,7 +177,7 @@ void feature_expansion_system_time(State& state) {
 //
 void feature_expansion_command_station_properties_identifier(State&) {
   ImGui::SeparatorText("Parameters");
-  ImGui::Text("\\todo");
+  ImGui::TextUnformatted("\\todo");
 }
 
 } // namespace broadcast
@@ -984,7 +984,7 @@ void cv_access_short_form(State& state, dcc::Address addr) {
 //
 void cv_access_xpom(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  ImGui::Text("\\todo");
+  ImGui::TextUnformatted("\\todo");
 }
 
 } // namespace loco

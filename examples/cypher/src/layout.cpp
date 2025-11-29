@@ -26,7 +26,7 @@ void layout() {
     ImGuiID dock_left_top{};
     ImGuiID dock_left_bottom{};
     ImGui::DockBuilderSplitNode(
-      dock_left, ImGuiDir_Up, 0.25f, &dock_left_top, &dock_left_bottom);
+      dock_left, ImGuiDir_Up, 0.3f, &dock_left_top, &dock_left_bottom);
 
     //
     ImGuiID dock_right_top{};

@@ -19,7 +19,11 @@ struct State {
   } windows{};
 
   //
-  dcc::tx::Config cfg{};
+  struct Config : dcc::tx::Config {
+    friend constexpr bool operator==(Config const& lhs,
+                                     Config const& rhs) = default;
+    uint8_t bidibit_duration{60u};
+  } cfg{};
 
   //
   struct Packet {
@@ -33,7 +37,7 @@ struct State {
       std::vector<std::tuple<ImColor, std::string>> highlights{};
       std::vector<std::tuple<double, ImColor, std::string>> tags{};
     } plots{};
-    dcc::tx::Config cfg{};
+    Config cfg{};
     bool show{true};
   };
 
@@ -46,7 +50,17 @@ struct State {
   //
   struct Datagram {
     dcc::bidi::Datagram<> bytes{};
-    std::vector<std::string> desc{};
+    std::vector<std::string> desc_strs{};
+    std::string pattern_str{};
+    struct {
+      std::vector<double> t_p{};
+      std::vector<double> p{};
+      std::vector<double> t_b{};
+      std::vector<double> b{};
+      std::vector<std::tuple<ImColor, std::string>> highlights{};
+      std::vector<std::tuple<double, ImColor, std::string>> tags{};
+    } plots{};
+    Config cfg{};
     bool show{true};
   };
 
