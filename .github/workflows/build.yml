@@ -8,10 +8,23 @@ on:
 
 jobs:
   arm-none-eabi-gcc:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/arm-none-eabi-gcc.yml@v0.2.0
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/arm-none-eabi-gcc.yml@v0.2.1
     with:
       arch: -mcpu=cortex-m7
       target: DCCStm32Decoder DCCStm32CommandStation
+
+  emscripten:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 4.0.18
+      - run: |
+          emcmake cmake --preset "Release"
+          cmake --build build --target DCCypher
 
   esp-elf-gcc:
     runs-on: ubuntu-24.04
@@ -29,4 +42,8 @@ jobs:
           target: esp32
 
   x86_64-linux-gnu-gcc:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.2.0
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.2.1
+    with:
+      pre-build: |
+        sudo apt update -y
+        sudo apt install -y '^libxcb.*-dev' libglu1-mesa-dev libx11-xcb-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
