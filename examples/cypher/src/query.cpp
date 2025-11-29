@@ -73,11 +73,21 @@ void from_query(State& state, std::string const& url) {
     return;
   }
 
-  if (auto const param{get_query_param(url, "packets")}; size(param)) {
-    state.packets.clear();
+  if (auto const param{get_query_param(url, "op_packets")}; size(param)) {
+    std::ranges::remove_if(state.packets,
+                           [](auto&& packet) { return !packet.service_mode; });
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
       state.packets.push_back({.bytes = vector2packet(v)});
+  }
+
+  if (auto const param{get_query_param(url, "serv_packets")}; size(param)) {
+    std::ranges::remove_if(state.packets,
+                           [](auto&& packet) { return packet.service_mode; });
+    auto const vs{to_vector(param)};
+    for (auto const& v : vs)
+      state.packets.push_back(
+        {.bytes = vector2packet(v), .service_mode = true});
   }
 
   if (auto const param{get_query_param(url, "datagrams")}; size(param)) {
@@ -93,9 +103,19 @@ std::string to_query(State& state) {
   std::string retval{get_url()};
 
   if (size(state.packets)) {
-    retval += "?packets=";
+    retval += "?op_packets=";
     for (auto packet : state.packets) {
-      if (!packet.show) continue;
+      if (!packet.show || packet.service_mode) continue;
+      for (auto b : packet.bytes) retval += std::format("{:02X}", b);
+      retval += '_';
+    }
+    retval.pop_back();
+  }
+
+  if (size(state.packets)) {
+    retval += "?serv_packets=";
+    for (auto packet : state.packets) {
+      if (!packet.show || !packet.service_mode) continue;
       for (auto b : packet.bytes) retval += std::format("{:02X}", b);
       retval += '_';
     }
