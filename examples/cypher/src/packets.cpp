@@ -19,10 +19,10 @@ namespace {
 namespace eval {
 
 // clang-format off
-void eval(State& state, State::Packet& packet);
+void eval(State& state, State::Packet& packet, bool service_mode);
   void preamble(State::Packet& packet);
-  void address(State::Packet& packet);
-  void instruction(State::Packet& packet);
+  void address(State::Packet& packet, bool service_mode);
+  void instruction(State::Packet& packet, bool service_mode);
     void unknown(State::Packet& packet, std::span<uint8_t const> bytes);
     void decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
       void decoder_control_digital_decoder_reset(State::Packet& packet, std::span<uint8_t const> bytes);
@@ -55,8 +55,8 @@ void eval(State& state, State::Packet& packet);
       void feature_expansion_binary_state_control_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
       void feature_expansion_f13_f20(State::Packet& packet, std::span<uint8_t const> bytes);
       void feature_expansion_f21_f28(State::Packet& packet, std::span<uint8_t const> bytes);
-    void cv_access(State::Packet& packet, std::span<uint8_t const> bytes);
-      void cv_access_long_form(State::Packet& packet, std::span<uint8_t const> bytes);
+    void cv_access(State::Packet& packet, std::span<uint8_t const> bytes, bool service_mode);
+      void cv_access_long_form(State::Packet& packet, std::span<uint8_t const> bytes, bool service_mode);
       void cv_access_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
       void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes);
     void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const> bytes);
@@ -64,12 +64,12 @@ void eval(State& state, State::Packet& packet);
     void extended_accessory_decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
     void nop_for_basic_and_extended_accessory(State::Packet& packet, std::span<uint8_t const> bytes);
   void checksum(State::Packet& packet);
-  void highlights(State::Packet& packet);
-  void tags(State::Packet& packet);
+  void highlights(State::Packet& packet, bool service_mode);
+  void tags(State::Packet& packet, bool service_mode);
 // clang-format on
 
 //
-void eval(State& state, State::Packet& packet) {
+void eval(State& state, State::Packet& packet, bool service_mode) {
   if (!empty(packet.desc_strs) && state.cfg == packet.cfg) return;
 
   //
@@ -102,11 +102,11 @@ void eval(State& state, State::Packet& packet) {
   }
 
   preamble(packet);
-  address(packet);
-  instruction(packet);
+  address(packet, service_mode);
+  instruction(packet, service_mode);
   checksum(packet);
-  highlights(packet);
-  tags(packet);
+  highlights(packet, service_mode);
+  tags(packet, service_mode);
 }
 
 //
@@ -115,8 +115,8 @@ void preamble(State::Packet& packet) {
 }
 
 //
-void address(State::Packet& packet) {
-  auto const addr{packet.service_mode
+void address(State::Packet& packet, bool service_mode) {
+  auto const addr{service_mode
                     ? dcc::Address{.type = dcc::Address::UnknownService}
                     : dcc::decode_address(packet.bytes)};
   switch (addr.type) {
@@ -163,8 +163,8 @@ void address(State::Packet& packet) {
 }
 
 //
-void instruction(State::Packet& packet) {
-  auto const addr{packet.service_mode
+void instruction(State::Packet& packet, bool service_mode) {
+  auto const addr{service_mode
                     ? dcc::Address{.type = dcc::Address::UnknownService}
                     : dcc::decode_address(packet.bytes)};
   auto first{cbegin(packet.bytes) +
@@ -173,7 +173,7 @@ void instruction(State::Packet& packet) {
   if (empty(bytes)) return;
   else if (addr.type == dcc::Address::UnknownService) {
     packet.desc_strs.push_back("CV Access - Long Form");
-    cv_access_long_form(packet, bytes);
+    cv_access_long_form(packet, bytes, service_mode);
   } else if (addr.type == dcc::Address::Broadcast ||
              addr.type == dcc::Address::BasicLoco ||
              addr.type == dcc::Address::ExtendedLoco)
@@ -191,7 +191,8 @@ void instruction(State::Packet& packet) {
         return function_group(packet, bytes);
       case dcc::Instruction::FeatureExpansion:
         return feature_expansion(packet, bytes);
-      case dcc::Instruction::CvAccess: return cv_access(packet, bytes);
+      case dcc::Instruction::CvAccess:
+        return cv_access(packet, bytes, service_mode);
       case dcc::Instruction::Logon: break;
     }
   else if (addr.type == dcc::Address::BasicAccessory)
@@ -588,15 +589,18 @@ void feature_expansion_f21_f28(State::Packet& packet,
 }
 
 //
-void cv_access(State::Packet& packet, std::span<uint8_t const> bytes) {
+void cv_access(State::Packet& packet,
+               std::span<uint8_t const> bytes,
+               bool service_mode) {
   packet.desc_strs.push_back("CV Access");
   if (bytes[0uz] & ztl::mask<4u>) cv_access_short_form(packet, bytes);
-  else cv_access_long_form(packet, bytes);
+  else cv_access_long_form(packet, bytes, service_mode);
 }
 
 //
 void cv_access_long_form(State::Packet& packet,
-                         std::span<uint8_t const> bytes) {
+                         std::span<uint8_t const> bytes,
+                         bool service_mode) {
   packet.desc_strs.back() += " - Long Form";
   auto const kk{bytes[0uz] >> 2u & 0b11u};
   auto const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
@@ -606,9 +610,8 @@ void cv_access_long_form(State::Packet& packet,
       packet.desc_strs.back() += kk == 0b01u ? "\n- Verify CV" : "\n- Write CV";
       packet.desc_strs.back() +=
         std::to_string(cv_addr + 1u) + "=" + std::to_string(bytes[2uz]);
-      packet.pattern_str += packet.service_mode
-                              ? " 0 0111KKVV 0 VVVVVVVV 0 DDDDDDDD"
-                              : " 0 1110KKVV 0 VVVVVVVV 0 DDDDDDDD";
+      packet.pattern_str += service_mode ? " 0 0111KKVV 0 VVVVVVVV 0 DDDDDDDD"
+                                         : " 0 1110KKVV 0 VVVVVVVV 0 DDDDDDDD";
       break;
     case 0b10u:
       auto const pos{bytes[2uz] & 0b111u};
@@ -618,9 +621,8 @@ void cv_access_long_form(State::Packet& packet,
       packet.desc_strs.back() += std::to_string(cv_addr + 1u) + ":" +
                                  std::to_string(pos) + "=" +
                                  std::to_string(bit);
-      packet.pattern_str += packet.service_mode
-                              ? " 0 111010VV 0 VVVVVVVV 0 111KDBBB"
-                              : " 0 011110VV 0 VVVVVVVV 0 111KDBBB";
+      packet.pattern_str += service_mode ? " 0 111010VV 0 VVVVVVVV 0 111KDBBB"
+                                         : " 0 011110VV 0 VVVVVVVV 0 111KDBBB";
       break;
   }
 }
@@ -711,7 +713,7 @@ void checksum(State::Packet& packet) {
 }
 
 //
-void highlights(State::Packet& packet) {
+void highlights(State::Packet& packet, bool service_mode) {
   auto const addr{dcc::decode_address(packet.bytes)};
   auto first{cbegin(packet.bytes) +
              (packet.bytes[0uz] >= 128u && packet.bytes[0uz] <= 252u ? 2 : 1)};
@@ -744,7 +746,7 @@ void highlights(State::Packet& packet) {
   }
 
   // Address
-  if (!packet.service_mode)
+  if (!service_mode)
     for (; k < addr_count; ++k) {
       // Space
       ++j;
@@ -821,8 +823,8 @@ void highlights(State::Packet& packet) {
 }
 
 //
-void tags(State::Packet& packet) {
-  auto const addr{packet.service_mode
+void tags(State::Packet& packet, bool service_mode) {
+  auto const addr{service_mode
                     ? dcc::Address{.type = dcc::Address::UnknownService}
                     : dcc::decode_address(packet.bytes)};
   auto first{cbegin(packet.bytes) +
@@ -835,7 +837,7 @@ void tags(State::Packet& packet) {
   packet.plots.tags.push_back({t, PRE_COL, "Preamble"});
   t += 2.0 * (num_preamble * bit1_duration + bit0_duration);
 
-  if (!packet.service_mode) {
+  if (!service_mode) {
     packet.plots.tags.push_back({t, ADDR_COL, "Address"});
     t += std::accumulate(
       cbegin(packet.bytes),
@@ -864,13 +866,45 @@ void tags(State::Packet& packet) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+namespace tab {
+
+// clang-format off
+void tab(State::Packet& packet, size_t i);
+  void description(State::Packet& packet);
+  void data(State::Packet& packet);
+  void plot(State::Packet& packet);
+// clang-format on
+
+//
+void tab(State::Packet& packet, size_t i) {
+  if (ImGui::BeginTabItem(("#" + std::to_string(i) + UNIQUE_LABEL()).c_str(),
+                          &packet.show,
+                          ImGuiTabItemFlags_None)) {
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode(
+          (std::string{"Description"} + UNIQUE_LABEL()).c_str())) {
+      description(packet);
+      ImGui::TreePop();
+    }
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode((std::string{"Data"} + UNIQUE_LABEL()).c_str())) {
+      data(packet);
+      ImGui::TreePop();
+    }
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode((std::string{"Plot"} + UNIQUE_LABEL()).c_str())) {
+      plot(packet);
+      ImGui::TreePop();
+    }
+    ImGui::EndTabItem();
+  }
+}
+
 //
 void description(State::Packet& packet) {
   for (auto const& desc : packet.desc_strs)
     ImGui::BulletText("%s", desc.c_str());
 }
-
-////////////////////////////////////////////////////////////////////////////////
 
 //
 void data(State::Packet& packet) {
@@ -879,8 +913,6 @@ void data(State::Packet& packet) {
                      ssize(packet.bytes),
                      ImGuiInputTextFlags_ReadOnly);
 }
-
-////////////////////////////////////////////////////////////////////////////////
 
 //
 void plot(State::Packet& packet) {
@@ -960,6 +992,8 @@ void plot(State::Packet& packet) {
   }
 }
 
+} // namespace tab
+
 } // namespace
 
 //
@@ -969,33 +1003,17 @@ void packets(State& state) {
   if (ImGui::Begin("Packets", &state.windows.show_packets)) {
     if (ImGui::BeginTabBar(UNIQUE_LABEL())) {
       size_t i{};
-      for (auto& packet : state.packets) {
 
-        eval::eval(state, packet);
-
-        if (ImGui::BeginTabItem(
-              ("#" + std::to_string(i++) + UNIQUE_LABEL()).c_str(),
-              &packet.show,
-              ImGuiTabItemFlags_None)) {
-          ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-          if (ImGui::TreeNode(
-                (std::string{"Description"} + UNIQUE_LABEL()).c_str())) {
-            description(packet);
-            ImGui::TreePop();
-          }
-          ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-          if (ImGui::TreeNode((std::string{"Data"} + UNIQUE_LABEL()).c_str())) {
-            data(packet);
-            ImGui::TreePop();
-          }
-          ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-          if (ImGui::TreeNode((std::string{"Plot"} + UNIQUE_LABEL()).c_str())) {
-            plot(packet);
-            ImGui::TreePop();
-          }
-          ImGui::EndTabItem();
-        }
+      for (auto& packet : state.op_packets) {
+        eval::eval(state, packet, false);
+        tab::tab(packet, i++);
       }
+
+      for (auto& packet : state.serv_packets) {
+        eval::eval(state, packet, true);
+        tab::tab(packet, i++);
+      }
+
       ImGui::EndTabBar();
     }
   }

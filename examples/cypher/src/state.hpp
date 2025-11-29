@@ -34,11 +34,14 @@ struct State {
       std::vector<std::tuple<double, ImColor, std::string>> tags{};
     } plots{};
     dcc::tx::Config cfg{};
-    bool service_mode{};
     bool show{true};
   };
 
-  std::list<Packet> packets{};
+  // Operations mode packets
+  std::list<Packet> op_packets{};
+
+  // Service mode packets
+  std::list<Packet> serv_packets{};
 
   //
   struct Datagram {

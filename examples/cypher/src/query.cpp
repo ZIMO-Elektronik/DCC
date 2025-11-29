@@ -67,27 +67,25 @@ void query(State& state) { from_query(state, get_query()); }
 //
 void from_query(State& state, std::string const& url) {
   if (auto const param{get_query_param(url, "demo")}; size(param)) {
-    state.packets.clear();
+    state.op_packets.clear();
+    state.serv_packets.clear();
     state.datagrams.clear();
     demo(state);
     return;
   }
 
   if (auto const param{get_query_param(url, "op_packets")}; size(param)) {
-    std::ranges::remove_if(state.packets,
-                           [](auto&& packet) { return !packet.service_mode; });
+    state.op_packets.clear();
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
-      state.packets.push_back({.bytes = vector2packet(v)});
+      state.op_packets.push_back({.bytes = vector2packet(v)});
   }
 
   if (auto const param{get_query_param(url, "serv_packets")}; size(param)) {
-    std::ranges::remove_if(state.packets,
-                           [](auto&& packet) { return packet.service_mode; });
+    state.serv_packets.clear();
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
-      state.packets.push_back(
-        {.bytes = vector2packet(v), .service_mode = true});
+      state.serv_packets.push_back({.bytes = vector2packet(v)});
   }
 
   if (auto const param{get_query_param(url, "datagrams")}; size(param)) {
@@ -102,20 +100,20 @@ void from_query(State& state, std::string const& url) {
 std::string to_query(State& state) {
   std::string retval{get_url()};
 
-  if (size(state.packets)) {
+  if (size(state.op_packets)) {
     retval += "?op_packets=";
-    for (auto packet : state.packets) {
-      if (!packet.show || packet.service_mode) continue;
+    for (auto packet : state.op_packets) {
+      if (!packet.show) continue;
       for (auto b : packet.bytes) retval += std::format("{:02X}", b);
       retval += '_';
     }
     retval.pop_back();
   }
 
-  if (size(state.packets)) {
+  if (size(state.serv_packets)) {
     retval += "?serv_packets=";
-    for (auto packet : state.packets) {
-      if (!packet.show || !packet.service_mode) continue;
+    for (auto packet : state.serv_packets) {
+      if (!packet.show) continue;
       for (auto b : packet.bytes) retval += std::format("{:02X}", b);
       retval += '_';
     }
