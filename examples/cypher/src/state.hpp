@@ -50,5 +50,9 @@ struct State {
     bool show{true};
   };
 
-  std::list<Datagram> datagrams{};
+  // Loco datagrams
+  std::list<Datagram> loco_datagrams{};
+
+  // Accessory datagrams
+  std::list<Datagram> accy_datagrams{};
 };
