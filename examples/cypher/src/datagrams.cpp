@@ -4,15 +4,10 @@
 #include <implot_internal.h>
 #include "utility.hpp"
 
-#define PRE_COL ImPlot::GetColormapColor(8)      // white
-#define START_COL ImPlot::GetColormapColor(2)    // green
-#define ADDR_COL ImPlot::GetColormapColor(5)     // yellow
-#define DATA_COL ImPlot::GetColormapColor(4)     // orange
-#define END_COL ImPlot::GetColormapColor(9)      // red
-#define CHECKSUM_COL ImPlot::GetColormapColor(3) // violet
-
-#define TCS_COL ImPlot::GetColormapColor(8)  // white
-#define TTS1_COL ImPlot::GetColormapColor(5) // yellow
+#define START_COL ImPlot::GetColormapColor(2) // green
+#define STOP_COL ImPlot::GetColormapColor(9)  // red
+#define TCS_COL ImPlot::GetColormapColor(8)   // white
+#define TTS1_COL ImPlot::GetColormapColor(5)  // yellow
 #define TTC1_COL TTS1_COL
 #define TTS2_COL ImPlot::GetColormapColor(4) // orange
 #define TTC2_COL TTS2_COL
@@ -21,6 +16,26 @@
 namespace {
 
 using namespace dcc::bidi;
+
+//
+uint8_t byte_at_mouse(ImPlotPoint mouse, State::Datagram& datagram) {
+  //
+  if (mouse.x >= Timing::TTS1 &&
+      mouse.x <= Timing::TTS1 + 10u * 4u * channel1_size) {
+    auto const i{static_cast<size_t>((mouse.x - Timing::TTS1) / (10u * 4u))};
+    return datagram.bytes[i];
+  }
+  //
+  else if (mouse.x >= Timing::TTS2 &&
+           mouse.x <= Timing::TTS2 + 10u * 4u * channel2_size) {
+    auto const i{channel1_size +
+                 static_cast<size_t>((mouse.x - Timing::TTS2) / (10u * 4u))};
+    return datagram.bytes[i];
+  }
+  //
+  else
+    return 0u;
+}
 
 namespace eval {
 
@@ -94,12 +109,8 @@ void eval(State& state, State::Datagram& datagram) {
     datagram.plots.t_b.push_back(offset + 10u * 4u);
     datagram.plots.b.push_back(1.0 * scale);
   }
-
   datagram.plots.t_b.push_back(datagram.plots.t_p.back());
   datagram.plots.b.push_back(1.0 * scale);
-
-  printf("size t_b %d\n", size(datagram.plots.t_b));
-  printf("size b %d\n", size(datagram.plots.b));
 
   highlights(datagram);
   tags(datagram);
@@ -107,11 +118,61 @@ void eval(State& state, State::Datagram& datagram) {
 
 //
 void highlights(State::Datagram& datagram) {
-
   // Build data string
   std::string data_str{};
   for (auto b : datagram.bytes)
-    if (b) data_str += std::format("S{:08b}T", b);
+    if (b) {
+      auto str{std::format(" {:08b} ", b)};
+      std::ranges::reverse(str); // LSB first
+      data_str += str;
+    }
+
+  auto const hgl_str{data_str + "\n"};
+
+  // Carot index
+  size_t c{};
+
+  for (auto i{0uz}; i < bundled_channels_size; ++i) {
+    auto offset{i < 2uz ? Timing::TTS1
+                        : Timing::TTS2 - channel1_size * 10u * 4u};
+    offset += i * 10u * 4u;
+
+    auto const b{datagram.bytes[i]};
+    if (!b) continue;
+
+    // Startbit
+    datagram.plots.highlights.push_back(
+      {START_COL,
+       hgl_str + std::string(size(hgl_str), ' ').replace(c, 1uz, 1uz, '^')});
+    datagram.plots.highlights.push_back(
+      {START_COL,
+       hgl_str + std::string(size(hgl_str), ' ').replace(c, 1uz, 1uz, '^')});
+    datagram.plots.highlights.push_back(
+      {START_COL,
+       hgl_str + std::string(size(hgl_str), ' ').replace(c++, 1uz, 1uz, '^')});
+
+    auto const col{i < 2uz ? TTS1_COL : TTS2_COL};
+    for (auto j{1uz}; j <= CHAR_BIT; ++j) {
+      datagram.plots.highlights.push_back(
+        {col,
+         hgl_str + std::string(size(hgl_str), ' ').replace(c, 1uz, 1uz, '^')});
+      datagram.plots.highlights.push_back(
+        {col,
+         hgl_str +
+           std::string(size(hgl_str), ' ').replace(c++, 1uz, 1uz, '^')});
+    }
+
+    // Stopbit
+    datagram.plots.highlights.push_back(
+      {STOP_COL,
+       hgl_str + std::string(size(hgl_str), ' ').replace(c, 1uz, 1uz, '^')});
+    datagram.plots.highlights.push_back(
+      {STOP_COL,
+       hgl_str + std::string(size(hgl_str), ' ').replace(c, 1uz, 1uz, '^')});
+    datagram.plots.highlights.push_back(
+      {STOP_COL,
+       hgl_str + std::string(size(hgl_str), ' ').replace(c++, 1uz, 1uz, '^')});
+  }
 }
 
 //
@@ -215,10 +276,17 @@ void plot(State::Datagram& datagram) {
     if (ImPlot::IsPlotHovered()) {
       ImPlotPoint const mouse{ImPlot::GetPlotMousePos()};
 
-      if ((mouse.x >= Timing::TTS1 &&
-           mouse.x <= Timing::TTS1 + 10u * 4u * channel1_size) ||
-          (mouse.x >= Timing::TTS2 &&
-           mouse.x <= Timing::TTS2 + 10u * 4u * channel2_size)) {
+      if (auto const it{std::ranges::adjacent_find(
+            datagram.plots.t_b,
+            [x = mouse.x](double a, double b) { return x >= a && x <= b; })};
+          byte_at_mouse(mouse, datagram) && it != cend(datagram.plots.t_b)) {
+        auto const i{static_cast<size_t>(
+          std::ranges::distance(cbegin(datagram.plots.t_b), it))};
+
+        // Convert segment x coords to pixel space
+        std::array const ps{
+          ImPlot::PlotToPixels(ImPlotPoint{datagram.plots.t_b[i], 0}),
+          ImPlot::PlotToPixels(ImPlotPoint{datagram.plots.t_b[i + 1uz], 0})};
 
         // Get plot rect (for full-height fill)
         ImVec2 const plot_pos{ImPlot::GetPlotPos()};
@@ -228,13 +296,26 @@ void plot(State::Datagram& datagram) {
 
         ImDrawList* dl{ImPlot::GetPlotDrawList()};
 
+        // Filled translucent rectangle covering the signal region
+        auto const& [hgl_col, hgl_str]{datagram.plots.highlights[i]};
+        dl->AddRectFilled(
+          ImVec2{ps[0uz].x, y_min},
+          ImVec2{ps[1uz].x, y_max},
+          ImColor(
+            hgl_col.Value.x, hgl_col.Value.y, hgl_col.Value.z, 50 / 255.0f));
+
         // Optional vertical line at the exact mouse x
-        auto hgl_col = CHECKSUM_COL;
         ImVec2 const px{ImPlot::PlotToPixels(ImPlotPoint{mouse.x, 0.0})};
-        dl->AddLine(ImVec2{px.x, y_min},
-                    ImVec2{px.x, y_max},
-                    ImColor(hgl_col.x, hgl_col.y, hgl_col.z, 150 / 255.0f),
-                    1.0f);
+        dl->AddLine(
+          ImVec2{px.x, y_min},
+          ImVec2{px.x, y_max},
+          ImColor(
+            hgl_col.Value.x, hgl_col.Value.y, hgl_col.Value.z, 150 / 255.0f),
+          1.0f);
+
+        ImGui::BeginTooltip();
+        ImGui::TextUnformatted(hgl_str.c_str());
+        ImGui::EndTooltip();
       }
     }
 

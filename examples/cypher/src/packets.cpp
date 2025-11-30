@@ -732,7 +732,7 @@ void highlights(State::Packet& packet, bool service_mode) {
   size_t i{};
 
   // Carot index
-  size_t j{};
+  size_t c{};
 
   // Byte index
   size_t k{};
@@ -742,84 +742,84 @@ void highlights(State::Packet& packet, bool service_mode) {
     packet.plots.highlights[i++] = {
       PRE_COL,
       hgl_str +
-        std::string(size(packet.pattern_str), ' ').replace(j++, 1uz, 1uz, '^')};
+        std::string(size(packet.pattern_str), ' ').replace(c++, 1uz, 1uz, '^')};
   }
 
   // Address
   if (!service_mode)
     for (; k < addr_count; ++k) {
       // Space
-      ++j;
+      ++c;
 
       // Startbit
       packet.plots.highlights[i++] = {
         START_COL,
         hgl_str + std::string(size(packet.pattern_str), ' ')
-                    .replace(j++, 1uz, 1uz, '^')};
+                    .replace(c++, 1uz, 1uz, '^')};
 
       // Space
-      ++j;
+      ++c;
 
       //
       for (auto l{0uz}; l < CHAR_BIT; ++l)
         packet.plots.highlights[i++] = {
           ADDR_COL,
           hgl_str + std::string(size(packet.pattern_str), ' ')
-                      .replace(j++, 1uz, 1uz, '^')};
+                      .replace(c++, 1uz, 1uz, '^')};
     }
 
   // Data
   for (; k < size(packet.bytes) - 1uz; ++k) {
     // Space
-    ++j;
+    ++c;
 
     // Startbit
     packet.plots.highlights[i++] = {
       START_COL,
       hgl_str +
-        std::string(size(packet.pattern_str), ' ').replace(j++, 1uz, 1uz, '^')};
+        std::string(size(packet.pattern_str), ' ').replace(c++, 1uz, 1uz, '^')};
 
     // Space
-    ++j;
+    ++c;
 
     // Byte
     for (auto l{0uz}; l < CHAR_BIT; ++l)
       packet.plots.highlights[i++] = {
         DATA_COL,
         hgl_str + std::string(size(packet.pattern_str), ' ')
-                    .replace(j++, 1uz, 1uz, '^')};
+                    .replace(c++, 1uz, 1uz, '^')};
   }
 
   // Checksum
   for (; k < size(packet.bytes); ++k) {
     // Space
-    ++j;
+    ++c;
 
     // Startbit
     packet.plots.highlights[i++] = {
       START_COL,
       hgl_str +
-        std::string(size(packet.pattern_str), ' ').replace(j++, 1uz, 1uz, '^')};
+        std::string(size(packet.pattern_str), ' ').replace(c++, 1uz, 1uz, '^')};
 
     // Space
-    ++j;
+    ++c;
 
     // Byte
     for (auto l{0uz}; l < CHAR_BIT; ++l)
       packet.plots.highlights[i++] = {
         CHECKSUM_COL,
         hgl_str + std::string(size(packet.pattern_str), ' ')
-                    .replace(j++, 1uz, 1uz, '^')};
+                    .replace(c++, 1uz, 1uz, '^')};
   }
 
   // Space
-  ++j;
+  ++c;
 
   // Endbit
   packet.plots.highlights[i++] = {
     END_COL,
     hgl_str +
-      std::string(size(packet.pattern_str), ' ').replace(j++, 1uz, 1uz, '^')};
+      std::string(size(packet.pattern_str), ' ').replace(c, 1uz, 1uz, '^')};
 }
 
 //
