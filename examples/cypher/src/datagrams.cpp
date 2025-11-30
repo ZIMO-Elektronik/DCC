@@ -11,10 +11,12 @@
 #define END_COL ImPlot::GetColormapColor(9)      // red
 #define CHECKSUM_COL ImPlot::GetColormapColor(3) // violet
 
-#define TCS_COL ImPlot::GetColormapColor(2)  // green
+#define TCS_COL ImPlot::GetColormapColor(8)  // white
 #define TTS1_COL ImPlot::GetColormapColor(5) // yellow
+#define TTC1_COL TTS1_COL
 #define TTS2_COL ImPlot::GetColormapColor(4) // orange
-#define TCE_COL ImPlot::GetColormapColor(9)  // red
+#define TTC2_COL TTS2_COL
+#define TCE_COL ImPlot::GetColormapColor(3) // violet
 
 namespace {
 
@@ -24,6 +26,7 @@ namespace eval {
 
 // clang-format off
 void eval(State& state, State::Datagram& datagram);
+  void highlights(State::Datagram& datagram);
   void tags(State::Datagram& datagram);
 // clang-format on
 
@@ -43,6 +46,8 @@ void eval(State& state, State::Datagram& datagram) {
   datagram.plots.highlights.clear();
   datagram.plots.tags.clear();
 
+  datagram.desc_strs.push_back(" REMOVOOOVE ME ");
+
   // P
   for (auto i{0uz}; i <= 8uz; ++i) {
     auto const bit{static_cast<bool>(i % 2uz)};
@@ -51,8 +56,6 @@ void eval(State& state, State::Datagram& datagram) {
     datagram.plots.t_p.push_back(i * datagram.cfg.bidibit_duration);
     datagram.plots.p.push_back(!bit);
   }
-  datagram.plots.t_p.push_back(Timing::TCEMax);
-  datagram.plots.p.push_back(1.0);
 
   // BiDi
   static constexpr auto scale{0.5};
@@ -64,7 +67,7 @@ void eval(State& state, State::Datagram& datagram) {
     offset += i * 10u * 4u;
 
     auto const b{datagram.bytes[i]};
-    if (!b) break;
+    if (!b) continue;
 
     // Startbit
     datagram.plots.t_b.push_back(offset + 0u * 4u);
@@ -95,9 +98,20 @@ void eval(State& state, State::Datagram& datagram) {
   datagram.plots.t_b.push_back(datagram.plots.t_p.back());
   datagram.plots.b.push_back(1.0 * scale);
 
-  datagram.desc_strs.push_back(" REMOVOOOVE ME ");
+  printf("size t_b %d\n", size(datagram.plots.t_b));
+  printf("size b %d\n", size(datagram.plots.b));
 
+  highlights(datagram);
   tags(datagram);
+}
+
+//
+void highlights(State::Datagram& datagram) {
+
+  // Build data string
+  std::string data_str{};
+  for (auto b : datagram.bytes)
+    if (b) data_str += std::format("S{:08b}T", b);
 }
 
 //
@@ -105,8 +119,11 @@ void tags(State::Datagram& datagram) {
   datagram.plots.tags.push_back(
     {datagram.cfg.bidibit_duration / 2u, TCS_COL, "TCS"});
   datagram.plots.tags.push_back({Timing::TTS1, TTS1_COL, "TTS1"});
+  datagram.plots.tags.push_back({Timing::TTC1, TTC1_COL, "TTC1"});
   datagram.plots.tags.push_back({Timing::TTS2, TTS2_COL, "TTS2"});
-  datagram.plots.tags.push_back({Timing::TCEMax, TCE_COL, "TCE"});
+  datagram.plots.tags.push_back({Timing::TTC2, TTC1_COL, "TTC2"});
+  datagram.plots.tags.push_back(
+    {8 * datagram.cfg.bidibit_duration, TCE_COL, "TCE"});
 }
 
 } // namespace eval
@@ -155,22 +172,25 @@ void description(State::Datagram& datagram) {
 
 //
 void data(State::Datagram& datagram) {
-  auto const first{
-    std::ranges::find_if(datagram.bytes, [](uint8_t b) { return b; })};
-  auto const last{
-    std::ranges::find_if(datagram.bytes, [](uint8_t b) { return !b; })};
-  auto const offset{first - cbegin(datagram.bytes)};
+  // This is beyond stupid, but have you tried doing that shit with algorithms?
+  int first{-1};
+  int last{-1};
+  for (auto i{0}; i < ssize(datagram.bytes); ++i) {
+    if (!datagram.bytes[i]) continue;
+    if (first == -1) first = i;
+    last = i;
+  }
   ImGui::BinaryTable(UNIQUE_LABEL(),
-                     data(datagram.bytes) + offset,
-                     last - first,
+                     data(datagram.bytes) + first,
+                     last - first + 1,
                      ImGuiInputTextFlags_ReadOnly,
-                     offset);
+                     first);
 }
 
 //
 void plot(State::Datagram& datagram) {
   if (ImPlot::BeginPlot("Digital Signal")) {
-    // P track
+    // Plot P and BiDi
     ImPlot::SetupAxis(ImAxis_X1, "Time [us]");
     ImPlot::SetupAxis(ImAxis_Y1, "P", ImPlotAxisFlags_NoTickLabels);
     ImPlot::SetupAxis(
@@ -191,17 +211,39 @@ void plot(State::Datagram& datagram) {
                      data(datagram.plots.b),
                      static_cast<int>(ssize(datagram.plots.t_b)));
 
+    // Highlights
+    if (ImPlot::IsPlotHovered()) {
+      ImPlotPoint const mouse{ImPlot::GetPlotMousePos()};
+
+      if ((mouse.x >= Timing::TTS1 &&
+           mouse.x <= Timing::TTS1 + 10u * 4u * channel1_size) ||
+          (mouse.x >= Timing::TTS2 &&
+           mouse.x <= Timing::TTS2 + 10u * 4u * channel2_size)) {
+
+        // Get plot rect (for full-height fill)
+        ImVec2 const plot_pos{ImPlot::GetPlotPos()};
+        ImVec2 const plot_size{ImPlot::GetPlotSize()};
+        float const y_min{plot_pos.y};
+        float const y_max{plot_pos.y + plot_size.y};
+
+        ImDrawList* dl{ImPlot::GetPlotDrawList()};
+
+        // Optional vertical line at the exact mouse x
+        auto hgl_col = CHECKSUM_COL;
+        ImVec2 const px{ImPlot::PlotToPixels(ImPlotPoint{mouse.x, 0.0})};
+        dl->AddLine(ImVec2{px.x, y_min},
+                    ImVec2{px.x, y_max},
+                    ImColor(hgl_col.x, hgl_col.y, hgl_col.z, 150 / 255.0f),
+                    1.0f);
+      }
+    }
+
     // Tags
     for (auto const& [x, col, str] : datagram.plots.tags)
       ImPlot::TagX(x, col, "%s", str.c_str());
 
-    // Highlight
-    if (ImPlot::IsPlotHovered()) {
-      ImPlotPoint const mouse{ImPlot::GetPlotMousePos()};
-    }
+    ImPlot::EndPlot();
   }
-
-  ImPlot::EndPlot();
 }
 
 } // namespace tab

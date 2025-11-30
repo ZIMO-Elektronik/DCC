@@ -244,11 +244,22 @@ void tab(State::Packet& packet, size_t i);
 void datagram_builder(State& state) {
   if (!state.windows.show_datagram_builder) return;
 
+  /// \todo REMOVE
   if (state.loco_datagrams.empty()) {
-    auto const dg{::app::adr_high(3u, false)};
-    Datagram<> datagram{};
-    std::ranges::copy(dg, begin(datagram));
-    state.loco_datagrams.push_back({.bytes = datagram});
+    {
+      auto const dg{::app::adr_high(3u, false)};
+      Datagram<> datagram{};
+      std::ranges::copy(dg, begin(datagram));
+      state.loco_datagrams.push_back({.bytes = datagram});
+    }
+
+    {
+      auto const dg{encode_datagram(
+        make_datagram<Bits::_18>(7u, static_cast<uint32_t>(0u << 6u | 42u)))};
+      Datagram<> datagram{};
+      std::ranges::copy(dg, begin(datagram) + channel1_size);
+      state.loco_datagrams.push_back({.bytes = datagram});
+    }
   }
 
   if (ImGui::Begin("Datagram Builder",

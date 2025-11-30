@@ -919,7 +919,7 @@ void data(State::Packet& packet) {
 //
 void plot(State::Packet& packet) {
   if (ImPlot::BeginPlot("Digital Signal")) {
-    // P and N track
+    // Plot P and N
     ImPlot::SetupAxis(ImAxis_X1, "Time [us]");
     ImPlot::SetupAxis(ImAxis_Y1, "P", ImPlotAxisFlags_NoTickLabels);
     ImPlot::SetupAxis(
@@ -939,11 +939,7 @@ void plot(State::Packet& packet) {
                      data(packet.plots.n),
                      static_cast<int>(ssize(packet.plots.t)));
 
-    // Tags
-    for (auto const& [x, col, str] : packet.plots.tags)
-      ImPlot::TagX(x, col, "%s", str.c_str());
-
-    // Highlight
+    // Highlights
     if (ImPlot::IsPlotHovered()) {
       ImPlotPoint const mouse{ImPlot::GetPlotMousePos()};
 
@@ -989,6 +985,10 @@ void plot(State::Packet& packet) {
         ImGui::EndTooltip();
       }
     }
+
+    // Tags
+    for (auto const& [x, col, str] : packet.plots.tags)
+      ImPlot::TagX(x, col, "%s", str.c_str());
 
     ImPlot::EndPlot();
   }
