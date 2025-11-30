@@ -57,7 +57,24 @@ void channel2(State& state, Datagram<>& datagram) {
 //
 void app_tos(State& state, Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
-  ImGui::TextUnformatted("\\todo");
+  static dcc::Address::value_type addr{3};
+  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr);
+  addr = std::clamp<dcc::Address::value_type>(addr, 1u, 10239u);
+  static bool consist{};
+  ImGui::Checkbox("Consist", &consist);
+  static bool r{};
+  if (consist) ImGui::Checkbox("R", &r);
+  static constexpr uint8_t min{0u};
+  static constexpr uint8_t max{30u};
+  static uint8_t s{};
+  ImGui::SliderScalar("[s]", ImGuiDataType_U8, &s, &min, &max);
+  auto const adr_high{app::adr_high(addr, consist)};
+  auto it{std::copy(
+    cbegin(adr_high), cend(adr_high), begin(datagram) + channel1_size)};
+  auto const adr_low{app::adr_low(addr, consist, r)};
+  it = std::copy(cbegin(adr_low), cend(adr_low), it);
+  auto const time{encode_datagram(make_datagram<Bits::_12>(14u, s))};
+  std::copy(cbegin(time), cend(time), it);
 }
 
 } // namespace broadcast
@@ -136,7 +153,21 @@ void app_adr_low(State& state, Datagram<>& datagram) {
 //
 void app_adr_info1(State& state, Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
-  ImGui::TextUnformatted("\\todo");
+  static bool track_polarity{};
+  ImGui::Checkbox("Track polarity", &track_polarity);
+  static bool direction{};
+  ImGui::Checkbox("Direction", &direction);
+  static bool driving{};
+  ImGui::Checkbox("Driving", &driving);
+  static bool consist{};
+  ImGui::Checkbox("Consist", &consist);
+  static bool addr_request{};
+  ImGui::Checkbox("Addressing request", &addr_request);
+  auto const dg{encode_datagram(make_datagram<Bits::_12>(
+    3u,
+    static_cast<uint8_t>(addr_request << 4u | consist << 3u | driving << 2u |
+                         direction << 1u | track_polarity << 0u)))};
+  std::ranges::copy(dg, begin(datagram));
 }
 
 //
@@ -171,9 +202,9 @@ void channel2(State& state, Datagram<>& datagram) {
 //
 void app_pom(State& state, Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
-  static uint8_t cv{};
-  ImGui::InputScalar("CV", ImGuiDataType_U8, &cv);
-  auto const dg{encode_datagram(make_datagram<Bits::_12>(0u, cv))};
+  static uint8_t cv_value{};
+  ImGui::InputScalar("CV value", ImGuiDataType_U8, &cv_value);
+  auto const dg{encode_datagram(make_datagram<Bits::_12>(0u, cv_value))};
   std::ranges::copy(dg, begin(datagram) + 2);
 }
 
@@ -198,13 +229,31 @@ void app_dyn(State& state, Datagram<>& datagram) {
 //
 void app_xpom(State& state, Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
-  ImGui::TextUnformatted("\\todo");
+  static constexpr std::array ss{
+    "SS = 00 - ID8", "SS = 01 - ID9", "SS = 10 - ID10", "SS = 11 - ID11"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(ss), ssize(ss));
+  static std::array<uint16_t, 4uz> cv_values{};
+  ImGui::InputScalarN(
+    "CV Values", ImGuiDataType_U8, data(cv_values), ssize(cv_values));
+  auto const dg{encode_datagram(make_datagram<Bits::_36>(
+    0b10u << 2u | i,
+    static_cast<uint32_t>(cv_values[0uz] << 24u | cv_values[1uz] << 16u |
+                          cv_values[2uz] << 8u | cv_values[3uz] << 0u)))};
+  std::ranges::copy(dg, begin(datagram) + channel1_size);
 }
 
 //
 void app_cv_auto(State& state, Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
-  ImGui::TextUnformatted("\\todo");
+  static uint32_t cv_addr{0u};
+  ImGui::InputScalar("CV Address", ImGuiDataType_U32, &cv_addr);
+  cv_addr = std::clamp<dcc::Address::value_type>(cv_addr, 0u, (1u << 24u) - 1u);
+  static uint8_t cv_value{0u};
+  ImGui::InputScalar("CV Value", ImGuiDataType_U8, &cv_value);
+  auto const dg{encode_datagram(
+    make_datagram<Bits::_36>(12u, cv_addr << 8u | cv_value << 0u))};
+  std::ranges::copy(dg, begin(datagram) + channel1_size);
 }
 
 //

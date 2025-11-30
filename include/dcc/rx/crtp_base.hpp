@@ -1013,9 +1013,9 @@ private:
         30s)
       return;
     if (_tps.tos == decltype(_tps.tos){}) _tps.tos = now;
-    auto& packet{*end(_tos_deque)};
+    auto& datagram{*end(_tos_deque)};
     auto const adr_high{adrHigh(_addrs.primary)};
-    auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(packet))};
+    auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(datagram))};
     auto const adr_low{adrLow(_addrs.primary)};
     it = std::copy(cbegin(adr_low), cend(adr_low), it);
     auto const time{encode_datagram(make_datagram<Bits::_12>(

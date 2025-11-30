@@ -17,26 +17,6 @@ namespace {
 
 using namespace dcc::bidi;
 
-//
-uint8_t byte_at_mouse(ImPlotPoint mouse, State::Datagram& datagram) {
-  //
-  if (mouse.x >= Timing::TTS1 &&
-      mouse.x <= Timing::TTS1 + 10u * 4u * channel1_size) {
-    auto const i{static_cast<size_t>((mouse.x - Timing::TTS1) / (10u * 4u))};
-    return datagram.bytes[i];
-  }
-  //
-  else if (mouse.x >= Timing::TTS2 &&
-           mouse.x <= Timing::TTS2 + 10u * 4u * channel2_size) {
-    auto const i{channel1_size +
-                 static_cast<size_t>((mouse.x - Timing::TTS2) / (10u * 4u))};
-    return datagram.bytes[i];
-  }
-  //
-  else
-    return 0u;
-}
-
 namespace eval {
 
 // clang-format off
@@ -276,10 +256,24 @@ void plot(State::Datagram& datagram) {
     if (ImPlot::IsPlotHovered()) {
       ImPlotPoint const mouse{ImPlot::GetPlotMousePos()};
 
+      uint8_t b{};
+      //
+      if (mouse.x >= Timing::TTS1 &&
+          mouse.x <= Timing::TTS1 + 10u * 4u * channel1_size)
+        b =
+          datagram
+            .bytes[static_cast<size_t>((mouse.x - Timing::TTS1) / (10u * 4u))];
+      //
+      else if (mouse.x >= Timing::TTS2 &&
+               mouse.x <= Timing::TTS2 + 10u * 4u * channel2_size)
+        b = datagram
+              .bytes[channel1_size + static_cast<size_t>(
+                                       (mouse.x - Timing::TTS2) / (10u * 4u))];
+
       if (auto const it{std::ranges::adjacent_find(
             datagram.plots.t_b,
             [x = mouse.x](double a, double b) { return x >= a && x <= b; })};
-          byte_at_mouse(mouse, datagram) && it != cend(datagram.plots.t_b)) {
+          b && it != cend(datagram.plots.t_b)) {
         auto const i{static_cast<size_t>(
           std::ranges::distance(cbegin(datagram.plots.t_b), it))};
 

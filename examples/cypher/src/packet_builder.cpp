@@ -140,7 +140,7 @@ void feature_expansion_time_and_date(State& state) {
     ImGui::InputScalarN("[dd::mm:yyyy]",
                         ImGuiDataType_U16,
                         data(date),
-                        3,
+                        ssize(date),
                         nullptr,
                         nullptr,
                         "%02u");
@@ -887,26 +887,24 @@ void cv_access_long_form(State& state, dcc::Address addr) {
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
   if (!strcmp(instrs[static_cast<size_t>(i)], "Byte Verify") ||
       !strcmp(instrs[static_cast<size_t>(i)], "Byte Write")) {
-    static uint8_t cv{};
-    ImGui::InputScalar("CV Value", ImGuiDataType_U8, &cv);
+    static uint8_t cv_value{};
+    ImGui::InputScalar("CV Value", ImGuiDataType_U8, &cv_value);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets")) {
       if (!strcmp(instrs[static_cast<size_t>(i)], "Byte Verify"))
-        addr
-          ? state.operations_packets.push_back(
-              {.bytes =
-                 dcc::make_cv_access_long_verify_packet(addr, cv_addr, cv)})
-          : state.service_packets.push_back(
-              {.bytes =
-                 dcc::make_cv_access_long_verify_service_packet(cv_addr, cv)});
+        addr ? state.operations_packets.push_back(
+                 {.bytes = dcc::make_cv_access_long_verify_packet(
+                    addr, cv_addr, cv_value)})
+             : state.service_packets.push_back(
+                 {.bytes = dcc::make_cv_access_long_verify_service_packet(
+                    cv_addr, cv_value)});
       else
-        addr
-          ? state.operations_packets.push_back(
-              {.bytes =
-                 dcc::make_cv_access_long_write_packet(addr, cv_addr, cv)})
-          : state.service_packets.push_back(
-              {.bytes =
-                 dcc::make_cv_access_long_write_service_packet(cv_addr, cv)});
+        addr ? state.operations_packets.push_back(
+                 {.bytes = dcc::make_cv_access_long_write_packet(
+                    addr, cv_addr, cv_value)})
+             : state.service_packets.push_back(
+                 {.bytes = dcc::make_cv_access_long_write_service_packet(
+                    cv_addr, cv_value)});
     }
   } else if (!strcmp(instrs[static_cast<size_t>(i)], "Bit Verify") ||
              !strcmp(instrs[static_cast<size_t>(i)], "Bit Write")) {
