@@ -17,6 +17,7 @@
 #include <utility>
 #include <ztl/math.hpp>
 #include "address.hpp"
+#include "bidi/datagram.hpp"
 #include "crc8.hpp"
 #include "exor.hpp"
 #include "instruction.hpp"
@@ -1419,5 +1420,50 @@ consteval auto make_idle_packet() {
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
+
+///
+constexpr auto make_app_adr_high_datagram(dcc::Address) {}
+
+///
+constexpr auto make_app_adr_low_datagram(dcc::Address) {}
+
+///
+constexpr auto make_app_info1_datagram() {}
+
+///
+constexpr auto make_app_pom_datagram() {}
+
+///
+constexpr auto make_app_ext_datagram() {}
+
+///
+constexpr auto make_app_dyn_datagram() {}
+
+///
+constexpr auto make_app_xpom_datagram() {}
+
+///
+constexpr auto make_app_cv_auto_datagram() {}
+
+///
+constexpr auto make_app_block_datagram() {}
+
+///
+constexpr auto make_app_search_datagram() {}
+
+///
+constexpr auto make_app_srq_datagram() {}
+
+///
+constexpr auto make_app_stat4_datagram() {}
+
+///
+constexpr auto make_app_stat1_datagram() {}
+
+///
+constexpr auto make_app_time_datagram() {}
+
+///
+constexpr auto make_app_error_datagram() {}
 
 } // namespace dcc

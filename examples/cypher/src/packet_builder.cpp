@@ -370,12 +370,16 @@ void consist_control(State& state, dcc::Address addr) {
 //
 void consist_control_set_consist_address(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static uint8_t cv19{};
-  ImGui::BinaryTable(UNIQUE_LABEL(), &cv19, sizeof(cv19));
+  static dcc::Address::value_type consist_addr{3};
+  ImGui::InputScalar("Address", ImGuiDataType_U8, &consist_addr);
+  consist_addr = std::clamp<dcc::Address::value_type>(consist_addr, 1u, 127u);
+  static bool r{};
+  ImGui::Checkbox("R", &r);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
     state.operations_packets.push_back(
-      {.bytes = dcc::make_set_consist_address_packet(addr, cv19)});
+      {.bytes =
+         dcc::make_set_consist_address_packet(addr, r << 7u | consist_addr)});
 }
 
 //
