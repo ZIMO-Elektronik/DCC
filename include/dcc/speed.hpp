@@ -11,6 +11,8 @@
 #pragma once
 
 #include <cstdint>
+#include <ztl/bits.hpp>
+#include <ztl/math.hpp>
 
 namespace dcc {
 

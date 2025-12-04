@@ -17,5 +17,5 @@ jobs:
         sudo apt update -y
         sudo apt install -y '^libxcb.*-dev' libglu1-mesa-dev libx11-xcb-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
       args: -DCMAKE_BUILD_TYPE=Debug -DDCC_STANDARD_COMPLIANCE=${{ matrix.compliance }}
-      target: DCCTests
+      target: DCCIncludeWhatYouMust DCCTests
       post-build: ctest --test-dir build --schedule-random --timeout 86400
