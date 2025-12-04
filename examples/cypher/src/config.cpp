@@ -12,7 +12,7 @@ void config(State& state) {
     ImGui::SeparatorText("Signal");
     uint8_t min{DCC_TX_MIN_PREAMBLE_BITS};
     uint8_t max{DCC_TX_MAX_PREAMBLE_BITS};
-    ImGui::SliderScalar("Preamble bits",
+    ImGui::SliderScalar("Preamble Bits",
                         ImGuiDataType_U8,
                         &state.cfg.num_preamble,
                         &min,
@@ -21,7 +21,7 @@ void config(State& state) {
 
     min = dcc::tx::Timing::Bit1Min;
     max = dcc::tx::Timing::Bit1Max;
-    ImGui::SliderScalar("Bit 1 duration [us]",
+    ImGui::SliderScalar("Bit 1 Duration [us]",
                         ImGuiDataType_U8,
                         &state.cfg.bit1_duration,
                         &min,
@@ -30,7 +30,7 @@ void config(State& state) {
 
     min = dcc::tx::Timing::Bit0Min;
     max = dcc::tx::Timing::Bit0Max;
-    ImGui::SliderScalar("Bit 0 duration [us]",
+    ImGui::SliderScalar("Bit 0 Duration [us]",
                         ImGuiDataType_U8,
                         &state.cfg.bit0_duration,
                         &min,
@@ -39,7 +39,7 @@ void config(State& state) {
 
     min = 57u;
     max = 61u;
-    ImGui::SliderScalar("Bit BiDi duration [us]",
+    ImGui::SliderScalar("Bit BiDi Duration [us]",
                         ImGuiDataType_U8,
                         &state.cfg.bidibit_duration,
                         &min,
@@ -47,13 +47,13 @@ void config(State& state) {
                         "%u");
 
     ImGui::SeparatorText("Share");
-    if (ImGui::Button("To clipboard")) {
+    if (ImGui::Button("To Clipboard")) {
       ImGui::SetClipboardText("");
       ImGui::LogToClipboard();
       ImGui::LogText("%s", to_query(state).c_str());
       ImGui::LogFinish();
     }
-    if (ImGui::Button("From clipboard"))
+    if (ImGui::Button("From Clipboard"))
       from_query(state, ImGui::GetClipboardText());
   }
   ImGui::End();
