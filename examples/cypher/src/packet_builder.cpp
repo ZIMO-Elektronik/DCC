@@ -527,7 +527,7 @@ void advanced_operations_special_operating_modes(State& state,
   static bool west{};
   ImGui::Checkbox("West", &west);
   static bool east{};
-  ImGui::Checkbox("East", &west);
+  ImGui::Checkbox("East", &east);
   static bool man{};
   ImGui::Checkbox("MAN", &man);
   if (ImGui::Button("Push to Packets"))
