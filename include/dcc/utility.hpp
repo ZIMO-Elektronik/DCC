@@ -326,7 +326,7 @@ enum struct Consist : uint8_t {
   NotPart = 0b00u,
   Leading = 0b10u,
   Middle = 0b01u,
-  Read = 0b11u
+  Rear = 0b11u
 };
 
 /// Make advanced operations - special operating modes packet

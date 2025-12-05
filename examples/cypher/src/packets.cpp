@@ -344,8 +344,10 @@ void advanced_operations_analog_function_group(State::Packet& packet,
 void advanced_operations_special_operating_modes(
   State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - Special Operating Modes";
+  auto const cc{(bytes[1uz] >> 2u) & 0b11u};
   packet.desc_strs.back() +=
-    std::string{"\n- Consist="} + consist_labels[(bytes[1uz] >> 2u) & 0b11u];
+    std::string{"\n- Consist="} +
+    consist_labels[((cc & 1) << 1) | ((cc & 2) >> 1) | (cc & ~3)];
   packet.desc_strs.back() +=
     "\n- Shunting=" +
     std::to_string(static_cast<bool>(bytes[1uz] & ztl::mask<4u>));

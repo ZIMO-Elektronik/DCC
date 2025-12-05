@@ -520,8 +520,8 @@ void advanced_operations_analog_function_group(State& state,
 void advanced_operations_special_operating_modes(State& state,
                                                  dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static int cc{};
-  ImGui::Combo("Consist", &cc, data(consist_labels), ssize(consist_labels));
+  static int i{};
+  ImGui::Combo("Consist", &i, data(consist_labels), ssize(consist_labels));
   static bool shunting{};
   ImGui::Checkbox("Shunting", &shunting);
   static bool west{};
@@ -533,7 +533,12 @@ void advanced_operations_special_operating_modes(State& state,
   if (ImGui::Button("Push to Packets"))
     state.operations_packets.push_back(
       {.bytes = dcc::make_special_operating_modes(
-         addr, static_cast<dcc::Consist>(cc), shunting, west, east, man)});
+         addr,
+         static_cast<dcc::Consist>(((i & 1) << 1) | ((i & 2) >> 1) | (i & ~3)),
+         shunting,
+         west,
+         east,
+         man)});
 }
 
 //
