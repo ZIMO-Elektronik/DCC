@@ -524,7 +524,8 @@ constexpr auto make_f5_f8_packet(Address::value_type addr, uint8_t state) {
 /// \return Feature expansion - binary state long packet
 constexpr auto
 make_binary_state_long_packet(Address addr, uint16_t bin_addr, bool d) {
-  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  assert(addr.type == Address::Broadcast || addr.type == Address::BasicLoco ||
+         addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -904,7 +905,8 @@ constexpr auto make_f61_f68_packet(Address::value_type addr, uint8_t state) {
 /// \return Feature expansion - binary state short packet
 constexpr auto
 make_binary_state_short_packet(Address addr, uint8_t bin_addr, bool d) {
-  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  assert(addr.type == Address::Broadcast || addr.type == Address::BasicLoco ||
+         addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};

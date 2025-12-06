@@ -25,6 +25,21 @@ void eval(State& state, State::Datagram& datagram);
   void tags(State::Datagram& datagram);
 // clang-format on
 
+} // namespace eval
+
+namespace tab {
+
+// clang-format off
+void tab(State::Datagram& datagram, size_t i);
+  void description(State::Datagram& datagram);
+  void data(State::Datagram& datagram);
+  void plot(State::Datagram& datagram);
+// clang-format on
+
+} // namespace tab
+
+namespace eval {
+
 void eval(State& state, State::Datagram& datagram) {
   if (!empty(datagram.desc_strs) && state.cfg == datagram.cfg) return;
 
@@ -172,13 +187,6 @@ void tags(State::Datagram& datagram) {
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace tab {
-
-// clang-format off
-void tab(State::Datagram& datagram, size_t i);
-  void description(State::Datagram& datagram);
-  void data(State::Datagram& datagram);
-  void plot(State::Datagram& datagram);
-// clang-format on
 
 //
 void tab(State::Datagram& datagram, size_t i) {

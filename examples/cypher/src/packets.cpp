@@ -68,6 +68,21 @@ void eval(State& state, State::Packet& packet, bool service_mode);
   void tags(State::Packet& packet, bool service_mode);
 // clang-format on
 
+} // namespace eval
+
+namespace tab {
+
+// clang-format off
+void tab(State::Packet& packet, size_t i);
+  void description(State::Packet& packet);
+  void data(State::Packet& packet);
+  void plot(State::Packet& packet);
+// clang-format on
+
+} // namespace tab
+
+namespace eval {
+
 //
 void eval(State& state, State::Packet& packet, bool service_mode) {
   if (!empty(packet.desc_strs) && state.cfg == packet.cfg) return;
@@ -871,13 +886,6 @@ void tags(State::Packet& packet, bool service_mode) {
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace tab {
-
-// clang-format off
-void tab(State::Packet& packet, size_t i);
-  void description(State::Packet& packet);
-  void data(State::Packet& packet);
-  void plot(State::Packet& packet);
-// clang-format on
 
 //
 void tab(State::Packet& packet, size_t i) {

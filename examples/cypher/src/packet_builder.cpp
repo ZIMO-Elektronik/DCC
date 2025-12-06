@@ -18,6 +18,74 @@ void broadcast(State& state);
     void feature_expansion_command_station_properties_identifier(State& state);
 // clang-format on
 
+} // namespace broadcast
+
+namespace loco {
+
+// clang-format off
+void basic(State& state);
+void extended(State& state);
+  void loco(State& state, dcc::Address addr);
+    void decoder_control(State& state, dcc::Address addr);
+      void decoder_control_digital_decoder_reset(State& state, dcc::Address addr);
+      void decoder_control_hard_reset(State& state, dcc::Address addr);
+      void decoder_control_factory_test(State& state, dcc::Address addr);
+      void decoder_control_set_advanced_addressing(State& state, dcc::Address addr);
+      void decoder_control_decoder_acknowledgement_request(State& state, dcc::Address addr);
+    void consist_control(State& state, dcc::Address addr);
+      void consist_control_set_consist_address(State& state, dcc::Address addr);
+    void advanced_operations(State& state, dcc::Address addr);
+      void advanced_operations_speed_direction_and_function(State& state, dcc::Address addr);
+      void advanced_operations_analog_function_group(State& state, dcc::Address addr);
+      void advanced_operations_special_operating_modes(State& state, dcc::Address addr);
+      void advanced_operations_128_speed_step_control(State& state, dcc::Address addr);
+    void speed_and_direction(State& state, dcc::Address addr);
+    void function_group(State& state, dcc::Address addr);
+      void function_group_f0_f4(State& state, dcc::Address addr);
+      void function_group_f9_f12(State& state, dcc::Address addr);
+      void function_group_f5_f8(State& state, dcc::Address addr);
+    void feature_expansion(State& state, dcc::Address addr);
+      void feature_expansion_binary_state_control_long_form(State& state, dcc::Address addr);
+      void feature_expansion_f29_f36(State& state, dcc::Address addr);
+      void feature_expansion_f37_f44(State& state, dcc::Address addr);
+      void feature_expansion_f45_f52(State& state, dcc::Address addr);
+      void feature_expansion_f53_f60(State& state, dcc::Address addr);
+      void feature_expansion_f61_f68(State& state, dcc::Address addr);
+      void feature_expansion_binary_state_control_short_form(State& state, dcc::Address addr);
+      void feature_expansion_f13_f20(State& state, dcc::Address addr);
+      void feature_expansion_f21_f28(State& state, dcc::Address addr);
+    void cv_access(State& state, dcc::Address addr);
+      void cv_access_long_form(State& state, dcc::Address addr);
+      void cv_access_short_form(State& state, dcc::Address addr);
+      void cv_access_xpom(State& state, dcc::Address addr);
+// clang-format on
+
+} // namespace loco
+
+namespace accessory {
+
+// clang-format off
+void basic(State& state);
+void extended(State& state);
+  void accessory(State& state, dcc::Address addr);
+    void basic_accessory_decoder_control(State& state, dcc::Address addr);
+    void extended_accessory_decoder_control(State& state, dcc::Address addr);
+    void nop_for_basic_and_extended_accessory(State& state, dcc::Address addr);
+// clang-format on
+
+} // namespace accessory
+
+namespace idle {
+
+// clang-format off
+void idle(State& state);
+  void digital_decoder_idle(State& state);
+// clang-format on
+
+} // namespace idle
+
+namespace broadcast {
+
 //
 void broadcast(State& state) {
   ImGui::SeparatorText("Instruction");
@@ -88,18 +156,27 @@ void speed_and_direction(State& state) {
 void feature_expansion(State& state) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"",
+                                     "Binary State Control Long Form",
                                      "Time and Date",
                                      "System Time",
-                                     "Command Station Properties Identifier"};
+                                     "Command Station Properties Identifier",
+                                     "Binary State Control Short Form"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
-  if (!strcmp(instrs[static_cast<size_t>(i)], "Time and Date"))
+  if (!strcmp(instrs[static_cast<size_t>(i)], "Binary State Control Long Form"))
+    ::loco::feature_expansion_binary_state_control_long_form(
+      state, {.type = dcc::Address::Broadcast});
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "Time and Date"))
     feature_expansion_time_and_date(state);
   else if (!strcmp(instrs[static_cast<size_t>(i)], "System Time"))
     feature_expansion_system_time(state);
   else if (!strcmp(instrs[static_cast<size_t>(i)],
                    "Command Station Properties Identifier"))
     feature_expansion_command_station_properties_identifier(state);
+  else if (!strcmp(instrs[static_cast<size_t>(i)],
+                   "Binary State Control Short Form"))
+    ::loco::feature_expansion_binary_state_control_short_form(
+      state, {.type = dcc::Address::Broadcast});
 }
 
 //
@@ -185,44 +262,6 @@ void feature_expansion_command_station_properties_identifier(State&) {
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace loco {
-
-// clang-format off
-void basic(State& state);
-void extended(State& state);
-  void loco(State& state, dcc::Address addr);
-    void decoder_control(State& state, dcc::Address addr);
-      void decoder_control_digital_decoder_reset(State& state, dcc::Address addr);
-      void decoder_control_hard_reset(State& state, dcc::Address addr);
-      void decoder_control_factory_test(State& state, dcc::Address addr);
-      void decoder_control_set_advanced_addressing(State& state, dcc::Address addr);
-      void decoder_control_decoder_acknowledgement_request(State& state, dcc::Address addr);
-    void consist_control(State& state, dcc::Address addr);
-      void consist_control_set_consist_address(State& state, dcc::Address addr);
-    void advanced_operations(State& state, dcc::Address addr);
-      void advanced_operations_speed_direction_and_function(State& state, dcc::Address addr);
-      void advanced_operations_analog_function_group(State& state, dcc::Address addr);
-      void advanced_operations_special_operating_modes(State& state, dcc::Address addr);
-      void advanced_operations_128_speed_step_control(State& state, dcc::Address addr);
-    void speed_and_direction(State& state, dcc::Address addr);
-    void function_group(State& state, dcc::Address addr);
-      void function_group_f0_f4(State& state, dcc::Address addr);
-      void function_group_f9_f12(State& state, dcc::Address addr);
-      void function_group_f5_f8(State& state, dcc::Address addr);
-    void feature_expansion(State& state, dcc::Address addr);
-      void feature_expansion_binary_state_control_long_form(State& state, dcc::Address addr);
-      void feature_expansion_f29_f36(State& state, dcc::Address addr);
-      void feature_expansion_f37_f44(State& state, dcc::Address addr);
-      void feature_expansion_f45_f52(State& state, dcc::Address addr);
-      void feature_expansion_f53_f60(State& state, dcc::Address addr);
-      void feature_expansion_f61_f68(State& state, dcc::Address addr);
-      void feature_expansion_binary_state_control_short_form(State& state, dcc::Address addr);
-      void feature_expansion_f13_f20(State& state, dcc::Address addr);
-      void feature_expansion_f21_f28(State& state, dcc::Address addr);
-    void cv_access(State& state, dcc::Address addr);
-      void cv_access_long_form(State& state, dcc::Address addr);
-      void cv_access_short_form(State& state, dcc::Address addr);
-      void cv_access_xpom(State& state, dcc::Address addr);
-// clang-format on
 
 //
 void basic(State& state) {
@@ -1000,15 +1039,6 @@ void cv_access_xpom(State& state, dcc::Address addr) {
 
 namespace accessory {
 
-// clang-format off
-void basic(State& state);
-void extended(State& state);
-  void accessory(State& state, dcc::Address addr);
-    void basic_accessory_decoder_control(State& state, dcc::Address addr);
-    void extended_accessory_decoder_control(State& state, dcc::Address addr);
-    void nop_for_basic_and_extended_accessory(State& state, dcc::Address addr);
-// clang-format on
-
 //
 void basic(State& state) {
   ImGui::SeparatorText("Address");
@@ -1114,11 +1144,6 @@ void nop_for_basic_and_extended_accessory(State& state, dcc::Address addr) {
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace idle {
-
-// clang-format off
-void idle(State& state);
-  void digital_decoder_idle(State& state);
-// clang-format on
 
 //
 void idle(State& state) {

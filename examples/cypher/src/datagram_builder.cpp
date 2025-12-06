@@ -6,6 +6,36 @@ namespace {
 
 using namespace dcc::bidi;
 
+namespace broadcast {
+
+// clang-format off
+void broadcast(State& state, Datagram<>& datagram);
+  void channel2(State& state, Datagram<>& datagram);
+    void app_tos(State& state, Datagram<>& datagram);
+// clang-format on
+
+} // namespace broadcast
+
+namespace loco {
+
+// clang-format off
+void loco(State& state, Datagram<>& datagram);
+  void channel1(State& state, Datagram<>& datagram);
+    void app_adr_high(State& state, Datagram<>& datagram);
+    void app_adr_low(State& state, Datagram<>& datagram);
+    void app_adr_info1(State& state, Datagram<>& datagram);
+  void channel2(State& state, Datagram<>& datagram);
+    void app_pom(State& state, Datagram<>& datagram);
+    void app_ext(State& state, Datagram<>& datagram);
+    void app_info(State& state, Datagram<>& datagram);
+    void app_dyn(State& state, Datagram<>& datagram);
+    void app_xpom(State& state, Datagram<>& datagram);
+    void app_cv_auto(State& state, Datagram<>& datagram);
+    void app_block(State& state, Datagram<>& datagram);
+// clang-format on
+
+} // namespace loco
+
 namespace app {
 
 //
@@ -28,12 +58,6 @@ auto adr_low(dcc::Address::value_type addr, bool consist, bool r) {
 } // namespace app
 
 namespace broadcast {
-
-// clang-format off
-void broadcast(State& state, Datagram<>& datagram);
-  void channel2(State& state, Datagram<>& datagram);
-    void app_tos(State& state, Datagram<>& datagram);
-// clang-format on
 
 //
 void broadcast(State& state, Datagram<>& datagram) {
@@ -82,22 +106,6 @@ void app_tos(State& state, Datagram<>& datagram) {
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace loco {
-
-// clang-format off
-void loco(State& state, Datagram<>& datagram);
-  void channel1(State& state, Datagram<>& datagram);
-    void app_adr_high(State& state, Datagram<>& datagram);
-    void app_adr_low(State& state, Datagram<>& datagram);
-    void app_adr_info1(State& state, Datagram<>& datagram);
-  void channel2(State& state, Datagram<>& datagram);
-    void app_pom(State& state, Datagram<>& datagram);
-    void app_ext(State& state, Datagram<>& datagram);
-    void app_info(State& state, Datagram<>& datagram);
-    void app_dyn(State& state, Datagram<>& datagram);
-    void app_xpom(State& state, Datagram<>& datagram);
-    void app_cv_auto(State& state, Datagram<>& datagram);
-    void app_block(State& state, Datagram<>& datagram);
-// clang-format on
 
 //
 void loco(State& state, Datagram<>& datagram) {
@@ -274,19 +282,6 @@ void accessory(State& state, Datagram<>& datagram) {
 }
 
 } // namespace accessory
-
-////////////////////////////////////////////////////////////////////////////////
-
-namespace tab {
-
-// clang-format off
-void tab(State::Packet& packet, size_t i);
-  void description(State::Packet& packet);
-  void data(State::Packet& packet);
-  void plot(State::Packet& packet);
-// clang-format on
-
-} // namespace tab
 
 } // namespace
 
