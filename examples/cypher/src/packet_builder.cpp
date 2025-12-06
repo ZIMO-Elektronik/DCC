@@ -204,9 +204,9 @@ void feature_expansion_time_and_date(State& state) {
     static constexpr uint8_t acc_max{63u};
     static uint8_t acc{1};
     ImGui::SliderScalar(
-      "Factor", ImGuiDataType_U8, &acc, &acc_min, &acc_max, "%u");
+      "Acceleration", ImGuiDataType_U8, &acc, &acc_min, &acc_max, "%u");
     static bool update{};
-    ImGui::Checkbox("Abrupt Update", &update);
+    ImGui::Checkbox("Update", &update);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
       state.operations_packets.push_back(

@@ -493,10 +493,10 @@ void feature_expansion_time_and_date(State::Packet& packet,
       packet.desc_strs.back() +=
         "\n- Hours=" + std::to_string(bytes[2uz] & 0x1Fu);
       packet.desc_strs.back() +=
-        "\n- Abrupt Update=" +
+        "\n- Update=" +
         std::to_string(static_cast<bool>(bytes[3uz] & ztl::mask<7u>));
       packet.desc_strs.back() +=
-        "\n- Factor=" + std::to_string(bytes[3uz] & 0x3Fu);
+        "\n- Acceleration=" + std::to_string(bytes[3uz] & 0x3Fu);
       packet.pattern_str += " 0 11000001 0 00MMMMMM 0 WWWHHHHH 0 U0BBBBBB";
       break;
     case 0b01u:
