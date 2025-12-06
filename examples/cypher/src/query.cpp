@@ -70,6 +70,7 @@ void from_query(State& state, std::string const& url) {
     state.operations_packets.clear();
     state.service_packets.clear();
     state.loco_datagrams.clear();
+    state.accessory_datagrams.clear();
     demo(state);
     return;
   }
