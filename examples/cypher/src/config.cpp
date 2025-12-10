@@ -53,6 +53,8 @@ void config(State& state) {
       ImGui::LogText("%s", to_query(state).c_str());
       ImGui::LogFinish();
     }
+    if (ImGui::Button("From Clipboard"))
+      from_query(state, ImGui::GetClipboardText());
   }
   ImGui::End();
 }
