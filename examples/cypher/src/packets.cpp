@@ -188,7 +188,8 @@ void instruction(State::Packet& packet, bool service_mode) {
   if (empty(bytes)) return;
   else if (addr.type == dcc::Address::UnknownService) {
     packet.desc_strs.push_back("CV Access");
-    cv_access_long_form(packet, bytes, service_mode);
+    cv_access_long_form(
+      packet, {cbegin(packet.bytes), cend(packet.bytes)}, service_mode);
   } else if (addr.type == dcc::Address::Broadcast ||
              addr.type == dcc::Address::BasicLoco ||
              addr.type == dcc::Address::ExtendedLoco)
