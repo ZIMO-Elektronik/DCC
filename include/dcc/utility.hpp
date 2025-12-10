@@ -253,7 +253,7 @@ constexpr auto make_set_consist_address_packet(Address::value_type addr,
 /// \param  fs...     Functions
 /// \return Advanced operations - speed, direction and functions packet
 template<std::unsigned_integral... Fs>
-requires(sizeof...(Fs) > 0uz)
+requires(sizeof...(Fs) >= 1uz && sizeof...(Fs) <= 4uz)
 constexpr auto make_speed_direction_and_functions_packet(Address addr,
                                                          uint8_t rggggggg,
                                                          Fs... fs) {
@@ -277,7 +277,7 @@ constexpr auto make_speed_direction_and_functions_packet(Address addr,
 /// \param  fs...     Functions
 /// \return Advanced operations - speed, direction and functions packet
 template<std::unsigned_integral... Fs>
-requires(sizeof...(Fs) > 0uz)
+requires(sizeof...(Fs) >= 1uz && sizeof...(Fs) <= 4uz)
 constexpr auto make_speed_direction_and_functions_packet(
   Address::value_type addr, uint8_t rggggggg, Fs... fs) {
   return make_speed_direction_and_functions_packet(
@@ -1233,6 +1233,7 @@ constexpr auto make_cv_access_short_write_packet(Address::value_type addr,
 constexpr auto
 make_cv_access_xpom_verify_packet(Address addr, uint8_t ss, uint32_t cv_addr) {
   assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  assert(cv_addr < smath::pow(2u, 24u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -1269,12 +1270,14 @@ constexpr auto make_cv_access_xpom_verify_packet(Address::value_type addr,
 /// \param  cvs...  CV values
 /// \return CV access XPOM packet for writing CVs
 template<std::unsigned_integral... Cvs>
-requires(sizeof...(Cvs) > 0uz)
+requires(sizeof...(Cvs) >= 1uz && sizeof...(Cvs) <= 4uz &&
+         ((!std::same_as<Cvs, bool>) && ...))
 constexpr auto make_cv_access_xpom_write_packet(Address addr,
                                                 uint8_t ss,
                                                 uint32_t cv_addr,
                                                 Cvs... cvs) {
   assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  assert(cv_addr < smath::pow(2u, 24u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};
@@ -1297,7 +1300,8 @@ constexpr auto make_cv_access_xpom_write_packet(Address addr,
 /// \param  cvs...  CV values
 /// \return CV access XPOM packet for writing CVs
 template<std::unsigned_integral... Cvs>
-requires(sizeof...(Cvs) > 0uz)
+requires(sizeof...(Cvs) >= 1uz && sizeof...(Cvs) <= 4uz &&
+         ((!std::same_as<Cvs, bool>) && ...))
 constexpr auto make_cv_access_xpom_write_packet(Address::value_type addr,
                                                 uint8_t ss,
                                                 uint32_t cv_addr,
@@ -1320,6 +1324,7 @@ constexpr auto make_cv_access_xpom_write_packet(Address::value_type addr,
 constexpr auto make_cv_access_xpom_write_packet(
   Address addr, uint8_t ss, uint32_t cv_addr, bool bit, uint32_t pos) {
   assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  assert(cv_addr < smath::pow(2u, 24u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address(addr, first)};

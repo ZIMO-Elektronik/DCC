@@ -51,10 +51,10 @@ void add_loco_packets(State& state) {
     {.bytes = dcc::make_special_operating_modes(
        random_loco_address(),
        static_cast<dcc::Consist>(random_interval<uint8_t>(0b00u, 0b11u)),
-       random_interval(0, 1),
-       random_interval(0, 1),
-       random_interval(0, 1),
-       random_interval(0, 1))});
+       static_cast<bool>(random_interval(0, 1)),
+       static_cast<bool>(random_interval(0, 1)),
+       static_cast<bool>(random_interval(0, 1)),
+       static_cast<bool>(random_interval(0, 1)))});
   state.operations_packets.push_back(
     {.bytes = dcc::make_128_speed_step_control_packet(
        random_loco_address(), random_interval<uint8_t>())});
@@ -78,15 +78,16 @@ void add_loco_packets(State& state) {
 
   // Feature expansion
   state.operations_packets.push_back(
-    {.bytes = dcc::make_binary_state_long_packet(random_loco_address(),
-                                                 random_interval<uint16_t>(),
-                                                 random_interval(0, 1))});
+    {.bytes = dcc::make_binary_state_long_packet(
+       random_loco_address(),
+       random_interval<uint16_t>(),
+       static_cast<bool>(random_interval(0, 1)))});
   state.operations_packets.push_back(
     {.bytes = dcc::make_time_packet(random_interval<uint8_t>(0u, 7u),
                                     random_interval<uint8_t>(0u, 23u),
                                     random_interval<uint8_t>(0u, 59u),
                                     random_interval<uint8_t>(0u, 63u),
-                                    random_interval(0, 1))});
+                                    static_cast<bool>(random_interval(0, 1)))});
   state.operations_packets.push_back(
     {.bytes = dcc::make_date_packet(random_interval<uint8_t>(1u, 7u),
                                     random_interval<uint8_t>(1u, 12u),
@@ -113,9 +114,10 @@ void add_loco_packets(State& state) {
     {.bytes = dcc::make_f61_f68_packet(random_loco_address(),
                                        random_interval<uint8_t>())});
   state.operations_packets.push_back(
-    {.bytes = dcc::make_binary_state_short_packet(random_loco_address(),
-                                                  random_interval<uint8_t>(),
-                                                  random_interval(0, 1))});
+    {.bytes = dcc::make_binary_state_short_packet(
+       random_loco_address(),
+       random_interval<uint8_t>(),
+       static_cast<bool>(random_interval(0, 1)))});
   state.operations_packets.push_back(
     {.bytes = dcc::make_f13_f20_packet(random_loco_address(),
                                        random_interval<uint8_t>())});
@@ -127,24 +129,24 @@ void add_loco_packets(State& state) {
   state.operations_packets.push_back(
     {.bytes = dcc::make_cv_access_long_verify_packet(
        random_loco_address(),
-       random_interval<uint16_t>(0u, 1023u),
+       random_interval<uint16_t>(0u, smath::pow(2u, 10u) - 1u),
        random_interval<uint8_t>())});
   state.operations_packets.push_back(
     {.bytes = dcc::make_cv_access_long_write_packet(
        random_loco_address(),
-       random_interval<uint16_t>(0u, 1023u),
+       random_interval<uint16_t>(0u, smath::pow(2u, 10u) - 1u),
        random_interval<uint8_t>())});
   state.operations_packets.push_back(
     {.bytes = dcc::make_cv_access_long_verify_packet(
        random_loco_address(),
-       random_interval<uint16_t>(0u, 1023u),
-       random_interval(0, 1),
+       random_interval<uint16_t>(0u, smath::pow(2u, 10u) - 1u),
+       static_cast<bool>(random_interval(0, 1)),
        random_interval<uint8_t>(0u, 7u))});
   state.operations_packets.push_back(
     {.bytes = dcc::make_cv_access_long_write_packet(
        random_loco_address(),
-       random_interval<uint16_t>(0u, 1023u),
-       random_interval(0, 1),
+       random_interval<uint16_t>(0u, smath::pow(2u, 10u) - 1u),
+       static_cast<bool>(random_interval(0, 1)),
        random_interval<uint8_t>(0u, 7u))});
   state.operations_packets.push_back(
     {.bytes = make_cv_access_short_write_packet(
@@ -167,14 +169,57 @@ void add_loco_packets(State& state) {
                                                 0b0110u,
                                                 random_interval<uint8_t>(),
                                                 random_interval<uint8_t>())});
+  state.operations_packets.push_back(
+    {.bytes = make_cv_access_xpom_verify_packet(
+       random_loco_address(),
+       random_interval<uint8_t>(0u, 3u),
+       random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u))});
+  state.operations_packets.push_back(
+    {.bytes = make_cv_access_xpom_write_packet(
+       random_loco_address(),
+       random_interval<uint8_t>(0u, 3u),
+       random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u),
+       random_interval<uint8_t>())});
+  state.operations_packets.push_back(
+    {.bytes = make_cv_access_xpom_write_packet(
+       random_loco_address(),
+       random_interval<uint8_t>(0u, 3u),
+       random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u),
+       random_interval<uint8_t>(),
+       random_interval<uint8_t>())});
+  state.operations_packets.push_back(
+    {.bytes = make_cv_access_xpom_write_packet(
+       random_loco_address(),
+       random_interval<uint8_t>(0u, 3u),
+       random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u),
+       random_interval<uint8_t>(),
+       random_interval<uint8_t>(),
+       random_interval<uint8_t>())});
+  state.operations_packets.push_back(
+    {.bytes = make_cv_access_xpom_write_packet(
+       random_loco_address(),
+       random_interval<uint8_t>(0u, 3u),
+       random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u),
+       random_interval<uint8_t>(),
+       random_interval<uint8_t>(),
+       random_interval<uint8_t>(),
+       random_interval<uint8_t>())});
+  state.operations_packets.push_back(
+    {.bytes = make_cv_access_xpom_write_packet(
+       random_loco_address(),
+       random_interval<uint8_t>(0u, 3u),
+       random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u),
+       static_cast<bool>(random_interval(0, 1)),
+       random_interval<uint8_t>())});
 }
 
 //
 void add_accessory_packets(State& state) {
   state.operations_packets.push_back(
-    {.bytes = dcc::make_basic_accessory_packet(random_basic_accessory_address(),
-                                               random_interval(0, 1),
-                                               random_interval(0, 1))});
+    {.bytes = dcc::make_basic_accessory_packet(
+       random_basic_accessory_address(),
+       static_cast<bool>(random_interval(0, 1)),
+       static_cast<bool>(random_interval(0, 1)))});
   state.operations_packets.push_back(
     {.bytes = dcc::make_extended_accessory_packet(
        random_extended_accessory_address(), random_interval<uint8_t>())});
@@ -188,19 +233,21 @@ void add_accessory_packets(State& state) {
 void add_service_packets(State& state) {
   state.service_packets.push_back(
     {.bytes = dcc::make_cv_access_long_verify_service_packet(
-       random_interval<uint16_t>(0u, 1023u), random_interval<uint8_t>())});
+       random_interval<uint16_t>(0u, smath::pow(2u, 10u) - 1u),
+       random_interval<uint8_t>())});
   state.service_packets.push_back(
     {.bytes = dcc::make_cv_access_long_write_service_packet(
-       random_interval<uint16_t>(0u, 1023u), random_interval<uint8_t>())});
+       random_interval<uint16_t>(0u, smath::pow(2u, 10u) - 1u),
+       random_interval<uint8_t>())});
   state.service_packets.push_back(
     {.bytes = dcc::make_cv_access_long_verify_service_packet(
-       random_interval<uint16_t>(0u, 1023u),
-       random_interval(0, 1),
+       random_interval<uint16_t>(0u, smath::pow(2u, 10u) - 1u),
+       static_cast<bool>(random_interval(0, 1)),
        random_interval<uint8_t>(0u, 7u))});
   state.service_packets.push_back(
     {.bytes = dcc::make_cv_access_long_write_service_packet(
-       random_interval<uint16_t>(0u, 1023u),
-       random_interval(0, 1),
+       random_interval<uint16_t>(0u, smath::pow(2u, 10u) - 1u),
+       static_cast<bool>(random_interval(0, 1)),
        random_interval<uint8_t>(0u, 7u))});
 }
 
