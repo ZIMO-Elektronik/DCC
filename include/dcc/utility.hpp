@@ -1224,6 +1224,137 @@ constexpr auto make_cv_access_short_write_packet(Address::value_type addr,
     byte2);
 }
 
+/// Make CV access XPOM packet for verifying CVs
+///
+/// \param  addr    Address
+/// \param  ss      Sequence number
+/// \param  cv_addr CV address
+/// \return CV access XPOM packet for verifying CVs
+constexpr auto
+make_cv_access_xpom_verify_packet(Address addr, uint8_t ss, uint32_t cv_addr) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *last++ = static_cast<uint8_t>(0b1110'0100 | ss);
+  *last++ = static_cast<uint8_t>(cv_addr >> 16u);
+  *last++ = static_cast<uint8_t>(cv_addr >> 8u);
+  *last++ = static_cast<uint8_t>(cv_addr >> 0u);
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make CV access XPOM packet for verifying CVs
+///
+/// \param  addr    Address
+/// \param  ss      Sequence number
+/// \param  cv_addr CV address
+/// \return CV access XPOM packet for verifying CVs
+constexpr auto make_cv_access_xpom_verify_packet(Address::value_type addr,
+                                                 uint8_t ss,
+                                                 uint32_t cv_addr) {
+  return make_cv_access_xpom_verify_packet(
+    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
+    ss,
+    cv_addr);
+}
+
+/// Make CV access XPOM packet for writing CVs
+///
+/// \tparam Cvs...  Type of CVs
+/// \param  addr    Address
+/// \param  ss      Sequence number
+/// \param  cv_addr CV address
+/// \param  cvs...  CV values
+/// \return CV access XPOM packet for writing CVs
+template<std::unsigned_integral... Cvs>
+requires(sizeof...(Cvs) > 0uz)
+constexpr auto make_cv_access_xpom_write_packet(Address addr,
+                                                uint8_t ss,
+                                                uint32_t cv_addr,
+                                                Cvs... cvs) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *last++ = static_cast<uint8_t>(0b1110'1100 | ss);
+  *last++ = static_cast<uint8_t>(cv_addr >> 16u);
+  *last++ = static_cast<uint8_t>(cv_addr >> 8u);
+  *last++ = static_cast<uint8_t>(cv_addr >> 0u);
+  ((*last++ = static_cast<uint8_t>(cvs)), ...);
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make CV access XPOM packet for writing CVs
+///
+/// \tparam Cvs...  Type of CVs
+/// \param  addr    Address
+/// \param  ss      Sequence number
+/// \param  cv_addr CV address
+/// \param  cvs...  CV values
+/// \return CV access XPOM packet for writing CVs
+template<std::unsigned_integral... Cvs>
+requires(sizeof...(Cvs) > 0uz)
+constexpr auto make_cv_access_xpom_write_packet(Address::value_type addr,
+                                                uint8_t ss,
+                                                uint32_t cv_addr,
+                                                Cvs... cvs) {
+  return make_cv_access_xpom_write_packet(
+    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
+    ss,
+    cv_addr,
+    cvs...);
+}
+
+/// Make CV access XPOM packet for writing CV bit
+///
+/// \param  addr    Address
+/// \param  ss      Sequence number
+/// \param  cv_addr CV address
+/// \param  bit     Bit
+/// \param  pos     Bit position
+/// \return CV access XPOM packet for writing CV bit
+constexpr auto make_cv_access_xpom_write_packet(
+  Address addr, uint8_t ss, uint32_t cv_addr, bool bit, uint32_t pos) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address(addr, first)};
+  *last++ = static_cast<uint8_t>(0b1110'1000 | ss);
+  *last++ = static_cast<uint8_t>(cv_addr >> 16u);
+  *last++ = static_cast<uint8_t>(cv_addr >> 8u);
+  *last++ = static_cast<uint8_t>(cv_addr >> 0u);
+  auto const d{static_cast<uint32_t>(bit << 3u)};
+  *last++ = static_cast<uint8_t>(0b1111'0000u | d | (pos & 0b111u));
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make CV access XPOM packet for writing CV bit
+///
+/// \param  addr    Address
+/// \param  ss      Sequence number
+/// \param  cv_addr CV address
+/// \param  bit     Bit
+/// \param  pos     Bit position
+/// \return CV access XPOM packet for writing CV bit
+constexpr auto make_cv_access_xpom_write_packet(Address::value_type addr,
+                                                uint8_t ss,
+                                                uint32_t cv_addr,
+                                                bool bit,
+                                                uint32_t pos) {
+  return make_cv_access_xpom_write_packet(
+    {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
+    ss,
+    cv_addr,
+    bit,
+    pos);
+}
+
 /// Logon group (RCN-218)
 enum struct LogonGroup : uint8_t {
   All = 0b00u,

@@ -14,12 +14,12 @@
 // Create a unique label to pass to ImGui::*
 //
 // \warning
-// The lifetime of the std::string only sufficient if used directly as in
+// The lifetime of the std::string is only sufficient if used directly as in
 // ```
 // ImGui::Button(IMGUI_UNIQUE_ID(42));
 // ```
 //
-// This would be UB
+// Whereas this would be UB
 // ```
 // const char* id{IMGUI_UNIQUE_ID(42)};
 // ImGui::Button(id);

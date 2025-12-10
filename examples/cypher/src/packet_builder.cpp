@@ -465,16 +465,16 @@ void advanced_operations_speed_direction_and_function(State& state,
   // Functions
   static size_t length{8uz};
   static std::array<bool, 32uz> d{};
-  for (auto i{8uz}; i-- > 0uz;) {
-    ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
-    ImGui::SameLine();
-  }
-  ImGui::TextUnformatted("F7-F0");
   if (ImGui::Button("-") && length > 8uz) length -= 8uz;
   ImGui::SameLine();
   if (ImGui::Button("+") && length < d.max_size()) length += 8uz;
   ImGui::SameLine();
   ImGui::Text("Length");
+  for (auto i{8uz}; i-- > 0uz;) {
+    ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
+    ImGui::SameLine();
+  }
+  ImGui::TextUnformatted("F7-F0");
   if (length > 8uz) {
     for (auto i{16uz}; i-- > 8uz;) {
       ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
@@ -549,6 +549,7 @@ void advanced_operations_analog_function_group(State& state,
   ImGui::Combo("Channel", &ssssssss, data(analog_labels), ssize(analog_labels));
   static uint8_t dddddddd{};
   ImGui::InputScalar("Value", ImGuiDataType_U8, &dddddddd);
+  ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
     state.operations_packets.push_back(
       {.bytes =
@@ -569,6 +570,7 @@ void advanced_operations_special_operating_modes(State& state,
   ImGui::Checkbox("East", &east);
   static bool man{};
   ImGui::Checkbox("MAN", &man);
+  ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
     state.operations_packets.push_back(
       {.bytes = dcc::make_special_operating_modes(
@@ -927,12 +929,13 @@ void cv_access(State& state, dcc::Address addr) {
 //
 void cv_access_long_form(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static uint16_t cv_addr{};
-  ImGui::InputScalar("CV Address", ImGuiDataType_U16, &cv_addr);
   static constexpr std::array instrs{
     "", "Byte Verify", "Byte Write", "Bit Verify", "Bit Write"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+  static uint16_t cv_addr{};
+  ImGui::InputScalar("CV Address", ImGuiDataType_U16, &cv_addr);
+  cv_addr = std::clamp<uint16_t>(cv_addr, 0u, 1023u);
   if (!strcmp(instrs[static_cast<size_t>(i)], "Byte Verify") ||
       !strcmp(instrs[static_cast<size_t>(i)], "Byte Write")) {
     static uint8_t cv_value{};
@@ -1030,7 +1033,84 @@ void cv_access_short_form(State& state, dcc::Address addr) {
 //
 void cv_access_xpom(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  ImGui::TextUnformatted("\\todo");
+  static constexpr std::array instrs{
+    "", "Bytes Verify", "Bytes Write", "Bit Write"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+  static constexpr std::array sss{
+    "00 (ID8)", "01 (ID9)", "10 (ID10)", "11 (ID11)"};
+  static int ss{};
+  ImGui::Combo("Sequence #", &ss, data(sss), ssize(sss));
+  static uint32_t cv_addr{};
+  ImGui::InputScalar("CV Address", ImGuiDataType_U32, &cv_addr);
+  cv_addr = std::clamp<uint32_t>(cv_addr, 0u, 16777215u);
+  if (!strcmp(instrs[static_cast<size_t>(i)], "Bytes Verify")) {
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.operations_packets.push_back(
+        {.bytes = dcc::make_cv_access_xpom_verify_packet(
+           addr, static_cast<uint8_t>(ss), cv_addr)});
+  } else if (!strcmp(instrs[static_cast<size_t>(i)], "Bytes Write")) {
+    static ztl::inplace_vector<uint8_t, 4uz> cv_values{0u};
+    if (ImGui::Button("-") && size(cv_values) > 1uz) cv_values.pop_back();
+    ImGui::SameLine();
+    if (ImGui::Button("+") && size(cv_values) < cv_values.max_size())
+      cv_values.push_back(0u);
+    ImGui::SameLine();
+    ImGui::Text("Length");
+    ImGui::InputScalarN(
+      "CV Values", ImGuiDataType_U8, data(cv_values), size(cv_values));
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets")) switch (size(cv_values)) {
+        case 1uz:
+          state.operations_packets.push_back(
+            {.bytes = dcc::make_cv_access_xpom_write_packet(
+               addr, static_cast<uint8_t>(ss), cv_addr, cv_values[0uz])});
+          break;
+        case 2uz:
+          state.operations_packets.push_back(
+            {.bytes =
+               dcc::make_cv_access_xpom_write_packet(addr,
+                                                     static_cast<uint8_t>(ss),
+                                                     cv_addr,
+                                                     cv_values[0uz],
+                                                     cv_values[1uz])});
+          break;
+        case 3uz:
+          state.operations_packets.push_back(
+            {.bytes =
+               dcc::make_cv_access_xpom_write_packet(addr,
+                                                     static_cast<uint8_t>(ss),
+                                                     cv_addr,
+                                                     cv_values[0uz],
+                                                     cv_values[1uz],
+                                                     cv_values[2uz])});
+          break;
+        case 4uz:
+          state.operations_packets.push_back(
+            {.bytes =
+               dcc::make_cv_access_xpom_write_packet(addr,
+                                                     static_cast<uint8_t>(ss),
+                                                     cv_addr,
+                                                     cv_values[0uz],
+                                                     cv_values[1uz],
+                                                     cv_values[2uz],
+                                                     cv_values[3uz])});
+          break;
+      }
+  } else if (!strcmp(instrs[static_cast<size_t>(i)], "Bit Write")) {
+    static bool bit{};
+    ImGui::Checkbox("Bit", &bit);
+    static constexpr uint8_t const min{};
+    static constexpr uint8_t const max{7u};
+    static uint8_t pos{};
+    ImGui::SliderScalar("Position", ImGuiDataType_U8, &pos, &max, &min);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.operations_packets.push_back(
+        {.bytes = dcc::make_cv_access_xpom_write_packet(
+           addr, static_cast<uint8_t>(ss), cv_addr, bit, pos)});
+  }
 }
 
 } // namespace loco
