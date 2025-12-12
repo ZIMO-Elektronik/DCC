@@ -94,7 +94,7 @@ The DCC protocol is defined by various standards published by the [National Mode
       - Binary state control long form :negative_squared_cross_mark:
       - Time and date :negative_squared_cross_mark:
       - System time :negative_squared_cross_mark:
-      - Command station properties identifier :negative_squared_cross_mark:
+      - Command station feature identification :negative_squared_cross_mark:
       - F29-F36 :negative_squared_cross_mark:
       - F37-F44 :negative_squared_cross_mark:
       - F45-F52 :negative_squared_cross_mark:

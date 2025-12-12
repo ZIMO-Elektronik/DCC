@@ -2,6 +2,12 @@
 #include <dcc/dcc.hpp>
 #include "utility.hpp"
 
+#if defined(__STDCPP_FLOAT16_T__)
+using FLOAT16 = std::float16_t;
+#else
+using FLOAT16 = float;
+#endif
+
 namespace {
 
 void add_loco_packets(State& state) {
@@ -93,11 +99,19 @@ void add_loco_packets(State& state) {
                                     random_interval<uint8_t>(1u, 12u),
                                     random_interval<uint16_t>(0u, 4095u))});
   state.operations_packets.push_back(
-    {.bytes =
-       dcc::make_time_scale_packet(random_interval<float>(-100.0f, 100.0f))});
+    {.bytes = dcc::make_time_scale_packet(random_interval(
+       static_cast<FLOAT16>(-100.0f), static_cast<FLOAT16>(100.0f)))});
   state.operations_packets.push_back(
     {.bytes = dcc::make_system_time_packet(random_interval<uint16_t>())});
-  /// \todo Command station properties identifier
+  state.operations_packets.push_back(
+    {.bytes = dcc::make_command_station_feature_identification_packet(
+       dcc::LocoFeatures{random_interval<uint16_t>()})});
+  state.operations_packets.push_back(
+    {.bytes = dcc::make_command_station_feature_identification_packet(
+       dcc::AccessoryBroadcastFeatures{random_interval<uint16_t>()})});
+  state.operations_packets.push_back(
+    {.bytes = dcc::make_command_station_feature_identification_packet(
+       dcc::BiDiFeatures{random_interval<uint16_t>()})});
   state.operations_packets.push_back(
     {.bytes = dcc::make_f29_f36_packet(random_loco_address(),
                                        random_interval<uint8_t>())});

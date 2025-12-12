@@ -15,7 +15,7 @@ void broadcast(State& state);
   void feature_expansion(State& state);
     void feature_expansion_time_and_date(State& state);
     void feature_expansion_system_time(State& state);
-    void feature_expansion_command_station_properties_identifier(State& state);
+    void feature_expansion_command_station_feature_identification(State& state);
 // clang-format on
 
 } // namespace broadcast
@@ -159,7 +159,7 @@ void feature_expansion(State& state) {
                                      "Binary State Control Long Form",
                                      "Time and Date",
                                      "System Time",
-                                     "Command Station Properties Identifier",
+                                     "Command Station Feature Identification",
                                      "Binary State Control Short Form"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
@@ -171,8 +171,8 @@ void feature_expansion(State& state) {
   else if (!strcmp(instrs[static_cast<size_t>(i)], "System Time"))
     feature_expansion_system_time(state);
   else if (!strcmp(instrs[static_cast<size_t>(i)],
-                   "Command Station Properties Identifier"))
-    feature_expansion_command_station_properties_identifier(state);
+                   "Command Station Feature Identification"))
+    feature_expansion_command_station_feature_identification(state);
   else if (!strcmp(instrs[static_cast<size_t>(i)],
                    "Binary State Control Short Form"))
     ::loco::feature_expansion_binary_state_control_short_form(
@@ -252,9 +252,102 @@ void feature_expansion_system_time(State& state) {
 }
 
 //
-void feature_expansion_command_station_properties_identifier(State&) {
+void feature_expansion_command_station_feature_identification(State& state) {
   ImGui::SeparatorText("Parameters");
-  ImGui::TextUnformatted("\\todo");
+  static constexpr std::array feat_type{
+    "", "Loco Features", "Accessory and Broadcast Features", "BiDi Features"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(feat_type), ssize(feat_type));
+  if (!strcmp(feat_type[static_cast<size_t>(i)], "Loco Features")) {
+    static bool special_operating_modes{};
+    static bool analog_function{};
+    static bool binary_state_long{};
+    static bool binary_state_short{};
+    static bool f29_f68{};
+    static bool f13_f28{};
+    static bool xpom_write{};
+    static bool pom_write{};
+    static bool sdf{};
+    static bool speed_steps_128{};
+    static bool extended_addresses_10000_10239{};
+    static bool addresses_100_127_as_extended{};
+    ImGui::Checkbox("Special Operating Modes", &special_operating_modes);
+    ImGui::Checkbox("Analog Function", &analog_function);
+    ImGui::Checkbox("Binary State Long", &binary_state_long);
+    ImGui::Checkbox("Binary State Short", &binary_state_short);
+    ImGui::Checkbox("F29-F68", &f29_f68);
+    ImGui::Checkbox("F13-F28", &f13_f28);
+    ImGui::Checkbox("XPOM Write", &xpom_write);
+    ImGui::Checkbox("POM Write", &pom_write);
+    ImGui::Checkbox("Speed, Direction and Functions", &sdf);
+    ImGui::Checkbox("128 Speed Steps", &speed_steps_128);
+    ImGui::Checkbox("Extended Addresses 10000-10239",
+                    &extended_addresses_10000_10239);
+    ImGui::Checkbox("Addresses 100-127 as Extended",
+                    &addresses_100_127_as_extended);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.operations_packets.push_back(
+        {.bytes = dcc::make_command_station_feature_identification_packet(
+           dcc::LocoFeatures{static_cast<uint16_t>(
+             special_operating_modes << 13u | analog_function << 12u |
+             binary_state_long << 11u | binary_state_short << 10u |
+             f29_f68 << 9u | f13_f28 << 8u | xpom_write << 5u |
+             pom_write << 4u | sdf << 3u | speed_steps_128 << 2u |
+             extended_addresses_10000_10239 << 1u |
+             addresses_100_127_as_extended << 0u)})});
+  } else if (!strcmp(feat_type[static_cast<size_t>(i)],
+                     "Accessory and Broadcast Features")) {
+    static bool system_time{};
+    static bool time_scale{};
+    static bool date{};
+    static bool time{};
+    static bool pom_write{};
+    static bool extended{};
+    static bool alt_address_table{};
+    ImGui::Checkbox("System Time", &system_time);
+    ImGui::Checkbox("Time Scale", &time_scale);
+    ImGui::Checkbox("Date", &date);
+    ImGui::Checkbox("Time", &time);
+    ImGui::Checkbox("POM Write", &pom_write);
+    ImGui::Checkbox("Extended", &extended);
+    ImGui::Checkbox("Alt. Address Table", &alt_address_table);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.operations_packets.push_back(
+        {.bytes = dcc::make_command_station_feature_identification_packet(
+           dcc::AccessoryBroadcastFeatures{static_cast<uint16_t>(
+             system_time << 11u | time_scale << 10u | date << 9u | time << 8u |
+             pom_write << 3u | extended << 1u | alt_address_table << 0u)})});
+  } else if (!strcmp(feat_type[static_cast<size_t>(i)], "BiDi Features")) {
+    static bool railcom_plus{};
+    static bool app_dyn_track_voltage{};
+    static bool app_dyn_operating_params{};
+    static bool app_dyn_container_levels{};
+    static bool xpom_read{};
+    static bool pom_read{};
+    static bool nop_for_accessories{};
+    static bool dcc_a{};
+    static bool railcom{};
+    ImGui::Checkbox("RailCom+", &railcom_plus);
+    ImGui::Checkbox("app:dyn Track Voltage", &app_dyn_track_voltage);
+    ImGui::Checkbox("app:dyn Operating Parameters", &app_dyn_operating_params);
+    ImGui::Checkbox("app:dyn Container Levels", &app_dyn_container_levels);
+    ImGui::Checkbox("XPOM Read", &xpom_read);
+    ImGui::Checkbox("POM Read", &pom_read);
+    ImGui::Checkbox("NOP for Accessories", &nop_for_accessories);
+    ImGui::Checkbox("DCC-A", &dcc_a);
+    ImGui::Checkbox("RailCom", &railcom);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.operations_packets.push_back(
+        {.bytes = dcc::make_command_station_feature_identification_packet(
+           dcc::BiDiFeatures{static_cast<uint16_t>(
+             railcom_plus << 15u | app_dyn_track_voltage << 10u |
+             app_dyn_operating_params << 9u | app_dyn_container_levels << 8u |
+             xpom_read << 4u | pom_read << 3u | nop_for_accessories << 2u |
+             dcc_a << 1u | railcom << 0u)})});
+  }
 }
 
 } // namespace broadcast

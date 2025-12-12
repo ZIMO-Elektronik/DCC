@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstring>
 #include <utility>
+#include <ztl/bits.hpp>
 #include <ztl/math.hpp>
 #include "address.hpp"
 #include "bidi/datagram.hpp"
@@ -756,10 +757,183 @@ constexpr auto make_system_time_packet(uint16_t ms) {
   return packet;
 }
 
-/// \todo Command station bla
-constexpr auto make_command_station_properties_identifier_packet() {
+/// Loco features for command station feature identification instruction
+struct LocoFeatures {
+  consteval LocoFeatures() = default;
+  constexpr LocoFeatures(uint16_t hword)
+    : reserved15{static_cast<bool>(hword & ztl::mask<15u>)},
+      reserved14{static_cast<bool>(hword & ztl::mask<14u>)},
+      special_operating_modes{static_cast<bool>(hword & ztl::mask<13u>)},
+      analog_function{static_cast<bool>(hword & ztl::mask<12u>)},
+      binary_state_long{static_cast<bool>(hword & ztl::mask<11u>)},
+      binary_state_short{static_cast<bool>(hword & ztl::mask<10u>)},
+      f29_f68{static_cast<bool>(hword & ztl::mask<9u>)},
+      f13_f28{static_cast<bool>(hword & ztl::mask<8u>)},
+      reserved7{static_cast<bool>(hword & ztl::mask<7u>)},
+      reserved6{static_cast<bool>(hword & ztl::mask<6u>)},
+      xpom_write{static_cast<bool>(hword & ztl::mask<5u>)},
+      pom_write{static_cast<bool>(hword & ztl::mask<4u>)},
+      sdf{static_cast<bool>(hword & ztl::mask<3u>)},
+      speed_steps_128{static_cast<bool>(hword & ztl::mask<2u>)},
+      extended_addresses_10000_10239{static_cast<bool>(hword & ztl::mask<1u>)},
+      addresses_100_127_as_extended{static_cast<bool>(hword & ztl::mask<0u>)} {}
+  constexpr operator uint16_t() const {
+    return static_cast<uint16_t>(
+      reserved15 << 15u | reserved14 << 14u | special_operating_modes << 13u |
+      analog_function << 12u | binary_state_long << 11u |
+      binary_state_short << 10u | f29_f68 << 9u | f13_f28 << 8u |
+      reserved7 << 7u | reserved6 << 6u | xpom_write << 5u | pom_write << 4u |
+      sdf << 3u | speed_steps_128 << 2u | extended_addresses_10000_10239 << 1u |
+      addresses_100_127_as_extended << 0u);
+  }
+  uint16_t reserved15 : 1 {};
+  uint16_t reserved14 : 1 {};
+  uint16_t special_operating_modes : 1 {};
+  uint16_t analog_function : 1 {};
+  uint16_t binary_state_long : 1 {};
+  uint16_t binary_state_short : 1 {};
+  uint16_t f29_f68 : 1 {};
+  uint16_t f13_f28 : 1 {};
+  uint16_t reserved7 : 1 {};
+  uint16_t reserved6 : 1 {};
+  uint16_t xpom_write : 1 {};
+  uint16_t pom_write : 1 {};
+  uint16_t sdf : 1 {};
+  uint16_t speed_steps_128 : 1 {};
+  uint16_t extended_addresses_10000_10239 : 1 {};
+  uint16_t addresses_100_127_as_extended : 1 {};
+};
+
+/// Accessory and broadcast features for command station feature identification
+/// instruction
+struct AccessoryBroadcastFeatures {
+  consteval AccessoryBroadcastFeatures() = default;
+  constexpr AccessoryBroadcastFeatures(uint16_t hword)
+    : reserved15{static_cast<bool>(hword & ztl::mask<15u>)},
+      reserved14{static_cast<bool>(hword & ztl::mask<14u>)},
+      reserved13{static_cast<bool>(hword & ztl::mask<13u>)},
+      reserved12{static_cast<bool>(hword & ztl::mask<12u>)},
+      system_time{static_cast<bool>(hword & ztl::mask<11u>)},
+      time_scale{static_cast<bool>(hword & ztl::mask<10u>)},
+      date{static_cast<bool>(hword & ztl::mask<9u>)},
+      time{static_cast<bool>(hword & ztl::mask<8u>)},
+      reserved7{static_cast<bool>(hword & ztl::mask<7u>)},
+      reserved6{static_cast<bool>(hword & ztl::mask<6u>)},
+      reserved5{static_cast<bool>(hword & ztl::mask<5u>)},
+      reserved4{static_cast<bool>(hword & ztl::mask<4u>)},
+      pom_write{static_cast<bool>(hword & ztl::mask<3u>)},
+      reserved2{static_cast<bool>(hword & ztl::mask<2u>)},
+      extended{static_cast<bool>(hword & ztl::mask<1u>)},
+      alt_address_table{static_cast<bool>(hword & ztl::mask<0u>)} {}
+  constexpr operator uint16_t() const {
+    return static_cast<uint16_t>(
+      reserved15 << 15u | reserved14 << 14u | reserved13 << 13u |
+      reserved12 << 12u | system_time << 11u | time_scale << 10u | date << 9u |
+      time << 8u | reserved7 << 7u | reserved6 << 6u | reserved5 << 5u |
+      reserved4 << 4u | pom_write << 3u | reserved2 << 2u | extended << 1u |
+      alt_address_table << 0u);
+  }
+  uint16_t reserved15 : 1 {};
+  uint16_t reserved14 : 1 {};
+  uint16_t reserved13 : 1 {};
+  uint16_t reserved12 : 1 {};
+  uint16_t system_time : 1 {};
+  uint16_t time_scale : 1 {};
+  uint16_t date : 1 {};
+  uint16_t time : 1 {};
+  uint16_t reserved7 : 1 {};
+  uint16_t reserved6 : 1 {};
+  uint16_t reserved5 : 1 {};
+  uint16_t reserved4 : 1 {};
+  uint16_t pom_write : 1 {};
+  uint16_t reserved2 : 1 {};
+  uint16_t extended : 1 {};
+  uint16_t alt_address_table : 1 {};
+};
+
+/// BiDi features for command station feature identification instruction
+struct BiDiFeatures {
+  consteval BiDiFeatures() = default;
+  constexpr BiDiFeatures(uint16_t hword)
+    : railcom_plus{static_cast<bool>(hword & ztl::mask<15u>)},
+      reserved14{static_cast<bool>(hword & ztl::mask<14u>)},
+      reserved13{static_cast<bool>(hword & ztl::mask<13u>)},
+      reserved12{static_cast<bool>(hword & ztl::mask<12u>)},
+      reserved11{static_cast<bool>(hword & ztl::mask<11u>)},
+      app_dyn_track_voltage{static_cast<bool>(hword & ztl::mask<10u>)},
+      app_dyn_operating_params{static_cast<bool>(hword & ztl::mask<9u>)},
+      app_dyn_container_levels{static_cast<bool>(hword & ztl::mask<8u>)},
+      reserved7{static_cast<bool>(hword & ztl::mask<7u>)},
+      reserved6{static_cast<bool>(hword & ztl::mask<6u>)},
+      reserved5{static_cast<bool>(hword & ztl::mask<5u>)},
+      xpom_read{static_cast<bool>(hword & ztl::mask<4u>)},
+      pom_read{static_cast<bool>(hword & ztl::mask<3u>)},
+      nop_for_accessories{static_cast<bool>(hword & ztl::mask<2u>)},
+      dcc_a{static_cast<bool>(hword & ztl::mask<1u>)},
+      railcom{static_cast<bool>(hword & ztl::mask<0u>)} {}
+  constexpr operator uint16_t() const {
+    return static_cast<uint16_t>(
+      railcom_plus << 15u | reserved14 << 14u | reserved13 << 13u |
+      reserved12 << 12u | reserved11 << 11u | app_dyn_track_voltage << 10u |
+      app_dyn_operating_params << 9u | app_dyn_container_levels << 8u |
+      reserved7 << 7u | reserved6 << 6u | reserved5 << 5u | xpom_read << 4u |
+      pom_read << 3u | nop_for_accessories << 2u | dcc_a << 1u | railcom << 0u);
+  }
+  uint16_t railcom_plus : 1 {};
+  uint16_t reserved14 : 1 {};
+  uint16_t reserved13 : 1 {};
+  uint16_t reserved12 : 1 {};
+  uint16_t reserved11 : 1 {};
+  uint16_t app_dyn_track_voltage : 1 {};
+  uint16_t app_dyn_operating_params : 1 {};
+  uint16_t app_dyn_container_levels : 1 {};
+  uint16_t reserved7 : 1 {};
+  uint16_t reserved6 : 1 {};
+  uint16_t reserved5 : 1 {};
+  uint16_t xpom_read : 1 {};
+  uint16_t pom_read : 1 {};
+  uint16_t nop_for_accessories : 1 {};
+  uint16_t dcc_a : 1 {};
+  uint16_t railcom : 1 {};
+};
+
+/// Make feature expansion - command station feature identification
+///
+/// \param  iiii              Bitmask index
+/// \param  dddddddd_dddddddd Bitmask
+/// \return Feature expansion - command station feature identification
+constexpr auto
+make_command_station_feature_identification_packet(uint8_t iiii,
+                                                   uint16_t dddddddd_dddddddd) {
   Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({0u, Address::Broadcast}, first)};
+  *last++ = 0b1100'0011u;
+  *last++ = 0b1111'0000u | iiii;
+  last = uint16_2data(dddddddd_dddddddd, last);
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
+}
+
+/// Make feature expansion - command station feature identification
+///
+/// \param  f Features
+/// \return Feature expansion - command station feature identification
+template<typename F>
+requires(std::same_as<F, LocoFeatures> ||
+         std::same_as<F, AccessoryBroadcastFeatures> ||
+         std::same_as<F, BiDiFeatures>)
+constexpr auto make_command_station_feature_identification_packet(F&& f) {
+  if constexpr (std::same_as<F, LocoFeatures>)
+    return make_command_station_feature_identification_packet(
+      0b1111u, std::forward<F>(f));
+  else if constexpr (std::same_as<F, AccessoryBroadcastFeatures>)
+    return make_command_station_feature_identification_packet(
+      0b1110u, std::forward<F>(f));
+  else if constexpr (std::same_as<F, BiDiFeatures>)
+    return make_command_station_feature_identification_packet(
+      0b1101u, std::forward<F>(f));
 }
 
 /// Make feature expansion - F29-F36 packet

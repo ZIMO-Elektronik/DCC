@@ -46,7 +46,7 @@ void eval(State& state, State::Packet& packet, bool service_mode);
       void feature_expansion_binary_state_control_long_form(State::Packet& packet, std::span<uint8_t const> bytes);
       void feature_expansion_time_and_date(State::Packet& packet, std::span<uint8_t const> bytes);
       void feature_expansion_system_time(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_command_station_properties_identifier(State::Packet& packet, std::span<uint8_t const> bytes);
+      void feature_expansion_command_station_feature_identification(State::Packet& packet, std::span<uint8_t const> bytes);
       void feature_expansion_f29_f36(State::Packet& packet, std::span<uint8_t const> bytes);
       void feature_expansion_f37_f44(State::Packet& packet, std::span<uint8_t const> bytes);
       void feature_expansion_f45_f52(State::Packet& packet, std::span<uint8_t const> bytes);
@@ -456,8 +456,8 @@ void feature_expansion(State::Packet& packet, std::span<uint8_t const> bytes) {
     case 0b1100'0001u: return feature_expansion_time_and_date(packet, bytes);
     case 0b1100'0010u: return feature_expansion_system_time(packet, bytes);
     case 0b1100'0011u:
-      return feature_expansion_command_station_properties_identifier(packet,
-                                                                     bytes);
+      return feature_expansion_command_station_feature_identification(packet,
+                                                                      bytes);
     case 0b1101'1000u: return feature_expansion_f29_f36(packet, bytes);
     case 0b1101'1001u: return feature_expansion_f37_f44(packet, bytes);
     case 0b1101'1010u: return feature_expansion_f45_f52(packet, bytes);
@@ -535,8 +535,50 @@ void feature_expansion_system_time(State::Packet& packet,
 }
 
 //
-void feature_expansion_command_station_properties_identifier(
-  State::Packet& packet, std::span<uint8_t const> bytes) {}
+void feature_expansion_command_station_feature_identification(
+  State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - Command Station Feature Identification";
+  switch (auto const iiii{bytes[1uz] & 0x0Fu}) {
+    case 0b1111u:
+      packet.desc_strs.back() += "\n- Loco Features";
+      packet.desc_strs.back() += "\n- Special Operating Modes";
+      packet.desc_strs.back() += "\n- Analog Function";
+      packet.desc_strs.back() += "\n- Binary State Long";
+      packet.desc_strs.back() += "\n- Binary State Short";
+      packet.desc_strs.back() += "\n- F29-F68";
+      packet.desc_strs.back() += "\n- F13-F28";
+      packet.desc_strs.back() += "\n- XPOM Write";
+      packet.desc_strs.back() += "\n- POM Write";
+      packet.desc_strs.back() += "\n- Speed, Direction and Functions";
+      packet.desc_strs.back() += "\n- 128 Speed Steps";
+      packet.desc_strs.back() += "\n- Extended Addresses 10000-10239";
+      packet.desc_strs.back() += "\n- Addresses 100-127 as Extended";
+      break;
+    case 0b1110u:
+      packet.desc_strs.back() += "\n- Accessory and Broadcast Features";
+      packet.desc_strs.back() += "\n- System Time";
+      packet.desc_strs.back() += "\n- Time Scale";
+      packet.desc_strs.back() += "\n- Date";
+      packet.desc_strs.back() += "\n- Time";
+      packet.desc_strs.back() += "\n- POM Write";
+      packet.desc_strs.back() += "\n- Extended";
+      packet.desc_strs.back() += "\n- Alt. Address Table";
+      break;
+    case 0b1101u:
+      packet.desc_strs.back() += "\n- RailCom Features";
+      packet.desc_strs.back() += "\n- RailCom+";
+      packet.desc_strs.back() += "\n- app:dyn Track Voltage";
+      packet.desc_strs.back() += "\n- app:dyn Operating Parameters";
+      packet.desc_strs.back() += "\n- app:dyn Container Levels";
+      packet.desc_strs.back() += "\n- XPOM Read";
+      packet.desc_strs.back() += "\n- POM Read";
+      packet.desc_strs.back() += "\n- NOP for Accessories";
+      packet.desc_strs.back() += "\n- DCC-A";
+      packet.desc_strs.back() += "\n- RailCom";
+      break;
+  }
+  packet.pattern_str += " 0 11000011 0 1111IIII 0 DDDDDDDD 0 DDDDDDDD";
+}
 
 //
 void feature_expansion_f29_f36(State::Packet& packet,
