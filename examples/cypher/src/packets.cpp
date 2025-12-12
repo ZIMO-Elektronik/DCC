@@ -139,39 +139,39 @@ void address(State::Packet& packet, bool service_mode) {
       packet.desc_strs.push_back("Service");
       break;
     case dcc::Address::Broadcast:
-      packet.desc_strs.push_back("Broadcast " + std::to_string(addr));
+      packet.desc_strs.push_back("Broadcast=" + std::to_string(addr));
       packet.pattern_str += " 0 00000000";
       break;
     case dcc::Address::BasicLoco:
-      packet.desc_strs.push_back("Basic Loco " + std::to_string(addr));
+      packet.desc_strs.push_back("Basic Loco=" + std::to_string(addr));
       packet.pattern_str += " 0 0AAAAAAA";
       break;
     case dcc::Address::BasicAccessory:
-      packet.desc_strs.push_back("Basic Accessory " + std::to_string(addr));
+      packet.desc_strs.push_back("Basic Accessory=" + std::to_string(addr));
       packet.pattern_str += " 0 10AAAAAA 0 1ÂÂÂDAAR";
       break;
     case dcc::Address::ExtendedAccessory:
-      packet.desc_strs.push_back("Extended Accessory " + std::to_string(addr));
+      packet.desc_strs.push_back("Extended Accessory=" + std::to_string(addr));
       packet.pattern_str += " 0 10AAAAAA 0 0ÂÂÂ0AA1";
       break;
     case dcc::Address::ExtendedLoco:
-      packet.desc_strs.push_back("Extended Loco " + std::to_string(addr));
+      packet.desc_strs.push_back("Extended Loco=" + std::to_string(addr));
       packet.pattern_str += " 0 11AAAAAA 0 AAAAAAAA";
       break;
     case dcc::Address::Reserved:
-      packet.desc_strs.push_back("Reserved" + std::to_string(addr));
+      packet.desc_strs.push_back("Reserved=" + std::to_string(addr));
       packet.pattern_str += " 0 11x1xxx";
       break;
     case dcc::Address::DataTransfer:
-      packet.desc_strs.push_back("Data Transfer" + std::to_string(addr));
+      packet.desc_strs.push_back("Data Transfer=" + std::to_string(addr));
       packet.pattern_str += " 0 11111101";
       break;
     case dcc::Address::AutomaticLogon:
-      packet.desc_strs.push_back("Automatic Logon" + std::to_string(addr));
+      packet.desc_strs.push_back("Automatic Logon=" + std::to_string(addr));
       packet.pattern_str += " 0 11111110";
       break;
     case dcc::Address::Idle:
-      packet.desc_strs.push_back("Idle " + std::to_string(addr));
+      packet.desc_strs.push_back("Idle=" + std::to_string(addr));
       packet.pattern_str += " 0 11111111";
       break;
   }
@@ -274,7 +274,7 @@ void decoder_control_set_advanced_addressing(State::Packet& packet,
                                              std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - Set Advanced Addressing";
   packet.desc_strs.back() +=
-    "\n- D=" + std::to_string(bytes[0uz] & ztl::mask<0u>);
+    "\n- CV29:5=" + std::to_string(bytes[0uz] & ztl::mask<0u>);
   packet.pattern_str += " 0 0000101D";
 }
 
@@ -299,7 +299,7 @@ void consist_control_set_consist_address(State::Packet& packet,
                                          std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - Set Consist Address";
   packet.desc_strs.back() +=
-    "\n- R=" + std::to_string(bytes[0uz] & ztl::mask<0u>);
+    "\n- Reversed=" + std::to_string(bytes[0uz] & ztl::mask<0u>);
   packet.desc_strs.back() += "\n- Address=" + std::to_string(bytes[1uz]);
   packet.pattern_str += " 0 0001001R 0 0AAAAAAA";
 }
@@ -627,7 +627,8 @@ void cv_access_long_form(State::Packet& packet,
   switch (kk) {
     case 0b01u: [[fallthrough]];
     case 0b11u:
-      packet.desc_strs.back() += kk == 0b01u ? "\n- Verify" : "\n- Write";
+      packet.desc_strs.back() +=
+        kk == 0b01u ? "\n- Verify Byte" : "\n- Write Byte";
       packet.desc_strs.back() += "\n- CV" + std::to_string(cv_addr + 1u) + "=" +
                                  std::to_string(bytes[2uz]);
       packet.pattern_str += service_mode ? " 0 0111KKVV 0 VVVVVVVV 0 DDDDDDDD"
@@ -637,7 +638,7 @@ void cv_access_long_form(State::Packet& packet,
       auto const pos{bytes[2uz] & 0b111u};
       auto const bit{static_cast<bool>(bytes[2uz] & ztl::mask<3u>)};
       packet.desc_strs.back() +=
-        bytes[2uz] & ztl::mask<4u> ? "\n- Write" : "\n- Verify";
+        bytes[2uz] & ztl::mask<4u> ? "\n- Write Bit" : "\n- Verify Bit";
       packet.desc_strs.back() += "\n- CV" + std::to_string(cv_addr + 1u) + ":" +
                                  std::to_string(pos) + "=" +
                                  std::to_string(bit);
@@ -654,29 +655,29 @@ void cv_access_short_form(State::Packet& packet,
   auto const kkkk{bytes[0uz] & 0x0Fu};
   switch (kkkk) {
     case 0b0010u:
-      packet.desc_strs.back() += "\n- Write";
+      packet.desc_strs.back() += "\n- Write Byte";
       packet.desc_strs.back() += "\n- CV23=" + std::to_string(bytes[1uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD";
       break;
     case 0b0011u:
-      packet.desc_strs.back() += "\n- Write";
+      packet.desc_strs.back() += "\n- Write Byte";
       packet.desc_strs.back() += "\n- CV24=" + std::to_string(bytes[1uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD";
       break;
     case 0b0100u:
-      packet.desc_strs.back() += "\n- Write";
+      packet.desc_strs.back() += "\n- Write Bytes";
       packet.desc_strs.back() += "\n- CV17=" + std::to_string(bytes[1uz]);
       packet.desc_strs.back() += "\n- CV18=" + std::to_string(bytes[2uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD 0 DDDDDDDD";
       break;
     case 0b0101u:
-      packet.desc_strs.back() += "\n- Write";
+      packet.desc_strs.back() += "\n- Write Bytes";
       packet.desc_strs.back() += "\n- CV31=" + std::to_string(bytes[1uz]);
       packet.desc_strs.back() += "\n- CV32=" + std::to_string(bytes[2uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD 0 DDDDDDDD";
       break;
     case 0b0110u:
-      packet.desc_strs.back() += "\n- Write";
+      packet.desc_strs.back() += "\n- Write Bytes";
       packet.desc_strs.back() += "\n- CV19=" + std::to_string(bytes[1uz]);
       packet.desc_strs.back() += "\n- CV20=" + std::to_string(bytes[2uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD 0 DDDDDDDD";
@@ -689,33 +690,34 @@ void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - XPOM";
   auto const kk{bytes[0uz] >> 2u & 0b11u};
   auto const ss{bytes[0uz] & 0b11u};
-  auto const cv_addr{bytes[1uz] << 16u | bytes[2uz] << 8u | bytes[3uz] << 0u};
-  packet.desc_strs.back() += "\n- SS=" + std::format("{:02b}", ss);
+  auto const page_str{"Page CV31=" + std::to_string(bytes[1uz]) +
+                      " CV32=" + std::to_string(bytes[2uz])};
+  packet.desc_strs.back() += "\n- Sequence Number=" + std::format("{:02b}", ss);
   switch (kk) {
     case 0b01u:
-      packet.desc_strs.back() += "\n- Verify";
-      packet.desc_strs.back() += "\n- CV" + std::to_string(cv_addr + 1u);
-      packet.desc_strs.back() += "\n- CV" + std::to_string(cv_addr + 2u);
-      packet.desc_strs.back() += "\n- CV" + std::to_string(cv_addr + 3u);
-      packet.desc_strs.back() += "\n- CV" + std::to_string(cv_addr + 4u);
+      packet.desc_strs.back() += "\n- Verify Bytes @ " + page_str;
+      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 1u);
+      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 2u);
+      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 3u);
+      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 4u);
       packet.pattern_str += " 0 1110KKSS 0 VVVVVVVV 0 VVVVVVVV 0 VVVVVVVV";
       break;
     case 0b11u:
-      packet.desc_strs.back() += "\n- Write";
+      packet.desc_strs.back() += "\n- Write Bytes @ " + page_str;
       packet.pattern_str += " 0 1110KKSS 0 VVVVVVVV 0 VVVVVVVV 0 VVVVVVVV";
       for (auto i{4uz}; i < size(bytes) - 1uz; ++i) {
         packet.desc_strs.back() += "\n- CV" +
-                                   std::to_string(cv_addr + 1u + i - 4u) + "=" +
-                                   std::to_string(bytes[i]);
+                                   std::to_string(bytes[3uz] + 1u + i - 4u) +
+                                   "=" + std::to_string(bytes[i]);
         packet.pattern_str += " 0 DDDDDDDD";
       }
       break;
     case 0b10u:
       auto const pos{bytes[4uz] & 0b111u};
       auto const bit{static_cast<bool>(bytes[4uz] & ztl::mask<3u>)};
-      packet.desc_strs.back() += "\n- Write";
-      packet.desc_strs.back() += "\n- CV" + std::to_string(cv_addr + 1u) + ":" +
-                                 std::to_string(pos) + "=" +
+      packet.desc_strs.back() += "\n- Write Bit @ " + page_str;
+      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 1u) +
+                                 ":" + std::to_string(pos) + "=" +
                                  std::to_string(bit);
       packet.pattern_str +=
         " 0 1110KKSS 0 VVVVVVVV 0 VVVVVVVV 0 VVVVVVVV 0 1111DBBB";
@@ -735,9 +737,10 @@ void basic_accessory_decoder_control(State::Packet& packet,
                                      std::span<uint8_t const>) {
   packet.desc_strs.push_back("Basic Accessory Decoder Control");
   packet.desc_strs.back() +=
-    "\n - R=" +
-    std::to_string(static_cast<bool>(packet.bytes[1uz] & ztl::mask<0u>)) +
-    " D=" +
+    "\n- Output=" +
+    std::to_string(static_cast<bool>(packet.bytes[1uz] & ztl::mask<0u>));
+  packet.desc_strs.back() +=
+    "\n- State=" +
     std::to_string(static_cast<bool>(packet.bytes[1uz] & ztl::mask<3u>));
 }
 
@@ -745,10 +748,12 @@ void basic_accessory_decoder_control(State::Packet& packet,
 void extended_accessory_decoder_control(State::Packet& packet,
                                         std::span<uint8_t const> bytes) {
   packet.desc_strs.push_back("Extended Accessory Decoder Control");
-  packet.desc_strs.back() += "\n - State=" + std::format("{:08b}", bytes[0uz]);
   packet.desc_strs.back() +=
-    " or R=" + std::to_string(static_cast<bool>(bytes[0uz] & ztl::mask<7u>)) +
-    +" and Time=" + switch_on_time_labels[bytes[0uz] & 0x7Fu];
+    "\n- State=" + std::format("{:08b}", bytes[0uz]) + " or";
+  packet.desc_strs.back() +=
+    "\n- Output=" +
+    std::to_string(static_cast<bool>(bytes[0uz] & ztl::mask<7u>)) +
+    +" for Time=" + switch_on_time_labels[bytes[0uz] & 0x7Fu];
   packet.pattern_str += " 0 DDDDDDDD";
 }
 
