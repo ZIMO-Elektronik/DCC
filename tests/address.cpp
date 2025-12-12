@@ -31,6 +31,18 @@ TEST(address,
   EXPECT_EQ(extended_accessory_addr, 3u);
 }
 
+TEST(address, basic_and_extended_accessory_nop) {
+  auto basic_nop{dcc::make_accessory_nop_packet(
+    {.value = 12u, .type = dcc::Address::BasicAccessory})};
+  auto ext_nop{dcc::make_accessory_nop_packet(
+    {.value = 12u, .type = dcc::Address::ExtendedAccessory})};
+  EXPECT_EQ(dcc::decode_address(basic_nop),
+            (dcc::Address{.value = 12u, .type = dcc::Address::BasicAccessory}));
+  EXPECT_EQ(
+    dcc::decode_address(ext_nop),
+    (dcc::Address{.value = 12u, .type = dcc::Address::ExtendedAccessory}));
+}
+
 TEST(address, decode_address) {
   {
     std::array<uint8_t, 2uz> data{};

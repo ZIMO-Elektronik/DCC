@@ -5,6 +5,11 @@ on:
     tags:
       - v*.*.*
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   upload_components:
     runs-on: ubuntu-24.04
@@ -18,3 +23,11 @@ jobs:
           version: ${{ github.ref_name }}
           namespace: zimo-elektronik
           api_token: ${{ secrets.IDF_COMPONENT_API_TOKEN }}
+
+  # I'd have preferred a release trigger
+  # release:
+  #   types: [published]
+  #
+  # but this doesn't work.
+  docs:
+    uses: ./.github/workflows/docs.yml

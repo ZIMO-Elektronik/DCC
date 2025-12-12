@@ -6,8 +6,7 @@ TEST_F(RxTest, feature_expansion_f20_f13) {
               function(_addrs.primary.value,
                        0xFFu << 13u,
                        static_cast<uint32_t>(state << 13u)));
-  ReceiveAndExecute(
-    make_feature_expansion_f20_f13_packet(_addrs.primary, state));
+  ReceiveAndExecute(make_f13_f20_packet(_addrs.primary, state));
 }
 
 TEST_F(RxTest, feature_expansion_f20_f13_wrong_packet_length) {
@@ -17,8 +16,8 @@ TEST_F(RxTest, feature_expansion_f20_f13_wrong_packet_length) {
                        0xFFu << 13u,
                        static_cast<uint32_t>(state << 13u)))
     .Times(0);
-  ReceiveAndExecute(TinkerWithPacketLength(
-    make_feature_expansion_f20_f13_packet(_addrs.primary, state)));
+  ReceiveAndExecute(
+    TinkerWithPacketLength(make_f13_f20_packet(_addrs.primary, state)));
 }
 
 TEST_F(RxTest, feature_expansion_f28_f21) {
@@ -27,6 +26,5 @@ TEST_F(RxTest, feature_expansion_f28_f21) {
               function(_addrs.primary.value,
                        0xFFu << 21u,
                        static_cast<uint32_t>(state << 21u)));
-  ReceiveAndExecute(
-    make_feature_expansion_f28_f21_packet(_addrs.primary, state));
+  ReceiveAndExecute(make_f21_f28_packet(_addrs.primary, state));
 }

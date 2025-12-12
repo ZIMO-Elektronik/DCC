@@ -15,6 +15,13 @@
 namespace dcc::tx {
 
 struct Config {
+  friend constexpr bool operator==(Config const& lhs, Config const& rhs) {
+    return lhs.num_preamble == rhs.num_preamble &&
+           lhs.bit1_duration == rhs.bit1_duration &&
+           lhs.bit0_duration == rhs.bit0_duration &&
+           lhs.flags.bidi == rhs.flags.bidi;
+  }
+
   /// Number of preamble bits [17-30]
   uint8_t num_preamble{DCC_TX_MIN_PREAMBLE_BITS};
 
