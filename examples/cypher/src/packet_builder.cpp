@@ -236,7 +236,7 @@ void feature_expansion_time_and_date(State& state) {
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
       state.operations_packets.push_back(
-        {.bytes = dcc::make_time_scale_packet(scale)});
+        {.bytes = dcc::make_time_scale_packet(static_cast<FLOAT16>(scale))});
   }
 }
 
@@ -646,8 +646,8 @@ void advanced_operations_analog_function_group(State& state,
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
     state.operations_packets.push_back(
-      {.bytes =
-         dcc::make_analog_function_group_packet(addr, ssssssss, dddddddd)});
+      {.bytes = dcc::make_analog_function_group_packet(
+         addr, static_cast<uint8_t>(ssssssss), dddddddd)});
 }
 
 ///
@@ -843,7 +843,7 @@ void feature_expansion_binary_state_control_long_form(State& state,
   ImGui::Checkbox("State", &d);
   static uint16_t bin_addr{};
   ImGui::InputScalar("Address", ImGuiDataType_U16, &bin_addr);
-  bin_addr = std::clamp<uint8_t>(bin_addr, 0u, 32767u);
+  bin_addr = std::clamp<uint16_t>(bin_addr, 0u, 32767u);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
     state.operations_packets.push_back(

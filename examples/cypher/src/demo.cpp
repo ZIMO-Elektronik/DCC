@@ -2,12 +2,6 @@
 #include <dcc/dcc.hpp>
 #include "utility.hpp"
 
-#if defined(__STDCPP_FLOAT16_T__)
-using FLOAT16 = std::float16_t;
-#else
-using FLOAT16 = float;
-#endif
-
 namespace {
 
 void add_loco_packets(State& state) {

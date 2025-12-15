@@ -71,8 +71,8 @@ void app_search(Datagram<>& datagram) {
   static constexpr uint8_t max{30u};
   static uint8_t s{};
   ImGui::SliderScalar("[s]", ImGuiDataType_U8, &s, &min, &max);
-  auto const dg{dcc::make_app_search_datagram(addr, r << 7u | consist, s)};
-  std::ranges::copy(dg, begin(datagram) + channel1_size);
+  std::ranges::copy(dcc::make_app_search_datagram(addr, r << 7u | consist, s),
+                    begin(datagram) + channel1_size);
 }
 
 } // namespace broadcast
@@ -114,8 +114,8 @@ void app_adr_high(Datagram<>& datagram) {
   addr = std::clamp<dcc::Address::value_type>(addr, 1u, 10239u);
   static bool consist{};
   ImGui::Checkbox("Consist", &consist);
-  auto const dg{dcc::make_app_adr_high_datagram(addr, consist)};
-  std::ranges::copy(dg, begin(datagram));
+  std::ranges::copy(dcc::make_app_adr_high_datagram(addr, consist),
+                    begin(datagram));
 }
 
 //
@@ -128,8 +128,8 @@ void app_adr_low(Datagram<>& datagram) {
   ImGui::Checkbox("Consist", &consist);
   static bool r{};
   if (consist) ImGui::Checkbox("Reversed", &r);
-  auto const dg{dcc::make_app_adr_low_datagram(addr, r << 7u | consist)};
-  std::ranges::copy(dg, begin(datagram));
+  std::ranges::copy(dcc::make_app_adr_low_datagram(addr, r << 7u | consist),
+                    begin(datagram));
 }
 
 //
@@ -186,8 +186,7 @@ void app_pom(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   static uint8_t cv_value{};
   ImGui::InputScalar("CV value", ImGuiDataType_U8, &cv_value);
-  auto const dg{encode_datagram(make_datagram<Bits::_12>(0u, cv_value))};
-  std::ranges::copy(dg, begin(datagram) + 2);
+  std::ranges::copy(dcc::make_app_pom_datagram(cv_value), begin(datagram) + 2);
 }
 
 //
@@ -215,14 +214,12 @@ void app_xpom(Datagram<>& datagram) {
     "SS = 00 - ID8", "SS = 01 - ID9", "SS = 10 - ID10", "SS = 11 - ID11"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(ss), ssize(ss));
-  static std::array<uint16_t, 4uz> cv_values{};
+  static std::array<uint8_t, 4uz> cv_values{};
   ImGui::InputScalarN(
     "CV Values", ImGuiDataType_U8, data(cv_values), ssize(cv_values));
-  auto const dg{encode_datagram(make_datagram<Bits::_36>(
-    0b10u << 2u | i,
-    static_cast<uint32_t>(cv_values[0uz] << 24u | cv_values[1uz] << 16u |
-                          cv_values[2uz] << 8u | cv_values[3uz] << 0u)))};
-  std::ranges::copy(dg, begin(datagram) + channel1_size);
+  std::ranges::copy(
+    dcc::make_app_xpom_datagram(static_cast<uint8_t>(i), cv_values),
+    begin(datagram) + channel1_size);
 }
 
 //
@@ -230,12 +227,11 @@ void app_cv_auto(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   static uint32_t cv_addr{0u};
   ImGui::InputScalar("CV Address", ImGuiDataType_U32, &cv_addr);
-  cv_addr = std::clamp<dcc::Address::value_type>(cv_addr, 0u, (1u << 24u) - 1u);
+  cv_addr = std::clamp(cv_addr, 0u, (1u << 24u) - 1u);
   static uint8_t cv_value{0u};
   ImGui::InputScalar("CV Value", ImGuiDataType_U8, &cv_value);
-  auto const dg{encode_datagram(
-    make_datagram<Bits::_36>(12u, cv_addr << 8u | cv_value << 0u))};
-  std::ranges::copy(dg, begin(datagram) + channel1_size);
+  std::ranges::copy(dcc::make_app_cv_auto_datagram(cv_addr, cv_value),
+                    begin(datagram) + channel1_size);
 }
 
 //
@@ -278,8 +274,7 @@ void datagram_builder(State& state) {
     if (Datagram<> datagram{};
         !strcmp(types[static_cast<size_t>(i)], "Broadcast"))
       broadcast::broadcast(state, datagram);
-    else if (Datagram<> datagram{};
-             !strcmp(types[static_cast<size_t>(i)], "Loco"))
+    else if (!strcmp(types[static_cast<size_t>(i)], "Loco"))
       loco::loco(state, datagram);
     else if (!strcmp(types[static_cast<size_t>(i)], "Accessory"))
       accessory::accessory(state, datagram);

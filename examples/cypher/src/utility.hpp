@@ -8,6 +8,12 @@
 #include <random>
 #include <string>
 
+#if defined(__STDCPP_FLOAT16_T__)
+using FLOAT16 = std::float16_t;
+#else
+using FLOAT16 = float;
+#endif
+
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 

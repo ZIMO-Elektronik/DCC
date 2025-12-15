@@ -1774,10 +1774,19 @@ constexpr auto make_app_dyn_datagram(uint8_t d, uint8_t x) {
 }
 
 /// \todo
-constexpr auto make_app_xpom_datagram() {}
+constexpr auto make_app_xpom_datagram(uint8_t ss,
+                                      std::span<uint8_t const, 4uz> bytes) {
+  return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_36>(
+    0b10u << 2u | ss,
+    static_cast<uint32_t>(bytes[0uz] << 24u | bytes[1uz] << 16u |
+                          bytes[2uz] << 8u | bytes[3uz] << 0u)));
+}
 
 /// \todo
-constexpr auto make_app_cv_auto_datagram() {}
+constexpr auto make_app_cv_auto_datagram(uint32_t cv_addr, uint8_t byte) {
+  return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_36>(
+    12u, cv_addr << 8u | static_cast<uint32_t>(byte << 0u)));
+}
 
 /// \todo
 constexpr auto make_app_block_datagram() {}
