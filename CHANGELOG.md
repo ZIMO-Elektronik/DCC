@@ -1,5 +1,8 @@
 # Changelog
 
+##
+- Bugfix hardened instruction decoding ([#128](https://github.com/ZIMO-Elektronik/DCC/issues/128))
+
 ## 0.45.0
 - Block `rx::CrtpBase::biDiChannel1` and `rx::CrtpBase::biDiChannel2` outside of BiDi cutout ([#110](https://github.com/ZIMO-Elektronik/DCC/issues/110))
 - Bugfix [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) explicitly requires that ID0 datagrams must follow any packet ([#113](https://github.com/ZIMO-Elektronik/DCC/issues/113))

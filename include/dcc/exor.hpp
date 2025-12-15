@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <numeric>
 #include <span>
+#include "packet.hpp"
 
 namespace dcc {
 
