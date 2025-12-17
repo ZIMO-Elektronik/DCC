@@ -1118,25 +1118,25 @@ private:
     if (!_ch1_addr_enabled || !empty(_adr_deque)) return;
     // Active address is logon
     else if (_logon_assigned) {
-      _adr_deque.push_back(adrHigh(_addrs.logon));
-      _adr_deque.push_back(adrLow(_addrs.logon));
+      _adr_deque.push_back(make_app_adr_high_datagram(_addrs.logon));
+      _adr_deque.push_back(make_app_adr_low_datagram(_addrs.logon));
     }
     // Active address is primary
     else if (!_addrs.consist) {
-      _adr_deque.push_back(adrHigh(_addrs.primary));
-      _adr_deque.push_back(adrLow(_addrs.primary));
+      _adr_deque.push_back(make_app_adr_high_datagram(_addrs.primary));
+      _adr_deque.push_back(make_app_adr_low_datagram(_addrs.primary));
     }
     // Active address is consist
     else if (_addrs.consist < 128u) {
-      _adr_deque.push_back(adrHighConsist(_addrs.consist));
-      _adr_deque.push_back(adrLowConsist(_addrs.consist));
+      auto const cv19{static_cast<uint8_t>(
+        (_addrs.consist.reversed ? 0x80u : 0u) | (_addrs.consist & 0x7Fu))};
+      _adr_deque.push_back(make_app_adr_high_datagram(_addrs.consist, cv19));
+      _adr_deque.push_back(make_app_adr_low_datagram(_addrs.consist, cv19));
     }
-    /// \todo Active address is extended consist... which isn't standardized
-    /// yet. Instead we send consist as if it would be an extended primary
-    /// address.
+    /// Active address is extended consist...
     else {
-      _adr_deque.push_back(adrHigh(_addrs.consist));
-      _adr_deque.push_back(adrLow(_addrs.consist));
+      _adr_deque.push_back(make_app_adr_high_datagram(_addrs.consist));
+      _adr_deque.push_back(make_app_adr_low_datagram(_addrs.consist));
     }
   }
 
@@ -1206,40 +1206,6 @@ private:
       impl().transmitBiDi({cbegin(_ch2), size(_ch2)});
       _logon_deque.pop_front();
     }
-  }
-
-  /// Get app:adr_high for primary or logon address
-  ///
-  /// \param  addr  Address
-  /// \return Datagram for app:adr_high
-  auto adrHigh(Address addr) const {
-    return encode_datagram(make_datagram<Bits::_12>(
-      1u, addr < 128u ? 0u : 0x80u | (addr & 0x3F00u) >> 8u));
-  }
-
-  /// Get app:adr_high for consist address
-  ///
-  /// \param  addr  Address
-  /// \return Datagram for app:adr_high
-  auto adrHighConsist([[maybe_unused]] Address addr) const {
-    return encode_datagram(make_datagram<Bits::_12>(1u, 0b0110'0000u));
-  }
-
-  /// Get app:adr_low for primary or logon address
-  ///
-  /// \param  addr  Address
-  /// \return Datagram for app:adr_low
-  auto adrLow(Address addr) const {
-    return encode_datagram(make_datagram<Bits::_12>(2u, addr & 0x00FFu));
-  }
-
-  /// Get app:adr_low for consist address
-  ///
-  /// \param  addr  Address
-  /// \return Datagram for app:adr_low
-  auto adrLowConsist(Address addr) const {
-    return encode_datagram(make_datagram<Bits::_12>(
-      2u, static_cast<uint8_t>(addr.reversed << 7u) | (addr & 0x007Fu)));
   }
 
   /// Logon store

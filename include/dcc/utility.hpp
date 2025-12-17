@@ -1734,7 +1734,11 @@ consteval auto make_idle_packet() {
   return packet;
 }
 
-/// \todo
+/// Make app:adr_high datagram
+///
+/// \param  addr  Address
+/// \param  cv19  CV19
+/// \return app:adr_high datagram
 constexpr auto make_app_adr_high_datagram(Address::value_type addr,
                                           uint8_t cv19 = 0u) {
   if (addr < 128u)
@@ -1745,7 +1749,11 @@ constexpr auto make_app_adr_high_datagram(Address::value_type addr,
       bidi::make_datagram<bidi::Bits::_12>(1u, 0x80u | (addr & 0x3F00u) >> 8u));
 }
 
-/// \todo
+/// Make app:adr_low datagram
+///
+/// \param  addr  Address
+/// \param  cv19  CV19
+/// \return app:adr_low datagram
 constexpr auto make_app_adr_low_datagram(Address::value_type addr,
                                          uint8_t cv19 = 0u) {
   if (addr < 128u)
@@ -1756,24 +1764,36 @@ constexpr auto make_app_adr_low_datagram(Address::value_type addr,
       bidi::make_datagram<bidi::Bits::_12>(2u, addr & 0xFFu));
 }
 
+/// Make app:info1 datagram
+///
 /// \todo
+/// \return app:info1 datagram
 constexpr auto make_app_info1_datagram() {}
 
-/// \todo
+/// Make app:pom datagram
+///
+/// \return app:pom datagram
 constexpr auto make_app_pom_datagram(uint8_t byte) {
   return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_12>(0u, byte));
 }
 
+/// Make app:ext datagram
+///
 /// \todo
+/// \return app:ext datagram
 constexpr auto make_app_ext_datagram() {}
 
-/// \todo
+/// Make app:dyn datagram
+///
+/// \return app:dyn datagram
 constexpr auto make_app_dyn_datagram(uint8_t d, uint8_t x) {
   return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_18>(
     7u, static_cast<uint32_t>(d << 6u | x)));
 }
 
-/// \todo
+/// Make app:xpom datagram
+///
+/// \return app:xpom datagram
 constexpr auto make_app_xpom_datagram(uint8_t ss,
                                       std::span<uint8_t const, 4uz> bytes) {
   return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_36>(
@@ -1782,16 +1802,23 @@ constexpr auto make_app_xpom_datagram(uint8_t ss,
                           bytes[2uz] << 8u | bytes[3uz] << 0u)));
 }
 
-/// \todo
+/// Make app:cv-auto datagram
+///
+/// \return app:cv-auto datagram
 constexpr auto make_app_cv_auto_datagram(uint32_t cv_addr, uint8_t byte) {
   return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_36>(
     12u, cv_addr << 8u | static_cast<uint32_t>(byte << 0u)));
 }
 
+/// Make app:cv-auto datagram
+///
 /// \todo
+/// \return app:cv-auto datagram
 constexpr auto make_app_block_datagram() {}
 
-/// \todo
+/// Make app:cv-auto datagram
+///
+/// \return app:cv-auto datagram
 constexpr auto
 make_app_search_datagram(Address::value_type addr, uint8_t cv19, uint8_t s) {
   bidi::Datagram<bidi::datagram_size<bidi::Bits::_36>> datagram{};
@@ -1805,19 +1832,34 @@ make_app_search_datagram(Address::value_type addr, uint8_t cv19, uint8_t s) {
   return datagram;
 }
 
+/// Make app:cv-auto datagram
+///
 /// \todo
+/// \return app:cv-auto datagram
 constexpr auto make_app_srq_datagram() {}
 
+/// Make app:cv-auto datagram
+///
 /// \todo
+/// \return app:cv-auto datagram
 constexpr auto make_app_stat4_datagram() {}
 
+/// Make app:cv-auto datagram
+///
 /// \todo
+/// \return app:cv-auto datagram
 constexpr auto make_app_stat1_datagram() {}
 
+/// Make app:cv-auto datagram
+///
 /// \todo
+/// \return app:cv-auto datagram
 constexpr auto make_app_time_datagram() {}
 
+/// Make app:cv-auto datagram
+///
 /// \todo
+/// \return app:cv-auto datagram
 constexpr auto make_app_error_datagram() {}
 
 } // namespace dcc
