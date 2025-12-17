@@ -47,6 +47,7 @@ struct State {
 
   //
   struct Datagram {
+    dcc::Address addr{};
     dcc::bidi::Datagram<> bytes{};
     std::vector<std::string> desc_strs{};
     std::string pattern_str{};
