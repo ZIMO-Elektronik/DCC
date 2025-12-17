@@ -1007,18 +1007,18 @@ private:
   /// Track search
   void trackSearch() {
     using std::literals::chrono_literals::operator""s;
-    if (_tos_backoff || !empty(_tos_deque)) return;
+    if (_search_backoff || !empty(_search_deque)) return;
     auto const now{std::chrono::system_clock::now()};
     if (std::chrono::duration_cast<std::chrono::seconds>(now - _tps.init) >=
         30s)
       return;
-    if (_tps.tos == decltype(_tps.tos){}) _tps.tos = now;
-    _tos_deque.push_back(make_app_search_datagram(
+    if (_tps.search == decltype(_tps.search){}) _tps.search = now;
+    _search_deque.push_back(make_app_search_datagram(
       _addrs.primary,
       0u,
-      static_cast<uint8_t>(
-        std::chrono::duration_cast<std::chrono::seconds>(_tps.tos - _tps.init)
-          .count())));
+      static_cast<uint8_t>(std::chrono::duration_cast<std::chrono::seconds>(
+                             _tps.search - _tps.init)
+                             .count())));
   }
 
   /// Logon enable
@@ -1188,11 +1188,11 @@ private:
 
   /// Handle app:search
   void appSearch() {
-    if (empty(_tos_deque)) return;
-    auto const& datagram{_tos_deque.front()};
+    if (empty(_search_deque)) return;
+    auto const& datagram{_search_deque.front()};
     std::ranges::copy(datagram, begin(_ch2));
     impl().transmitBiDi({cbegin(_ch2), size(datagram)});
-    _tos_deque.pop_front();
+    _search_deque.pop_front();
   }
 
   /// Handle app:logon
@@ -1295,8 +1295,8 @@ private:
     using std::literals::chrono_literals::operator""s;
     auto const now{std::chrono::system_clock::now()};
     if (now - _tps.packet >= 2s) {
-      _tos_backoff.now();
-      _tps.tos = decltype(_tps.tos){};
+      _search_backoff.now();
+      _tps.search = decltype(_tps.search){};
     }
     _tps.packet = now;
   }
@@ -1306,7 +1306,7 @@ private:
   ztl::inplace_deque<Datagram<datagram_size<Bits::_18>>, DCC_RX_BIDI_DEQUE_SIZE>
     _dyn_deque{};
   ztl::inplace_deque<Datagram<datagram_size<Bits::_48>>, 1uz> _logon_deque{};
-  ztl::inplace_deque<Datagram<datagram_size<Bits::_36>>, 1uz> _tos_deque{};
+  ztl::inplace_deque<Datagram<datagram_size<Bits::_36>>, 1uz> _search_deque{};
   ztl::inplace_deque<Datagram<datagram_size<Bits::_12>>, 2uz> _adr_deque{};
 
   // PoM
@@ -1336,7 +1336,7 @@ private:
   struct {
     std::chrono::time_point<std::chrono::system_clock> init;
     std::chrono::time_point<std::chrono::system_clock> packet;
-    std::chrono::time_point<std::chrono::system_clock> tos;
+    std::chrono::time_point<std::chrono::system_clock> search;
   } _tps{};
 
   std::array<uint8_t, 4uz> _did{};
@@ -1346,7 +1346,7 @@ private:
   Channel2 _ch2{};
 
   Backoff _logon_backoff{};
-  Backoff _tos_backoff{};
+  Backoff _search_backoff{};
 
   std::array<uint16_t, 2uz> _cids{}; ///< Central ID
   std::array<uint8_t, 2uz> _sids{};  ///< Session ID
