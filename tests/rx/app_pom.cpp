@@ -1,6 +1,6 @@
 #include "rx_test.hpp"
 
-using namespace dcc::bidi;
+using namespace dcc;
 
 TEST_F(RxTest, app_pom) {
   auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
@@ -15,7 +15,7 @@ TEST_F(RxTest, app_pom) {
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
   Receive(packet)->LeaveCutout()->Execute()->Receive(packet);
 
-  auto datagram{encode_datagram(make_datagram<Bits::_12>(0u, value))};
+  auto datagram{make_app_pom_datagram(value)};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   _mock.biDiChannel2();
 }
@@ -56,7 +56,7 @@ TEST_F(RxTest, app_pom_reply_on_any_packets) {
   auto other_packet_to_same_address{make_f0_f4_packet(_addrs.primary, 0b1u)};
   Receive(other_packet_to_same_address);
 
-  auto datagram{encode_datagram(make_datagram<Bits::_12>(0u, value))};
+  auto datagram{make_app_pom_datagram(value)};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   _mock.biDiChannel2();
 }

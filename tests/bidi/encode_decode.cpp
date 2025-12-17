@@ -43,7 +43,7 @@ TEST_F(EncodeDecodeTest, too_many_bits) {
   ASSERT_DEBUG_DEATH(make_datagram<Bits::_24>(0u, 16u << 24u), ".*");
 }
 
-// make_datagram has 2 overloads, one which takes a seperate ID and one wich
+// make_datagram has 2 overloads, one which takes a separate ID and one which
 // doesn't. Both should produce the same datagram however.
 TEST_F(EncodeDecodeTest, compare_datagram_with_and_without_ids) {
   EXPECT_EQ(make_datagram<Bits::_12>(DATA0),

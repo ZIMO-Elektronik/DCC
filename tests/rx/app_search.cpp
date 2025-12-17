@@ -1,7 +1,7 @@
 #include <array>
 #include "rx_test.hpp"
 
-using namespace dcc::bidi;
+using namespace dcc;
 using namespace std::chrono_literals;
 
 TEST_F(RxTest, app_search_basic_address) {
@@ -15,14 +15,7 @@ TEST_F(RxTest, app_search_basic_address) {
       dcc::make_binary_state_short_packet(0u, 2u, false));
 
   // Make datagram
-  auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0u))};
-  auto adr_low{encode_datagram(
-    make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.primary)))};
-  auto time{encode_datagram(make_datagram<Bits::_12>(14u, 0u))};
-  std::array<uint8_t, size(adr_high) + size(adr_low) + size(time)> datagram{};
-  auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(datagram))};
-  it = std::copy(cbegin(adr_low), cend(adr_low), it);
-  std::copy(cbegin(time), cend(time), it);
+  auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   _mock.biDiChannel2();
@@ -40,15 +33,7 @@ TEST_F(RxTest, app_search_extended_address) {
       dcc::make_binary_state_short_packet(0u, 2u, false));
 
   // Make datagram
-  auto adr_high{encode_datagram(
-    make_datagram<Bits::_12>(1u, 0x80u | (_addrs.primary & 0x3F00u) >> 8u))};
-  auto adr_low{encode_datagram(
-    make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.primary)))};
-  auto time{encode_datagram(make_datagram<Bits::_12>(14u, 0u))};
-  std::array<uint8_t, size(adr_high) + size(adr_low) + size(time)> datagram{};
-  auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(datagram))};
-  it = std::copy(cbegin(adr_low), cend(adr_low), it);
-  std::copy(cbegin(time), cend(time), it);
+  auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   _mock.biDiChannel2();
@@ -65,14 +50,7 @@ TEST_F(
       dcc::make_binary_state_short_packet(0u, 2u, false));
 
   // Make datagram
-  auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0u))};
-  auto adr_low{encode_datagram(
-    make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.primary)))};
-  auto time{encode_datagram(make_datagram<Bits::_12>(14u, 0u))};
-  std::array<uint8_t, size(adr_high) + size(adr_low) + size(time)> datagram{};
-  auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(datagram))};
-  it = std::copy(cbegin(adr_low), cend(adr_low), it);
-  std::copy(cbegin(time), cend(time), it);
+  auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   _mock.biDiChannel2();
