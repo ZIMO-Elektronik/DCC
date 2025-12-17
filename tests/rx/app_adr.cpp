@@ -2,7 +2,7 @@
 
 using namespace dcc;
 
-TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
+TEST_F(RxTest, app_adr_alternate_primary_address) {
   // Make datagram
   auto adr_high{make_app_adr_high_datagram(_addrs.primary)};
   auto adr_low{make_app_adr_low_datagram(_addrs.primary)};
@@ -23,7 +23,7 @@ TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
   }
 }
 
-TEST_F(RxTest, app_adr_alternate_logon_id1_id2) {
+TEST_F(RxTest, app_adr_alternate_logon_address) {
   Logon();
 
   // Make datagram
@@ -58,7 +58,7 @@ TEST_F(RxTest, app_adr_disabled_with_cv28_0) {
   _mock.biDiChannel1();
 }
 
-TEST_F(RxTest, app_adr_alternate_consist_id1_id2) {
+TEST_F(RxTest, app_adr_alternate_consist_address) {
   _cvs[19uz - 1uz] = static_cast<uint8_t>(_addrs.consist);
   SetUp();
 
@@ -82,7 +82,7 @@ TEST_F(RxTest, app_adr_alternate_consist_id1_id2) {
   }
 }
 
-TEST_F(RxTest, app_adr_alternate_long_consist_id1_id2) {
+TEST_F(RxTest, app_adr_alternate_long_consist_address) {
   _cvs[19uz - 1uz] = 83u;
   _cvs[20uz - 1uz] = 12u;
   _addrs.consist = static_cast<dcc::Address::value_type>(

@@ -1013,12 +1013,31 @@ private:
         30s)
       return;
     if (_tps.search == decltype(_tps.search){}) _tps.search = now;
-    _search_deque.push_back(make_app_search_datagram(
-      _addrs.primary,
-      0u,
-      static_cast<uint8_t>(std::chrono::duration_cast<std::chrono::seconds>(
-                             _tps.search - _tps.init)
-                             .count())));
+    // Active address is logon
+    if (_logon_assigned)
+      _search_deque.push_back(make_app_search_datagram(
+        _addrs.logon,
+        0u,
+        static_cast<uint8_t>(std::chrono::duration_cast<std::chrono::seconds>(
+                               _tps.search - _tps.init)
+                               .count())));
+    // Active address is primary
+    else if (!_addrs.consist)
+      _search_deque.push_back(make_app_search_datagram(
+        _addrs.primary,
+        0u,
+        static_cast<uint8_t>(std::chrono::duration_cast<std::chrono::seconds>(
+                               _tps.search - _tps.init)
+                               .count())));
+    // Active address is consist
+    else
+      _search_deque.push_back(make_app_search_datagram(
+        _addrs.consist,
+        static_cast<uint8_t>((_addrs.consist.reversed ? 0x80u : 0u) |
+                             (_addrs.consist & 0x7Fu)),
+        static_cast<uint8_t>(std::chrono::duration_cast<std::chrono::seconds>(
+                               _tps.search - _tps.init)
+                               .count())));
   }
 
   /// Logon enable

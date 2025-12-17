@@ -39,6 +39,22 @@ TEST_F(RxTest, app_search_extended_address) {
   _mock.biDiChannel2();
 }
 
+TEST_F(RxTest, app_search_consist_address) {
+  _cvs[19uz - 1uz] = static_cast<uint8_t>(_addrs.consist);
+  SetUp();
+
+  // Make sure to get past backoff (see RCN-218)
+  for (auto i{0.0}; i < 30.0 / 10E-3; ++i)
+    LeaveCutout()->Execute()->Receive(
+      dcc::make_binary_state_short_packet(0u, 2u, false));
+
+  // Make datagram
+  auto datagram{make_app_search_datagram(_addrs.consist, _cvs[19uz - 1uz], 0u)};
+
+  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
+  _mock.biDiChannel2();
+}
+
 TEST_F(
   RxTest,
   app_search_time_is_from_first_packet_regardless_of_which_packet_is_answered) {
