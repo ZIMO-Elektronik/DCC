@@ -9,13 +9,13 @@ namespace broadcast {
 
 // clang-format off
 void broadcast(State& state);
-  void decoder_control(State& state);
-    void decoder_control_digital_decoder_reset(State& state);
-  void speed_and_direction(State& state);
-  void feature_expansion(State& state);
-    void feature_expansion_time_and_date(State& state);
-    void feature_expansion_system_time(State& state);
-    void feature_expansion_command_station_feature_identification(State& state);
+  void decoder_control(State& state, dcc::Address addr);
+    void decoder_control_digital_decoder_reset(State& state, dcc::Address addr);
+  void speed_and_direction(State& state, dcc::Address addr);
+  void feature_expansion(State& state, dcc::Address addr);
+    void feature_expansion_time_and_date(State& state, dcc::Address addr);
+    void feature_expansion_system_time(State& state, dcc::Address addr);
+    void feature_expansion_command_station_feature_identification(State& state, dcc::Address addr);
 // clang-format on
 
 } // namespace broadcast
@@ -79,7 +79,7 @@ namespace idle {
 
 // clang-format off
 void idle(State& state);
-  void digital_decoder_idle(State& state);
+  void digital_decoder_idle(State& state, dcc::Address addr);
 // clang-format on
 
 } // namespace idle
@@ -94,34 +94,34 @@ void broadcast(State& state) {
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
   if (!strcmp(instrs[static_cast<size_t>(i)], "Decoder Control"))
-    decoder_control(state);
+    decoder_control(state, {.type = dcc::Address::Broadcast});
   else if (!strcmp(instrs[static_cast<size_t>(i)], "Speed & Direction"))
-    speed_and_direction(state);
+    speed_and_direction(state, {.type = dcc::Address::Broadcast});
   else if (!strcmp(instrs[static_cast<size_t>(i)], "Feature Expansion"))
-    feature_expansion(state);
+    feature_expansion(state, {.type = dcc::Address::Broadcast});
 }
 
 //
-void decoder_control(State& state) {
+void decoder_control(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"", "Digital Decoder Reset"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
   if (!strcmp(instrs[static_cast<size_t>(i)], "Digital Decoder Reset"))
-    decoder_control_digital_decoder_reset(state);
+    decoder_control_digital_decoder_reset(state, addr);
 }
 
 //
-void decoder_control_digital_decoder_reset(State& state) {
+void decoder_control_digital_decoder_reset(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   ImGui::Text("None");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back({.bytes = dcc::make_reset_packet()});
+    state.packets.push_back({.addr = addr, .bytes = dcc::make_reset_packet()});
 }
 
 // Digital Decoder Broadcast Stop Packets For All Decoders [S 9.2]
-void speed_and_direction(State& state) {
+void speed_and_direction(State& state, dcc::Address addr) {
   ImGui::BeginDisabled();
   ImGui::SeparatorText("Sub Instruction");
   static int i{};
@@ -147,13 +147,13 @@ void speed_and_direction(State& state) {
   rggggg = dcc::encode_rggggg(r, speed) | c << 4u;
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_speed_and_direction_packet(
-         {.type = dcc::Address::Broadcast}, rggggg)});
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_speed_and_direction_packet(addr, rggggg)});
 }
 
 //
-void feature_expansion(State& state) {
+void feature_expansion(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"",
                                      "Binary State Control Long Form",
@@ -164,23 +164,21 @@ void feature_expansion(State& state) {
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
   if (!strcmp(instrs[static_cast<size_t>(i)], "Binary State Control Long Form"))
-    ::loco::feature_expansion_binary_state_control_long_form(
-      state, {.type = dcc::Address::Broadcast});
+    ::loco::feature_expansion_binary_state_control_long_form(state, addr);
   else if (!strcmp(instrs[static_cast<size_t>(i)], "Time and Date"))
-    feature_expansion_time_and_date(state);
+    feature_expansion_time_and_date(state, addr);
   else if (!strcmp(instrs[static_cast<size_t>(i)], "System Time"))
-    feature_expansion_system_time(state);
+    feature_expansion_system_time(state, addr);
   else if (!strcmp(instrs[static_cast<size_t>(i)],
                    "Command Station Feature Identification"))
-    feature_expansion_command_station_feature_identification(state);
+    feature_expansion_command_station_feature_identification(state, addr);
   else if (!strcmp(instrs[static_cast<size_t>(i)],
                    "Binary State Control Short Form"))
-    ::loco::feature_expansion_binary_state_control_short_form(
-      state, {.type = dcc::Address::Broadcast});
+    ::loco::feature_expansion_binary_state_control_short_form(state, addr);
 }
 
 //
-void feature_expansion_time_and_date(State& state) {
+void feature_expansion_time_and_date(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static constexpr std::array chrono_type{"", "Time", "Date", "Time Scale"};
   static int i{};
@@ -209,9 +207,9 @@ void feature_expansion_time_and_date(State& state) {
     ImGui::Checkbox("Update", &update);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes =
-           dcc::make_time_packet(weekday, time[0uz], time[1uz], acc, update)});
+      state.packets.push_back({.addr = addr,
+                               .bytes = dcc::make_time_packet(
+                                 weekday, time[0uz], time[1uz], acc, update)});
   } else if (!strcmp(chrono_type[static_cast<size_t>(i)], "Date")) {
     static std::array<uint16_t, 3uz> date{24u, 3u, 1989u};
     ImGui::InputScalarN("[dd::mm:yyyy]",
@@ -226,8 +224,9 @@ void feature_expansion_time_and_date(State& state) {
     date[2uz] = std::clamp<uint16_t>(date[2uz], 0u, 4095u);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes = dcc::make_date_packet(static_cast<uint8_t>(date[0uz]),
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_date_packet(static_cast<uint8_t>(date[0uz]),
                                         static_cast<uint8_t>(date[1uz]),
                                         date[2uz])});
   } else if (!strcmp(chrono_type[static_cast<size_t>(i)], "Time Scale")) {
@@ -235,24 +234,26 @@ void feature_expansion_time_and_date(State& state) {
     ImGui::InputFloat("Time Scale", &scale);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes = dcc::make_time_scale_packet(static_cast<FLOAT16>(scale))});
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_time_scale_packet(static_cast<FLOAT16>(scale))});
   }
 }
 
 //
-void feature_expansion_system_time(State& state) {
+void feature_expansion_system_time(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static uint16_t ms{};
   ImGui::InputScalar("[ms]", ImGuiDataType_U16, &ms);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_system_time_packet(ms)});
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_system_time_packet(ms)});
 }
 
 //
-void feature_expansion_command_station_feature_identification(State& state) {
+void feature_expansion_command_station_feature_identification(
+  State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static constexpr std::array feat_type{
     "", "Loco Features", "Accessory and Broadcast Features", "BiDi Features"};
@@ -287,8 +288,9 @@ void feature_expansion_command_station_feature_identification(State& state) {
                     &basic_addresses_100_127_as_extended);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes = dcc::make_command_station_feature_identification_packet(
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_command_station_feature_identification_packet(
            dcc::LocoFeatures{static_cast<uint16_t>(
              special_operating_modes << 13u | analog_function << 12u |
              binary_state_long << 11u | binary_state_short << 10u |
@@ -314,8 +316,9 @@ void feature_expansion_command_station_feature_identification(State& state) {
     ImGui::Checkbox("Addresses Offset by 4", &addresses_offset_by_4);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes = dcc::make_command_station_feature_identification_packet(
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_command_station_feature_identification_packet(
            dcc::AccessoryBroadcastFeatures{static_cast<uint16_t>(
              system_time << 11u | time_scale << 10u | date << 9u | time << 8u |
              pom_write << 3u | extended << 1u |
@@ -341,8 +344,9 @@ void feature_expansion_command_station_feature_identification(State& state) {
     ImGui::Checkbox("RailCom", &railcom);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes = dcc::make_command_station_feature_identification_packet(
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_command_station_feature_identification_packet(
            dcc::BiDiFeatures{static_cast<uint16_t>(
              railcom_plus << 15u | app_dyn_track_voltage << 10u |
              app_dyn_operating_params << 9u | app_dyn_container_levels << 8u |
@@ -434,7 +438,8 @@ void decoder_control_digital_decoder_reset(State& state, dcc::Address addr) {
   ImGui::Text("None");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back({.bytes = dcc::make_reset_packet(addr)});
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_reset_packet(addr)});
 }
 
 //
@@ -443,8 +448,8 @@ void decoder_control_hard_reset(State& state, dcc::Address addr) {
   ImGui::Text("None");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_hard_reset_packet(addr)});
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_hard_reset_packet(addr)});
 }
 
 //
@@ -464,8 +469,9 @@ void decoder_control_factory_test(State& state, dcc::Address addr) {
     UNIQUE_LABEL(), data(bytes), static_cast<int>(ssize(bytes)));
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_factory_test_packet(addr, bit0, bytes)});
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_factory_test_packet(addr, bit0, bytes)});
 }
 
 //
@@ -475,8 +481,9 @@ void decoder_control_set_advanced_addressing(State& state, dcc::Address addr) {
   ImGui::Checkbox("CV29:5", &cv29_5);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_set_advanced_addressing_packet(addr, cv29_5)});
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_set_advanced_addressing_packet(addr, cv29_5)});
 }
 
 //
@@ -486,8 +493,8 @@ void decoder_control_decoder_acknowledgement_request(State& state,
   ImGui::Text("None");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Decoder Acknowledgement Request"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_ack_request_packet(addr)});
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_ack_request_packet(addr)});
 }
 
 //
@@ -510,9 +517,9 @@ void consist_control_set_consist_address(State& state, dcc::Address addr) {
   ImGui::Checkbox("Reversed", &r);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes =
-         dcc::make_set_consist_address_packet(addr, r << 7u | consist_addr)});
+    state.packets.push_back({.addr = addr,
+                             .bytes = dcc::make_set_consist_address_packet(
+                               addr, r << 7u | consist_addr)});
 }
 
 //
@@ -612,23 +619,27 @@ void advanced_operations_speed_direction_and_function(State& state,
                            d[24uz + 1uz] << 1u | d[24uz + 0uz] << 0u)};
     switch (length) {
       case 8uz:
-        state.operations_packets.push_back(
-          {.bytes = make_speed_direction_and_functions_packet(
+        state.packets.push_back(
+          {.addr = addr,
+           .bytes = make_speed_direction_and_functions_packet(
              addr, rggggggg, fs[0uz])});
         break;
       case 16uz:
-        state.operations_packets.push_back(
-          {.bytes = make_speed_direction_and_functions_packet(
+        state.packets.push_back(
+          {.addr = addr,
+           .bytes = make_speed_direction_and_functions_packet(
              addr, rggggggg, fs[0uz], fs[1uz])});
         break;
       case 24uz:
-        state.operations_packets.push_back(
-          {.bytes = make_speed_direction_and_functions_packet(
+        state.packets.push_back(
+          {.addr = addr,
+           .bytes = make_speed_direction_and_functions_packet(
              addr, rggggggg, fs[0uz], fs[1uz], fs[2uz])});
         break;
       case 32uz:
-        state.operations_packets.push_back(
-          {.bytes = make_speed_direction_and_functions_packet(
+        state.packets.push_back(
+          {.addr = addr,
+           .bytes = make_speed_direction_and_functions_packet(
              addr, rggggggg, fs[0uz], fs[1uz], fs[2uz], fs[3uz])});
         break;
     }
@@ -645,8 +656,9 @@ void advanced_operations_analog_function_group(State& state,
   ImGui::InputScalar("Value", ImGuiDataType_U8, &dddddddd);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_analog_function_group_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_analog_function_group_packet(
          addr, static_cast<uint8_t>(ssssssss), dddddddd)});
 }
 
@@ -666,8 +678,9 @@ void advanced_operations_special_operating_modes(State& state,
   ImGui::Checkbox("MAN", &man);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_special_operating_modes(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_special_operating_modes(
          addr,
          static_cast<dcc::Consist>(((i & 1) << 1) | ((i & 2) >> 1) | (i & ~3)),
          shunting,
@@ -696,8 +709,9 @@ void advanced_operations_128_speed_step_control(State& state,
   rggggggg = dcc::encode_rggggggg(r, speed);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_128_speed_step_control_packet(addr, rggggggg)});
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_128_speed_step_control_packet(addr, rggggggg)});
 }
 
 //
@@ -727,8 +741,9 @@ void speed_and_direction(State& state, dcc::Address addr) {
   rggggg = dcc::encode_rggggg(r, speed, cv29_1);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_speed_and_direction_packet(addr, rggggg)});
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_speed_and_direction_packet(addr, rggggg)});
 }
 
 //
@@ -756,8 +771,9 @@ void function_group_f0_f4(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F4-F0");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f0_f4_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f0_f4_packet(
          addr,
          static_cast<uint8_t>(d[4uz] << 4u | d[3uz] << 3u | d[2uz] << 2u |
                               d[1uz] << 1u | d[0uz] << 0u))});
@@ -774,8 +790,9 @@ void function_group_f9_f12(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F12-F9");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f9_f12_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f9_f12_packet(
          addr,
          static_cast<uint8_t>(d[3uz] << 3u | d[2uz] << 2u | d[1uz] << 1u |
                               d[0uz] << 0u))});
@@ -792,8 +809,9 @@ void function_group_f5_f8(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F8-F5");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f5_f8_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f5_f8_packet(
          addr,
          static_cast<uint8_t>(d[3uz] << 3u | d[2uz] << 2u | d[1uz] << 1u |
                               d[0uz] << 0u))});
@@ -846,8 +864,9 @@ void feature_expansion_binary_state_control_long_form(State& state,
   bin_addr = std::clamp<uint16_t>(bin_addr, 0u, 32767u);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_binary_state_long_packet(addr, bin_addr, d)});
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_binary_state_long_packet(addr, bin_addr, d)});
 }
 
 //
@@ -861,8 +880,9 @@ void feature_expansion_f29_f36(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F36-F29");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f29_f36_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f29_f36_packet(
          addr,
          static_cast<uint8_t>(d[7uz] << 7u | d[6uz] << 6u | d[5uz] << 5u |
                               d[4uz] << 4u | d[3uz] << 3u | d[2uz] << 2u |
@@ -880,8 +900,9 @@ void feature_expansion_f37_f44(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F44-F37");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f37_f44_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f37_f44_packet(
          addr,
          static_cast<uint8_t>(d[7uz] << 7u | d[6uz] << 6u | d[5uz] << 5u |
                               d[4uz] << 4u | d[3uz] << 3u | d[2uz] << 2u |
@@ -899,8 +920,9 @@ void feature_expansion_f45_f52(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F52-F45");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f45_f52_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f45_f52_packet(
          addr,
          static_cast<uint8_t>(d[7uz] << 7u | d[6uz] << 6u | d[5uz] << 5u |
                               d[4uz] << 4u | d[3uz] << 3u | d[2uz] << 2u |
@@ -918,8 +940,9 @@ void feature_expansion_f53_f60(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F60-F53");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f53_f60_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f53_f60_packet(
          addr,
          static_cast<uint8_t>(d[7uz] << 7u | d[6uz] << 6u | d[5uz] << 5u |
                               d[4uz] << 4u | d[3uz] << 3u | d[2uz] << 2u |
@@ -937,8 +960,9 @@ void feature_expansion_f61_f68(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F68-F61");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f61_f68_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f61_f68_packet(
          addr,
          static_cast<uint8_t>(d[7uz] << 7u | d[6uz] << 6u | d[5uz] << 5u |
                               d[4uz] << 4u | d[3uz] << 3u | d[2uz] << 2u |
@@ -956,8 +980,9 @@ void feature_expansion_binary_state_control_short_form(State& state,
   bin_addr = std::clamp<uint8_t>(bin_addr, 0u, 127u);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_binary_state_short_packet(addr, bin_addr, d)});
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_binary_state_short_packet(addr, bin_addr, d)});
 }
 
 //
@@ -971,8 +996,9 @@ void feature_expansion_f13_f20(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F20-F13");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f13_f20_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f13_f20_packet(
          addr,
          static_cast<uint8_t>(d[7uz] << 7u | d[6uz] << 6u | d[5uz] << 5u |
                               d[4uz] << 4u | d[3uz] << 3u | d[2uz] << 2u |
@@ -990,8 +1016,9 @@ void feature_expansion_f21_f28(State& state, dcc::Address addr) {
   ImGui::TextUnformatted("F28-F21");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_f21_f28_packet(
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_f21_f28_packet(
          addr,
          static_cast<uint8_t>(d[7uz] << 7u | d[6uz] << 6u | d[5uz] << 5u |
                               d[4uz] << 4u | d[3uz] << 3u | d[2uz] << 2u |
@@ -1037,19 +1064,19 @@ void cv_access_long_form(State& state, dcc::Address addr) {
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets")) {
       if (!strcmp(instrs[static_cast<size_t>(i)], "Byte Verify"))
-        addr ? state.operations_packets.push_back(
-                 {.bytes = dcc::make_cv_access_long_verify_packet(
-                    addr, cv_addr, cv_value)})
-             : state.service_packets.push_back(
-                 {.bytes = dcc::make_cv_access_long_verify_service_packet(
-                    cv_addr, cv_value)});
+        state.packets.push_back(
+          {.addr = addr,
+           .bytes = addr ? dcc::make_cv_access_long_verify_packet(
+                             addr, cv_addr, cv_value)
+                         : dcc::make_cv_access_long_verify_service_packet(
+                             cv_addr, cv_value)});
       else
-        addr ? state.operations_packets.push_back(
-                 {.bytes = dcc::make_cv_access_long_write_packet(
-                    addr, cv_addr, cv_value)})
-             : state.service_packets.push_back(
-                 {.bytes = dcc::make_cv_access_long_write_service_packet(
-                    cv_addr, cv_value)});
+        state.packets.push_back(
+          {.addr = addr,
+           .bytes = addr ? dcc::make_cv_access_long_write_packet(
+                             addr, cv_addr, cv_value)
+                         : dcc::make_cv_access_long_write_service_packet(
+                             cv_addr, cv_value)});
     }
   } else if (!strcmp(instrs[static_cast<size_t>(i)], "Bit Verify") ||
              !strcmp(instrs[static_cast<size_t>(i)], "Bit Write")) {
@@ -1062,19 +1089,19 @@ void cv_access_long_form(State& state, dcc::Address addr) {
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets")) {
       if (!strcmp(instrs[static_cast<size_t>(i)], "Bit Verify"))
-        addr ? state.operations_packets.push_back(
-                 {.bytes = dcc::make_cv_access_long_verify_packet(
-                    addr, cv_addr, bit, pos)})
-             : state.service_packets.push_back(
-                 {.bytes = dcc::make_cv_access_long_verify_service_packet(
-                    cv_addr, bit, pos)});
+        state.packets.push_back(
+          {.addr = addr,
+           .bytes = addr ? dcc::make_cv_access_long_verify_packet(
+                             addr, cv_addr, bit, pos)
+                         : dcc::make_cv_access_long_verify_service_packet(
+                             cv_addr, bit, pos)});
       else
-        addr ? state.operations_packets.push_back(
-                 {.bytes = dcc::make_cv_access_long_write_packet(
-                    addr, cv_addr, bit, pos)})
-             : state.service_packets.push_back(
-                 {.bytes = dcc::make_cv_access_long_write_service_packet(
-                    cv_addr, bit, pos)});
+        state.packets.push_back(
+          {.addr = addr,
+           .bytes = addr ? dcc::make_cv_access_long_write_packet(
+                             addr, cv_addr, bit, pos)
+                         : dcc::make_cv_access_long_write_service_packet(
+                             cv_addr, bit, pos)});
     }
   }
 }
@@ -1119,9 +1146,9 @@ void cv_access_short_form(State& state, dcc::Address addr) {
   if (!kkkk) return;
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_cv_access_short_write_packet(
-         addr, kkkk, cvs[0uz], cvs[1uz])});
+    state.packets.push_back({.addr = addr,
+                             .bytes = dcc::make_cv_access_short_write_packet(
+                               addr, kkkk, cvs[0uz], cvs[1uz])});
 }
 
 //
@@ -1141,9 +1168,9 @@ void cv_access_xpom(State& state, dcc::Address addr) {
   if (!strcmp(instrs[static_cast<size_t>(i)], "Bytes Verify")) {
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes = dcc::make_cv_access_xpom_verify_packet(
-           addr, static_cast<uint8_t>(ss), cv_addr)});
+      state.packets.push_back({.addr = addr,
+                               .bytes = dcc::make_cv_access_xpom_verify_packet(
+                                 addr, static_cast<uint8_t>(ss), cv_addr)});
   } else if (!strcmp(instrs[static_cast<size_t>(i)], "Bytes Write")) {
     static ztl::inplace_vector<uint8_t, 4uz> cv_values{0u};
     if (ImGui::Button("-") && size(cv_values) > 1uz) cv_values.pop_back();
@@ -1157,13 +1184,15 @@ void cv_access_xpom(State& state, dcc::Address addr) {
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets")) switch (size(cv_values)) {
         case 1uz:
-          state.operations_packets.push_back(
-            {.bytes = dcc::make_cv_access_xpom_write_packet(
+          state.packets.push_back(
+            {.addr = addr,
+             .bytes = dcc::make_cv_access_xpom_write_packet(
                addr, static_cast<uint8_t>(ss), cv_addr, cv_values[0uz])});
           break;
         case 2uz:
-          state.operations_packets.push_back(
-            {.bytes =
+          state.packets.push_back(
+            {.addr = addr,
+             .bytes =
                dcc::make_cv_access_xpom_write_packet(addr,
                                                      static_cast<uint8_t>(ss),
                                                      cv_addr,
@@ -1171,8 +1200,9 @@ void cv_access_xpom(State& state, dcc::Address addr) {
                                                      cv_values[1uz])});
           break;
         case 3uz:
-          state.operations_packets.push_back(
-            {.bytes =
+          state.packets.push_back(
+            {.addr = addr,
+             .bytes =
                dcc::make_cv_access_xpom_write_packet(addr,
                                                      static_cast<uint8_t>(ss),
                                                      cv_addr,
@@ -1181,8 +1211,9 @@ void cv_access_xpom(State& state, dcc::Address addr) {
                                                      cv_values[2uz])});
           break;
         case 4uz:
-          state.operations_packets.push_back(
-            {.bytes =
+          state.packets.push_back(
+            {.addr = addr,
+             .bytes =
                dcc::make_cv_access_xpom_write_packet(addr,
                                                      static_cast<uint8_t>(ss),
                                                      cv_addr,
@@ -1201,8 +1232,9 @@ void cv_access_xpom(State& state, dcc::Address addr) {
     ImGui::SliderScalar("Position", ImGuiDataType_U8, &pos, &max, &min);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes = dcc::make_cv_access_xpom_write_packet(
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_cv_access_xpom_write_packet(
            addr, static_cast<uint8_t>(ss), cv_addr, bit, pos)});
   }
 }
@@ -1266,8 +1298,8 @@ void basic_accessory_decoder_control(State& state, dcc::Address addr) {
   ImGui::Checkbox("State", &d);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_basic_accessory_packet(addr, r, d)});
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_basic_accessory_packet(addr, r, d)});
 }
 
 //
@@ -1281,8 +1313,9 @@ void extended_accessory_decoder_control(State& state, dcc::Address addr) {
     ImGui::InputScalar("State", ImGuiDataType_U8, &dddddddd);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes = dcc::make_extended_accessory_packet(addr, dddddddd)});
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_extended_accessory_packet(addr, dddddddd)});
   } else if (!strcmp(type[static_cast<size_t>(i)], "Switching Time")) {
     static bool r{};
     ImGui::Checkbox("Output", &r);
@@ -1297,8 +1330,9 @@ void extended_accessory_decoder_control(State& state, dcc::Address addr) {
                         switch_on_time_labels[zzzzzzz]);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
-      state.operations_packets.push_back(
-        {.bytes = dcc::make_extended_accessory_packet(addr, r, zzzzzzz)});
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_extended_accessory_packet(addr, r, zzzzzzz)});
   }
 }
 
@@ -1308,8 +1342,8 @@ void nop_for_basic_and_extended_accessory(State& state, dcc::Address addr) {
   ImGui::Text("None");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back(
-      {.bytes = dcc::make_accessory_nop_packet(addr)});
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_accessory_nop_packet(addr)});
 }
 
 } // namespace accessory
@@ -1325,16 +1359,16 @@ void idle(State& state) {
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
   if (!strcmp(instrs[static_cast<size_t>(i)], "Digital Decoder Idle"))
-    digital_decoder_idle(state);
+    digital_decoder_idle(state, {.value = 0xFFu, .type = dcc::Address::Idle});
 }
 
 //
-void digital_decoder_idle(State& state) {
+void digital_decoder_idle(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   ImGui::Text("None");
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back({.bytes = dcc::make_idle_packet()});
+    state.packets.push_back({.addr = addr, .bytes = dcc::make_idle_packet()});
 }
 
 } // namespace idle
@@ -1374,7 +1408,8 @@ void user_defined(State& state) {
     UNIQUE_LABEL(), data(packet), static_cast<int>(ssize(packet)));
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.operations_packets.push_back({.bytes = packet});
+    state.packets.push_back(
+      {.addr = dcc::decode_address(packet), .bytes = packet});
 }
 
 } // namespace user_defined

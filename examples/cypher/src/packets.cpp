@@ -19,10 +19,10 @@ namespace {
 namespace eval {
 
 // clang-format off
-void eval(State& state, State::Packet& packet, bool service_mode);
+void eval(State& state, State::Packet& packet);
   void preamble(State::Packet& packet);
-  void address(State::Packet& packet, bool service_mode);
-  void instruction(State::Packet& packet, bool service_mode);
+  void address(State::Packet& packet);
+  void instruction(State::Packet& packet);
     void unknown(State::Packet& packet, std::span<uint8_t const> bytes);
     void decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
       void decoder_control_digital_decoder_reset(State::Packet& packet, std::span<uint8_t const> bytes);
@@ -55,8 +55,8 @@ void eval(State& state, State::Packet& packet, bool service_mode);
       void feature_expansion_binary_state_control_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
       void feature_expansion_f13_f20(State::Packet& packet, std::span<uint8_t const> bytes);
       void feature_expansion_f21_f28(State::Packet& packet, std::span<uint8_t const> bytes);
-    void cv_access(State::Packet& packet, std::span<uint8_t const> bytes, bool service_mode);
-      void cv_access_long_form(State::Packet& packet, std::span<uint8_t const> bytes, bool service_mode);
+    void cv_access(State::Packet& packet, std::span<uint8_t const> bytes);
+      void cv_access_long_form(State::Packet& packet, std::span<uint8_t const> bytes);
       void cv_access_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
       void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes);
     void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const> bytes);
@@ -64,8 +64,8 @@ void eval(State& state, State::Packet& packet, bool service_mode);
     void extended_accessory_decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
     void nop_for_basic_and_extended_accessory(State::Packet& packet, std::span<uint8_t const> bytes);
   void checksum(State::Packet& packet);
-  void highlights(State::Packet& packet, bool service_mode);
-  void tags(State::Packet& packet, bool service_mode);
+  void highlights(State::Packet& packet);
+  void tags(State::Packet& packet);
 // clang-format on
 
 } // namespace eval
@@ -84,7 +84,7 @@ void tab(State::Packet& packet, size_t i);
 namespace eval {
 
 //
-void eval(State& state, State::Packet& packet, bool service_mode) {
+void eval(State& state, State::Packet& packet) {
   if (!empty(packet.desc_strs) && state.cfg == packet.cfg) return;
 
   //
@@ -117,11 +117,11 @@ void eval(State& state, State::Packet& packet, bool service_mode) {
   }
 
   preamble(packet);
-  address(packet, service_mode);
-  instruction(packet, service_mode);
+  address(packet);
+  instruction(packet);
   checksum(packet);
-  highlights(packet, service_mode);
-  tags(packet, service_mode);
+  highlights(packet);
+  tags(packet);
 }
 
 //
@@ -130,69 +130,67 @@ void preamble(State::Packet& packet) {
 }
 
 //
-void address(State::Packet& packet, bool service_mode) {
-  auto const addr{service_mode
-                    ? dcc::Address{.type = dcc::Address::UnknownService}
-                    : dcc::decode_address(packet.bytes)};
-  switch (addr.type) {
+void address(State::Packet& packet) {
+  switch (packet.addr.type) {
     case dcc::Address::UnknownService:
       packet.desc_strs.push_back("Service");
       break;
     case dcc::Address::Broadcast:
-      packet.desc_strs.push_back("Broadcast=" + std::to_string(addr));
+      packet.desc_strs.push_back("Broadcast=" + std::to_string(packet.addr));
       packet.pattern_str += " 0 00000000";
       break;
     case dcc::Address::BasicLoco:
-      packet.desc_strs.push_back("Basic Loco=" + std::to_string(addr));
+      packet.desc_strs.push_back("Basic Loco=" + std::to_string(packet.addr));
       packet.pattern_str += " 0 0AAAAAAA";
       break;
     case dcc::Address::BasicAccessory:
-      packet.desc_strs.push_back("Basic Accessory=" + std::to_string(addr));
+      packet.desc_strs.push_back("Basic Accessory=" +
+                                 std::to_string(packet.addr));
       packet.pattern_str += " 0 10AAAAAA 0 1ÂÂÂDAAR";
       break;
     case dcc::Address::ExtendedAccessory:
-      packet.desc_strs.push_back("Extended Accessory=" + std::to_string(addr));
+      packet.desc_strs.push_back("Extended Accessory=" +
+                                 std::to_string(packet.addr));
       packet.pattern_str += " 0 10AAAAAA 0 0ÂÂÂ0AA1";
       break;
     case dcc::Address::ExtendedLoco:
-      packet.desc_strs.push_back("Extended Loco=" + std::to_string(addr));
+      packet.desc_strs.push_back("Extended Loco=" +
+                                 std::to_string(packet.addr));
       packet.pattern_str += " 0 11AAAAAA 0 AAAAAAAA";
       break;
     case dcc::Address::Reserved:
-      packet.desc_strs.push_back("Reserved=" + std::to_string(addr));
+      packet.desc_strs.push_back("Reserved=" + std::to_string(packet.addr));
       packet.pattern_str += " 0 11x1xxx";
       break;
     case dcc::Address::DataTransfer:
-      packet.desc_strs.push_back("Data Transfer=" + std::to_string(addr));
+      packet.desc_strs.push_back("Data Transfer=" +
+                                 std::to_string(packet.addr));
       packet.pattern_str += " 0 11111101";
       break;
     case dcc::Address::AutomaticLogon:
-      packet.desc_strs.push_back("Automatic Logon=" + std::to_string(addr));
+      packet.desc_strs.push_back("Automatic Logon=" +
+                                 std::to_string(packet.addr));
       packet.pattern_str += " 0 11111110";
       break;
     case dcc::Address::Idle:
-      packet.desc_strs.push_back("Idle=" + std::to_string(addr));
+      packet.desc_strs.push_back("Idle=" + std::to_string(packet.addr));
       packet.pattern_str += " 0 11111111";
       break;
   }
 }
 
 //
-void instruction(State::Packet& packet, bool service_mode) {
-  auto const addr{service_mode
-                    ? dcc::Address{.type = dcc::Address::UnknownService}
-                    : dcc::decode_address(packet.bytes)};
+void instruction(State::Packet& packet) {
   auto first{cbegin(packet.bytes) +
              (packet.bytes[0uz] >= 128u && packet.bytes[0uz] <= 252u ? 2 : 1)};
   std::span<uint8_t const> bytes{first, cend(packet.bytes)};
   if (empty(bytes)) return;
-  else if (addr.type == dcc::Address::UnknownService) {
+  else if (packet.addr.type == dcc::Address::UnknownService) {
     packet.desc_strs.push_back("CV Access");
-    cv_access_long_form(
-      packet, {cbegin(packet.bytes), cend(packet.bytes)}, service_mode);
-  } else if (addr.type == dcc::Address::Broadcast ||
-             addr.type == dcc::Address::BasicLoco ||
-             addr.type == dcc::Address::ExtendedLoco)
+    cv_access_long_form(packet, {cbegin(packet.bytes), cend(packet.bytes)});
+  } else if (packet.addr.type == dcc::Address::Broadcast ||
+             packet.addr.type == dcc::Address::BasicLoco ||
+             packet.addr.type == dcc::Address::ExtendedLoco)
     switch (dcc::decode_instruction(bytes)) {
       case dcc::Instruction::UnknownService: return unknown(packet, bytes);
       case dcc::Instruction::DecoderControl:
@@ -207,19 +205,19 @@ void instruction(State::Packet& packet, bool service_mode) {
         return function_group(packet, bytes);
       case dcc::Instruction::FeatureExpansion:
         return feature_expansion(packet, bytes);
-      case dcc::Instruction::CvAccess:
-        return cv_access(packet, bytes, service_mode);
+      case dcc::Instruction::CvAccess: return cv_access(packet, bytes);
       case dcc::Instruction::Logon: break;
     }
-  else if (addr.type == dcc::Address::BasicAccessory)
+  else if (packet.addr.type == dcc::Address::BasicAccessory)
     packet.bytes[1uz] & ztl::mask<7u>
       ? basic_accessory_decoder_control(packet, bytes)
       : nop_for_basic_and_extended_accessory(packet, bytes);
-  else if (addr.type == dcc::Address::ExtendedAccessory)
+  else if (packet.addr.type == dcc::Address::ExtendedAccessory)
     packet.bytes[1uz] & ztl::mask<3u>
       ? nop_for_basic_and_extended_accessory(packet, bytes)
       : extended_accessory_decoder_control(packet, bytes);
-  else if (addr.type == dcc::Address::Idle) digital_decoder_idle(packet, bytes);
+  else if (packet.addr.type == dcc::Address::Idle)
+    digital_decoder_idle(packet, bytes);
 }
 
 //
@@ -682,20 +680,16 @@ void feature_expansion_f21_f28(State::Packet& packet,
 }
 
 //
-void cv_access(State::Packet& packet,
-               std::span<uint8_t const> bytes,
-               bool service_mode) {
+void cv_access(State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.desc_strs.push_back("CV Access");
   if (bytes[0uz] & ztl::mask<4u>) cv_access_short_form(packet, bytes);
-  else if (size(bytes) <= 3uz + 1uz)
-    cv_access_long_form(packet, bytes, service_mode);
+  else if (size(bytes) <= 3uz + 1uz) cv_access_long_form(packet, bytes);
   else cv_access_xpom(packet, bytes);
 }
 
 //
 void cv_access_long_form(State::Packet& packet,
-                         std::span<uint8_t const> bytes,
-                         bool service_mode) {
+                         std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - Long Form";
   auto const kk{bytes[0uz] >> 2u & 0b11u};
   auto const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
@@ -706,8 +700,9 @@ void cv_access_long_form(State::Packet& packet,
         kk == 0b01u ? "\n- Verify Byte" : "\n- Write Byte";
       packet.desc_strs.back() += "\n- CV" + std::to_string(cv_addr + 1u) + "=" +
                                  std::to_string(bytes[2uz]);
-      packet.pattern_str += service_mode ? " 0 0111KKVV 0 VVVVVVVV 0 DDDDDDDD"
-                                         : " 0 1110KKVV 0 VVVVVVVV 0 DDDDDDDD";
+      packet.pattern_str += packet.addr.type == dcc::Address::UnknownService
+                              ? " 0 0111KKVV 0 VVVVVVVV 0 DDDDDDDD"
+                              : " 0 1110KKVV 0 VVVVVVVV 0 DDDDDDDD";
       break;
     case 0b10u:
       auto const pos{bytes[2uz] & 0b111u};
@@ -717,8 +712,9 @@ void cv_access_long_form(State::Packet& packet,
       packet.desc_strs.back() += "\n- CV" + std::to_string(cv_addr + 1u) + ":" +
                                  std::to_string(pos) + "=" +
                                  std::to_string(bit);
-      packet.pattern_str += service_mode ? " 0 1110KKVV 0 VVVVVVVV 0 111KDBBB"
-                                         : " 0 0111KKVV 0 VVVVVVVV 0 111KDBBB";
+      packet.pattern_str += packet.addr.type == dcc::Address::UnknownService
+                              ? " 0 1110KKVV 0 VVVVVVVV 0 111KDBBB"
+                              : " 0 0111KKVV 0 VVVVVVVV 0 111KDBBB";
       break;
   }
 }
@@ -854,8 +850,7 @@ void checksum(State::Packet& packet) {
 }
 
 //
-void highlights(State::Packet& packet, bool service_mode) {
-  auto const addr{dcc::decode_address(packet.bytes)};
+void highlights(State::Packet& packet) {
   auto first{cbegin(packet.bytes) +
              (packet.bytes[0uz] >= 128u && packet.bytes[0uz] <= 252u ? 2 : 1)};
   auto const addr_count{static_cast<size_t>(first - cbegin(packet.bytes))};
@@ -886,7 +881,7 @@ void highlights(State::Packet& packet, bool service_mode) {
         std::string(size(packet.pattern_str), ' ').replace(c++, 1uz, 1uz, '^')};
 
   // Address
-  if (!service_mode)
+  if (packet.addr.type != dcc::Address::UnknownService)
     for (; k < addr_count; ++k) {
       // Space
       ++c;
@@ -963,10 +958,7 @@ void highlights(State::Packet& packet, bool service_mode) {
 }
 
 //
-void tags(State::Packet& packet, bool service_mode) {
-  auto const addr{service_mode
-                    ? dcc::Address{.type = dcc::Address::UnknownService}
-                    : dcc::decode_address(packet.bytes)};
+void tags(State::Packet& packet) {
   auto first{cbegin(packet.bytes) +
              (packet.bytes[0uz] >= 128u && packet.bytes[0uz] <= 252u ? 2 : 1)};
   std::span<uint8_t const> bytes{first, cend(packet.bytes)};
@@ -979,7 +971,7 @@ void tags(State::Packet& packet, bool service_mode) {
   packet.plots.tags.push_back({t, PRE_COL, "Preamble"});
   t += 2.0 * (num_preamble * bit1_duration + bit0_duration);
 
-  if (!service_mode) {
+  if (packet.addr.type != dcc::Address::UnknownService) {
     packet.plots.tags.push_back({t, ADDR_COL, "Address"});
     t += std::accumulate(
       cbegin(packet.bytes),
@@ -1139,13 +1131,8 @@ void packets(State& state) {
     if (ImGui::BeginTabBar(UNIQUE_LABEL())) {
       size_t i{};
 
-      for (auto& packet : state.operations_packets) {
-        eval::eval(state, packet, false);
-        tab::tab(packet, i++);
-      }
-
-      for (auto& packet : state.service_packets) {
-        eval::eval(state, packet, true);
+      for (auto& packet : state.packets) {
+        eval::eval(state, packet);
         tab::tab(packet, i++);
       }
 

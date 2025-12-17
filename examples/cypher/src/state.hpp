@@ -27,6 +27,7 @@ struct State {
 
   //
   struct Packet {
+    dcc::Address addr{};
     dcc::Packet bytes{};
     std::vector<std::string> desc_strs{};
     std::string pattern_str{};
@@ -41,11 +42,8 @@ struct State {
     bool show{true};
   };
 
-  // Operations mode packets
-  std::list<Packet> operations_packets{};
-
-  // Service mode packets
-  std::list<Packet> service_packets{};
+  // Packets
+  std::list<Packet> packets{};
 
   //
   struct Datagram {

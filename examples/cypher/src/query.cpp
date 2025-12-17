@@ -1,4 +1,5 @@
 #include "query.hpp"
+#include <map>
 #include <string>
 #include "demo.hpp"
 
@@ -16,6 +17,18 @@ EM_JS(char const*, get_url, (), {
 char const* get_query() { return ""; }
 char const* get_url() { return "https://zimo-elektronik.github.io/DCC/"; }
 #endif
+
+std::map<decltype(dcc::Address::type), char> address_preceding_character{
+  {dcc::Address::UnknownService, 'u'},
+  {dcc::Address::Broadcast, 'b'},
+  {dcc::Address::BasicLoco, 's'},
+  {dcc::Address::BasicAccessory, 'a'},
+  {dcc::Address::ExtendedAccessory, 'x'},
+  {dcc::Address::ExtendedLoco, 'l'},
+  {dcc::Address::Reserved, 'r'},
+  {dcc::Address::DataTransfer, 't'},
+  {dcc::Address::AutomaticLogon, 'e'},
+  {dcc::Address::Idle, 'i'}};
 
 //
 std::string get_query_param(std::string const& url, std::string const& param) {
@@ -67,26 +80,17 @@ void query(State& state) { from_query(state, get_query()); }
 //
 void from_query(State& state, std::string const& url) {
   if (auto const param{get_query_param(url, "demo")}; size(param)) {
-    state.operations_packets.clear();
-    state.service_packets.clear();
+    state.packets.clear();
     state.datagrams.clear();
     demo(state);
     return;
   }
 
-  if (auto const param{get_query_param(url, "operations_packets")};
-      size(param)) {
-    state.operations_packets.clear();
+  if (auto const param{get_query_param(url, "packets")}; size(param)) {
+    state.packets.clear();
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
-      state.operations_packets.push_back({.bytes = vector2packet(v)});
-  }
-
-  if (auto const param{get_query_param(url, "service_packets")}; size(param)) {
-    state.service_packets.clear();
-    auto const vs{to_vector(param)};
-    for (auto const& v : vs)
-      state.service_packets.push_back({.bytes = vector2packet(v)});
+      state.packets.push_back({.bytes = vector2packet(v)});
   }
 
   if (auto const param{get_query_param(url, "datagrams")}; size(param)) {
@@ -101,19 +105,9 @@ void from_query(State& state, std::string const& url) {
 std::string to_query(State& state) {
   std::string retval{get_url()};
 
-  if (size(state.operations_packets)) {
-    retval += "?operations_packets=";
-    for (auto packet : state.operations_packets) {
-      if (!packet.show) continue;
-      for (auto b : packet.bytes) retval += std::format("{:02X}", b);
-      retval += '_';
-    }
-    retval.pop_back();
-  }
-
-  if (size(state.service_packets)) {
-    retval += "?service_packets=";
-    for (auto packet : state.service_packets) {
+  if (size(state.packets)) {
+    retval += "?packets=";
+    for (auto packet : state.packets) {
       if (!packet.show) continue;
       for (auto b : packet.bytes) retval += std::format("{:02X}", b);
       retval += '_';
