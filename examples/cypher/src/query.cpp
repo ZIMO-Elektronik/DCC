@@ -69,8 +69,7 @@ void from_query(State& state, std::string const& url) {
   if (auto const param{get_query_param(url, "demo")}; size(param)) {
     state.operations_packets.clear();
     state.service_packets.clear();
-    state.loco_datagrams.clear();
-    state.accessory_datagrams.clear();
+    state.datagrams.clear();
     demo(state);
     return;
   }
@@ -90,19 +89,11 @@ void from_query(State& state, std::string const& url) {
       state.service_packets.push_back({.bytes = vector2packet(v)});
   }
 
-  if (auto const param{get_query_param(url, "loco_datagrams")}; size(param)) {
-    state.loco_datagrams.clear();
+  if (auto const param{get_query_param(url, "datagrams")}; size(param)) {
+    state.datagrams.clear();
     auto const vs{to_vector(param)};
     for (auto const& v : vs)
-      state.loco_datagrams.push_back({.bytes = vector2datagram(v)});
-  }
-
-  if (auto const param{get_query_param(url, "accessory_datagrams")};
-      size(param)) {
-    state.accessory_datagrams.clear();
-    auto const vs{to_vector(param)};
-    for (auto const& v : vs)
-      state.accessory_datagrams.push_back({.bytes = vector2datagram(v)});
+      state.datagrams.push_back({.bytes = vector2datagram(v)});
   }
 }
 
@@ -130,19 +121,9 @@ std::string to_query(State& state) {
     retval.pop_back();
   }
 
-  if (size(state.loco_datagrams)) {
-    retval += "?loco_datagrams=";
-    for (auto datagram : state.loco_datagrams) {
-      if (!datagram.show) continue;
-      for (auto b : datagram.bytes) retval += std::format("{:02X}", b);
-      retval += '_';
-    }
-    retval.pop_back();
-  }
-
-  if (size(state.accessory_datagrams)) {
-    retval += "?accessory_datagrams=";
-    for (auto datagram : state.accessory_datagrams) {
+  if (size(state.datagrams)) {
+    retval += "?datagrams=";
+    for (auto datagram : state.datagrams) {
       if (!datagram.show) continue;
       for (auto b : datagram.bytes) retval += std::format("{:02X}", b);
       retval += '_';

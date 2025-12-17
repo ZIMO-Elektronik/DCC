@@ -21,6 +21,7 @@ namespace eval {
 
 // clang-format off
 void eval(State& state, State::Datagram& datagram);
+  void dissector(State::Datagram& datagram);
   void highlights(State::Datagram& datagram);
   void tags(State::Datagram& datagram);
 // clang-format on
@@ -55,8 +56,6 @@ void eval(State& state, State::Datagram& datagram) {
   datagram.plots.b.clear();
   datagram.plots.highlights.clear();
   datagram.plots.tags.clear();
-
-  datagram.desc_strs.push_back(" REMOVOOOVE ME ");
 
   // P
   for (auto i{0uz}; i <= 8uz; ++i) {
@@ -107,8 +106,14 @@ void eval(State& state, State::Datagram& datagram) {
   datagram.plots.t_b.push_back(datagram.plots.t_p.back());
   datagram.plots.b.push_back(1.0 * scale);
 
+  dissector(datagram);
   highlights(datagram);
   tags(datagram);
+}
+
+//
+void dissector(State::Datagram& datagram) {
+  datagram.desc_strs.push_back(" REMOVOOOVE ME ");
 }
 
 //
@@ -340,12 +345,7 @@ void datagrams(State& state) {
     if (ImGui::BeginTabBar(UNIQUE_LABEL())) {
       size_t i{};
 
-      for (auto& datagram : state.loco_datagrams) {
-        eval::eval(state, datagram);
-        tab::tab(datagram, i++);
-      }
-
-      for (auto& datagram : state.accessory_datagrams) {
+      for (auto& datagram : state.datagrams) {
         eval::eval(state, datagram);
         tab::tab(datagram, i++);
       }

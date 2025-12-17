@@ -44,7 +44,7 @@ void broadcast(State& state, Datagram<>& datagram) {
   if (std::ranges::all_of(datagram, [](auto b) { return !b; })) return;
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Datagrams"))
-    state.loco_datagrams.push_back({.bytes = datagram});
+    state.datagrams.push_back({.bytes = datagram});
 }
 
 //
@@ -88,7 +88,7 @@ void loco(State& state, Datagram<>& datagram) {
   if (std::ranges::all_of(datagram, [](auto b) { return !b; })) return;
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Datagrams"))
-    state.loco_datagrams.push_back({.bytes = datagram});
+    state.datagrams.push_back({.bytes = datagram});
 }
 
 //
