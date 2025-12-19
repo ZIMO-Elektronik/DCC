@@ -21,12 +21,17 @@
 #include "app/block.hpp"
 #include "app/cv_auto.hpp"
 #include "app/dyn.hpp"
+#include "app/error.hpp"
 #include "app/ext.hpp"
 #include "app/info.hpp"
 #include "app/pom.hpp"
+#include "app/search.hpp"
 #include "app/srq.hpp"
+#include "app/stat1.hpp"
+#include "app/stat4.hpp"
+#include "app/test.hpp"
+#include "app/time.hpp"
 #include "app/xpom.hpp"
-#include "app/zeit.hpp"
 #include "channel.hpp"
 #include "datagram.hpp"
 #include "nak.hpp"
@@ -35,18 +40,28 @@ namespace dcc::bidi {
 
 /// Dissect datagrams
 struct Dissector : std::ranges::view_interface<Dissector> {
-  using value_type = std::variant<std::common_type_t<Ack, Nak>, // Ack or nak
-                                  app::Pom,                     // app:pom
-                                  app::AdrHigh,                 // app:adr_high
-                                  app::AdrLow,                  // app:adr_low
-                                  app::Ext,                     // app:ext
-                                  app::Info,                    // app:info
-                                  app::Dyn,                     // app:dyn
-                                  app::Xpom,                    // app:xpom
-                                  app::CvAuto,                  // app:CV-auto
-                                  app::Block,                   // app:block
-                                  app::Zeit,                    // app:zeit
-                                  app::Srq>;                    // app:srq
+  using value_type = std::variant<std::common_type_t<Ack, Nak>, // ACK or NAK
+                                  app::Pom,                     // ID0
+                                  app::AdrHigh,                 // ID1
+                                  app::AdrLow,                  // ID2
+                                  app::Ext,                     // ID3
+                                  app::Info,                    // ID4
+                                  app::Dyn,                     // ID7
+                                  app::Xpom,                    // ID8-11
+                                  app::CvAuto,                  // ID12
+                                  app::Block,                   // ID13
+                                  app::Search,                  // ID14
+                                  app::Srq,                     //
+                                                                // ID0
+                                  app::Stat4,                   // ID3
+                                  app::Stat1,                   // ID4
+                                  app::Time,                    // ID5
+                                  app::Error,                   // ID6
+                                                                // ID7
+                                                                // ID8-11
+                                  app::Test                     // ID12
+                                  >;                            // ID13
+
   using size_type = ztl::smallest_unsigned_t<bundled_channels_size>;
   using difference_type = std::make_signed_t<size_type>;
   using reference = value_type;
@@ -111,6 +126,7 @@ struct Dissector : std::ranges::view_interface<Dissector> {
             return app::Xpom{.ss = static_cast<uint8_t>(id & 0b11u)};
           case app::CvAuto::id: return app::CvAuto{};
           case app::Block::id: return app::Block{};
+          case app::Search::id: return app::Search{};
           default: return {};
         }
 
@@ -121,6 +137,18 @@ struct Dissector : std::ranges::view_interface<Dissector> {
         // others
         else switch (id) {
             case app::Pom::id: return app::Pom{.d = static_cast<uint8_t>(d)};
+            case app::Stat4::id: return app::Stat4{};
+            case app::Stat1::id: return app::Stat1{};
+            case app::Time::id: return app::Time{};
+            case app::Error::id: return app::Error{};
+            case app::Dyn::id: return app::Dyn{};
+            case app::Xpom::ids[0uz]: [[fallthrough]];
+            case app::Xpom::ids[1uz]: [[fallthrough]];
+            case app::Xpom::ids[2uz]: [[fallthrough]];
+            case app::Xpom::ids[3uz]:
+              return app::Xpom{.ss = static_cast<uint8_t>(id & 0b11u)};
+            case app::Test::id: return app::Test{};
+            case app::Block::id: return app::Block{};
             default: return {};
           }
 

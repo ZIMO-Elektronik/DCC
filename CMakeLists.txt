@@ -141,7 +141,7 @@ target_compile_definitions(
 if(PROJECT_IS_TOP_LEVEL AND NOT ESP_PLATFORM)
   target_include_directories(DCC INTERFACE include)
   target_common_warnings(DCC INTERFACE)
-  target_common_errors(DCC INTERFACE)
+  target_common_errors(DCC INTERFACE -Wfatal-errors)
 else()
   target_include_directories(DCC SYSTEM INTERFACE include)
 endif()
