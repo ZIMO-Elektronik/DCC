@@ -41,6 +41,7 @@ namespace dcc::bidi {
 /// Dissect datagrams
 struct Dissector : std::ranges::view_interface<Dissector> {
   using value_type = std::variant<std::common_type_t<Ack, Nak>, // ACK or NAK
+                                                                //
                                   app::Pom,                     // ID0
                                   app::AdrHigh,                 // ID1
                                   app::AdrLow,                  // ID2
@@ -51,6 +52,7 @@ struct Dissector : std::ranges::view_interface<Dissector> {
                                   app::CvAuto,                  // ID12
                                   app::Block,                   // ID13
                                   app::Search,                  // ID14
+                                                                //
                                   app::Srq,                     //
                                                                 // ID0
                                   app::Stat4,                   // ID3

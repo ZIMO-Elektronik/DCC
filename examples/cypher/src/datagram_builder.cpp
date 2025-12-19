@@ -249,10 +249,102 @@ void app_block(Datagram<>& datagram) {
 
 namespace accessory {
 
+// clang-format off
+void accessory(State& state, Datagram<>& datagram);
+  void channel1(Datagram<>& datagram);
+  void channel2(Datagram<>& datagram);
+    void app_pom(Datagram<>& datagram);
+    void app_stat4(Datagram<>& datagram);
+    void app_stat1(Datagram<>& datagram);
+    void app_time(Datagram<>& datagram);
+    void app_error(Datagram<>& datagram);
+    void app_dyn(Datagram<>& datagram);
+    void app_xpom(Datagram<>& datagram);
+    void app_test(Datagram<>& datagram);
+    void app_block(Datagram<>& datagram);
+// clang-format on
+
 //
 void accessory(State& state, Datagram<>& datagram) {
-  ImGui::TextUnformatted("\\todo");
+  channel1(datagram);
+  channel2(datagram);
+  if (std::ranges::all_of(datagram, [](auto b) { return !b; })) return;
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Datagrams"))
+    state.datagrams.push_back(
+      {.addr = {.value = 3u, .type = dcc::Address::ExtendedAccessory},
+       .bytes = datagram});
 }
+
+//
+void channel1(Datagram<>& datagram) {
+  ImGui::SeparatorText("Channel 1");
+  static constexpr std::array ch1_datagrams{"", "app:srq"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(ch1_datagrams), ssize(ch1_datagrams));
+}
+
+//
+void channel2(Datagram<>& datagram) {
+  ImGui::SeparatorText("Channel 2");
+  static constexpr std::array ch2_datagrams{"",
+                                            "app:pom",
+                                            "app:stat4",
+                                            "app:stat1",
+                                            "app:time",
+                                            "app:error",
+                                            "app:dyn",
+                                            "app:xpom",
+                                            "app:test",
+                                            "app:block"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(ch2_datagrams), ssize(ch2_datagrams));
+  if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:pom"))
+    app_pom(datagram);
+  else if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:stat4"))
+    app_stat4(datagram);
+  else if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:stat1"))
+    app_stat1(datagram);
+  else if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:time"))
+    app_time(datagram);
+  else if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:error"))
+    app_error(datagram);
+  else if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:dyn"))
+    app_dyn(datagram);
+  else if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:xpom"))
+    app_xpom(datagram);
+  else if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:test"))
+    app_test(datagram);
+  else if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:block"))
+    app_block(datagram);
+}
+
+//
+void app_pom(Datagram<>& datagram) { return loco::app_pom(datagram); }
+
+//
+void app_stat4(Datagram<>& datagram) {}
+
+//
+void app_stat1(Datagram<>& datagram) {}
+
+//
+void app_time(Datagram<>& datagram) {}
+
+//
+void app_error(Datagram<>& datagram) {}
+
+//
+void app_dyn(Datagram<>& datagram) {}
+
+//
+void app_xpom(Datagram<>& datagram) { return loco::app_xpom(datagram); }
+
+//
+void app_test(Datagram<>& datagram) {}
+
+//
+void app_block(Datagram<>& datagram) {}
 
 } // namespace accessory
 
