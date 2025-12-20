@@ -541,30 +541,46 @@ void feature_expansion_command_station_feature_identification(
       dcc::LocoFeatures const feats{
         static_cast<uint16_t>(bytes[2uz] << 8u | bytes[3uz] << 0u)};
       packet.desc_strs.back() += "\n- Loco Features";
-      packet.desc_strs.back() += "\n- Special Operating Modes=" +
-                                 std::to_string(feats.special_operating_modes);
-      packet.desc_strs.back() +=
-        "\n- Analog Function=" + std::to_string(feats.analog_function);
-      packet.desc_strs.back() +=
-        "\n- Binary State Long=" + std::to_string(feats.binary_state_long);
-      packet.desc_strs.back() +=
-        "\n- Binary State Short=" + std::to_string(feats.binary_state_short);
-      packet.desc_strs.back() += "\n- F29-F68=" + std::to_string(feats.f29_f68);
-      packet.desc_strs.back() += "\n- F13-F28=" + std::to_string(feats.f13_f28);
-      packet.desc_strs.back() +=
-        "\n- XPOM Write=" + std::to_string(feats.xpom_write);
-      packet.desc_strs.back() +=
-        "\n- POM Write=" + std::to_string(feats.pom_write);
-      packet.desc_strs.back() += "\n- Speed, Direction and Functions=" +
-                                 std::to_string(feats.special_operating_modes);
-      packet.desc_strs.back() +=
-        "\n- 128 Speed Steps=" + std::to_string(feats.speed_steps_128);
-      packet.desc_strs.back() +=
-        "\n- Extended Addresses 10000-10239=" +
-        std::to_string(feats.extended_addresses_10000_10239);
       packet.desc_strs.back() +=
         "\n- Basic Addresses 100-127 as Extended=" +
-        std::to_string(feats.basic_addresses_100_127_as_extended);
+        std::to_string(static_cast<bool>(
+          feats & dcc::LocoFeatures::BasicAddresses100_127AsExtended));
+      packet.desc_strs.back() +=
+        "\n- Extended Addresses 10000-10239=" +
+        std::to_string(static_cast<bool>(
+          feats & dcc::LocoFeatures::ExtendedAddresses10000_10239));
+      packet.desc_strs.back() +=
+        "\n- 128 Speed Steps=" + std::to_string(static_cast<bool>(
+                                   feats & dcc::LocoFeatures::SpeedSteps128));
+      packet.desc_strs.back() +=
+        "\n- Speed, Direction and Functions=" +
+        std::to_string(static_cast<bool>(feats & dcc::LocoFeatures::SDF));
+      packet.desc_strs.back() +=
+        "\n- POM Write=" +
+        std::to_string(static_cast<bool>(feats & dcc::LocoFeatures::PomWrite));
+      packet.desc_strs.back() +=
+        "\n- XPOM Write=" +
+        std::to_string(static_cast<bool>(feats & dcc::LocoFeatures::XpomWrite));
+      packet.desc_strs.back() +=
+        "\n- F13-F28=" +
+        std::to_string(static_cast<bool>(feats & dcc::LocoFeatures::F13_F28));
+      packet.desc_strs.back() +=
+        "\n- F29-F68=" +
+        std::to_string(static_cast<bool>(feats & dcc::LocoFeatures::F29_F68));
+      packet.desc_strs.back() +=
+        "\n- Binary State Short=" +
+        std::to_string(
+          static_cast<bool>(feats & dcc::LocoFeatures::BinaryStateShort));
+      packet.desc_strs.back() += "\n- Binary State Long=" +
+                                 std::to_string(static_cast<bool>(
+                                   feats & dcc::LocoFeatures::BinaryStateLong));
+      packet.desc_strs.back() +=
+        "\n- Analog Function=" + std::to_string(static_cast<bool>(
+                                   feats & dcc::LocoFeatures::AnalogFunction));
+      packet.desc_strs.back() +=
+        "\n- Special Operating Modes=" +
+        std::to_string(
+          static_cast<bool>(feats & dcc::LocoFeatures::SpecialOperatingModes));
       break;
     }
     case 0b1110u: {
@@ -572,17 +588,30 @@ void feature_expansion_command_station_feature_identification(
         static_cast<uint16_t>(bytes[2uz] << 8u | bytes[3uz] << 0u)};
       packet.desc_strs.back() += "\n- Accessory and Broadcast Features";
       packet.desc_strs.back() +=
-        "\n- System Time=" + std::to_string(feats.system_time);
+        "\n- Addresses Offset by 4=" +
+        std::to_string(static_cast<bool>(
+          feats & dcc::AccessoryBroadcastFeatures::AddressesOffsetBy4));
       packet.desc_strs.back() +=
-        "\n- Time Scale=" + std::to_string(feats.time_scale);
-      packet.desc_strs.back() += "\n- Date=" + std::to_string(feats.date);
-      packet.desc_strs.back() += "\n- Time=" + std::to_string(feats.time);
+        "\n- Extended=" + std::to_string(static_cast<bool>(
+                            feats & dcc::AccessoryBroadcastFeatures::Extended));
       packet.desc_strs.back() +=
-        "\n- POM Write=" + std::to_string(feats.pom_write);
+        "\n- POM Write=" +
+        std::to_string(
+          static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::PomWrite));
       packet.desc_strs.back() +=
-        "\n- Extended=" + std::to_string(feats.extended);
-      packet.desc_strs.back() += "\n- Addresses Offset by 4=" +
-                                 std::to_string(feats.addresses_offset_by_4);
+        "\n- Time=" + std::to_string(static_cast<bool>(
+                        feats & dcc::AccessoryBroadcastFeatures::Time));
+      packet.desc_strs.back() +=
+        "\n- Date=" + std::to_string(static_cast<bool>(
+                        feats & dcc::AccessoryBroadcastFeatures::Date));
+      packet.desc_strs.back() +=
+        "\n- Time Scale=" +
+        std::to_string(static_cast<bool>(
+          feats & dcc::AccessoryBroadcastFeatures::TimeScale));
+      packet.desc_strs.back() +=
+        "\n- System Time=" +
+        std::to_string(static_cast<bool>(
+          feats & dcc::AccessoryBroadcastFeatures::SystemTime));
       break;
     }
     case 0b1101u: {
@@ -590,21 +619,36 @@ void feature_expansion_command_station_feature_identification(
         static_cast<uint16_t>(bytes[2uz] << 8u | bytes[3uz] << 0u)};
       packet.desc_strs.back() += "\n- RailCom Features";
       packet.desc_strs.back() +=
-        "\n- RailCom+=" + std::to_string(feats.railcom_plus);
-      packet.desc_strs.back() += "\n- app:dyn Track Voltage=" +
-                                 std::to_string(feats.app_dyn_track_voltage);
-      packet.desc_strs.back() += "\n- app:dyn Operating Parameters=" +
-                                 std::to_string(feats.app_dyn_operating_params);
-      packet.desc_strs.back() += "\n- app:dyn Container Levels=" +
-                                 std::to_string(feats.app_dyn_container_levels);
+        "\n- RailCom=" +
+        std::to_string(static_cast<bool>(feats & dcc::BiDiFeatures::RailCom));
       packet.desc_strs.back() +=
-        "\n- XPOM Read=" + std::to_string(feats.xpom_read);
+        "\n- DCC-A=" +
+        std::to_string(static_cast<bool>(feats & dcc::BiDiFeatures::DccA));
       packet.desc_strs.back() +=
-        "\n- POM Read=" + std::to_string(feats.pom_read);
+        "\n- NOP for Accessories=" +
+        std::to_string(
+          static_cast<bool>(feats & dcc::BiDiFeatures::NopForAccessories));
       packet.desc_strs.back() +=
-        "\n- NOP for Accessories=" + std::to_string(feats.nop_for_accessories);
-      packet.desc_strs.back() += "\n- DCC-A=" + std::to_string(feats.dcc_a);
-      packet.desc_strs.back() += "\n- RailCom=" + std::to_string(feats.railcom);
+        "\n- POM Read=" +
+        std::to_string(static_cast<bool>(feats & dcc::BiDiFeatures::PomRead));
+      packet.desc_strs.back() +=
+        "\n- XPOM Read=" +
+        std::to_string(static_cast<bool>(feats & dcc::BiDiFeatures::XpomRead));
+      packet.desc_strs.back() +=
+        "\n- app:dyn Container Levels=" +
+        std::to_string(
+          static_cast<bool>(feats & dcc::BiDiFeatures::AppDynContainerLevels));
+      packet.desc_strs.back() +=
+        "\n- app:dyn Operating Parameters=" +
+        std::to_string(
+          static_cast<bool>(feats & dcc::BiDiFeatures::AppDynOperatingParams));
+      packet.desc_strs.back() +=
+        "\n- app:dyn Track Voltage=" +
+        std::to_string(
+          static_cast<bool>(feats & dcc::BiDiFeatures::AppDynTrackVoltage));
+      packet.desc_strs.back() +=
+        "\n- RailCom+=" + std::to_string(static_cast<bool>(
+                            feats & dcc::BiDiFeatures::RailComPlus));
       break;
     }
   }
