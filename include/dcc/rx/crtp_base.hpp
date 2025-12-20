@@ -1189,7 +1189,7 @@ private:
     }
     // Implicitly acknowledge all CV access commands
     else
-      impl().transmitBiDi(acks);
+      impl().transmitBiDi({&acks[0uz].value(), size(acks)});
   }
 
   /// Handle app:dyn

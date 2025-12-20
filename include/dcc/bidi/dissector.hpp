@@ -40,29 +40,30 @@ namespace dcc::bidi {
 
 /// Dissect datagrams
 struct Dissector : std::ranges::view_interface<Dissector> {
-  using value_type = std::variant<std::common_type_t<Ack, Nak>, // ACK or NAK
-                                                                //
-                                  app::Pom,                     // ID0
-                                  app::AdrHigh,                 // ID1
-                                  app::AdrLow,                  // ID2
-                                  app::Ext,                     // ID3
-                                  app::Info,                    // ID4
-                                  app::Dyn,                     // ID7
-                                  app::Xpom,                    // ID8-11
-                                  app::CvAuto,                  // ID12
-                                  app::Block,                   // ID13
-                                  app::Search,                  // ID14
-                                                                //
-                                  app::Srq,                     //
-                                                                // ID0
-                                  app::Stat4,                   // ID3
-                                  app::Stat1,                   // ID4
-                                  app::Time,                    // ID5
-                                  app::Error,                   // ID6
-                                                                // ID7
-                                                                // ID8-11
-                                  app::Test                     // ID12
-                                  >;                            // ID13
+  using value_type = std::variant<Ack,          // ACK
+                                  Nak,          // NAK
+                                                //
+                                  app::Pom,     // ID0
+                                  app::AdrHigh, // ID1
+                                  app::AdrLow,  // ID2
+                                  app::Ext,     // ID3
+                                  app::Info,    // ID4
+                                  app::Dyn,     // ID7
+                                  app::Xpom,    // ID8-11
+                                  app::CvAuto,  // ID12
+                                  app::Block,   // ID13
+                                  app::Search,  // ID14
+                                                //
+                                  app::Srq,     //
+                                                // ID0
+                                  app::Stat4,   // ID3
+                                  app::Stat1,   // ID4
+                                  app::Time,    // ID5
+                                  app::Error,   // ID6
+                                                // ID7
+                                                // ID8-11
+                                  app::Test     // ID12
+                                  >;            // ID13
 
   using size_type = ztl::smallest_unsigned_t<bundled_channels_size>;
   using difference_type = std::make_signed_t<size_type>;
@@ -99,15 +100,28 @@ struct Dissector : std::ranges::view_interface<Dissector> {
 
   constexpr reference operator*() const {
     auto const dg{next()};
-    auto const byte_count{std::size(dg)};
-    if (byte_count == sizeof(Ack)) return {dg.front()};
+
+    // ACK
+    if (dg[0uz] == acks[0uz] || dg[0uz] == acks[1uz]) return Ack{dg[0uz]};
+    // NAK
+    else if (dg[0uz] == nak) return Nak{dg[0uz]};
 
     auto const bit_count{std::size(dg) * 6uz - 4uz};
-    auto const id{static_cast<uint8_t>(dg.front() >> 2u)};
+    auto const id{static_cast<uint8_t>(dg[0uz] >> 2u)};
     auto const data{make_data(dg)};
     auto const d{data & ((1ull << bit_count) - 1ull)};
 
     switch (_addr.type) {
+      case Address::Broadcast:
+        switch (id) {
+          case app::AdrHigh::id:
+            return app::AdrHigh{.d = static_cast<uint8_t>(d)};
+          case app::AdrLow::id:
+            return app::AdrLow{.d = static_cast<uint8_t>(d)};
+          case app::Search::id: return app::Search{};
+          default: return {};
+        }
+
       case Address::BasicLoco: [[fallthrough]];
       case Address::ExtendedLoco:
         switch (id) {
@@ -189,10 +203,20 @@ private:
         _encoded[_i] == nak)
       return {&_encoded[_i], sizeof(Ack)};
 
-    switch (_addr.type) {
+    switch (auto const id{static_cast<uint8_t>(_decoded[_i] >> 2u)};
+            _addr.type) {
+      case Address::Broadcast:
+        switch (id) {
+          case app::AdrHigh::id: [[fallthrough]];
+          case app::AdrLow::id: [[fallthrough]];
+          case app::Search::id:
+            return {&_decoded[_i], datagram_size<Bits::_12>};
+          default: return {};
+        }
+
       case Address::BasicLoco: [[fallthrough]];
       case Address::ExtendedLoco:
-        switch (_decoded[_i] >> 2u) {
+        switch (id) {
           case app::Pom::id: [[fallthrough]];
           case app::AdrHigh::id: [[fallthrough]];
           case app::AdrLow::id:
@@ -214,7 +238,7 @@ private:
         // app:srq
         if (!_i) return {&_decoded[_i], datagram_size<Bits::_12>};
         // others
-        else switch (_decoded[_i] >> 2u) {
+        else switch (id) {
             case app::Pom::id: return {&_decoded[_i], datagram_size<Bits::_12>};
             default: return {};
           }

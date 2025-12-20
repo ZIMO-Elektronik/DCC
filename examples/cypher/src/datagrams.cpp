@@ -113,14 +113,53 @@ void eval(State& state, State::Datagram& datagram) {
 
 //
 void dissector(State::Datagram& datagram) {
-  datagram.desc_strs.push_back(" REMOVOOOVE ME ");
+  Dissector dissector{datagram.bytes, datagram.addr};
+  for (auto const& dg : dissector) {
+    if (auto const ack{get_if<Ack>(&dg)}) {
+      datagram.desc_strs.push_back("ACK");
+    } else if (auto const nak{get_if<Nak>(&dg)}) {
+      datagram.desc_strs.push_back("NAK");
+    } else if (auto const adr_low{get_if<app::Pom>(&dg)}) {
+      datagram.desc_strs.push_back("app:pom");
+    } else if (auto const dyn{get_if<app::AdrHigh>(&dg)}) {
+      datagram.desc_strs.push_back("app:adr_high");
+    } else if (auto const dyn{get_if<app::AdrLow>(&dg)}) {
+      datagram.desc_strs.push_back("app:adr_low");
+    } else if (auto const dyn{get_if<app::Ext>(&dg)}) {
+      datagram.desc_strs.push_back("app:ext");
+    } else if (auto const dyn{get_if<app::Info>(&dg)}) {
+      datagram.desc_strs.push_back("app:info");
+    } else if (auto const dyn{get_if<app::Dyn>(&dg)}) {
+      datagram.desc_strs.push_back("app:dyn");
+    } else if (auto const dyn{get_if<app::Xpom>(&dg)}) {
+      datagram.desc_strs.push_back("app:xpom");
+    } else if (auto const dyn{get_if<app::CvAuto>(&dg)}) {
+      datagram.desc_strs.push_back("app:CV-auto");
+    } else if (auto const dyn{get_if<app::Block>(&dg)}) {
+      datagram.desc_strs.push_back("app:block");
+    } else if (auto const dyn{get_if<app::Search>(&dg)}) {
+      datagram.desc_strs.push_back("app:search");
+    } else if (auto const dyn{get_if<app::Srq>(&dg)}) {
+      datagram.desc_strs.push_back("app:srq");
+    } else if (auto const dyn{get_if<app::Stat4>(&dg)}) {
+      datagram.desc_strs.push_back("app:stat4");
+    } else if (auto const dyn{get_if<app::Stat1>(&dg)}) {
+      datagram.desc_strs.push_back("app:stat1");
+    } else if (auto const dyn{get_if<app::Time>(&dg)}) {
+      datagram.desc_strs.push_back("app:time");
+    } else if (auto const dyn{get_if<app::Error>(&dg)}) {
+      datagram.desc_strs.push_back("app:error");
+    } else if (auto const dyn{get_if<app::Test>(&dg)}) {
+      datagram.desc_strs.push_back("app:test");
+    }
+  }
 }
 
 //
 void highlights(State::Datagram& datagram) {
   // Build data string
   std::string data_str{};
-  for (auto b : datagram.bytes)
+  for (auto const b : datagram.bytes)
     if (b) {
       auto str{std::format(" {:08b} ", b)};
       std::ranges::reverse(str); // LSB first
