@@ -3,6 +3,7 @@
 #include <dcc/dcc.hpp>
 #include "query.hpp"
 
+// Config window
 void config(State& state) {
   if (!state.windows.show_config) return;
 

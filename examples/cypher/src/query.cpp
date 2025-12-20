@@ -17,7 +17,7 @@ char const* get_query() { return ""; }
 char const* get_url() { return "https://zimo-elektronik.github.io/DCC/"; }
 #endif
 
-//
+// Get query parameter from URL
 std::string get_query_param(std::string const& url, std::string const& param) {
   auto const pattern{param + "="};
   auto const start_pos{url.find(pattern)};
@@ -29,7 +29,7 @@ std::string get_query_param(std::string const& url, std::string const& param) {
                         end_pos - size(pattern) - 1uz);
 }
 
-//
+// Split string to vector of strings
 auto to_str_vector(std::string const& str) {
   std::vector<std::string> retval;
   for (auto&& sub : str | std::views::split('_'))
@@ -37,7 +37,7 @@ auto to_str_vector(std::string const& str) {
   return retval;
 }
 
-//
+// Convert string to address
 dcc::Address str2addr(std::string const& str) {
   dcc::Address retval;
   switch (str[0uz]) {
@@ -57,7 +57,7 @@ dcc::Address str2addr(std::string const& str) {
   return retval;
 }
 
-//
+// Convert string to packet
 State::Packet str2packet(std::string const& str) {
   dcc::Packet bytes;
   for (auto i{6uz}; i < size(str) - 1uz; i += 2uz) {
@@ -67,7 +67,7 @@ State::Packet str2packet(std::string const& str) {
   return {.addr = str2addr(str), .bytes = bytes};
 }
 
-//
+// Convert string to datagram
 State::Datagram str2datagram(std::string const& str) {
   dcc::bidi::Datagram<> bytes;
   size_t count{};
@@ -78,7 +78,7 @@ State::Datagram str2datagram(std::string const& str) {
   return {.addr = str2addr(str), .bytes = bytes};
 }
 
-//
+// Convert address to string
 std::string addr2str(dcc::Address addr) {
   std::string retval;
   switch (addr.type) {
@@ -99,10 +99,10 @@ std::string addr2str(dcc::Address addr) {
 
 } // namespace
 
-//
+// Query
 void query(State& state) { from_query(state, get_query()); }
 
-//
+// Fill state from query
 void from_query(State& state, std::string const& url) {
   if (auto const param{get_query_param(url, "demo")}; size(param)) {
     state.packets.clear();
@@ -124,7 +124,7 @@ void from_query(State& state, std::string const& url) {
   }
 }
 
-//
+// Generate query from state
 std::string to_query(State& state) {
   std::string retval{get_url()};
 

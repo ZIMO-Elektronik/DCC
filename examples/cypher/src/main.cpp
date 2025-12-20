@@ -18,7 +18,6 @@
 #include "style.hpp"
 #include "utility.hpp"
 
-//
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #  include <SDL_opengles2.h>
 #else
@@ -114,7 +113,7 @@ int main(int, char*[]) {
                           .show_datagrams = true,
                           .show_about = false}};
 
-  //
+  // URL query
   query(state);
 
   // Main loop
@@ -147,7 +146,7 @@ int main(int, char*[]) {
     // Setup initial layout
     layout();
 
-    //
+    // Windows
     menu(state);
     config(state);
     packet_builder(state);

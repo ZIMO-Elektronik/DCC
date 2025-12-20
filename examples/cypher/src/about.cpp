@@ -2,15 +2,14 @@
 #include <imgui.h>
 #include "zimo_rgba.hpp"
 
-//
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #  include <SDL_opengles2.h>
 #else
 #  include <SDL_opengl.h>
 #endif
 
+// About window
 void about(State& state) {
-  //
   static GLuint zimo_texture{};
   if (!zimo_texture) {
     glGenTextures(1, &zimo_texture);

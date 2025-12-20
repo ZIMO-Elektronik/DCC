@@ -1123,7 +1123,7 @@ void plot(State::Packet& packet) {
 
 } // namespace
 
-//
+// Packets window
 void packets(State& state) {
   if (!state.windows.show_packets) return;
 

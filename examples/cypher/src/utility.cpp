@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-//
+// Random basic or extended loco address
 dcc::Address random_loco_address() {
   return random_interval(0, 1)
            ? dcc::Address{.value = random_interval<uint16_t>(1u, 127u),
@@ -15,13 +15,13 @@ dcc::Address random_loco_address() {
                           .type = dcc::Address::ExtendedLoco};
 }
 
-//
+// Random basic accessory address
 dcc::Address random_basic_accessory_address() {
   return dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
                       .type = dcc::Address::BasicAccessory};
 }
 
-//
+// Random extended accessory address
 dcc::Address random_extended_accessory_address() {
   return dcc::Address{.value = random_interval<uint16_t>(0u, 2047u),
                       .type = dcc::Address::ExtendedAccessory};
@@ -29,7 +29,7 @@ dcc::Address random_extended_accessory_address() {
 
 namespace ImGui {
 
-//
+// Like InputScalar, but with binary
 bool InputBinary(char const* label,
                  ImGuiDataType data_type,
                  void* p_data,
@@ -60,7 +60,7 @@ bool InputBinary(char const* label,
   return false;
 }
 
-//
+// Table which shows binary, decimal and hex values
 bool BinaryTable(char const* label,
                  uint8_t* p_data,
                  int rows,

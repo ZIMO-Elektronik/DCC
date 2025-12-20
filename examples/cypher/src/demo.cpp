@@ -372,6 +372,7 @@ void add_accessory_datagrams(State& state) {}
 
 } // namespace
 
+// Add demo packets and datagrams
 void demo(State& state) {
   add_loco_packets(state);
   add_accessory_packets(state);

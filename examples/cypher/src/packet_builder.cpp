@@ -35,7 +35,7 @@ void extended(State& state);
     void consist_control(State& state, dcc::Address addr);
       void consist_control_set_consist_address(State& state, dcc::Address addr);
     void advanced_operations(State& state, dcc::Address addr);
-      void advanced_operations_speed_direction_and_function(State& state, dcc::Address addr);
+      void advanced_operations_speed_direction_and_functions(State& state, dcc::Address addr);
       void advanced_operations_analog_function_group(State& state, dcc::Address addr);
       void advanced_operations_special_operating_modes(State& state, dcc::Address addr);
       void advanced_operations_128_speed_step_control(State& state, dcc::Address addr);
@@ -86,7 +86,7 @@ void idle(State& state);
 
 namespace broadcast {
 
-//
+// Broadcast
 void broadcast(State& state) {
   ImGui::SeparatorText("Instruction");
   static constexpr std::array instrs{
@@ -101,7 +101,7 @@ void broadcast(State& state) {
     feature_expansion(state, {.type = dcc::Address::Broadcast});
 }
 
-//
+// Broadcast decoder control
 void decoder_control(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"", "Digital Decoder Reset"};
@@ -111,7 +111,7 @@ void decoder_control(State& state, dcc::Address addr) {
     decoder_control_digital_decoder_reset(state, addr);
 }
 
-//
+// Broadcast decoder control - digital decoder reset
 void decoder_control_digital_decoder_reset(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   ImGui::Text("None");
@@ -120,7 +120,7 @@ void decoder_control_digital_decoder_reset(State& state, dcc::Address addr) {
     state.packets.push_back({.addr = addr, .bytes = dcc::make_reset_packet()});
 }
 
-// Digital Decoder Broadcast Stop Packets For All Decoders [S 9.2]
+// Broadcast speed and direction
 void speed_and_direction(State& state, dcc::Address addr) {
   ImGui::BeginDisabled();
   ImGui::SeparatorText("Sub Instruction");
@@ -152,7 +152,7 @@ void speed_and_direction(State& state, dcc::Address addr) {
        .bytes = dcc::make_speed_and_direction_packet(addr, rggggg)});
 }
 
-//
+// Broadcast feature expansion
 void feature_expansion(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"",
@@ -177,7 +177,7 @@ void feature_expansion(State& state, dcc::Address addr) {
     ::loco::feature_expansion_binary_state_control_short_form(state, addr);
 }
 
-//
+// Broadcast feature expansion - time and date
 void feature_expansion_time_and_date(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static constexpr std::array chrono_type{"", "Time", "Date", "Time Scale"};
@@ -240,7 +240,7 @@ void feature_expansion_time_and_date(State& state, dcc::Address addr) {
   }
 }
 
-//
+// Broadcast feature expansion - system time
 void feature_expansion_system_time(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static uint16_t ms{};
@@ -251,7 +251,7 @@ void feature_expansion_system_time(State& state, dcc::Address addr) {
       {.addr = addr, .bytes = dcc::make_system_time_packet(ms)});
 }
 
-//
+// Broadcast feature expansion - command station feature identification
 void feature_expansion_command_station_feature_identification(
   State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
@@ -361,7 +361,7 @@ void feature_expansion_command_station_feature_identification(
 
 namespace loco {
 
-//
+// Basic loco
 void basic(State& state) {
   ImGui::SeparatorText("Address");
   static dcc::Address::value_type addr{3};
@@ -370,7 +370,7 @@ void basic(State& state) {
   loco(state, {.value = addr, .type = dcc::Address::BasicLoco});
 }
 
-//
+// Extended loco
 void extended(State& state) {
   ImGui::SeparatorText("Address");
   static dcc::Address::value_type addr{3};
@@ -379,7 +379,7 @@ void extended(State& state) {
   loco(state, {.value = addr, .type = dcc::Address::ExtendedLoco});
 }
 
-//
+// Loco
 void loco(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Instruction");
   static constexpr std::array instrs{"",
@@ -408,7 +408,7 @@ void loco(State& state, dcc::Address addr) {
     cv_access(state, addr);
 }
 
-//
+// Loco decoder control
 void decoder_control(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"",
@@ -432,7 +432,7 @@ void decoder_control(State& state, dcc::Address addr) {
     decoder_control_decoder_acknowledgement_request(state, addr);
 }
 
-//
+// Loco decoder control - digital decoder reset
 void decoder_control_digital_decoder_reset(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   ImGui::Text("None");
@@ -442,7 +442,7 @@ void decoder_control_digital_decoder_reset(State& state, dcc::Address addr) {
       {.addr = addr, .bytes = dcc::make_reset_packet(addr)});
 }
 
-//
+// Loco decoder control - hard reset
 void decoder_control_hard_reset(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   ImGui::Text("None");
@@ -452,7 +452,7 @@ void decoder_control_hard_reset(State& state, dcc::Address addr) {
       {.addr = addr, .bytes = dcc::make_hard_reset_packet(addr)});
 }
 
-//
+// Loco decoder control - factory test
 void decoder_control_factory_test(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static bool bit0{};
@@ -474,7 +474,7 @@ void decoder_control_factory_test(State& state, dcc::Address addr) {
        .bytes = dcc::make_factory_test_packet(addr, bit0, bytes)});
 }
 
-//
+// Loco decoder control - set advanced addressing
 void decoder_control_set_advanced_addressing(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static bool cv29_5{};
@@ -486,7 +486,7 @@ void decoder_control_set_advanced_addressing(State& state, dcc::Address addr) {
        .bytes = dcc::make_set_advanced_addressing_packet(addr, cv29_5)});
 }
 
-//
+// Loco decoder control - decoder acknowledgement request
 void decoder_control_decoder_acknowledgement_request(State& state,
                                                      dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
@@ -497,7 +497,7 @@ void decoder_control_decoder_acknowledgement_request(State& state,
       {.addr = addr, .bytes = dcc::make_ack_request_packet(addr)});
 }
 
-//
+// Loco consist control
 void consist_control(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"", "Set Consist Address"};
@@ -507,7 +507,7 @@ void consist_control(State& state, dcc::Address addr) {
     consist_control_set_consist_address(state, addr);
 }
 
-//
+// Loco consist control - set consist address
 void consist_control_set_consist_address(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static dcc::Address::value_type consist_addr{3};
@@ -522,7 +522,7 @@ void consist_control_set_consist_address(State& state, dcc::Address addr) {
                                addr, r << 7u | consist_addr)});
 }
 
-//
+// Loco advanced operations
 void advanced_operations(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"",
@@ -533,7 +533,7 @@ void advanced_operations(State& state, dcc::Address addr) {
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
   if (!strcmp(instrs[static_cast<size_t>(i)], "Speed, Direction and Functions"))
-    advanced_operations_speed_direction_and_function(state, addr);
+    advanced_operations_speed_direction_and_functions(state, addr);
   else if (!strcmp(instrs[static_cast<size_t>(i)], "Analog Function Group"))
     advanced_operations_analog_function_group(state, addr);
   else if (!strcmp(instrs[static_cast<size_t>(i)], "Special Operating Modes"))
@@ -542,9 +542,9 @@ void advanced_operations(State& state, dcc::Address addr) {
     advanced_operations_128_speed_step_control(state, addr);
 }
 
-//
-void advanced_operations_speed_direction_and_function(State& state,
-                                                      dcc::Address addr) {
+// Loco advanced operations - speed, direction and functions
+void advanced_operations_speed_direction_and_functions(State& state,
+                                                       dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
 
   // Speed and direction
@@ -646,7 +646,7 @@ void advanced_operations_speed_direction_and_function(State& state,
   }
 }
 
-//
+// Loco advanced operations - analog function group
 void advanced_operations_analog_function_group(State& state,
                                                dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
@@ -662,7 +662,7 @@ void advanced_operations_analog_function_group(State& state,
          addr, static_cast<uint8_t>(ssssssss), dddddddd)});
 }
 
-///
+// Loco advanced operations - special operating modes
 void advanced_operations_special_operating_modes(State& state,
                                                  dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
@@ -689,7 +689,7 @@ void advanced_operations_special_operating_modes(State& state,
          man)});
 }
 
-//
+// Loco advanced operations - 128 speed step control
 void advanced_operations_128_speed_step_control(State& state,
                                                 dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
@@ -714,7 +714,7 @@ void advanced_operations_128_speed_step_control(State& state,
        .bytes = dcc::make_128_speed_step_control_packet(addr, rggggggg)});
 }
 
-//
+// Loco speed and direction
 void speed_and_direction(State& state, dcc::Address addr) {
   ImGui::BeginDisabled();
   ImGui::SeparatorText("Sub Instruction");
@@ -746,7 +746,7 @@ void speed_and_direction(State& state, dcc::Address addr) {
        .bytes = dcc::make_speed_and_direction_packet(addr, rggggg)});
 }
 
-//
+// Loco function group
 void function_group(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"", "F0-F4", "F9-F12", "F5-F8"};
@@ -760,7 +760,7 @@ void function_group(State& state, dcc::Address addr) {
     function_group_f5_f8(state, addr);
 }
 
-//
+// Loco function group - F0-F4
 void function_group_f0_f4(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 5uz> d{};
@@ -779,7 +779,7 @@ void function_group_f0_f4(State& state, dcc::Address addr) {
                               d[1uz] << 1u | d[0uz] << 0u))});
 }
 
-//
+// Loco function group - F9-F12
 void function_group_f9_f12(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 4uz> d{};
@@ -798,7 +798,7 @@ void function_group_f9_f12(State& state, dcc::Address addr) {
                               d[0uz] << 0u))});
 }
 
-//
+// Loco function group - F5-F8
 void function_group_f5_f8(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 4uz> d{};
@@ -817,7 +817,7 @@ void function_group_f5_f8(State& state, dcc::Address addr) {
                               d[0uz] << 0u))});
 }
 
-//
+// Loco feature expansion
 void feature_expansion(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   static constexpr std::array instrs{"",
@@ -853,7 +853,7 @@ void feature_expansion(State& state, dcc::Address addr) {
     feature_expansion_f21_f28(state, addr);
 }
 
-//
+// Loco feature expansion - binary state control long form
 void feature_expansion_binary_state_control_long_form(State& state,
                                                       dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
@@ -869,7 +869,7 @@ void feature_expansion_binary_state_control_long_form(State& state,
        .bytes = dcc::make_binary_state_long_packet(addr, bin_addr, d)});
 }
 
-//
+// Loco feature expansion - F29-F36
 void feature_expansion_f29_f36(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 8uz> d{};
@@ -889,7 +889,7 @@ void feature_expansion_f29_f36(State& state, dcc::Address addr) {
                               d[1uz] << 1u | d[0uz] << 0u))});
 }
 
-//
+// Loco feature expansion - F37-F44
 void feature_expansion_f37_f44(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 8uz> d{};
@@ -909,7 +909,7 @@ void feature_expansion_f37_f44(State& state, dcc::Address addr) {
                               d[1uz] << 1u | d[0uz] << 0u))});
 }
 
-//
+// Loco feature expansion - F45-F52
 void feature_expansion_f45_f52(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 8uz> d{};
@@ -929,7 +929,7 @@ void feature_expansion_f45_f52(State& state, dcc::Address addr) {
                               d[1uz] << 1u | d[0uz] << 0u))});
 }
 
-//
+// Loco feature expansion - F53-F60
 void feature_expansion_f53_f60(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 8uz> d{};
@@ -949,7 +949,7 @@ void feature_expansion_f53_f60(State& state, dcc::Address addr) {
                               d[1uz] << 1u | d[0uz] << 0u))});
 }
 
-//
+// Loco feature expansion - F61-F68
 void feature_expansion_f61_f68(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 8uz> d{};
@@ -969,7 +969,7 @@ void feature_expansion_f61_f68(State& state, dcc::Address addr) {
                               d[1uz] << 1u | d[0uz] << 0u))});
 }
 
-//
+// Loco feature expansion - binary state control short form
 void feature_expansion_binary_state_control_short_form(State& state,
                                                        dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
@@ -985,7 +985,7 @@ void feature_expansion_binary_state_control_short_form(State& state,
        .bytes = dcc::make_binary_state_short_packet(addr, bin_addr, d)});
 }
 
-//
+// Loco feature expansion - F13-F20
 void feature_expansion_f13_f20(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 8uz> d{};
@@ -1005,7 +1005,7 @@ void feature_expansion_f13_f20(State& state, dcc::Address addr) {
                               d[1uz] << 1u | d[0uz] << 0u))});
 }
 
-//
+// Loco feature expansion - F21-F28
 void feature_expansion_f21_f28(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, 8uz> d{};
@@ -1025,7 +1025,7 @@ void feature_expansion_f21_f28(State& state, dcc::Address addr) {
                               d[1uz] << 1u | d[0uz] << 0u))});
 }
 
-//
+// Loco CV access
 void cv_access(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Sub Instruction");
   if (addr) {
@@ -1047,7 +1047,7 @@ void cv_access(State& state, dcc::Address addr) {
   }
 }
 
-//
+// Loco CV access - long form
 void cv_access_long_form(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static constexpr std::array instrs{
@@ -1106,7 +1106,7 @@ void cv_access_long_form(State& state, dcc::Address addr) {
   }
 }
 
-//
+// Loco CV access - short form
 void cv_access_short_form(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static constexpr std::array instr{"",
@@ -1151,7 +1151,7 @@ void cv_access_short_form(State& state, dcc::Address addr) {
                                addr, kkkk, cvs[0uz], cvs[1uz])});
 }
 
-//
+// Loco CV access - XPOM
 void cv_access_xpom(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static constexpr std::array instrs{
@@ -1245,7 +1245,7 @@ void cv_access_xpom(State& state, dcc::Address addr) {
 
 namespace accessory {
 
-//
+// Basic accessory
 void basic(State& state) {
   ImGui::SeparatorText("Address");
   static dcc::Address::value_type addr{12};
@@ -1254,7 +1254,7 @@ void basic(State& state) {
   accessory(state, {.value = addr, .type = dcc::Address::BasicAccessory});
 }
 
-//
+// Extended accessory
 void extended(State& state) {
   ImGui::SeparatorText("Address");
   static dcc::Address::value_type addr{12};
@@ -1263,7 +1263,7 @@ void extended(State& state) {
   accessory(state, {.value = addr, .type = dcc::Address::ExtendedAccessory});
 }
 
-//
+// Accessory
 void accessory(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Instruction");
   if (addr.type == dcc::Address::BasicAccessory) {
@@ -1289,7 +1289,7 @@ void accessory(State& state, dcc::Address addr) {
   }
 }
 
-//
+// Basic accessory decoder control
 void basic_accessory_decoder_control(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static bool r{};
@@ -1302,7 +1302,7 @@ void basic_accessory_decoder_control(State& state, dcc::Address addr) {
       {.addr = addr, .bytes = dcc::make_basic_accessory_packet(addr, r, d)});
 }
 
-//
+// Extended accessory decoder control
 void extended_accessory_decoder_control(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static constexpr std::array type{"", "Signal", "Switching Time"};
@@ -1336,7 +1336,7 @@ void extended_accessory_decoder_control(State& state, dcc::Address addr) {
   }
 }
 
-//
+// Basic or extended accessory NOP
 void nop_for_basic_and_extended_accessory(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   ImGui::Text("None");
@@ -1352,7 +1352,7 @@ void nop_for_basic_and_extended_accessory(State& state, dcc::Address addr) {
 
 namespace idle {
 
-//
+// Idle
 void idle(State& state) {
   ImGui::SeparatorText("Instruction");
   static constexpr std::array instrs{"", "Digital Decoder Idle"};
@@ -1362,7 +1362,7 @@ void idle(State& state) {
     digital_decoder_idle(state, {.value = 0xFFu, .type = dcc::Address::Idle});
 }
 
-//
+// Idle digital decoder idle
 void digital_decoder_idle(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   ImGui::Text("None");
@@ -1377,7 +1377,7 @@ void digital_decoder_idle(State& state, dcc::Address addr) {
 
 namespace service {
 
-//
+// Service
 void service(State& state) {
   ImGui::SeparatorText("Instruction");
   static constexpr std::array instrs{"", "CV Access"};
@@ -1393,7 +1393,7 @@ void service(State& state) {
 
 namespace user_defined {
 
-//
+// User defined
 void user_defined(State& state) {
   ImGui::SeparatorText("Data");
   static dcc::Packet packet{0u, 0u};
@@ -1416,7 +1416,7 @@ void user_defined(State& state) {
 
 } // namespace
 
-//
+// Packet builder window
 void packet_builder(State& state) {
   if (!state.windows.show_packet_builder) return;
   if (ImGui::Begin("Packet Builder",

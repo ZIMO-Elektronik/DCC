@@ -38,7 +38,7 @@ void loco(State& state, Datagram<>& datagram);
 
 namespace broadcast {
 
-//
+// Broadcast
 void broadcast(State& state, Datagram<>& datagram) {
   channel2(datagram);
   if (std::ranges::all_of(datagram, [](auto b) { return !b; })) return;
@@ -48,7 +48,7 @@ void broadcast(State& state, Datagram<>& datagram) {
       {.addr = {.type = dcc::Address::Broadcast}, .bytes = datagram});
 }
 
-//
+// Broadcast channel2
 void channel2(Datagram<>& datagram) {
   ImGui::SeparatorText("Channel 2");
   static constexpr std::array ch2_datagrams{"", "app:search"};
@@ -58,7 +58,7 @@ void channel2(Datagram<>& datagram) {
     app_search(datagram);
 }
 
-//
+// Broadcast app:search
 void app_search(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   static dcc::Address::value_type addr{3};
@@ -82,7 +82,7 @@ void app_search(Datagram<>& datagram) {
 
 namespace loco {
 
-//
+// Loco
 void loco(State& state, Datagram<>& datagram) {
   channel1(datagram);
   channel2(datagram);
@@ -94,7 +94,7 @@ void loco(State& state, Datagram<>& datagram) {
        .bytes = datagram});
 }
 
-//
+// Loco channel1
 void channel1(Datagram<>& datagram) {
   ImGui::SeparatorText("Channel 1");
   static constexpr std::array ch1_datagrams{
@@ -109,7 +109,7 @@ void channel1(Datagram<>& datagram) {
     app_adr_info1(datagram);
 }
 
-//
+// Loco app:adr_high
 void app_adr_high(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   static dcc::Address::value_type addr{3};
@@ -121,7 +121,7 @@ void app_adr_high(Datagram<>& datagram) {
                     begin(datagram));
 }
 
-//
+// Loco app:adr_low
 void app_adr_low(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   static dcc::Address::value_type addr{3};
@@ -135,7 +135,7 @@ void app_adr_low(Datagram<>& datagram) {
                     begin(datagram));
 }
 
-//
+// Loco app:adr_info1
 void app_adr_info1(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   static bool track_polarity{};
@@ -155,7 +155,7 @@ void app_adr_info1(Datagram<>& datagram) {
   std::ranges::copy(dg, begin(datagram));
 }
 
-//
+// Loco channel2
 void channel2(Datagram<>& datagram) {
   ImGui::SeparatorText("Channel 2");
   static constexpr std::array ch2_datagrams{"",
@@ -184,7 +184,7 @@ void channel2(Datagram<>& datagram) {
     app_block(datagram);
 }
 
-//
+// Loco app:pom
 void app_pom(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   static uint8_t cv_value{};
@@ -192,25 +192,25 @@ void app_pom(Datagram<>& datagram) {
   std::ranges::copy(dcc::make_app_pom_datagram(cv_value), begin(datagram) + 2);
 }
 
-//
+// Loco app:ext
 void app_ext(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   ImGui::TextUnformatted("\\todo");
 }
 
-//
+// Loco app:info
 void app_info(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   ImGui::TextUnformatted("\\todo");
 }
 
-//
+// Loco app:dyn
 void app_dyn(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   ImGui::TextUnformatted("\\todo");
 }
 
-//
+// Loco app:xpom
 void app_xpom(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   static constexpr std::array ss{
@@ -225,7 +225,7 @@ void app_xpom(Datagram<>& datagram) {
     begin(datagram) + channel1_size);
 }
 
-//
+// Loco app:CV-auto
 void app_cv_auto(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   static uint32_t cv_addr{0u};
@@ -237,7 +237,7 @@ void app_cv_auto(Datagram<>& datagram) {
                     begin(datagram) + channel1_size);
 }
 
-//
+// Loco app:block
 void app_block(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
   ImGui::TextUnformatted("\\todo");
@@ -264,7 +264,7 @@ void accessory(State& state, Datagram<>& datagram);
     void app_block(Datagram<>& datagram);
 // clang-format on
 
-//
+// Accessory
 void accessory(State& state, Datagram<>& datagram) {
   channel1(datagram);
   channel2(datagram);
@@ -276,7 +276,7 @@ void accessory(State& state, Datagram<>& datagram) {
        .bytes = datagram});
 }
 
-//
+// Accessory channel1
 void channel1(Datagram<>& datagram) {
   ImGui::SeparatorText("Channel 1");
   static constexpr std::array ch1_datagrams{"", "app:srq"};
@@ -284,7 +284,7 @@ void channel1(Datagram<>& datagram) {
   ImGui::Combo(UNIQUE_LABEL(), &i, data(ch1_datagrams), ssize(ch1_datagrams));
 }
 
-//
+// Accessory channel2
 void channel2(Datagram<>& datagram) {
   ImGui::SeparatorText("Channel 2");
   static constexpr std::array ch2_datagrams{"",
@@ -319,37 +319,38 @@ void channel2(Datagram<>& datagram) {
     app_block(datagram);
 }
 
-//
+// Accessory app:pom
 void app_pom(Datagram<>& datagram) { return loco::app_pom(datagram); }
 
-//
+// Accessory app:stat4
 void app_stat4(Datagram<>& datagram) {}
 
-//
+// Accessory app:stat1
 void app_stat1(Datagram<>& datagram) {}
 
-//
+// Accessory app:time
 void app_time(Datagram<>& datagram) {}
 
-//
+// Accessory app:error
 void app_error(Datagram<>& datagram) {}
 
-//
+// Accessory app:dyn
 void app_dyn(Datagram<>& datagram) {}
 
-//
+// Accessory app:xpom
 void app_xpom(Datagram<>& datagram) { return loco::app_xpom(datagram); }
 
-//
+// Accessory app:test
 void app_test(Datagram<>& datagram) {}
 
-//
+// Accessory app:block
 void app_block(Datagram<>& datagram) {}
 
 } // namespace accessory
 
 } // namespace
 
+// Datagram builder window
 void datagram_builder(State& state) {
   if (!state.windows.show_datagram_builder) return;
 

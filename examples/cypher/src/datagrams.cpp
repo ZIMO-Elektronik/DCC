@@ -377,6 +377,7 @@ void plot(State::Datagram& datagram) {
 
 } // namespace
 
+// Datagrams window
 void datagrams(State& state) {
   if (!state.windows.show_datagrams) return;
 
