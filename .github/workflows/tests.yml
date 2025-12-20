@@ -26,5 +26,5 @@ jobs:
       pre-build: |
         sudo apt update -y
         sudo apt install -y '^libxcb.*-dev' libglu1-mesa-dev libx11-xcb-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
-      args: -DCMAKE_BUILD_TYPE=Debug -DDCC_STANDARD_COMPLIANCE=${{ matrix.compliance }}
+      args: -DCMAKE_BUILD_TYPE=Debug
       target: DCCIncludeWhatYouMust
