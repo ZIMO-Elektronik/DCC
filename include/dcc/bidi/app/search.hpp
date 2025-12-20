@@ -16,6 +16,7 @@ namespace dcc::bidi::app {
 
 struct Search {
   static constexpr uint8_t id{14u};
+  uint8_t d{};
   constexpr bool operator==(Search const&) const = default;
 };
 

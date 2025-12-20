@@ -118,7 +118,8 @@ struct Dissector : std::ranges::view_interface<Dissector> {
             return app::AdrHigh{.d = static_cast<uint8_t>(d)};
           case app::AdrLow::id:
             return app::AdrLow{.d = static_cast<uint8_t>(d)};
-          case app::Search::id: return app::Search{};
+          case app::Search::id:
+            return app::Search{.d = static_cast<uint8_t>(d)};
           default: return {};
         }
 
@@ -240,6 +241,21 @@ private:
         // others
         else switch (id) {
             case app::Pom::id: return {&_decoded[_i], datagram_size<Bits::_12>};
+            case app::Stat4::id:
+              return {&_decoded[_i], datagram_size<Bits::_36>};
+            case app::Stat1::id: [[fallthrough]];
+            case app::Time::id: [[fallthrough]];
+            case app::Error::id:
+              return {&_decoded[_i], datagram_size<Bits::_12>};
+            case app::Dyn::id: return {&_decoded[_i], datagram_size<Bits::_18>};
+            case app::Xpom::ids[0uz]: [[fallthrough]];
+            case app::Xpom::ids[1uz]: [[fallthrough]];
+            case app::Xpom::ids[2uz]: [[fallthrough]];
+            case app::Xpom::ids[3uz]:
+              return {&_decoded[_i], datagram_size<Bits::_36>};
+            case app::Test::id: return {};
+            case app::Block::id:
+              return {&_decoded[_i], datagram_size<Bits::_36>};
             default: return {};
           }
 

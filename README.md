@@ -420,7 +420,9 @@ Dissector dissector{datagram, packet};
 
 // Iterate
 for (auto const& dg : dissector)
-  if (auto adr_low{get_if<dcc::bidi::app::AdrLow>(&dg)}) {
+  if (auto ack{get_if<dcc::bidi::Ack>(&dg)}) {
+    // Use Ack here
+  } if (auto adr_low{get_if<dcc::bidi::app::AdrLow>(&dg)}) {
     // Use app:adr_low data here
   } else if (auto dyn{get_if<dcc::bidi::app::Dyn>(&dg)}) {
     // Use app:dyn data here
