@@ -1,6 +1,6 @@
 #include "rx_test.hpp"
 
-using namespace dcc;
+using namespace dcc::bidi;
 
 TEST_F(RxTest, app_pom) {
   auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
@@ -87,6 +87,6 @@ TEST_F(RxTest, app_pom_clear_internal_queue_on_unknown_cv_access_packet) {
     make_cv_access_long_verify_packet(_addrs.primary, cv_addr + 1u)};
   Receive(other_cv_packet)->LeaveCutout()->Execute()->Receive(other_cv_packet);
 
-  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(dcc::bidi::acks))).Times(1);
+  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(acks))).Times(1);
   _mock.biDiChannel2();
 }

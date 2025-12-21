@@ -260,98 +260,68 @@ void feature_expansion_command_station_feature_identification(
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(feat_type), ssize(feat_type));
   if (!strcmp(feat_type[static_cast<size_t>(i)], "Loco Features")) {
-    static bool special_operating_modes{};
-    static bool analog_function{};
-    static bool binary_state_long{};
-    static bool binary_state_short{};
-    static bool f29_f68{};
-    static bool f13_f28{};
-    static bool xpom_write{};
-    static bool pom_write{};
-    static bool sdf{};
-    static bool speed_steps_128{};
-    static bool extended_addresses_10000_10239{};
-    static bool basic_addresses_100_127_as_extended{};
-    ImGui::Checkbox("Special Operating Modes", &special_operating_modes);
-    ImGui::Checkbox("Analog Function", &analog_function);
-    ImGui::Checkbox("Binary State Long", &binary_state_long);
-    ImGui::Checkbox("Binary State Short", &binary_state_short);
-    ImGui::Checkbox("F29-F68", &f29_f68);
-    ImGui::Checkbox("F13-F28", &f13_f28);
-    ImGui::Checkbox("XPOM Write", &xpom_write);
-    ImGui::Checkbox("POM Write", &pom_write);
-    ImGui::Checkbox("Speed, Direction and Functions", &sdf);
-    ImGui::Checkbox("128 Speed Steps", &speed_steps_128);
-    ImGui::Checkbox("Extended Addresses 10000-10239",
-                    &extended_addresses_10000_10239);
-    ImGui::Checkbox("Basic Addresses 100-127 as Extended",
-                    &basic_addresses_100_127_as_extended);
+    static std::array<bool, 16uz> feats{};
+    ImGui::Checkbox("Basic Addresses 100-127 as Extended", &feats[0uz]);
+    ImGui::Checkbox("Extended Addresses 10000-10239", &feats[1uz]);
+    ImGui::Checkbox("128 Speed Steps", &feats[2uz]);
+    ImGui::Checkbox("Speed, Direction and Functions", &feats[3uz]);
+    ImGui::Checkbox("POM Write", &feats[4uz]);
+    ImGui::Checkbox("XPOM Write", &feats[5uz]);
+    ImGui::Checkbox("F13-F28", &feats[8uz]);
+    ImGui::Checkbox("F29-F68", &feats[9uz]);
+    ImGui::Checkbox("Binary State Short", &feats[10uz]);
+    ImGui::Checkbox("Binary State Long", &feats[11uz]);
+    ImGui::Checkbox("Analog Function", &feats[12uz]);
+    ImGui::Checkbox("Special Operating Modes", &feats[13uz]);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
       state.packets.push_back(
         {.addr = addr,
          .bytes = dcc::make_command_station_feature_identification_packet(
            dcc::LocoFeatures{static_cast<uint16_t>(
-             special_operating_modes << 13u | analog_function << 12u |
-             binary_state_long << 11u | binary_state_short << 10u |
-             f29_f68 << 9u | f13_f28 << 8u | xpom_write << 5u |
-             pom_write << 4u | sdf << 3u | speed_steps_128 << 2u |
-             extended_addresses_10000_10239 << 1u |
-             basic_addresses_100_127_as_extended << 0u)})});
+             feats[13uz] << 13u | feats[12uz] << 12u | feats[11uz] << 11u |
+             feats[10uz] << 10u | feats[9uz] << 9u | feats[8uz] << 8u |
+             feats[5uz] << 5u | feats[4uz] << 4u | feats[3uz] << 3u |
+             feats[2uz] << 2u | feats[1uz] << 1u | feats[0uz] << 0u)})});
   } else if (!strcmp(feat_type[static_cast<size_t>(i)],
                      "Accessory and Broadcast Features")) {
-    static bool system_time{};
-    static bool time_scale{};
-    static bool date{};
-    static bool time{};
-    static bool pom_write{};
-    static bool extended{};
-    static bool addresses_offset_by_4{};
-    ImGui::Checkbox("System Time", &system_time);
-    ImGui::Checkbox("Time Scale", &time_scale);
-    ImGui::Checkbox("Date", &date);
-    ImGui::Checkbox("Time", &time);
-    ImGui::Checkbox("POM Write", &pom_write);
-    ImGui::Checkbox("Extended", &extended);
-    ImGui::Checkbox("Addresses Offset by 4", &addresses_offset_by_4);
+    static std::array<bool, 16uz> feats{};
+    ImGui::Checkbox("Addresses Offset by 4", &feats[0uz]);
+    ImGui::Checkbox("Extended", &feats[1uz]);
+    ImGui::Checkbox("POM Write", &feats[3uz]);
+    ImGui::Checkbox("Time", &feats[8uz]);
+    ImGui::Checkbox("Date", &feats[9uz]);
+    ImGui::Checkbox("Time Scale", &feats[10uz]);
+    ImGui::Checkbox("System Time", &feats[11uz]);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
       state.packets.push_back(
         {.addr = addr,
          .bytes = dcc::make_command_station_feature_identification_packet(
            dcc::AccessoryBroadcastFeatures{static_cast<uint16_t>(
-             system_time << 11u | time_scale << 10u | date << 9u | time << 8u |
-             pom_write << 3u | extended << 1u |
-             addresses_offset_by_4 << 0u)})});
+             feats[11uz] << 11u | feats[10uz] << 10u | feats[9uz] << 9u |
+             feats[8uz] << 8u | feats[3uz] << 3u | feats[1uz] << 1u |
+             feats[0uz] << 0u)})});
   } else if (!strcmp(feat_type[static_cast<size_t>(i)], "BiDi Features")) {
-    static bool railcom_plus{};
-    static bool app_dyn_track_voltage{};
-    static bool app_dyn_operating_params{};
-    static bool app_dyn_container_levels{};
-    static bool xpom_read{};
-    static bool pom_read{};
-    static bool nop_for_accessories{};
-    static bool dcc_a{};
-    static bool railcom{};
-    ImGui::Checkbox("RailCom+", &railcom_plus);
-    ImGui::Checkbox("app:dyn Track Voltage", &app_dyn_track_voltage);
-    ImGui::Checkbox("app:dyn Operating Parameters", &app_dyn_operating_params);
-    ImGui::Checkbox("app:dyn Container Levels", &app_dyn_container_levels);
-    ImGui::Checkbox("XPOM Read", &xpom_read);
-    ImGui::Checkbox("POM Read", &pom_read);
-    ImGui::Checkbox("NOP for Accessories", &nop_for_accessories);
-    ImGui::Checkbox("DCC-A", &dcc_a);
-    ImGui::Checkbox("RailCom", &railcom);
+    static std::array<bool, 16uz> feats{};
+    ImGui::Checkbox("RailCom", &feats[0uz]);
+    ImGui::Checkbox("DCC-A", &feats[1uz]);
+    ImGui::Checkbox("NOP for Accessories", &feats[2uz]);
+    ImGui::Checkbox("POM Read", &feats[3uz]);
+    ImGui::Checkbox("XPOM Read", &feats[4uz]);
+    ImGui::Checkbox("app:dyn Container Levels", &feats[8uz]);
+    ImGui::Checkbox("app:dyn Operating Parameters", &feats[9uz]);
+    ImGui::Checkbox("app:dyn Track Voltage", &feats[10uz]);
+    ImGui::Checkbox("RailCom+", &feats[15uz]);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
       state.packets.push_back(
         {.addr = addr,
          .bytes = dcc::make_command_station_feature_identification_packet(
            dcc::BiDiFeatures{static_cast<uint16_t>(
-             railcom_plus << 15u | app_dyn_track_voltage << 10u |
-             app_dyn_operating_params << 9u | app_dyn_container_levels << 8u |
-             xpom_read << 4u | pom_read << 3u | nop_for_accessories << 2u |
-             dcc_a << 1u | railcom << 0u)})});
+             feats[15uz] << 15u | feats[10uz] << 10u | feats[9uz] << 9u |
+             feats[8uz] << 8u | feats[4uz] << 4u | feats[3uz] << 3u |
+             feats[2uz] << 2u | feats[1uz] << 1u | feats[0uz] << 0u)})});
   }
 }
 

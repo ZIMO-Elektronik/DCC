@@ -1,6 +1,6 @@
 #include "rx_test.hpp"
 
-using namespace dcc;
+using namespace dcc::bidi;
 
 TEST_F(RxTest, app_adr_alternate_primary_address) {
   // Make datagram

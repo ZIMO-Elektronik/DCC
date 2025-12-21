@@ -1,6 +1,6 @@
 #include "rx_test.hpp"
 
-using namespace dcc;
+using namespace dcc::bidi;
 
 TEST_F(RxTest, app_dyn) {
   // Send whatever packet to get last received address to match primary
@@ -10,7 +10,7 @@ TEST_F(RxTest, app_dyn) {
 
   // Add more datagrams than would fit the queue
   for (auto i{0uz}; i < 42u; ++i)
-    _mock.datagram(bidi::DirectionStatusByte{static_cast<uint8_t>(i)});
+    _mock.datagram(DirectionStatusByte{static_cast<uint8_t>(i)});
 
   uint8_t i{0u};
 
@@ -68,7 +68,7 @@ TEST_F(RxTest, dont_transmit_following_foreign_address) {
 
   // Add more datagrams than would fit the queue
   for (auto i{0uz}; i < 42u; ++i)
-    _mock.datagram(bidi::DirectionStatusByte{static_cast<uint8_t>(i)});
+    _mock.datagram(DirectionStatusByte{static_cast<uint8_t>(i)});
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
   _mock.biDiChannel2();

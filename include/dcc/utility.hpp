@@ -10,16 +10,15 @@
 
 #pragma once
 
+#include <static_math/static_math.h>
 #include <cassert>
 #include <concepts>
 #include <cstdint>
 #include <cstring>
 #include <utility>
-#include <ztl/bits.hpp>
 #include <ztl/enum.hpp>
 #include <ztl/math.hpp>
 #include "address.hpp"
-#include "bidi/datagram.hpp"
 #include "crc8.hpp"
 #include "exor.hpp"
 #include "instruction.hpp"
@@ -1660,133 +1659,5 @@ consteval auto make_idle_packet() {
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
 }
-
-/// Make app:adr_high datagram
-///
-/// \param  addr  Address
-/// \param  cv19  CV19
-/// \return app:adr_high datagram
-constexpr auto make_app_adr_high_datagram(Address::value_type addr,
-                                          uint8_t cv19 = 0u) {
-  if (addr < 128u)
-    return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_12>(
-      1u, cv19 ? 0b0110'0000u : 0b0000'0000u));
-  else
-    return bidi::encode_datagram(
-      bidi::make_datagram<bidi::Bits::_12>(1u, 0x80u | (addr & 0x3F00u) >> 8u));
-}
-
-/// Make app:adr_low datagram
-///
-/// \param  addr  Address
-/// \param  cv19  CV19
-/// \return app:adr_low datagram
-constexpr auto make_app_adr_low_datagram(Address::value_type addr,
-                                         uint8_t cv19 = 0u) {
-  if (addr < 128u)
-    return bidi::encode_datagram(
-      bidi::make_datagram<bidi::Bits::_12>(2u, (cv19 & 0x80) | (addr & 0x7Fu)));
-  else
-    return bidi::encode_datagram(
-      bidi::make_datagram<bidi::Bits::_12>(2u, addr & 0xFFu));
-}
-
-/// Make app:info1 datagram
-///
-/// \todo
-/// \return app:info1 datagram
-constexpr auto make_app_info1_datagram() {}
-
-/// Make app:pom datagram
-///
-/// \return app:pom datagram
-constexpr auto make_app_pom_datagram(uint8_t byte) {
-  return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_12>(0u, byte));
-}
-
-/// Make app:ext datagram
-///
-/// \todo
-/// \return app:ext datagram
-constexpr auto make_app_ext_datagram() {}
-
-/// Make app:dyn datagram
-///
-/// \return app:dyn datagram
-constexpr auto make_app_dyn_datagram(uint8_t d, uint8_t x) {
-  return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_18>(
-    7u, static_cast<uint32_t>(d << 6u | x)));
-}
-
-/// Make app:xpom datagram
-///
-/// \return app:xpom datagram
-constexpr auto make_app_xpom_datagram(uint8_t ss,
-                                      std::span<uint8_t const, 4uz> bytes) {
-  return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_36>(
-    0b10u << 2u | ss,
-    static_cast<uint32_t>(bytes[0uz] << 24u | bytes[1uz] << 16u |
-                          bytes[2uz] << 8u | bytes[3uz] << 0u)));
-}
-
-/// Make app:CV-auto datagram
-///
-/// \return app:CV-auto datagram
-constexpr auto make_app_cv_auto_datagram(uint32_t cv_addr, uint8_t byte) {
-  return bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_36>(
-    12u, cv_addr << 8u | static_cast<uint32_t>(byte << 0u)));
-}
-
-/// Make app:block datagram
-///
-/// \todo
-/// \return app:block datagram
-constexpr auto make_app_block_datagram() {}
-
-/// Make app:search datagram
-///
-/// \return app:search datagram
-constexpr auto
-make_app_search_datagram(Address::value_type addr, uint8_t cv19, uint8_t s) {
-  bidi::Datagram<bidi::datagram_size<bidi::Bits::_36>> datagram{};
-  auto const adr_high{make_app_adr_high_datagram(addr, cv19)};
-  auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(datagram))};
-  auto const adr_low{make_app_adr_low_datagram(addr, cv19)};
-  it = std::copy(cbegin(adr_low), cend(adr_low), it);
-  auto const time{
-    bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_12>(14u, s))};
-  std::copy(cbegin(time), cend(time), it);
-  return datagram;
-}
-
-/// Make app:srq datagram
-///
-/// \todo
-/// \return app:srq datagram
-constexpr auto make_app_srq_datagram() {}
-
-/// Make app:stat4 datagram
-///
-/// \todo
-/// \return app:stat4 datagram
-constexpr auto make_app_stat4_datagram() {}
-
-/// Make app:stat1 datagram
-///
-/// \todo
-/// \return app:stat1 datagram
-constexpr auto make_app_stat1_datagram() {}
-
-/// Make app:time datagram
-///
-/// \todo
-/// \return app:time datagram
-constexpr auto make_app_time_datagram() {}
-
-/// Make app:error datagram
-///
-/// \todo
-/// \return app:error datagram
-constexpr auto make_app_error_datagram() {}
 
 } // namespace dcc

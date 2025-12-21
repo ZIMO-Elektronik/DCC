@@ -1,7 +1,7 @@
 #include <array>
 #include "rx_test.hpp"
 
-using namespace dcc;
+using namespace dcc::bidi;
 using namespace std::chrono_literals;
 
 TEST_F(RxTest, app_search_basic_address) {

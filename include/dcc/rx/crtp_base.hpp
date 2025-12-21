@@ -24,6 +24,7 @@
 #include "../bidi/nak.hpp"
 #include "../bidi/temperature.hpp"
 #include "../bidi/track_voltage.hpp"
+#include "../bidi/utility.hpp"
 #include "../crc8.hpp"
 #include "../direction.hpp"
 #include "../instruction.hpp"

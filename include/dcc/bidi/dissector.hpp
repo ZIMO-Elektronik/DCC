@@ -24,6 +24,7 @@
 #include "app/error.hpp"
 #include "app/ext.hpp"
 #include "app/info.hpp"
+#include "app/info1.hpp"
 #include "app/pom.hpp"
 #include "app/search.hpp"
 #include "app/srq.hpp"
