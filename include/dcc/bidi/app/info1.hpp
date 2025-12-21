@@ -16,14 +16,14 @@ namespace dcc::bidi::app {
 
 struct Info1 {
   static constexpr uint8_t id{3u};
-  constexpr bool operator==(Info1 const&) const = default;
-  enum : uint8_t {
+  enum Flags : uint8_t {
     TrackPolarity = 1u << 0u,
-    Direction = 1u << 1u,
-    WTF = 1u << 2u,
+    EastWest = 1u << 1u,
+    Driving = 1u << 2u,
     Consist = 1u << 3u,
-    WTF2 = 1u << 4u
-  };
+    AddressingRequest = 1u << 4u
+  } d{};
+  constexpr bool operator==(Info1 const&) const = default;
 };
 
 } // namespace dcc::bidi::app

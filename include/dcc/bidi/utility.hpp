@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// BiDi utility
+/// BiDi utilities
 ///
 /// \file   dcc/bidi/acks.hpp
 /// \author Vincent Hamp
@@ -68,8 +68,9 @@ constexpr auto make_app_adr_low_datagram(Address::value_type addr,
 ///
 /// \todo
 /// \return app:info1 datagram
-constexpr auto make_app_info1_datagram(uint8_t d) {
-  return encode_datagram(make_datagram<Bits::_12>(app::Info1::id, d));
+constexpr auto make_app_info1_datagram(app::Info1::Flags d) {
+  return encode_datagram(
+    make_datagram<Bits::_12>(app::Info1::id, std::to_underlying(d)));
 }
 
 /// Make app:pom datagram

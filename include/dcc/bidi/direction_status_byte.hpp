@@ -15,6 +15,7 @@
 namespace dcc::bidi {
 
 struct DirectionStatusByte : app::Dyn {
+  consteval DirectionStatusByte() : app::Dyn{.x = 27u} {}
   explicit constexpr DirectionStatusByte(uint8_t byte)
     : app::Dyn{.d = byte, .x = 27u} {}
 };

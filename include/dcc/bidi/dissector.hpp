@@ -47,6 +47,7 @@ struct Dissector : std::ranges::view_interface<Dissector> {
                                   app::Pom,     // ID0
                                   app::AdrHigh, // ID1
                                   app::AdrLow,  // ID2
+                                  app::Info1,   // ID3
                                   app::Ext,     // ID3
                                   app::Info,    // ID4
                                   app::Dyn,     // ID7
@@ -132,7 +133,9 @@ struct Dissector : std::ranges::view_interface<Dissector> {
             return app::AdrHigh{.d = static_cast<uint8_t>(d)};
           case app::AdrLow::id:
             return app::AdrLow{.d = static_cast<uint8_t>(d)};
-          case app::Ext::id: return app::Ext{};
+          case app::Info1::id:
+            if (_i < 2uz) return app::Info1{};
+            else return app::Ext{};
           case app::Info::id: return app::Info{};
           case app::Dyn::id:
             return app::Dyn{.d = static_cast<uint8_t>(d >> 6u),

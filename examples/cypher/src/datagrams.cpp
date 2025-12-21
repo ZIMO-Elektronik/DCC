@@ -119,37 +119,39 @@ void dissector(State::Datagram& datagram) {
       datagram.desc_strs.push_back("ACK");
     } else if (auto const nak{get_if<Nak>(&dg)}) {
       datagram.desc_strs.push_back("NAK");
-    } else if (auto const adr_low{get_if<app::Pom>(&dg)}) {
+    } else if (auto const pom{get_if<app::Pom>(&dg)}) {
       datagram.desc_strs.push_back("app:pom");
-    } else if (auto const dyn{get_if<app::AdrHigh>(&dg)}) {
+    } else if (auto const adr_high{get_if<app::AdrHigh>(&dg)}) {
       datagram.desc_strs.push_back("app:adr_high");
-    } else if (auto const dyn{get_if<app::AdrLow>(&dg)}) {
+    } else if (auto const adr_low{get_if<app::AdrLow>(&dg)}) {
       datagram.desc_strs.push_back("app:adr_low");
-    } else if (auto const dyn{get_if<app::Ext>(&dg)}) {
+    } else if (auto const info1{get_if<app::Info1>(&dg)}) {
+      datagram.desc_strs.push_back("app:info1");
+    } else if (auto const ext{get_if<app::Ext>(&dg)}) {
       datagram.desc_strs.push_back("app:ext");
-    } else if (auto const dyn{get_if<app::Info>(&dg)}) {
+    } else if (auto const info{get_if<app::Info>(&dg)}) {
       datagram.desc_strs.push_back("app:info");
     } else if (auto const dyn{get_if<app::Dyn>(&dg)}) {
       datagram.desc_strs.push_back("app:dyn");
-    } else if (auto const dyn{get_if<app::Xpom>(&dg)}) {
+    } else if (auto const xpom{get_if<app::Xpom>(&dg)}) {
       datagram.desc_strs.push_back("app:xpom");
-    } else if (auto const dyn{get_if<app::CvAuto>(&dg)}) {
+    } else if (auto const cv_auto{get_if<app::CvAuto>(&dg)}) {
       datagram.desc_strs.push_back("app:CV-auto");
-    } else if (auto const dyn{get_if<app::Block>(&dg)}) {
+    } else if (auto const block{get_if<app::Block>(&dg)}) {
       datagram.desc_strs.push_back("app:block");
-    } else if (auto const dyn{get_if<app::Search>(&dg)}) {
+    } else if (auto const search{get_if<app::Search>(&dg)}) {
       datagram.desc_strs.push_back("app:search");
-    } else if (auto const dyn{get_if<app::Srq>(&dg)}) {
+    } else if (auto const srq{get_if<app::Srq>(&dg)}) {
       datagram.desc_strs.push_back("app:srq");
-    } else if (auto const dyn{get_if<app::Stat4>(&dg)}) {
+    } else if (auto const stat4{get_if<app::Stat4>(&dg)}) {
       datagram.desc_strs.push_back("app:stat4");
-    } else if (auto const dyn{get_if<app::Stat1>(&dg)}) {
+    } else if (auto const state1{get_if<app::Stat1>(&dg)}) {
       datagram.desc_strs.push_back("app:stat1");
-    } else if (auto const dyn{get_if<app::Time>(&dg)}) {
+    } else if (auto const time{get_if<app::Time>(&dg)}) {
       datagram.desc_strs.push_back("app:time");
-    } else if (auto const dyn{get_if<app::Error>(&dg)}) {
+    } else if (auto const error{get_if<app::Error>(&dg)}) {
       datagram.desc_strs.push_back("app:error");
-    } else if (auto const dyn{get_if<app::Test>(&dg)}) {
+    } else if (auto const test{get_if<app::Test>(&dg)}) {
       datagram.desc_strs.push_back("app:test");
     }
   }

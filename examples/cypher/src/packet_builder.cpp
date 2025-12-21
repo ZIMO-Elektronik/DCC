@@ -260,7 +260,7 @@ void feature_expansion_command_station_feature_identification(
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(feat_type), ssize(feat_type));
   if (!strcmp(feat_type[static_cast<size_t>(i)], "Loco Features")) {
-    static std::array<bool, 16uz> feats{};
+    static std::array<bool, CHAR_BIT * sizeof(uint16_t)> feats{};
     ImGui::Checkbox("Basic Addresses 100-127 as Extended", &feats[0uz]);
     ImGui::Checkbox("Extended Addresses 10000-10239", &feats[1uz]);
     ImGui::Checkbox("128 Speed Steps", &feats[2uz]);
@@ -285,7 +285,7 @@ void feature_expansion_command_station_feature_identification(
              feats[2uz] << 2u | feats[1uz] << 1u | feats[0uz] << 0u)})});
   } else if (!strcmp(feat_type[static_cast<size_t>(i)],
                      "Accessory and Broadcast Features")) {
-    static std::array<bool, 16uz> feats{};
+    static std::array<bool, CHAR_BIT * sizeof(uint16_t)> feats{};
     ImGui::Checkbox("Addresses Offset by 4", &feats[0uz]);
     ImGui::Checkbox("Extended", &feats[1uz]);
     ImGui::Checkbox("POM Write", &feats[3uz]);
@@ -303,7 +303,7 @@ void feature_expansion_command_station_feature_identification(
              feats[8uz] << 8u | feats[3uz] << 3u | feats[1uz] << 1u |
              feats[0uz] << 0u)})});
   } else if (!strcmp(feat_type[static_cast<size_t>(i)], "BiDi Features")) {
-    static std::array<bool, 16uz> feats{};
+    static std::array<bool, CHAR_BIT * sizeof(uint16_t)> feats{};
     ImGui::Checkbox("RailCom", &feats[0uz]);
     ImGui::Checkbox("DCC-A", &feats[1uz]);
     ImGui::Checkbox("NOP for Accessories", &feats[2uz]);
@@ -842,7 +842,7 @@ void feature_expansion_binary_state_control_long_form(State& state,
 // Loco feature expansion - F29-F36
 void feature_expansion_f29_f36(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static std::array<bool, 8uz> d{};
+  static std::array<bool, CHAR_BIT> d{};
   for (auto i{8uz}; i-- > 0uz;) {
     ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
     ImGui::SameLine();
@@ -862,7 +862,7 @@ void feature_expansion_f29_f36(State& state, dcc::Address addr) {
 // Loco feature expansion - F37-F44
 void feature_expansion_f37_f44(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static std::array<bool, 8uz> d{};
+  static std::array<bool, CHAR_BIT> d{};
   for (auto i{8uz}; i-- > 0uz;) {
     ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
     ImGui::SameLine();
@@ -882,7 +882,7 @@ void feature_expansion_f37_f44(State& state, dcc::Address addr) {
 // Loco feature expansion - F45-F52
 void feature_expansion_f45_f52(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static std::array<bool, 8uz> d{};
+  static std::array<bool, CHAR_BIT> d{};
   for (auto i{8uz}; i-- > 0uz;) {
     ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
     ImGui::SameLine();
@@ -902,7 +902,7 @@ void feature_expansion_f45_f52(State& state, dcc::Address addr) {
 // Loco feature expansion - F53-F60
 void feature_expansion_f53_f60(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static std::array<bool, 8uz> d{};
+  static std::array<bool, CHAR_BIT> d{};
   for (auto i{8uz}; i-- > 0uz;) {
     ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
     ImGui::SameLine();
@@ -922,7 +922,7 @@ void feature_expansion_f53_f60(State& state, dcc::Address addr) {
 // Loco feature expansion - F61-F68
 void feature_expansion_f61_f68(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static std::array<bool, 8uz> d{};
+  static std::array<bool, CHAR_BIT> d{};
   for (auto i{8uz}; i-- > 0uz;) {
     ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
     ImGui::SameLine();
@@ -958,7 +958,7 @@ void feature_expansion_binary_state_control_short_form(State& state,
 // Loco feature expansion - F13-F20
 void feature_expansion_f13_f20(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static std::array<bool, 8uz> d{};
+  static std::array<bool, CHAR_BIT> d{};
   for (auto i{8uz}; i-- > 0uz;) {
     ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
     ImGui::SameLine();
@@ -978,7 +978,7 @@ void feature_expansion_f13_f20(State& state, dcc::Address addr) {
 // Loco feature expansion - F21-F28
 void feature_expansion_f21_f28(State& state, dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
-  static std::array<bool, 8uz> d{};
+  static std::array<bool, CHAR_BIT> d{};
   for (auto i{8uz}; i-- > 0uz;) {
     ImGui::Checkbox(UNIQUE_LABEL(i), &d[i]);
     ImGui::SameLine();

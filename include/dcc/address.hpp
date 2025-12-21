@@ -39,7 +39,7 @@ struct Address {
 
   value_type value{};
 
-  enum : uint8_t {
+  enum Type : uint8_t {
     UnknownService,    ///< Unknown or service (=no address)
     Broadcast,         ///< Broadcast
     BasicLoco,         ///< Basic loco (7 bit)

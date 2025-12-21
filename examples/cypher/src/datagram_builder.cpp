@@ -137,20 +137,15 @@ void app_adr_low(Datagram<>& datagram) {
 // Loco app:adr_info1
 void app_adr_info1(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
-  static bool track_polarity{};
-  ImGui::Checkbox("Track polarity", &track_polarity);
-  static bool direction{};
-  ImGui::Checkbox("Direction", &direction);
-  static bool driving{};
-  ImGui::Checkbox("Driving", &driving);
-  static bool consist{};
-  ImGui::Checkbox("Consist", &consist);
-  static bool addr_request{};
-  ImGui::Checkbox("Addressing request", &addr_request);
-  auto const dg{encode_datagram(make_datagram<Bits::_12>(
-    3u,
-    static_cast<uint8_t>(addr_request << 4u | consist << 3u | driving << 2u |
-                         direction << 1u | track_polarity << 0u)))};
+  static std::array<bool, CHAR_BIT> flags{};
+  ImGui::Checkbox("Track Polarity", &flags[0uz]);
+  ImGui::Checkbox("East-West", &flags[1uz]);
+  ImGui::Checkbox("Driving", &flags[2uz]);
+  ImGui::Checkbox("Consist", &flags[3uz]);
+  ImGui::Checkbox("Addressing Request", &flags[4uz]);
+  auto const dg{make_app_info1_datagram(app::Info1::Flags{static_cast<uint8_t>(
+    flags[4uz] << 4u | flags[3uz] << 3u | flags[2uz] << 2u | flags[1uz] << 1u |
+    flags[0uz] << 0u)})};
   std::ranges::copy(dg, begin(datagram));
 }
 
