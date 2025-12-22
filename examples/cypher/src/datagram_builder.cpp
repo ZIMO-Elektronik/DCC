@@ -143,7 +143,7 @@ void app_adr_info1(Datagram<>& datagram) {
   ImGui::Checkbox("Driving", &flags[2uz]);
   ImGui::Checkbox("Consist", &flags[3uz]);
   ImGui::Checkbox("Addressing Request", &flags[4uz]);
-  auto const dg{make_app_info1_datagram(app::Info1::Flags{static_cast<uint8_t>(
+  auto const dg{make_app_info1_datagram({static_cast<app::Info1::Flags>(
     flags[4uz] << 4u | flags[3uz] << 3u | flags[2uz] << 2u | flags[1uz] << 1u |
     flags[0uz] << 0u)})};
   std::ranges::copy(dg, begin(datagram));
@@ -152,14 +152,16 @@ void app_adr_info1(Datagram<>& datagram) {
 // Loco channel2
 void channel2(Datagram<>& datagram) {
   ImGui::SeparatorText("Channel 2");
-  static constexpr std::array ch2_datagrams{"",
-                                            "app:pom",
-                                            "app:ext",
-                                            "app:info",
-                                            "app:dyn",
-                                            "app:xpom",
-                                            "app:CV-auto",
-                                            "app:block"};
+  static constexpr std::array ch2_datagrams{
+    "",
+    "app:pom",
+    "app:ext",
+    // "app:info",
+    "app:dyn",
+    "app:xpom",
+    "app:CV-auto",
+    // "app:block"
+  };
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(ch2_datagrams), ssize(ch2_datagrams));
   if (!strcmp(ch2_datagrams[static_cast<size_t>(i)], "app:pom"))
@@ -189,7 +191,17 @@ void app_pom(Datagram<>& datagram) {
 // Loco app:ext
 void app_ext(Datagram<>& datagram) {
   ImGui::SeparatorText("Parameters");
-  ImGui::TextUnformatted("\\todo");
+  static int i{};
+  ImGui::Combo(
+    UNIQUE_LABEL(), &i, data(app_ext_type_labels), ssize(app_ext_type_labels));
+  static uint16_t p{0};
+  ImGui::InputScalar("Position", ImGuiDataType_U16, &p);
+  p = std::clamp<uint16_t>(p, 0u, smath::pow(2u, i ? 8u : 11u) - 1u);
+  std::ranges::copy(
+    make_app_ext_datagram(
+      {.t = static_cast<app::Ext::Type>(i ? i + app::Ext::Reserved8 + 1u : 0u),
+       .p = p}),
+    begin(datagram) + 2);
 }
 
 // Loco app:info

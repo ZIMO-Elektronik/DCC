@@ -75,6 +75,14 @@ void extended(State& state);
 
 } // namespace accessory
 
+namespace automatic_logon {
+
+// clang-format off
+void automatic_logon(State& state);
+// clang-format on
+
+} // namespace automatic_logon
+
 namespace idle {
 
 // clang-format off
@@ -1320,6 +1328,14 @@ void nop_for_basic_and_extended_accessory(State& state, dcc::Address addr) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+namespace automatic_logon {
+
+void automatic_logon(State&) {}
+
+} // namespace automatic_logon
+
+////////////////////////////////////////////////////////////////////////////////
+
 namespace idle {
 
 // Idle
@@ -1416,7 +1432,7 @@ void packet_builder(State& state) {
     else if (!strcmp(types[static_cast<size_t>(i)], "Extended Loco"))
       loco::extended(state);
     else if (!strcmp(types[static_cast<size_t>(i)], "Automatic Logon"))
-      ; //
+      automatic_logon::automatic_logon(state);
     else if (!strcmp(types[static_cast<size_t>(i)], "Idle")) idle::idle(state);
     else if (!strcmp(types[static_cast<size_t>(i)], "Service"))
       service::service(state);

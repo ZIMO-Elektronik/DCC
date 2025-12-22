@@ -6,7 +6,7 @@
 ///
 /// \file   dcc/bidi/acks.hpp
 /// \author Vincent Hamp
-/// \date   15/05/2025
+/// \date   21/12/2025
 
 #pragma once
 
@@ -33,6 +33,13 @@
 #include "datagram.hpp"
 
 namespace dcc::bidi {
+
+/// Make app:pom datagram
+///
+/// \return app:pom datagram
+constexpr auto make_app_pom_datagram(uint8_t byte) {
+  return encode_datagram(make_datagram<Bits::_12>(app::Pom::id, byte));
+}
 
 /// Make app:adr_high datagram
 ///
@@ -66,25 +73,27 @@ constexpr auto make_app_adr_low_datagram(Address::value_type addr,
 
 /// Make app:info1 datagram
 ///
-/// \todo
+/// \param  info1 app::Info1
 /// \return app:info1 datagram
-constexpr auto make_app_info1_datagram(app::Info1::Flags d) {
+constexpr auto make_app_info1_datagram(app::Info1 info1) {
   return encode_datagram(
-    make_datagram<Bits::_12>(app::Info1::id, std::to_underlying(d)));
-}
-
-/// Make app:pom datagram
-///
-/// \return app:pom datagram
-constexpr auto make_app_pom_datagram(uint8_t byte) {
-  return encode_datagram(make_datagram<Bits::_12>(app::Pom::id, byte));
+    make_datagram<Bits::_12>(app::Info1::id, std::to_underlying(info1.d)));
 }
 
 /// Make app:ext datagram
 ///
-/// \todo
+/// \param  ext app::Ext
 /// \return app:ext datagram
-constexpr auto make_app_ext_datagram() {}
+constexpr auto make_app_ext_datagram(app::Ext ext) {
+  assert((ext.t >= app::Ext::Reserved8 && ext.p <= 0xFFu) ||
+         (ext.t < app::Ext::Reserved8 && ext.p <= 0x7FFu));
+  return encode_datagram(make_datagram<Bits::_18>(
+    app::Ext::id,
+    static_cast<uint32_t>(std::to_underlying(ext.t) << 8u) | ext.p));
+}
+
+/// \todo not yet specified
+constexpr auto make_app_info_datagram() {}
 
 /// Make app:dyn datagram
 ///
@@ -114,10 +123,7 @@ constexpr auto make_app_cv_auto_datagram(uint32_t cv_addr, uint8_t byte) {
     app::CvAuto::id, cv_addr << 8u | static_cast<uint32_t>(byte << 0u)));
 }
 
-/// Make app:block datagram
-///
-/// \todo
-/// \return app:block datagram
+/// \todo not yet specified
 constexpr auto make_app_block_datagram() {}
 
 /// Make app:search datagram

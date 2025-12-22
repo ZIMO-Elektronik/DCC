@@ -133,9 +133,17 @@ struct Dissector : std::ranges::view_interface<Dissector> {
             return app::AdrHigh{.d = static_cast<uint8_t>(d)};
           case app::AdrLow::id:
             return app::AdrLow{.d = static_cast<uint8_t>(d)};
-          case app::Info1::id:
-            if (_i < 2uz) return app::Info1{};
-            else return app::Ext{};
+          // case app::Info1::id: [[fallthrough]];
+          case app::Ext::id:
+            if (_i < 2uz)
+              return app::Info1{.d = static_cast<app::Info1::Flags>(d)};
+            else {
+              app::Ext::Type const type{static_cast<uint8_t>(d >> 8u)};
+              return app::Ext{
+                .t = type >= app::Ext::Reserved8 ? type : app::Ext::AddressOnly,
+                .p = static_cast<uint16_t>(
+                  d & (type >= app::Ext::Reserved8 ? 0x00FFu : 0x07FFu))};
+            }
           case app::Info::id: return app::Info{};
           case app::Dyn::id:
             return app::Dyn{.d = static_cast<uint8_t>(d >> 6u),
@@ -144,8 +152,14 @@ struct Dissector : std::ranges::view_interface<Dissector> {
           case app::Xpom::ids[1uz]: [[fallthrough]];
           case app::Xpom::ids[2uz]: [[fallthrough]];
           case app::Xpom::ids[3uz]:
-            return app::Xpom{.ss = static_cast<uint8_t>(id & 0b11u)};
-          case app::CvAuto::id: return app::CvAuto{};
+            return app::Xpom{.ss = static_cast<uint8_t>(id & 0b11u),
+                             .d = {static_cast<uint8_t>(d >> 24u),
+                                   static_cast<uint8_t>(d >> 16u),
+                                   static_cast<uint8_t>(d >> 8u),
+                                   static_cast<uint8_t>(d >> 0u)}};
+          case app::CvAuto::id:
+            return app::CvAuto{.v = static_cast<uint32_t>(d >> 8u),
+                               .d = static_cast<uint8_t>(d)};
           case app::Block::id: return app::Block{};
           case app::Search::id: return app::Search{};
           default: return {};
@@ -226,7 +240,11 @@ private:
           case app::AdrHigh::id: [[fallthrough]];
           case app::AdrLow::id:
             return {&_decoded[_i], datagram_size<Bits::_12>};
-          case app::Ext::id: return {&_decoded[_i], datagram_size<Bits::_18>};
+          // case app::Info1::id: [[fallthrough]];
+          case app::Ext::id:
+            return {&_decoded[_i],
+                    _i < 2u ? datagram_size<Bits::_12>
+                            : datagram_size<Bits::_18>};
           case app::Info::id: return {&_decoded[_i], datagram_size<Bits::_36>};
           case app::Dyn::id: return {&_decoded[_i], datagram_size<Bits::_18>};
           case app::Xpom::ids[0uz]: [[fallthrough]];

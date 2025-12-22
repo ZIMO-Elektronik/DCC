@@ -121,26 +121,56 @@ void dissector(State::Datagram& datagram) {
       datagram.desc_strs.push_back("NAK");
     } else if (auto const pom{get_if<app::Pom>(&dg)}) {
       datagram.desc_strs.push_back("app:pom");
+      datagram.desc_strs.back() += std::format("\n- CV={}", pom->d);
     } else if (auto const adr_high{get_if<app::AdrHigh>(&dg)}) {
       datagram.desc_strs.push_back("app:adr_high");
+      datagram.desc_strs.back() +=
+        std::format("\n- Address High Byte={:08b} ", adr_high->d);
     } else if (auto const adr_low{get_if<app::AdrLow>(&dg)}) {
       datagram.desc_strs.push_back("app:adr_low");
+      datagram.desc_strs.back() +=
+        std::format("\n- Address Low Byte={:08b} ", adr_low->d);
     } else if (auto const info1{get_if<app::Info1>(&dg)}) {
       datagram.desc_strs.push_back("app:info1");
+      datagram.desc_strs.back() += std::format(
+        "\n- Track Polarity={}", info1->d & app::Info1::TrackPolarity ? 1 : 0);
+      datagram.desc_strs.back() += std::format(
+        "\n- East-West={}", info1->d & app::Info1::EastWest ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n- Driving={}", info1->d & app::Info1::Driving ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n- Consist={}", info1->d & app::Info1::Consist ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n- Addressing Request={}",
+                    info1->d & app::Info1::AddressingRequest ? 1 : 0);
     } else if (auto const ext{get_if<app::Ext>(&dg)}) {
       datagram.desc_strs.push_back("app:ext");
+      datagram.desc_strs.back() += std::format(
+        "\n- {}",
+        app_ext_type_labels[ext->t ? (ext->t - (app::Ext::Reserved8 + 1uz))
+                                   : ext->t]);
+      datagram.desc_strs.back() += std::format("\n- Position={}", ext->p);
     } else if (auto const info{get_if<app::Info>(&dg)}) {
       datagram.desc_strs.push_back("app:info");
     } else if (auto const dyn{get_if<app::Dyn>(&dg)}) {
       datagram.desc_strs.push_back("app:dyn");
     } else if (auto const xpom{get_if<app::Xpom>(&dg)}) {
       datagram.desc_strs.push_back("app:xpom");
+      datagram.desc_strs.back() +=
+        std::format("\n- Sequence Number={:02b}", xpom->ss);
+      datagram.desc_strs.back() += std::format("\n- CV[0]={}", xpom->d[0uz]);
+      datagram.desc_strs.back() += std::format("\n- CV[1]={}", xpom->d[1uz]);
+      datagram.desc_strs.back() += std::format("\n- CV[2]={}", xpom->d[2uz]);
+      datagram.desc_strs.back() += std::format("\n- CV[3]={}", xpom->d[3uz]);
     } else if (auto const cv_auto{get_if<app::CvAuto>(&dg)}) {
       datagram.desc_strs.push_back("app:CV-auto");
+      datagram.desc_strs.back() +=
+        std::format("\n- CV{}={}", cv_auto->v + 1u, cv_auto->d);
     } else if (auto const block{get_if<app::Block>(&dg)}) {
       datagram.desc_strs.push_back("app:block");
     } else if (auto const search{get_if<app::Search>(&dg)}) {
       datagram.desc_strs.push_back("app:search");
+      datagram.desc_strs.back() += std::format("\n- Time={}s", search->d);
     } else if (auto const srq{get_if<app::Srq>(&dg)}) {
       datagram.desc_strs.push_back("app:srq");
     } else if (auto const stat4{get_if<app::Stat4>(&dg)}) {

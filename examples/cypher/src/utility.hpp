@@ -344,6 +344,16 @@ inline constexpr std::array consist_labels{
   "Not Part", "Leading", "Middle", "Rear"};
 
 //
+inline constexpr std::array app_ext_type_labels{
+  "Address Only (TTTT = 0000-0111)",
+  "Gas Station (TTTT = 1010)",
+  "Coal Depot (TTTT = 1011)",
+  "Water Crane (TTTT = 1100)",
+  "Sand Store (TTTT = 1101)",
+  "Charging Station (TTTT = 1110)",
+  "Filling Station (TTTT = 1111)"};
+
+//
 template<typename T>
 requires(std::integral<T> || std::floating_point<T>)
 constexpr T random_interval(T min = std::numeric_limits<T>::min(),
