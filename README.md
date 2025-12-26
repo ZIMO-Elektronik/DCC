@@ -7,8 +7,12 @@
 DCC is an acronym for [Digital Command Control](https://en.wikipedia.org/wiki/Digital_Command_Control), a standardized protocol for controlling digital model railways. This C++ library of the same name contains **platform-independent** code to either decode (decoder) or generate (command station) a DCC signal on the track. For both cases, a typical microcontroller timer with microsecond precision is sufficient for implementing a receiver or transmitter class. Also included, but not platform-independent, is an encoder for the [ESP32 RMT](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) peripherals.
 
 The implementation provided here is used in the following products:
-- [ZIMO MN decoders](https://www.zimo.at/web2010/products/mn-nicht-sound-decoder_EN.htm)
-- [ZIMO small-](https://www.zimo.at/web2010/products/ms-sound-decoder_EN.htm) and [large-scale MS decoders](https://www.zimo.at/web2010/products/ms-sound-decoder-grossbahn_EN.htm)
+- Command stations
+  - [ZIMO KLUG](https://www.zimo.at/web2010/products/KLUG_EN.htm)
+- Decoders
+  - [ZIMO small-](https://www.zimo.at/web2010/products/ms-sound-decoder_EN.htm) and [large-scale MS decoders](https://www.zimo.at/web2010/products/ms-sound-decoder-grossbahn_EN.htm)
+  - [ZIMO MN decoders](https://www.zimo.at/web2010/products/mn-nicht-sound-decoder_EN.htm)
+  - [ZIMO FS decoders](https://www.zimo.at/web2010/products/funktionsdecoder_EN.htm)
 
 <details>
   <summary>Table of Contents</summary>
@@ -36,17 +40,17 @@ The implementation provided here is used in the following products:
 ## Protocol
 The DCC protocol is defined by various standards published by the [National Model Railroad Association (NMRA)](https://www.nmra.org/) and the [RailCommunity](https://www.vhdm.at/). The standards are mostly consistent and we have attempted to match the English and German standards in the table below. However, if you can read German, we recommend that you stick to the RCN standards as they are updated more frequently.
 
-| NMRA (English)                                                                                                                                                                            | RailCommunity (German)                                                                                                   |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| [S-9.1 Electrical Standards for Digital Command Control](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.1_electrical_standards_for_digital_command_control_2021.pdf) | [RCN-210 DCC - Protokoll Bit - Übertragung](https://normen.railcommunity.de/RCN-210.pdf)                                 |
-| [S-9.2 Communications Standards For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-92-2004-07.pdf)                                | [RCN-211 DCC - Protokoll Paketstruktur, Adressbereiche und globale Befehle](https://normen.railcommunity.de/RCN-211.pdf) |
-| [S-9.2.1 DCC Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf)                                            | [RCN-212 DCC - Protokoll Betriebsbefehle für Fahrzeugdecoder](https://normen.railcommunity.de/RCN-212.pdf)               |
-| [S-9.2.1 DCC Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf)                                            | [RCN-213 DCC - Protokoll Betriebsbefehle für Zubehördecoder](https://normen.railcommunity.de/RCN-213.pdf)                |
-| [S-9.2.1 DCC Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf)                                            | [RCN-214 DCC - Protokoll Konfigurationsbefehle](https://normen.railcommunity.de/RCN-214.pdf)                             |
-| [S-9.2.3 Service Mode For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/S-9.2.3_2012_07.pdf)                                       | [RCN-216 DCC - Protokoll Programmierumgebung](https://normen.railcommunity.de/RCN-216.pdf)                               |
-| [S-9.3.2 Communications Standard for Digital Command Control Basic Decoder Transmission](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/S-9.3.2_2012_12_10.pdf)          | [RCN-217 RailCom DCC-Rückmeldeprotokol](https://normen.railcommunity.de/RCN-217.pdf)                                     |
-| [S-9.2.1.1 Advanced Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1.1_advanced_extended_packet_formats.pdf)                              | [RCN-218 DCC - Protokoll DCC-A - Automatische Anmeldung](https://normen.railcommunity.de/RCN-218.pdf)                    |
-| [S-9.2.2 Configuration Variables For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.2_decoder_cvs_2012.07.pdf)                | [RCN-225 DCC - Protokoll Konfigurationsvariablen](https://normen.railcommunity.de/RCN-225.pdf)                           |
+| NMRA (English)                                                                                                                                                                       | RailCommunity (German)                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| [S-9.1 Electrical Standards for Digital Command Control](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.1_electrical_standards_for_digital_command_control.pdf) | [RCN-210 DCC - Protokoll Bit - Übertragung](https://normen.railcommunity.de/RCN-210.pdf)                                 |
+| [S-9.2 Communications Standards For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-92-2004-07.pdf)                           | [RCN-211 DCC - Protokoll Paketstruktur, Adressbereiche und globale Befehle](https://normen.railcommunity.de/RCN-211.pdf) |
+| [S-9.2.1 DCC Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf)                                       | [RCN-212 DCC - Protokoll Betriebsbefehle für Fahrzeugdecoder](https://normen.railcommunity.de/RCN-212.pdf)               |
+| [S-9.2.1 DCC Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf)                                       | [RCN-213 DCC - Protokoll Betriebsbefehle für Zubehördecoder](https://normen.railcommunity.de/RCN-213.pdf)                |
+| [S-9.2.1 DCC Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf)                                       | [RCN-214 DCC - Protokoll Konfigurationsbefehle](https://normen.railcommunity.de/RCN-214.pdf)                             |
+| [S-9.2.3 Service Mode For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/S-9.2.3_2012_07.pdf)                                  | [RCN-216 DCC - Protokoll Programmierumgebung](https://normen.railcommunity.de/RCN-216.pdf)                               |
+| [S-9.3.2 Communications Standard for Digital Command Control Basic Decoder Transmission](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/S-9.3.2_2012_12_10.pdf)     | [RCN-217 RailCom DCC-Rückmeldeprotokoll](https://normen.railcommunity.de/RCN-217.pdf)                                    |
+| [S-9.2.1.1 Advanced Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1.1_advanced_extended_packet_formats.pdf)                         | [RCN-218 DCC - Protokoll DCC-A - Automatische Anmeldung](https://normen.railcommunity.de/RCN-218.pdf)                    |
+| [S-9.2.2 Configuration Variables For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.2_decoder_cvs_2012.07.pdf)           | [RCN-225 DCC - Protokoll Konfigurationsvariablen](https://normen.railcommunity.de/RCN-225.pdf)                           |
 
 ## Deviations from the Standard
 - The consist control command requires **two identical** programming packets to program CV19 although this is not required by either [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) (chapter 2.4.1) or [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.1.4).
@@ -67,7 +71,7 @@ The DCC protocol is defined by various standards published by the [National Mode
 - Configures itself based on its CV values
 - Supports user-defined BiDi datagrams
 - Supported instructions
-  - Multi-function decoders
+  - Loco decoders ("Multi-Function")
     - Decoder control
       - Digital decoder reset :negative_squared_cross_mark:
       - Hard reset :negative_squared_cross_mark:
@@ -77,13 +81,12 @@ The DCC protocol is defined by various standards published by the [National Mode
     - Consist control
       - Set consist address :ballot_box_with_check:
     - Advanced operations
-      - Speed, direction and function :ballot_box_with_check:
+      - Speed, direction and functions :ballot_box_with_check:
       - Analog function group :negative_squared_cross_mark:
       - Special operating modes :ballot_box_with_check:
       - 128 speed step control :ballot_box_with_check:
-    - Speed and direction
-      - Basic speed and direction :ballot_box_with_check:
-    - Function groups
+    - Speed and direction :ballot_box_with_check:
+    - Function group
       - F0-F4 :ballot_box_with_check:
       - F9-F12 :ballot_box_with_check:
       - F5-F8 :ballot_box_with_check:
@@ -91,7 +94,7 @@ The DCC protocol is defined by various standards published by the [National Mode
       - Binary state control long form :negative_squared_cross_mark:
       - Time and date :negative_squared_cross_mark:
       - System time :negative_squared_cross_mark:
-      - Command station properties identifier :negative_squared_cross_mark:
+      - Command station feature identification :negative_squared_cross_mark:
       - F29-F36 :negative_squared_cross_mark:
       - F37-F44 :negative_squared_cross_mark:
       - F45-F52 :negative_squared_cross_mark:
@@ -103,8 +106,11 @@ The DCC protocol is defined by various standards published by the [National Mode
     - CV access
       - Long form :ballot_box_with_check:
       - Short form :ballot_box_with_check:
+      - XPOM :negative_squared_cross_mark:
   - Accessory decoders
     - Currently not supported :negative_squared_cross_mark:
+  - Idle
+    - Digital decoder idle :ballot_box_with_check:
 
 ### Transmitter
 - Configurable preamble, bit durations and BiDi cutout
@@ -173,7 +179,7 @@ Commands available:
         This help message
  - exit
         Quit the session
- - address <Address [0-16383] [default:3]>
+ - address <Address [0-10239] [default:3]>
         Set address all commands are sent to
  - direction_speed <Direction [1 forward, 0 backward]> <Speed [0-127]>
         Set direction and speed
@@ -414,7 +420,9 @@ Dissector dissector{datagram, packet};
 
 // Iterate
 for (auto const& dg : dissector)
-  if (auto adr_low{get_if<dcc::bidi::app::AdrLow>(&dg)}) {
+  if (auto ack{get_if<dcc::bidi::Ack>(&dg)}) {
+    // Use Ack here
+  } if (auto adr_low{get_if<dcc::bidi::app::AdrLow>(&dg)}) {
     // Use app:adr_low data here
   } else if (auto dyn{get_if<dcc::bidi::app::Dyn>(&dg)}) {
     // Use app:dyn data here

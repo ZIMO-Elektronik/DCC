@@ -11,8 +11,20 @@ jobs:
     strategy:
       matrix:
         compliance: [OFF, ON]
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.2.0
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.2.1
     with:
+      pre-build: |
+        sudo apt update -y
+        sudo apt install -y '^libxcb.*-dev' libglu1-mesa-dev libx11-xcb-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
       args: -DCMAKE_BUILD_TYPE=Debug -DDCC_STANDARD_COMPLIANCE=${{ matrix.compliance }}
       target: DCCTests
       post-build: ctest --test-dir build --schedule-random --timeout 86400
+
+  include-what-you-must:
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.2.1
+    with:
+      pre-build: |
+        sudo apt update -y
+        sudo apt install -y '^libxcb.*-dev' libglu1-mesa-dev libx11-xcb-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
+      args: -DCMAKE_BUILD_TYPE=Debug
+      target: DCCIncludeWhatYouMust

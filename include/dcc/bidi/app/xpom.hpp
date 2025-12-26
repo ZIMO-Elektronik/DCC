@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 namespace dcc::bidi::app {
@@ -17,6 +18,7 @@ namespace dcc::bidi::app {
 struct Xpom {
   static constexpr std::array<uint8_t, 4uz> ids{8u, 9u, 10u, 11u};
   uint8_t ss{};
+  std::array<uint8_t, 4uz> d{};
   constexpr bool operator==(Xpom const&) const = default;
 };
 
