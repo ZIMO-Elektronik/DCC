@@ -136,44 +136,47 @@ void address(State::Packet& packet) {
       packet.desc_strs.push_back("Service");
       break;
     case dcc::Address::Broadcast:
-      packet.desc_strs.push_back("Broadcast=" + std::to_string(packet.addr));
+      packet.desc_strs.push_back("Broadcast=" +
+                                 std::to_string(packet.addr.value));
       packet.pattern_str += " 0 00000000";
       break;
     case dcc::Address::BasicLoco:
-      packet.desc_strs.push_back("Basic Loco=" + std::to_string(packet.addr));
+      packet.desc_strs.push_back("Basic Loco=" +
+                                 std::to_string(packet.addr.value));
       packet.pattern_str += " 0 0AAAAAAA";
       break;
     case dcc::Address::BasicAccessory:
       packet.desc_strs.push_back("Basic Accessory=" +
-                                 std::to_string(packet.addr));
+                                 std::to_string(packet.addr.value));
       packet.pattern_str += " 0 10AAAAAA 0 1ÂÂÂDAAR";
       break;
     case dcc::Address::ExtendedAccessory:
       packet.desc_strs.push_back("Extended Accessory=" +
-                                 std::to_string(packet.addr));
+                                 std::to_string(packet.addr.value));
       packet.pattern_str += " 0 10AAAAAA 0 0ÂÂÂ0AA1";
       break;
     case dcc::Address::ExtendedLoco:
       packet.desc_strs.push_back("Extended Loco=" +
-                                 std::to_string(packet.addr));
+                                 std::to_string(packet.addr.value));
       packet.pattern_str += " 0 11AAAAAA 0 AAAAAAAA";
       break;
     case dcc::Address::Reserved:
-      packet.desc_strs.push_back("Reserved=" + std::to_string(packet.addr));
+      packet.desc_strs.push_back("Reserved=" +
+                                 std::to_string(packet.addr.value));
       packet.pattern_str += " 0 11x1xxx";
       break;
     case dcc::Address::DataTransfer:
       packet.desc_strs.push_back("Data Transfer=" +
-                                 std::to_string(packet.addr));
+                                 std::to_string(packet.addr.value));
       packet.pattern_str += " 0 11111101";
       break;
     case dcc::Address::AutomaticLogon:
       packet.desc_strs.push_back("Automatic Logon=" +
-                                 std::to_string(packet.addr));
+                                 std::to_string(packet.addr.value));
       packet.pattern_str += " 0 11111110";
       break;
     case dcc::Address::Idle:
-      packet.desc_strs.push_back("Idle=" + std::to_string(packet.addr));
+      packet.desc_strs.push_back("Idle=" + std::to_string(packet.addr.value));
       packet.pattern_str += " 0 11111111";
       break;
   }
@@ -807,23 +810,24 @@ void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {
   auto const ss{bytes[0uz] & 0b11u};
   auto const page_str{"Page CV31=" + std::to_string(bytes[1uz]) +
                       " CV32=" + std::to_string(bytes[2uz])};
-  packet.desc_strs.back() += "\n- Sequence Number=" + std::format("{:02b}", ss);
+  auto const cv_addr{bytes[1uz] << 16u | bytes[2uz] << 8u | bytes[3uz] << 0u};
+  packet.desc_strs.back() += std::format("\n- Sequence Number={:02b}", ss);
   switch (kk) {
     case 0b01u:
       packet.desc_strs.back() += "\n- Verify Bytes @ " + page_str;
-      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 1u);
-      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 2u);
-      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 3u);
-      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 4u);
+      for (auto i{1uz}; i <= 4uz; ++i)
+        packet.desc_strs.back() +=
+          std::format("\n- CV{} (CV{})", bytes[3uz] + i, cv_addr + i);
       packet.pattern_str += " 0 1110KKSS 0 VVVVVVVV 0 VVVVVVVV 0 VVVVVVVV";
       break;
     case 0b11u:
       packet.desc_strs.back() += "\n- Write Bytes @ " + page_str;
       packet.pattern_str += " 0 1110KKSS 0 VVVVVVVV 0 VVVVVVVV 0 VVVVVVVV";
       for (auto i{4uz}; i < size(bytes) - 1uz; ++i) {
-        packet.desc_strs.back() += "\n- CV" +
-                                   std::to_string(bytes[3uz] + 1u + i - 4u) +
-                                   "=" + std::to_string(bytes[i]);
+        packet.desc_strs.back() += std::format("\n- CV{0}={1} (CV{2}={1})",
+                                               bytes[3uz] + 1u + i - 4u,
+                                               bytes[i],
+                                               cv_addr + 1u + i - 4u);
         packet.pattern_str += " 0 DDDDDDDD";
       }
       break;
@@ -831,9 +835,12 @@ void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {
       auto const pos{bytes[4uz] & 0b111u};
       auto const bit{static_cast<bool>(bytes[4uz] & ztl::mask<3u>)};
       packet.desc_strs.back() += "\n- Write Bit @ " + page_str;
-      packet.desc_strs.back() += "\n- CV" + std::to_string(bytes[3uz] + 1u) +
-                                 ":" + std::to_string(pos) + "=" +
-                                 std::to_string(bit);
+      packet.desc_strs.back() +=
+        std::format("\n- CV{0}:{1}={2} (CV{3}:{1}={2})",
+                    bytes[3uz] + 1u,
+                    pos,
+                    bit ? 1 : 0,
+                    cv_addr + 1u);
       packet.pattern_str +=
         " 0 1110KKSS 0 VVVVVVVV 0 VVVVVVVV 0 VVVVVVVV 0 1111DBBB";
       break;
