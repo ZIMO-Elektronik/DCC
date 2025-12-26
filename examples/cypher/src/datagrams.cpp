@@ -44,7 +44,7 @@ namespace eval {
 void eval(State& state, State::Datagram& datagram) {
   if (!empty(datagram.desc_strs) && state.cfg == datagram.cfg) return;
 
-  //
+  // Make a copy of global config to know when to rebuild
   datagram.cfg = state.cfg;
 
   // Clear/resize
@@ -111,7 +111,7 @@ void eval(State& state, State::Datagram& datagram) {
   tags(datagram);
 }
 
-//
+// Annotate datagram
 void dissector(State::Datagram& datagram) {
   Dissector dissector{datagram.bytes, datagram.addr};
   for (auto const& dg : dissector) {
@@ -187,7 +187,7 @@ void dissector(State::Datagram& datagram) {
   }
 }
 
-//
+// Generate highlights for plot
 void highlights(State::Datagram& datagram) {
   // Build data string
   std::string data_str{};
@@ -246,7 +246,7 @@ void highlights(State::Datagram& datagram) {
   }
 }
 
-//
+// Generate tags for plot
 void tags(State::Datagram& datagram) {
   datagram.plots.tags.push_back(
     {datagram.cfg.bidibit_duration / 2u, TCS_COL, "TCS"});
@@ -264,7 +264,7 @@ void tags(State::Datagram& datagram) {
 
 namespace tab {
 
-//
+// Tab
 void tab(State::Datagram& datagram, size_t i) {
   if (ImGui::BeginTabItem(("#" + std::to_string(i) + UNIQUE_LABEL()).c_str(),
                           &datagram.show,
@@ -289,13 +289,13 @@ void tab(State::Datagram& datagram, size_t i) {
   }
 }
 
-//
+// Description node
 void description(State::Datagram& datagram) {
   for (auto const& desc : datagram.desc_strs)
     ImGui::BulletText("%s", desc.c_str());
 }
 
-//
+// Data node
 void data(State::Datagram& datagram) {
   // This is beyond stupid, but have you tried doing that shit with algorithms?
   int first{-1};
@@ -312,7 +312,7 @@ void data(State::Datagram& datagram) {
                      first);
 }
 
-//
+// Plot node
 void plot(State::Datagram& datagram) {
   if (ImPlot::BeginPlot("Digital Signal")) {
     // Plot P and BiDi
