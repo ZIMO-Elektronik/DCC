@@ -15,16 +15,16 @@
 namespace dcc::bidi {
 
 enum Timing {
-  TCSMin = 26u,  ///< Minimal timing for cutout start
+  TCSMin = 26u,  ///< Minimum timing for cutout start
   TCS = 29u,     ///< Standard timing for cutout start
-  TCSMax = 32u,  ///< Maximal timing for cutout start
-  TCEMin = 454u, ///< Minimal timing for cutout end
+  TCSMax = 32u,  ///< Maximum timing for cutout start
+  TCEMin = 454u, ///< Minimum timing for cutout end
   TCE = 471u,    ///< Standard timing for cutout end
-  TCEMax = 488u, ///< Maximal timing for cutout end
-  TTS1 = 80u,    ///< Minimal timing for start channel 1
-  TTC1 = 177u,   ///< Maximal timing for end channel 1
-  TTS2 = 193u,   ///< Minimal timing for start channel 2
-  TTC2 = 454u    ///< Maximal timing for end channel 2
+  TCEMax = 488u, ///< Maximum timing for cutout end
+  TTS1 = 80u,    ///< Minimum timing for start channel 1
+  TTC1 = 177u,   ///< Maximum timing for end channel 1
+  TTS2 = 193u,   ///< Minimum timing for start channel 2
+  TTC2 = 454u    ///< Maximum timing for end channel 2
 };
 
 } // namespace dcc::bidi

@@ -104,8 +104,7 @@ TEST_F(
 
   ReceiveAndExecute(cv_packet);
 
-  auto other_packet_to_different_address{
-    dcc::make_function_group_f4_f0_packet(42u, 0b1u)};
+  auto other_packet_to_different_address{dcc::make_f0_f4_packet(42u, 0b1u)};
   ReceiveAndExecute(other_packet_to_different_address);
 
   ReceiveAndExecute(cv_packet);
@@ -127,8 +126,7 @@ TEST_F(
 
   ReceiveAndExecute(cv_packet);
 
-  auto other_packet_to_same_address{
-    make_function_group_f4_f0_packet(_addrs.primary, 0b1u)};
+  auto other_packet_to_same_address{make_f0_f4_packet(_addrs.primary, 0b1u)};
   ReceiveAndExecute(other_packet_to_same_address);
 
   ReceiveAndExecute(cv_packet);

@@ -16,6 +16,7 @@
 namespace dcc::bidi {
 
 struct Temperature : app::Dyn {
+  consteval Temperature() : app::Dyn{.x = 26u} {}
   explicit constexpr Temperature(int32_t temp)
     : app::Dyn{
         .d = static_cast<uint8_t>(ztl::lerp<int32_t>(temp, -50, 205, 0, 255)),

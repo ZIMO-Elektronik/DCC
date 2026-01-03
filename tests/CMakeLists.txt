@@ -12,11 +12,11 @@ cpmaddpackage(
   NAME
   Boost
   VERSION
-  1.88.0
+  1.90.0
   URL
-  https://github.com/boostorg/boost/releases/download/boost-1.88.0/boost-1.88.0-cmake.tar.gz
+  https://github.com/boostorg/boost/releases/download/boost-1.90.0/boost-1.90.0-cmake.tar.gz
   URL_HASH
-  SHA256=dcea50f40ba1ecfc448fdf886c0165cf3e525fef2c9e3e080b9804e8117b9694
+  SHA256=913ca43d49e93d1b158c9862009add1518a4c665e7853b349a6492d158b036d4
   OPTIONS
   "BOOST_ENABLE_CMAKE ON"
   "BOOST_SKIP_INSTALL_RULES ON"

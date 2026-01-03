@@ -16,6 +16,8 @@ namespace dcc::bidi::app {
 
 struct CvAuto {
   static constexpr uint8_t id{12u};
+  uint32_t v{};
+  uint8_t d{};
   constexpr bool operator==(CvAuto const&) const = default;
 };
 

@@ -16,6 +16,18 @@ namespace dcc::bidi::app {
 
 struct Ext {
   static constexpr uint8_t id{3u};
+  enum Type : uint8_t {
+    AddressOnly = 0b0000u,
+    Reserved8 = 0b1000u,
+    Reserved9 = 0b1001u,
+    GasStation = 0b1010u,
+    CoalDepot = 0b1011u,
+    WaterCrane = 0b1100u,
+    SandStore = 0b1101u,
+    ChargingStation = 0b1110u,
+    FillingStation = 0b1111u
+  } t{};
+  uint16_t p{};
   constexpr bool operator==(Ext const&) const = default;
 };
 

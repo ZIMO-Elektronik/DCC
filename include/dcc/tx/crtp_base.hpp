@@ -15,6 +15,7 @@
 #include <ztl/inplace_deque.hpp>
 #include "../bidi/datagram.hpp"
 #include "../bidi/timing.hpp"
+#include "../utility.hpp"
 #include "command_station.hpp"
 #include "config.hpp"
 #include "timings.hpp"

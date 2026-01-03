@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include <array>
 #include <cstdint>
+#include <ztl/implicit_wrapper.hpp>
 
 namespace dcc::bidi {
 
-using Nak = uint8_t;
+using Nak = ztl::implicit_wrapper<uint8_t, struct NakTag>;
 
 /// Instruction received correctly but not supported
 inline constexpr uint8_t nak{0b0011'1100u};

@@ -2,14 +2,13 @@
 
 using namespace dcc::bidi;
 
-TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
+TEST_F(RxTest, app_adr_alternate_primary_address) {
   // Make datagram
-  auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0u))};
-  auto adr_low{encode_datagram(
-    make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.primary)))};
+  auto adr_high{make_app_adr_high_datagram(_addrs.primary)};
+  auto adr_low{make_app_adr_low_datagram(_addrs.primary)};
 
   // Send whatever packet to get last received address to match primary
-  auto packet{make_function_group_f4_f0_packet(_addrs.primary, 10u)};
+  auto packet{make_f0_f4_packet(_addrs.primary, 10u)};
   Receive(packet);
 
   InSequence s;
@@ -24,17 +23,15 @@ TEST_F(RxTest, app_adr_alternate_primary_id1_id2) {
   }
 }
 
-TEST_F(RxTest, app_adr_alternate_logon_id1_id2) {
+TEST_F(RxTest, app_adr_alternate_logon_address) {
   Logon();
 
   // Make datagram
-  auto adr_high{encode_datagram(
-    make_datagram<Bits::_12>(1u, 0x80u | (_addrs.logon & 0x3F00u) >> 8u))};
-  auto adr_low{
-    encode_datagram(make_datagram<Bits::_12>(2u, _addrs.logon & 0x00FFu))};
+  auto adr_high{make_app_adr_high_datagram(_addrs.logon)};
+  auto adr_low{make_app_adr_low_datagram(_addrs.logon)};
 
   // Send whatever packet to get last received address to match primary
-  auto packet{make_function_group_f4_f0_packet(_addrs.primary, 10u)};
+  auto packet{make_f0_f4_packet(_addrs.primary, 10u)};
   Receive(packet);
 
   InSequence s;
@@ -54,24 +51,23 @@ TEST_F(RxTest, app_adr_disabled_with_cv28_0) {
   SetUp();
 
   // Send whatever packet to get last received address to match primary
-  Receive(make_function_group_f4_f0_packet(_addrs.primary, 10u));
+  Receive(make_f0_f4_packet(_addrs.primary, 10u));
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
   Execute();
   _mock.biDiChannel1();
 }
 
-TEST_F(RxTest, app_adr_alternate_consist_id1_id2) {
+TEST_F(RxTest, app_adr_alternate_consist_address) {
   _cvs[19uz - 1uz] = static_cast<uint8_t>(_addrs.consist);
   SetUp();
 
   // Make datagram
-  auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0b0110'0000u))};
-  auto adr_low{encode_datagram(
-    make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.consist)))};
+  auto adr_high{make_app_adr_high_datagram(_addrs.consist, _cvs[19uz - 1uz])};
+  auto adr_low{make_app_adr_low_datagram(_addrs.consist, _cvs[19uz - 1uz])};
 
   // Send whatever packet to get last received address to match primary
-  auto packet{make_function_group_f4_f0_packet(_addrs.consist, 10u)};
+  auto packet{make_f0_f4_packet(_addrs.consist, 10u)};
   Receive(packet);
 
   InSequence s;
@@ -86,7 +82,7 @@ TEST_F(RxTest, app_adr_alternate_consist_id1_id2) {
   }
 }
 
-TEST_F(RxTest, app_adr_alternate_long_consist_id1_id2) {
+TEST_F(RxTest, app_adr_alternate_long_consist_address) {
   _cvs[19uz - 1uz] = 83u;
   _cvs[20uz - 1uz] = 12u;
   _addrs.consist = static_cast<dcc::Address::value_type>(
@@ -95,13 +91,11 @@ TEST_F(RxTest, app_adr_alternate_long_consist_id1_id2) {
   SetUp();
 
   // Make datagram
-  auto adr_high{encode_datagram(
-    make_datagram<Bits::_12>(1u, 0x80u | (_addrs.consist & 0x3F00u) >> 8u))};
-  auto adr_low{
-    encode_datagram(make_datagram<Bits::_12>(2u, _addrs.consist & 0x00FFu))};
+  auto adr_high{make_app_adr_high_datagram(_addrs.consist, _cvs[19uz - 1uz])};
+  auto adr_low{make_app_adr_low_datagram(_addrs.consist, _cvs[19uz - 1uz])};
 
   // Send whatever packet to get last received address to match primary
-  auto packet{make_function_group_f4_f0_packet(_addrs.consist, 10u)};
+  auto packet{make_f0_f4_packet(_addrs.consist, 10u)};
   Receive(packet);
 
   InSequence s;
@@ -118,9 +112,8 @@ TEST_F(RxTest, app_adr_alternate_long_consist_id1_id2) {
 
 TEST_F(RxTest, app_adr_broadcast) {
   // Make datagram
-  auto adr_high{encode_datagram(make_datagram<Bits::_12>(1u, 0u))};
-  auto adr_low{encode_datagram(
-    make_datagram<Bits::_12>(2u, static_cast<uint8_t>(_addrs.primary)))};
+  auto adr_high{make_app_adr_high_datagram(_addrs.primary)};
+  auto adr_low{make_app_adr_low_datagram(_addrs.primary)};
 
   // Broadcast
   auto packet{dcc::make_speed_and_direction_packet(0u, 0u)};
