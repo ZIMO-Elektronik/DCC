@@ -28,7 +28,7 @@ endif()
 FetchContent_Declare(
   CMakeModules
   GIT_REPOSITORY "https://github.com/ZIMO-Elektronik/CMakeModules"
-  GIT_TAG v0.10.0
+  GIT_TAG v0.12.0
   SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
 FetchContent_MakeAvailable(CMakeModules)
 
@@ -141,7 +141,7 @@ target_compile_definitions(
 if(PROJECT_IS_TOP_LEVEL AND NOT ESP_PLATFORM)
   target_include_directories(DCC INTERFACE include)
   target_common_warnings(DCC INTERFACE)
-  target_common_errors(DCC INTERFACE)
+  target_common_errors(DCC INTERFACE -Wfatal-errors)
 else()
   target_include_directories(DCC SYSTEM INTERFACE include)
 endif()
@@ -162,7 +162,7 @@ if(NOT TARGET static_math)
 endif()
 
 if(NOT TARGET ZTL::ZTL)
-  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.23.1")
+  cpmaddpackage("gh:ZIMO-Elektronik/ZTL@0.24.0")
 endif()
 
 target_link_libraries(DCC INTERFACE static_math ZTL::ZTL)
@@ -177,6 +177,8 @@ if(PROJECT_IS_TOP_LEVEL)
   file(GLOB_RECURSE SRC examples/*.[ch]pp include/*.[ch]pp src/*.[ch]pp
        tests/*.[ch]pp)
   add_clang_format_target(DCCFormat OPTIONS -i FILES ${SRC})
+  add_include_what_you_must_target(DCCIncludeWhatYouMust TARGET DCC
+                                   EXCLUDE_HEADERS "rmt_dcc_encoder.h")
 endif()
 
 if(BUILD_TESTING

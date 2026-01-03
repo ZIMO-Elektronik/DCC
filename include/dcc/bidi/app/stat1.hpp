@@ -2,23 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// Address assign
+/// BiDi app:stat1
 ///
-/// \file   dcc/address_assign.hpp
+/// \file   dcc/bidi/app/stat1.hpp
 /// \author Vincent Hamp
-/// \date   17/05/2025
+/// \date   19/12/2025
 
 #pragma once
 
 #include <cstdint>
 
-namespace dcc {
+namespace dcc::bidi::app {
 
-/// Address assign (RCN-218)
-enum struct AddressAssign : uint8_t {
-  Reserved = 0b00u | 0b01u,
-  Permanent = 0b10u,
-  Temporary = 0b11u,
+struct Stat1 {
+  static constexpr uint8_t id{4u};
+  uint8_t d{};
+  constexpr bool operator==(Stat1 const&) const = default;
 };
 
-} // namespace dcc
+} // namespace dcc::bidi::app

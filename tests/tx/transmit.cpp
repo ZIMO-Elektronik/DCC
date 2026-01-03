@@ -39,7 +39,7 @@ TEST_F(TxTest, consecutive_packets_without_cutout) {
 
 TEST_F(TxTest, consecutive_packets_with_cutout) {
   {
-    auto packet{dcc::make_function_group_f12_f9_packet(3u, 0b0000'1100u)};
+    auto packet{dcc::make_f9_f12_packet(3u, 0b0000'1100u)};
     EXPECT_ALL_TRUE(_packet_mock.packet(packet), _timings_mock.packet(packet));
     auto timings{dcc::tx::packet2timings(packet, _cfg)};
     auto bits{(_cfg.num_preamble +                  // Preamble

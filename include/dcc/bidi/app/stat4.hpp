@@ -2,24 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// Address group
+/// BiDi app:stat4
 ///
-/// \file   dcc/address_group.hpp
+/// \file   dcc/bidi/app/stat4.hpp
 /// \author Vincent Hamp
-/// \date   02/04/2024
+/// \date   19/12/2025
 
 #pragma once
 
 #include <cstdint>
 
-namespace dcc {
+namespace dcc::bidi::app {
 
-/// Address group (RCN-218)
-enum struct AddressGroup : uint8_t {
-  All = 0b00u,
-  Loco = 0b01u,
-  Acc = 0b10u,
-  Now = 0b11u
+struct Stat4 {
+  static constexpr uint8_t id{3u};
+  uint8_t d{};
+  constexpr bool operator==(Stat4 const&) const = default;
 };
 
-} // namespace dcc
+} // namespace dcc::bidi::app

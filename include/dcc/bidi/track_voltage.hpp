@@ -16,6 +16,7 @@
 namespace dcc::bidi {
 
 struct TrackVoltage : app::Dyn {
+  consteval TrackVoltage() : app::Dyn{.x = 46u} {}
   explicit constexpr TrackVoltage(int32_t mV)
     : app::Dyn{.d = static_cast<uint8_t>(std::max<int32_t>(0, mV - 5000) / 100),
                .x = 46u} {}

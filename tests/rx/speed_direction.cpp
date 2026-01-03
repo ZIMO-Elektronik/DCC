@@ -1,10 +1,29 @@
 #include "rx_test.hpp"
 
-TEST_F(RxTest, speed_and_direction) {
+TEST_F(RxTest, speed_and_direction_14_speed_steps) {
+  _cvs[29uz - 1uz] = 0b1000u;
+  SetUp();
+
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<14>(13)));
+  ReceiveAndExecute(
+    make_speed_and_direction_packet(_addrs.primary, 1u << 5u | 0b1110u));
+
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Backward));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<14>(6)));
+  ReceiveAndExecute(make_speed_and_direction_packet(_addrs.primary, 0b0111u));
+}
+
+TEST_F(RxTest, speed_and_direction_28_speed_steps) {
   EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<28>(17)));
   ReceiveAndExecute(
-    make_speed_and_direction_packet(_addrs.primary, 1u << 5u | 10u));
+    make_speed_and_direction_packet(_addrs.primary, 1u << 5u | 0b1010u));
+
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<28>(5)));
+  ReceiveAndExecute(
+    make_speed_and_direction_packet(_addrs.primary, 1u << 5u | 0b0100u));
 }
 
 TEST_F(RxTest, speed_and_direction_f0_exception) {

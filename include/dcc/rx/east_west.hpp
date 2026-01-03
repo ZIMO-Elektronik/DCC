@@ -11,6 +11,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstdint>
 #include <optional>
 
 namespace dcc::rx {

@@ -39,7 +39,7 @@ struct Address {
 
   value_type value{};
 
-  enum : uint8_t {
+  enum Type : uint8_t {
     UnknownService,    ///< Unknown or service (=no address)
     Broadcast,         ///< Broadcast
     BasicLoco,         ///< Basic loco (7 bit)
@@ -63,6 +63,7 @@ struct Address {
 /// \param  first   Beginning of the range to decode from
 /// \return Address
 template<std::input_iterator InputIt>
+requires(sizeof(std::iter_value_t<InputIt>) == 1uz)
 constexpr Address decode_address(InputIt first) {
   // 0
   if (*first == 0u) return {*first, Address::Broadcast};
@@ -74,8 +75,9 @@ constexpr Address decode_address(InputIt first) {
     auto const a10_8{(~*first & 0x70u) << 4u};
     auto const a1_0{(*first >> 1u) & 0x03u};
     return {static_cast<Address::value_type>(a10_8 | a7_2 | a1_0),
-            *first & 0b1000'0000u ? Address::BasicAccessory
-                                  : Address::ExtendedAccessory};
+            (*first & 0b1000'0000u) || !(*first & 0b1000'0001u)
+              ? Address::BasicAccessory
+              : Address::ExtendedAccessory};
   }
   // 192-231
   else if (*first <= 231u) {

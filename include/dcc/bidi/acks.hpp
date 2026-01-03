@@ -12,14 +12,15 @@
 
 #include <array>
 #include <cstdint>
+#include <ztl/implicit_wrapper.hpp>
 
 namespace dcc::bidi {
 
-using Ack = uint8_t;
+using Ack = ztl::implicit_wrapper<uint8_t, struct AckTag>;
 
 /// Instruction understood and will be executed
 ///
 /// For some stupid, incomprehensible reason, there are two versions of ACK.
-inline constexpr std::array<Ack, 2uz> acks{0b0000'1111u, 0b1111'0000u};
+inline constexpr std::array acks{Ack{0b0000'1111u}, Ack{0b1111'0000u}};
 
 } // namespace dcc::bidi
