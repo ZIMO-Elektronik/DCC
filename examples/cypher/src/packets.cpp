@@ -527,7 +527,7 @@ void feature_expansion_system_time(State::Packet& packet,
 void feature_expansion_command_station_feature_identification(
   State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - Command Station Feature Identification";
-  switch (auto const iiii{bytes[1uz] & 0x0Fu}) {
+  switch ([[maybe_unused]] auto const iiii{bytes[1uz] & 0x0Fu}) {
     case 0b1111u: {
       dcc::LocoFeatures const feats{
         static_cast<uint16_t>(bytes[2uz] << 8u | bytes[3uz] << 0u)};
@@ -848,8 +848,7 @@ void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {
 }
 
 // Digital decoder idle
-void digital_decoder_idle(State::Packet& packet,
-                          std::span<uint8_t const> bytes) {
+void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const>) {
   packet.desc_strs.push_back("Digital Decoder Idle");
   packet.pattern_str += " 0 00000000";
 }
@@ -880,7 +879,7 @@ void extended_accessory_decoder_control(State::Packet& packet,
 
 // NOP for basic and extended accessory
 void nop_for_basic_and_extended_accessory(State::Packet& packet,
-                                          std::span<uint8_t const> bytes) {
+                                          std::span<uint8_t const>) {
   packet.desc_strs.push_back("NOP for Basic and Extended Accessory Decoder");
 }
 
@@ -1084,7 +1083,7 @@ void description(State::Packet& packet) {
 void data(State::Packet& packet) {
   ImGui::BinaryTable(UNIQUE_LABEL(),
                      data(packet.bytes),
-                     ssize(packet.bytes),
+                     static_cast<int>(ssize(packet.bytes)),
                      ImGuiInputTextFlags_ReadOnly);
 }
 
