@@ -223,10 +223,11 @@ void dissector(State::Datagram& datagram) {
           break;
         // Position (app:ext)
         case 20u:
-          // Second app:dyn
+          // Second app:dyn with position
           if (auto it2{it}; ++it2 != end(dissector)) {
             auto const dg2{*it2};
-            if (auto const dyn_2{get_if<app::Dyn>(&dg2)}) {
+            if (auto const dyn_2{get_if<app::Dyn>(&dg2)};
+                dyn_2 && dyn_2->x == 20u) {
               it = it2;
               datagram.desc_strs.push_back("app:dyn");
               datagram.desc_strs.back() += std::format("\n- D={}", dyn_2->d);
@@ -246,14 +247,12 @@ void dissector(State::Datagram& datagram) {
           break;
         // Status and alarm messages
         case 21u:
-          datagram.desc_strs.back() +=
-            std::format("\n- Related to DV={}", dyn->d & ztl::mask<6u> ? 1 : 0);
           // Related to DV
           if (dyn->d & ztl::mask<6u>) {
             datagram.desc_strs.back() +=
-              std::format("\n- Alarm={}", dyn->d & ztl::mask<7u> ? 1 : 0);
+              std::format("\n- Related to DV={}", dyn->d & 0x3Fu);
             datagram.desc_strs.back() +=
-              std::format("\n- DV={}", dyn->d & 0x3Fu);
+              std::format("\n- Alarm={}", dyn->d & ztl::mask<7u> ? 1 : 0);
           }
           // Pre-defined
           else {
@@ -263,11 +262,11 @@ void dissector(State::Datagram& datagram) {
                 case 129u: [[fallthrough]];
                 case 130u:
                   datagram.desc_strs.back() += std::format(
-                    "\n- Alarm={}",
+                    "\n- Code={}",
                     mob_app_dyn_status_and_alarm_messages_labels[dyn->d -
                                                                  128uz]);
                   break;
-                default: datagram.desc_strs.back() += "\n- Alarm=?"; break;
+                default: datagram.desc_strs.back() += "\n- Code=?"; break;
               }
             // STAT
             else switch (dyn->d) {

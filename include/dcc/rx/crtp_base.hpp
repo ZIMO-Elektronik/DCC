@@ -1267,14 +1267,12 @@ private:
     impl().writeCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u, cv65300_65301[1uz]);
   }
 
-  /// Update quality of service (roughly every second)
-  ///
-  /// \return Quality of service
+  /// Update quality of service every 100 packets (roughly every second)
   void updateQos() {
-    if (_preamble_count < 100u) return;
-    _qos =
-      static_cast<uint8_t>(100u - (_packet_count * 100u) / _preamble_count);
-    _packet_count = _preamble_count = 0u;
+    if (_preamble_count < 100uz) return;
+    _qos = static_cast<uint8_t>(std::clamp(
+      100uz - (_packet_count * 100uz) / _preamble_count, 0uz, 100uz));
+    _packet_count = _preamble_count = 0uz;
   }
 
   /// Update time points
