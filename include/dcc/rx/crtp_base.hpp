@@ -797,7 +797,7 @@ private:
           cvWrite(24u - 1u, bytes[1uz]);
         break;
 
-      // Extended address 0 and 1 (CV17 and CV18)
+      // Extended address (CV17 and CV18)
       case 0b0100u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
         else if (_own_equal_packets_count == 2uz) {
@@ -813,6 +813,15 @@ private:
         else if (_own_equal_packets_count == 2uz) {
           cvWrite(31u - 1u, bytes[1uz]);
           cvWrite(32u - 1u, bytes[2uz]);
+        }
+        break;
+
+      // Consist address (CV19 and CV20)
+      case 0b0110u:
+        if (size(bytes) != 3uz + sizeof(_checksum)) return false;
+        else if (_own_equal_packets_count == 2uz) {
+          cvWrite(19u - 1u, bytes[1uz]);
+          cvWrite(20u - 1u, bytes[2uz]);
         }
         break;
 

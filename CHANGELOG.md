@@ -3,6 +3,7 @@
 ##
 - Add `DCCypher` web app ([#126](https://github.com/ZIMO-Elektronik/DCC/pull/126))
 - Add accessory support to `bidi::Dissector` ([#98](https://github.com/ZIMO-Elektronik/DCC/issues/98))
+- Add CV access short form for CV19/20 ([#132](https://github.com/ZIMO-Elektronik/DCC/issues/132))
 - Bugfix incorrect calculation of QoS ([#127](https://github.com/ZIMO-Elektronik/DCC/issues/127))
 - Bugfix hardened instruction decoding ([#128](https://github.com/ZIMO-Elektronik/DCC/issues/128))
 - Bugfix track search does not return consist address ([#133](https://github.com/ZIMO-Elektronik/DCC/issues/133))
