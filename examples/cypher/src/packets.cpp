@@ -357,9 +357,9 @@ void advanced_operations_special_operating_modes(
   State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - Special Operating Modes";
   auto const cc{(bytes[1uz] >> 2u) & 0b11u};
-  packet.desc_strs.back() +=
-    std::format("\n- Consist={}",
-                consist_labels[((cc & 1) << 1) | ((cc & 2) >> 1) | (cc & ~3)]);
+  packet.desc_strs.back() += std::format(
+    "\n- Consist={}",
+    consist_labels[((cc & 1u) << 1u) | ((cc & 2u) >> 1u) | (cc & ~3u)]);
   packet.desc_strs.back() +=
     std::format("\n- Shunting={}", bytes[1uz] & ztl::mask<4u> ? 1 : 0);
   packet.desc_strs.back() +=
@@ -810,7 +810,8 @@ void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {
   auto const ss{bytes[0uz] & 0b11u};
   auto const page_str{
     std::format("Page CV31={} CV32={}", bytes[1uz], bytes[2uz])};
-  auto const cv_addr{bytes[1uz] << 16u | bytes[2uz] << 8u | bytes[3uz] << 0u};
+  auto const cv_addr{static_cast<uint32_t>(
+    bytes[1uz] << 16u | bytes[2uz] << 8u | bytes[3uz] << 0u)};
   packet.desc_strs.back() += std::format("\n- Sequence Number={:02b}", ss);
   switch (kk) {
     case 0b01u:

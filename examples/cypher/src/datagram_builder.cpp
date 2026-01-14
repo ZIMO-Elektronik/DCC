@@ -74,8 +74,9 @@ void app_search(State::Datagram& datagram) {
   static constexpr uint8_t max{30u};
   static uint8_t s{};
   ImGui::SliderScalar("[s]", ImGuiDataType_U8, &s, &min, &max);
-  std::ranges::copy(make_app_search_datagram(addr, r << 7u | consist, s),
-                    begin(datagram.bytes) + channel1_size);
+  std::ranges::copy(
+    make_app_search_datagram(addr, static_cast<uint8_t>(r << 7u | consist), s),
+    begin(datagram.bytes) + channel1_size);
 }
 
 } // namespace broadcast
@@ -275,7 +276,7 @@ void app_dyn(State::Datagram& datagram, std::span<char const* const> labels) {
       UNIQUE_LABEL(I), ImGuiDataType_U8, data(ver), ssize(ver));
     ver[0uz] = std::clamp<uint8_t>(ver[0uz], 0u, 9u);
     ver[1uz] = std::clamp<uint8_t>(ver[1uz], 0u, 9u);
-    d = ver[0uz] << 4u | ver[1uz];
+    d = static_cast<uint8_t>(ver[0uz] << 4u | ver[1uz]);
   }
   // Change flags
   else if (!strcmp(labels[static_cast<size_t>(i)], "Change Flags")) {
@@ -626,7 +627,8 @@ void app_stat1(State::Datagram& datagram) {
   ImGui::Checkbox("Returned Aspect Based on Feedback", &bit5);
   static uint8_t aspect{};
   ImGui::InputScalar("Aspect", ImGuiDataType_U8, &aspect);
-  aspect = std::clamp<uint8_t>(aspect, 0u, smath::pow(2u, i ? 8u : 5u) - 1u);
+  aspect = std::clamp<uint8_t>(
+    aspect, 0u, static_cast<uint8_t>(smath::pow(2u, i ? 8u : 5u) - 1u));
   auto const aspect_low_bits{aspect & 0b1'1111u};
   auto const first{make_app_stat1_datagram(
     static_cast<uint8_t>(bit6 << 6u | bit5 << 5u | aspect_low_bits))};

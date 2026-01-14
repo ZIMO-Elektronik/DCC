@@ -1067,9 +1067,10 @@ private:
     // - CIDs are equal and
     // - SIDs are equal if not yet logon assigned or
     // - difference between SIDs is <=1 if already logon assigned
-    if (auto const skip{_cids.back() == _cids.front() &&
-                        static_cast<uint8_t>(_sids.back() - _sids.front()) <=
-                          _logon_assigned}) {
+    if ([[maybe_unused]] auto const skip{
+          _cids.back() == _cids.front() &&
+          static_cast<uint8_t>(_sids.back() - _sids.front()) <=
+            _logon_assigned}) {
       _logon_selected = _logon_assigned = _logon_store = true;
       return;
     }

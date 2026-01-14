@@ -1,6 +1,6 @@
 # Changelog
 
-##
+## 0.46.0
 - Add `DCCypher` web app ([#126](https://github.com/ZIMO-Elektronik/DCC/pull/126))
 - Add accessory support to `bidi::Dissector` ([#98](https://github.com/ZIMO-Elektronik/DCC/issues/98))
 - Add CV access short form for CV19/20 ([#132](https://github.com/ZIMO-Elektronik/DCC/issues/132))

@@ -639,8 +639,8 @@ void add_accessory_datagrams() {
     auto const bit5{static_cast<bool>(random_interval(0, 1))};
     auto const aspect{random_interval<uint8_t>(0b0011'1111u, 0b0111'1111u)};
     State::Datagram datagram{.addr = random_extended_accessory_address()};
-    auto const first{
-      make_app_stat1_datagram(bit6 << 6u | bit5 << 5u | (aspect & 0b1'1111u))};
+    auto const first{make_app_stat1_datagram(
+      static_cast<uint8_t>(bit6 << 6u | bit5 << 5u | (aspect & 0b1'1111u)))};
     std::ranges::copy(first, begin(datagram.bytes) + channel1_size);
     auto const second{make_app_stat1_datagram(0x80u | aspect >> 5u)};
     std::ranges::copy(second,

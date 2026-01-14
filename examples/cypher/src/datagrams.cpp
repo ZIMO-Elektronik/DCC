@@ -123,9 +123,9 @@ void dissector(State::Datagram& datagram) {
   Dissector dissector{datagram.bytes, datagram.addr};
   for (auto it{begin(dissector)}; it != end(dissector); ++it) {
     auto const& dg{*it};
-    if (auto const ack{get_if<Ack>(&dg)}) {
+    if ([[maybe_unused]] auto const ack{get_if<Ack>(&dg)}) {
       datagram.desc_strs.push_back("ACK");
-    } else if (auto const nak{get_if<Nak>(&dg)}) {
+    } else if ([[maybe_unused]] auto const nak{get_if<Nak>(&dg)}) {
       datagram.desc_strs.push_back("NAK");
     } else if (auto const pom{get_if<app::Pom>(&dg)}) {
       datagram.desc_strs.push_back("app:pom");
@@ -158,7 +158,7 @@ void dissector(State::Datagram& datagram) {
                     ext->t ? app_ext_type_labels[ext->t]
                            : "Address Only (TTTT = 0000-0111)");
       datagram.desc_strs.back() += std::format("\n- Position={}", ext->p);
-    } else if (auto const info{get_if<app::Info>(&dg)}) {
+    } else if ([[maybe_unused]] auto const info{get_if<app::Info>(&dg)}) {
       datagram.desc_strs.push_back("app:info");
       datagram.desc_strs.push_back("\\todo");
     } else if (auto const dyn{get_if<app::Dyn>(&dg)}) {
@@ -384,7 +384,7 @@ void dissector(State::Datagram& datagram) {
       datagram.desc_strs.push_back("app:CV-auto");
       datagram.desc_strs.back() +=
         std::format("\n- CV{}={}", cv_auto->v + 1u, cv_auto->d);
-    } else if (auto const block{get_if<app::Block>(&dg)}) {
+    } else if ([[maybe_unused]] auto const block{get_if<app::Block>(&dg)}) {
       datagram.desc_strs.push_back("app:block");
       datagram.desc_strs.push_back("\\todo");
     } else if (auto const search{get_if<app::Search>(&dg)}) {
@@ -490,7 +490,7 @@ void dissector(State::Datagram& datagram) {
           datagram.desc_strs.back() += "\n- Error=Internal";
           break;
       }
-    } else if (auto const test{get_if<app::Test>(&dg)}) {
+    } else if ([[maybe_unused]] auto const test{get_if<app::Test>(&dg)}) {
       datagram.desc_strs.push_back("app:test");
       datagram.desc_strs.push_back("\\todo");
     }
@@ -514,9 +514,6 @@ void highlights(State::Datagram& datagram) {
   size_t c{};
 
   for (auto i{0uz}; i < bundled_channels_size; ++i) {
-    auto offset{i < 2uz ? tts1 : tts2 - channel1_size * 10u * 4u};
-    offset += static_cast<double>(i * 10u * 4u);
-
     auto const b{datagram.bytes[i]};
     if (!b) continue;
 
