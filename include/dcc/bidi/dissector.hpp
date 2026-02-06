@@ -249,7 +249,12 @@ private:
       case Address::BasicLoco: [[fallthrough]];
       case Address::ExtendedLoco:
         switch (id) {
-          case app::Pom::id: [[fallthrough]];
+          case app::Pom::id: // (double) POM must be at start of channel 2
+            if (_i == channel1_size ||
+                (_i - datagram_size<Bits::_12> == channel1_size &&
+                 _decoded[channel1_size] >> 2u == id))
+              return {&_decoded[_i], datagram_size<Bits::_12>};
+            return {};
           case app::AdrHigh::id: [[fallthrough]];
           case app::AdrLow::id:
             return {&_decoded[_i], datagram_size<Bits::_12>};
