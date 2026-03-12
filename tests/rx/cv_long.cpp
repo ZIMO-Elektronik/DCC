@@ -93,7 +93,7 @@ TEST_F(RxTest, cv_long_write_byte_operations_mode) {
                       Matcher<std::function<void(uint8_t)>>(_)))
     .WillOnce(InvokeArgument<2uz>(byte));
   ReceiveAndExecuteTwice(
-    dcc::make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte));
+    make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte));
 }
 
 TEST_F(

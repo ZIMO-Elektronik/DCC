@@ -107,6 +107,13 @@ struct CrtpBase {
 
     // Initialization time point
     _tps.init = std::chrono::system_clock::now();
+
+    // Clear deques
+    _dyn_deque.clear();
+    _logon_deque.clear();
+    _search_deque.clear();
+    _adr_deque.clear();
+    _pom.deque.clear();
   }
 
   /// Enable

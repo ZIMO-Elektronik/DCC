@@ -81,3 +81,26 @@ TEST_F(
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   _mock.biDiChannel2();
 }
+
+TEST_F(RxTest, app_search_address_change_must_clear_deque) {
+  BASIC_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE();
+
+  // Make sure to get past backoff (see RCN-218)
+  for (auto i{0.0}; i < 30.0 / 10E-3; ++i)
+    Receive(dcc::make_binary_state_short_packet(0u, 2u, false))
+      ->LeaveCutout()
+      ->Execute();
+
+  // Change address
+  for (auto i{0uz}; i < 2uz; ++i)
+    ReceiveAndExecute(make_cv_access_long_write_packet(_addrs.primary, 0u, 4u));
+
+  // Receive any broadcast
+  Receive(dcc::make_speed_and_direction_packet(0u, 0u));
+
+  // Make datagram
+  auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
+
+  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
+  _mock.biDiChannel2();
+}
