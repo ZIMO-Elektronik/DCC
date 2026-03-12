@@ -18,7 +18,10 @@
           "text": "-enable-pretty-printing",
           "ignoreFailures": false
         }
-      ]
+      ],
+      "symbolLoadInfo": {
+        "loadAll": false
+      }
     },
     {
       "name": "Debug DCCRepl",

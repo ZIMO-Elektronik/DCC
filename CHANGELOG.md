@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.46.2
+- Bugfix CV bit manipulation operations mode ([#142](https://github.com/ZIMO-Elektronik/DCC/issues/142))
+
 ## 0.46.1
 - Bugfix workaround for old app:info (id3) datagrams in channel 2 ([#138](https://github.com/ZIMO-Elektronik/DCC/issues/138))
 

@@ -16,6 +16,18 @@ TEST_F(RxTest, cv_long_verify_bit_service_mode) {
   for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
 }
 
+TEST_F(RxTest, cv_long_verify_bit_operations_mode) {
+  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
+  auto bit{RandomInterval(0u, 1u)};
+  auto position{RandomInterval(0u, 7u)};
+  auto packet{dcc::make_cv_access_long_verify_packet(
+    _addrs.primary, cv_addr, bit, position)};
+
+  EXPECT_CALL(_mock, readCv(cv_addr, bit, position)).WillOnce(Return(bit));
+
+  ReceiveAndExecute(packet);
+}
+
 TEST_F(RxTest, cv_long_verify_byte_operations_mode) {
   auto cv_addr{RandomInterval(0u, smath::pow(2u, 10u) - 1u)};
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
@@ -41,23 +53,6 @@ TEST_F(RxTest, cv_long_verify_byte_service_mode) {
   for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
 }
 
-TEST_F(RxTest, cv_long_ignore_write_bit_operations_mode) {
-  // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{RandomInterval(0u, 1u)};
-  auto position{RandomInterval(0u, 7u)};
-  auto packet{
-    make_cv_access_long_write_packet(_addrs.primary, cv_addr, bit, position)};
-
-  // 2 or more identical packets
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(cv_addr),
-                      Matcher<uint8_t>(_),
-                      Matcher<std::function<void(uint8_t)>>(_)))
-    .Times(0);
-  for (auto i{0uz}; i < 2uz; ++i) ReceiveAndExecute(packet);
-}
-
 TEST_F(RxTest, cv_long_write_bit_service_mode) {
   EnterServiceMode();
 
@@ -72,6 +67,19 @@ TEST_F(RxTest, cv_long_write_bit_service_mode) {
   EXPECT_CALL(_mock, writeCv(cv_addr, bit, position)).WillOnce(Return(bit));
   EXPECT_CALL(_mock, serviceAck());
   for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
+}
+
+TEST_F(RxTest, cv_long_write_bit_operations_mode) {
+  // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
+  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
+  auto bit{RandomInterval(0u, 1u)};
+  auto position{RandomInterval(0u, 7u)};
+  auto packet{
+    make_cv_access_long_write_packet(_addrs.primary, cv_addr, bit, position)};
+
+  // 2 or more identical packets
+  EXPECT_CALL(_mock, writeCv(cv_addr, bit, position)).WillOnce(Return(bit));
+  for (auto i{0uz}; i < 2uz; ++i) ReceiveAndExecute(packet);
 }
 
 TEST_F(RxTest, cv_long_write_byte_operations_mode) {
