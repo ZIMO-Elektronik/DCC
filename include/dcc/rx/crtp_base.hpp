@@ -861,7 +861,7 @@ private:
   /// \param  bit     CV bit
   /// \param  pos     CV bit position
   void cvVerifyImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
-    if (serviceMode() && impl().readCv(cv_addr, bit, pos) == bit)
+    if ((impl().readCv(cv_addr, bit, pos) == bit) && serviceMode())
       impl().serviceAck();
   }
 
@@ -905,7 +905,7 @@ private:
   /// \param  bit     CV bit
   /// \param  pos     CV bit position
   void cvWriteImpl(uint32_t cv_addr, bool bit, uint32_t pos) {
-    if (serviceMode() && impl().writeCv(cv_addr, bit, pos) == bit)
+    if ((impl().writeCv(cv_addr, bit, pos) == bit) && serviceMode())
       impl().serviceAck();
   }
 
