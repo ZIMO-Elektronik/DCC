@@ -33,19 +33,17 @@ struct RxTest : ::testing::Test {
     return dis(gen);
   }
 
-  /// \todo this needs to go
   void ReceiveAndExecute(dcc::Packet const& packet) {
     Receive(packet)->LeaveCutout()->Execute();
   }
 
-  /// \todo this needs to go
   void ReceiveAndExecuteTwice(dcc::Packet const& packet) {
     ReceiveAndExecute(packet);
     ReceiveAndExecute(packet);
   }
 
   NiceMock<RxMock> _mock;
-  dcc::Addresses _addrs{
+  dcc::rx::Addresses _addrs{
     .primary = {.value = 3u, .type = dcc::Address::BasicLoco},
     .consist = {.value = 4u, .type = dcc::Address::BasicLoco},
     .logon = {.value = 1000u, .type = dcc::Address::ExtendedLoco}};

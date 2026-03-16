@@ -2,17 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// Addresses
+/// Receive addresses
 ///
-/// \file   dcc/addresses.hpp
+/// \file   dcc/rx/addresses.hpp
 /// \author Vincent Hamp
 /// \date   04/01/2022
 
 #pragma once
 
-#include "address.hpp"
+#include "../address.hpp"
 
-namespace dcc {
+namespace dcc::rx {
 
 struct Addresses {
   Address primary{};
@@ -21,4 +21,4 @@ struct Addresses {
   Address received{};
 };
 
-} // namespace dcc
+} // namespace dcc::rx
