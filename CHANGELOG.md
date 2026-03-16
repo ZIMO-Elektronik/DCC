@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.46.2
+- Add getter for address of last transmission to `tx::CrtpBase` ([#140](https://github.com/ZIMO-Elektronik/DCC/issues/140))
 - Bugfix `rx::CrtpBase::init()` clears deques ([#141](https://github.com/ZIMO-Elektronik/DCC/issues/141))
 - Bugfix CV bit manipulation operations mode ([#142](https://github.com/ZIMO-Elektronik/DCC/issues/142))
 

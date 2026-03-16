@@ -11,7 +11,6 @@
 #pragma once
 
 #include <bit>
-#include <cassert>
 #include <climits>
 #include <variant>
 #include <ztl/limits.hpp>

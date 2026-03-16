@@ -10,12 +10,15 @@
 
 #pragma once
 
+#include <cassert>
 #include <concepts>
 #include <span>
+#include <utility>
 #include <ztl/inplace_deque.hpp>
 #include "../bidi/datagram.hpp"
 #include "../bidi/timing.hpp"
 #include "../utility.hpp"
+#include "addresses.hpp"
 #include "command_station.hpp"
 #include "config.hpp"
 #include "timings.hpp"
@@ -32,8 +35,9 @@ requires(std::same_as<D, Packet> || std::same_as<D, Timings>)
 struct CrtpBase {
   friend T;
 
-  using value_type =
-    std::conditional_t<std::same_as<D, Packet>, TimingsAdapter, Timings>;
+  using value_type = std::pair<
+    Address,
+    std::conditional_t<std::same_as<D, Packet>, TimingsAdapter, Timings>>;
 
   /// Initialize
   ///
@@ -45,12 +49,14 @@ struct CrtpBase {
            cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max && //
            cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);  //
     _cfg = cfg;
+    _idle_packet.first = _addrs.current = decode_address(packet);
     if constexpr (std::same_as<D, Packet>)
-      _idle_packet = TimingsAdapter{packet, _cfg};
+      _idle_packet.second = TimingsAdapter{packet, _cfg};
     else if constexpr (std::same_as<D, Timings>)
-      _idle_packet = bytes2timings(packet, _cfg);
-    _first = begin(_idle_packet);
-    _last = cend(_idle_packet);
+      _idle_packet.second = bytes2timings(packet, _cfg);
+    _first = begin(_idle_packet.second);
+    _last = cend(_idle_packet.second);
+    _idle = true;
   }
 
   /// Transmit packet
@@ -80,31 +86,30 @@ struct CrtpBase {
   Timings::value_type transmit() {
     // Packet timings
     if (_first != _last) return packetTiming();
+
     // Packet end
-    else if constexpr (requires(T t) {
-                         { t.packetEnd() };
-                       })
+    if constexpr (requires(T t) {
+                    { t.packetEnd() };
+                  })
       if (!_bidi_count) impl().packetEnd();
 
     // BiDi timings
     if (_cfg.flags.bidi && _bidi_count <= 4uz) return biDiTiming();
     else _bidi_count = 0uz;
 
-    // Deque is empty, transmit idle packet
-    if (empty(_deque)) {
-      _first = begin(_idle_packet);
-      _last = cend(_idle_packet);
-    }
-    // Deque contains packet, transmit it
-    else {
-      _first = begin(_deque.front());
-      _last = cend(_deque.front());
-      /// \warning
-      /// Careful! This only works because of the design of ztl::inplace_deque.
-      /// The element currently pointed to will stay valid until the next call
-      /// of pop_front().
+    // Only pop if packet came from deque
+    if (!_idle) {
+      assert(!empty(_deque));
       _deque.pop_front();
     }
+
+    // Next packet
+    _idle = empty(_deque);
+    auto& packet{_idle ? _idle_packet : _deque.front()};
+    _addrs.last = _addrs.current;
+    _addrs.current = packet.first;
+    _first = begin(packet.second);
+    _last = cend(packet.second);
     return packetTiming();
   }
 
@@ -117,6 +122,11 @@ struct CrtpBase {
   ///
   /// \return Deque capacity
   constexpr auto capacity() const { return DCC_TX_DEQUE_SIZE; }
+
+  /// Get address of last transmission
+  ///
+  /// \return Address of last transmission
+  constexpr auto address() const { return _addrs.last; }
 
 private:
   constexpr CrtpBase() = default;
@@ -186,9 +196,10 @@ private:
   ///
   /// \param  bytes Bytes containing DCC packet
   void pushBack(std::span<uint8_t const> bytes) {
-    if constexpr (std::same_as<D, Packet>) _deque.push_back({bytes, _cfg});
+    if constexpr (std::same_as<D, Packet>)
+      _deque.push_back({decode_address(bytes), {bytes, _cfg}});
     else if constexpr (std::same_as<D, Timings>)
-      _deque.push_back(bytes2timings(bytes, _cfg));
+      _deque.push_back({decode_address(bytes), bytes2timings(bytes, _cfg)});
   }
 
   /// Toggle track outputs
@@ -208,13 +219,19 @@ private:
   /// Idle packet
   value_type _idle_packet{};
 
+  /// Addresses
+  Addresses _addrs{};
+
   /// Iterators
-  decltype(std::begin(_idle_packet)) _first{std::begin(_idle_packet)};
-  decltype(std::cend(_idle_packet)) _last{std::cend(_idle_packet)};
+  decltype(std::begin(_idle_packet.second)) _first{
+    std::begin(_idle_packet.second)};
+  decltype(std::cend(_idle_packet.second)) _last{
+    std::cend(_idle_packet.second)};
 
   size_t _bidi_count{}; ///< Count BiDi timings
   Config _cfg{};        ///< Configuration
   bool _polarity{};     ///< Track polarity
+  bool _idle{true};     ///< Idle flag
 };
 
 } // namespace dcc::tx

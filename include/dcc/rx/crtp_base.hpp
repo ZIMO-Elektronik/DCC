@@ -10,12 +10,12 @@
 
 #pragma once
 
+#include <cassert>
 #include <chrono>
 #include <concepts>
 #include <span>
 #include <ztl/bits.hpp>
 #include <ztl/inplace_deque.hpp>
-#include "../addresses.hpp"
 #include "../bidi/acks.hpp"
 #include "../bidi/channel.hpp"
 #include "../bidi/datagram.hpp"
@@ -31,6 +31,7 @@
 #include "../packet.hpp"
 #include "../speed.hpp"
 #include "../utility.hpp"
+#include "addresses.hpp"
 #include "async_readable.hpp"
 #include "async_writable.hpp"
 #include "backoff.hpp"
