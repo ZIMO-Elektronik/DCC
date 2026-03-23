@@ -26,15 +26,12 @@
 
 namespace dcc::tx {
 
-/// CRTP base for transmitting DCC
+/// Base for transmitting DCC
 ///
-/// \tparam T Type to downcast to
 /// \tparam D Deque value type
-template<typename T, typename D = Packet>
+template<typename D = Packet>
 requires(std::same_as<D, Packet> || std::same_as<D, Timings>)
-struct CrtpBase {
-  friend T;
-
+struct Base {
   using value_type = std::pair<
     Address,
     std::conditional_t<std::same_as<D, Packet>, TimingsAdapter, Timings>>;
@@ -82,35 +79,37 @@ struct CrtpBase {
 
   /// Get next bit duration to transmit in µs
   ///
+  /// \tparam Self self
   /// \return Bit duration in µs
-  Timings::value_type transmit() {
+  template<typename Self>
+  Timings::value_type transmit(this Self&& self) {
     // Packet timings
-    if (_first != _last) return packetTiming();
+    if (self._first != self._last) return self.packetTiming();
 
     // Packet end
-    if constexpr (requires(T t) {
-                    { t.packetEnd() };
+    if constexpr (requires(Self&& self) {
+                    { self.packetEnd() };
                   })
-      if (!_bidi_count) impl().packetEnd();
+      if (!self._bidi_count) self.packetEnd();
 
     // BiDi timings
-    if (_cfg.flags.bidi && _bidi_count <= 4uz) return biDiTiming();
-    else _bidi_count = 0uz;
+    if (self._cfg.flags.bidi && self._bidi_count <= 4uz) return self.biDiTiming();
+    else self._bidi_count = 0uz;
 
     // Only pop if packet came from deque
-    if (!_idle) {
-      assert(!empty(_deque));
-      _deque.pop_front();
+    if (!self._idle) {
+      assert(!empty(self._deque));
+      self._deque.pop_front();
     }
 
     // Next packet
-    _idle = empty(_deque);
-    auto& packet{_idle ? _idle_packet : _deque.front()};
-    _addrs.last = _addrs.current;
-    _addrs.current = packet.first;
-    _first = begin(packet.second);
-    _last = cend(packet.second);
-    return packetTiming();
+    self._idle = empty(self._deque);
+    auto& packet{self._idle ? self._idle_packet : self._deque.front()};
+    self._addrs.last = self._addrs.current;
+    self._addrs.current = packet.first;
+    self._first = begin(packet.second);
+    self._last = cend(packet.second);
+    return self.packetTiming();
   }
 
   /// Get deque size
@@ -128,10 +127,8 @@ struct CrtpBase {
   /// \return Address of last transmission
   constexpr auto address() const { return _addrs.last; }
 
-private:
-  constexpr CrtpBase() = default;
-  auto& impl() { return static_cast<T&>(*this); }
-  auto const& impl() const { return static_cast<T const&>(*this); }
+protected:
+  constexpr Base() = default;
 
   /// Packet timing
   ///
@@ -146,47 +143,48 @@ private:
   /// BiDi timing
   ///
   /// \return Next BiDi timing
-  Timings::value_type biDiTiming() {
-    switch (_bidi_count++) {
+  template<typename Self>
+  Timings::value_type biDiTiming(this Self&& self) {
+    switch (self._bidi_count++) {
       // Send half a 1 bit
       case 0uz:
-        toggleTrackOutputs();
+        self.toggleTrackOutputs();
         return static_cast<Timings::value_type>(bidi::Timing::TCS);
 
       // Cutout start
       case 1uz:
-        toggleTrackOutputs();
-        if constexpr (requires(T t) {
-                        { t.biDiStart() };
+        self.toggleTrackOutputs();
+        if constexpr (requires(Self self) {
+                        { self.biDiStart() };
                       })
-          impl().biDiStart();
+          self.biDiStart();
         return static_cast<Timings::value_type>(bidi::Timing::TTS1 -
                                                 bidi::Timing::TCS);
 
       // Channel 1 start
       case 2uz:
-        if constexpr (requires(T t) {
-                        { t.biDiChannel1() };
+        if constexpr (requires(Self self) {
+                        { self.biDiChannel1() };
                       })
-          impl().biDiChannel1();
+          self.biDiChannel1();
         return static_cast<Timings::value_type>(bidi::Timing::TTS2 -
                                                 bidi::Timing::TTS1);
 
       // Channel 2 start
       case 3uz:
-        if constexpr (requires(T t) {
-                        { t.biDiChannel2() };
+        if constexpr (requires(Self self) {
+                        { self.biDiChannel2() };
                       })
-          impl().biDiChannel2();
+          self.biDiChannel2();
         return static_cast<Timings::value_type>(bidi::Timing::TTC2 -
                                                 bidi::Timing::TTS2);
 
       // Cutout end
       default:
-        if constexpr (requires(T t) {
-                        { t.biDiEnd() };
+        if constexpr (requires(Self self) {
+                        { self.biDiEnd() };
                       })
-          impl().biDiEnd();
+          self.biDiEnd();
         return static_cast<Timings::value_type>(bidi::Timing::TCE -
                                                 bidi::Timing::TTC2);
     }
@@ -203,13 +201,14 @@ private:
   }
 
   /// Toggle track outputs
-  void toggleTrackOutputs() {
-    if constexpr (requires(T t, bool N, bool P) {
-                    { t.trackOutputs(N, P) };
+  template<typename Self> 
+  void toggleTrackOutputs(this Self&& self) {
+    if constexpr (requires(Self self, bool N, bool P) {
+                    { self.trackOutputs(N, P) };
                   }) {
       // By default the phase is "positive", so P > N for the first half bit.
-      impl().trackOutputs(_polarity, !_polarity);
-      _polarity = !_polarity;
+      self.trackOutputs(self._polarity, !self._polarity);
+      self._polarity = !self._polarity;
     }
   }
 

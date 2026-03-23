@@ -344,12 +344,12 @@ This distinction is important because the receiver prevents both
 > That means the methods `execute`, `biDiChannel1` and `biDiChannel2` can only be called in their respective phase. If called outside of the phase, they return immediately.
 
 ### Transmitter
-As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::CrtpBase`. There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.
+As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::Base`. There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.
 ```cpp
 #include <dcc/dcc.hpp>
 
-struct CommandStation : dcc::tx::CrtpBase<CommandStation> {
-  friend dcc::tx::CrtpBase<CommandStation>;
+struct CommandStation : dcc::tx::Base<> {
+  friend dcc::tx::Base<>;
 
 private:
   // Write track outputs
@@ -401,9 +401,9 @@ Again, inheriting from the base class isn't sufficient:
 #### Packet vs. Timings
 If you look at the signature of the transmitter base, you will see that it has a second template parameter which can be either `dcc::Packet` or `dcc::tx::Timings`.
 ```cpp
-template<typename T, typename D = Packet>
+template<typename D = Packet>
 requires(std::same_as<D, Packet> || std::same_as<D, Timings>)
-struct CrtpBase
+struct Base
 ```
 
 This parameter determines whether the transmitter stores packets to be sent as bytes or as bit timings. The trade-off is simple, packets require **less RAM** but **more instructions** in the interrupt, timings require **more RAM** but **fewer instructions** in the interrupt.
