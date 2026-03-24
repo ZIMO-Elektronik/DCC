@@ -24,6 +24,7 @@
 #include "config.hpp"
 #include "timings.hpp"
 #include "timings_adapter.hpp"
+#include "queued_packet.hpp"
 
 namespace dcc::tx {
 
@@ -33,9 +34,7 @@ namespace dcc::tx {
 template<typename D = Packet>
 requires(std::same_as<D, Packet> || std::same_as<D, Timings>)
 struct Base {
-  using value_type = std::pair<
-    Address,
-    std::conditional_t<std::same_as<D, Packet>, TimingsAdapter, Timings>>;
+  using value_type = detail::QueuedPacket<D>;
 
   /// Initialize
   ///
@@ -47,13 +46,13 @@ struct Base {
            cfg.bit1_duration >= Bit1Min && cfg.bit1_duration <= Bit1Max && //
            cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);  //
     _cfg = cfg;
-    _idle_packet.first = _addrs.current = decode_address(packet);
+    _idle_packet.address = _addrs.current = decode_address(packet);
     if constexpr (std::same_as<D, Packet>)
-      _idle_packet.second = TimingsAdapter{packet, _cfg};
+      _idle_packet.packet = TimingsAdapter{packet, _cfg};
     else if constexpr (std::same_as<D, Timings>)
-      _idle_packet.second = bytes2timings(packet, _cfg);
-    _first = begin(_idle_packet.second);
-    _last = cend(_idle_packet.second);
+      _idle_packet.packet = bytes2timings(packet, _cfg);
+    _first = begin(_idle_packet.packet);
+    _last = cend(_idle_packet.packet);
     _idle = true;
   }
 
@@ -108,9 +107,9 @@ struct Base {
     self._idle = empty(self._deque);
     auto& packet{self._idle ? self._idle_packet : self._deque.front()};
     self._addrs.last = self._addrs.current;
-    self._addrs.current = packet.first;
-    self._first = begin(packet.second);
-    self._last = cend(packet.second);
+    self._addrs.current = packet.address;
+    self._first = begin(packet.packet);
+    self._last = cend(packet.packet);
     return self.packetTiming();
   }
 
@@ -224,10 +223,10 @@ protected:
   Addresses _addrs{};
 
   /// Iterators
-  decltype(std::begin(_idle_packet.second)) _first{
-    std::begin(_idle_packet.second)};
-  decltype(std::cend(_idle_packet.second)) _last{
-    std::cend(_idle_packet.second)};
+  decltype(std::begin(_idle_packet.packet)) _first{
+    std::begin(_idle_packet.packet)};
+  decltype(std::cend(_idle_packet.packet)) _last{
+    std::cend(_idle_packet.packet)};
 
   detail::BiDiPhase _bidi_phase{}; ///< Count BiDi timings
   Config _cfg{};           ///< Configuration
