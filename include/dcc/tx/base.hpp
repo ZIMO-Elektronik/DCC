@@ -19,6 +19,7 @@
 #include "../bidi/timing.hpp"
 #include "../utility.hpp"
 #include "addresses.hpp"
+#include "bidi_phase.hpp"
 #include "command_station.hpp"
 #include "config.hpp"
 #include "timings.hpp"
@@ -90,11 +91,12 @@ struct Base {
     if constexpr (requires(Self&& self) {
                     { self.packetEnd() };
                   })
-      if (!self._bidi_count) self.packetEnd();
+      if (self._bidi_phase == detail::BiDiPhase::Pre) self.packetEnd();
 
     // BiDi timings
-    if (self._cfg.flags.bidi && self._bidi_count <= 4uz) return self.biDiTiming();
-    else self._bidi_count = 0uz;
+    if (self._cfg.flags.bidi && self._bidi_phase != detail::BiDiPhase::Done)
+      return self.biDiTiming();
+    else self._bidi_phase = detail::BiDiPhase::Pre;
 
     // Only pop if packet came from deque
     if (!self._idle) {
@@ -145,14 +147,14 @@ protected:
   /// \return Next BiDi timing
   template<typename Self>
   Timings::value_type biDiTiming(this Self&& self) {
-    switch (self._bidi_count++) {
+    switch (self._bidi_phase++) {
       // Send half a 1 bit
-      case 0uz:
+      case detail::BiDiPhase::Pre:
         self.toggleTrackOutputs();
         return static_cast<Timings::value_type>(bidi::Timing::TCS);
 
       // Cutout start
-      case 1uz:
+      case detail::BiDiPhase::Start:
         self.toggleTrackOutputs();
         if constexpr (requires(Self self) {
                         { self.biDiStart() };
@@ -162,7 +164,7 @@ protected:
                                                 bidi::Timing::TCS);
 
       // Channel 1 start
-      case 2uz:
+      case detail::BiDiPhase::Channel1:
         if constexpr (requires(Self self) {
                         { self.biDiChannel1() };
                       })
@@ -171,7 +173,7 @@ protected:
                                                 bidi::Timing::TTS1);
 
       // Channel 2 start
-      case 3uz:
+      case detail::BiDiPhase::Channel2:
         if constexpr (requires(Self self) {
                         { self.biDiChannel2() };
                       })
@@ -201,7 +203,7 @@ protected:
   }
 
   /// Toggle track outputs
-  template<typename Self> 
+  template<typename Self>
   void toggleTrackOutputs(this Self&& self) {
     if constexpr (requires(Self self, bool N, bool P) {
                     { self.trackOutputs(N, P) };
@@ -227,10 +229,10 @@ protected:
   decltype(std::cend(_idle_packet.second)) _last{
     std::cend(_idle_packet.second)};
 
-  size_t _bidi_count{}; ///< Count BiDi timings
-  Config _cfg{};        ///< Configuration
-  bool _polarity{};     ///< Track polarity
-  bool _idle{true};     ///< Idle flag
+  detail::BiDiPhase _bidi_phase{}; ///< Count BiDi timings
+  Config _cfg{};           ///< Configuration
+  bool _polarity{};        ///< Track polarity
+  bool _idle{true};        ///< Idle flag
 };
 
 } // namespace dcc::tx
