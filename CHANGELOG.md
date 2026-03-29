@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.46.3
+- Rename `make_special_operating_modes` to `make_special_operating_modes_packet`
+- Bugfix copy/paste error at east-west directions ([#147](https://github.com/ZIMO-Elektronik/DCC/issues/147))
+
 ## 0.46.2
 - Add getter for address of last transmission to `tx::CrtpBase` ([#140](https://github.com/ZIMO-Elektronik/DCC/issues/140))
 - Bugfix `rx::CrtpBase::init()` clears deques ([#141](https://github.com/ZIMO-Elektronik/DCC/issues/141))

@@ -69,7 +69,7 @@ void add_loco_packets() {
   addr = random_loco_address();
   state.packets.push_back(
     {.addr = addr,
-     .bytes = make_special_operating_modes(
+     .bytes = make_special_operating_modes_packet(
        addr,
        static_cast<Consist>(random_interval<uint8_t>(0b00u, 0b11u)),
        static_cast<bool>(random_interval(0, 1)),

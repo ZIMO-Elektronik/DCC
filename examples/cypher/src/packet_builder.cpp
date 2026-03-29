@@ -653,7 +653,7 @@ void advanced_operations_special_operating_modes(dcc::Address addr) {
   if (ImGui::Button("Push to Packets"))
     state.packets.push_back(
       {.addr = addr,
-       .bytes = dcc::make_special_operating_modes(
+       .bytes = dcc::make_special_operating_modes_packet(
          addr,
          static_cast<dcc::Consist>(((i & 1) << 1) | ((i & 2) >> 1) | (i & ~3)),
          shunting,

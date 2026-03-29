@@ -43,3 +43,35 @@ TEST_F(RxTest, _126_speed_steps_fwd_wrong_packet_length) {
   ReceiveAndExecute(TinkerWithPacketLength(make_128_speed_step_control_packet(
     _addrs.primary, dcc::Forward << 7u | 10u)));
 }
+
+TEST_F(RxTest, special_operating_modes) {
+  EXPECT_CALL(
+    _mock, eastWestDirection(_addrs.primary.value, std::optional<int32_t>{}));
+  ReceiveAndExecute(make_special_operating_modes_packet(
+    _addrs.primary, dcc::Consist::NotPart, false, false, false, false));
+  EXPECT_FALSE(_mock.man());
+}
+
+TEST_F(RxTest, special_operating_modes_man) {
+  EXPECT_CALL(
+    _mock, eastWestDirection(_addrs.primary.value, std::optional<int32_t>{}));
+  ReceiveAndExecute(make_special_operating_modes_packet(
+    _addrs.primary, dcc::Consist::NotPart, false, false, false, true));
+  EXPECT_TRUE(_mock.man());
+}
+
+TEST_F(RxTest, special_operating_modes_east) {
+  EXPECT_CALL(
+    _mock,
+    eastWestDirection(_addrs.primary.value, std::optional<int32_t>{dcc::East}));
+  ReceiveAndExecute(make_special_operating_modes_packet(
+    _addrs.primary, dcc::Consist::NotPart, false, false, true, false));
+}
+
+TEST_F(RxTest, special_operating_modes_west) {
+  EXPECT_CALL(
+    _mock,
+    eastWestDirection(_addrs.primary.value, std::optional<int32_t>{dcc::West}));
+  ReceiveAndExecute(make_special_operating_modes_packet(
+    _addrs.primary, dcc::Consist::NotPart, false, true, false, false));
+}

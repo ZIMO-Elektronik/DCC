@@ -339,7 +339,7 @@ enum struct Consist : uint8_t {
 /// \param  east      East bit
 /// \param  man       MAN function
 /// \return Advanced operations - special operating modes packet
-constexpr auto make_special_operating_modes(
+constexpr auto make_special_operating_modes_packet(
   Address addr, Consist cc, bool shunting, bool west, bool east, bool man) {
   assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
@@ -362,13 +362,13 @@ constexpr auto make_special_operating_modes(
 /// \param  east      East bit
 /// \param  man       MAN function
 /// \return Advanced operations - special operating modes packet
-constexpr auto make_special_operating_modes(Address::value_type addr,
-                                            Consist cc,
-                                            bool shunting,
-                                            bool west,
-                                            bool east,
-                                            bool man) {
-  return make_special_operating_modes(
+constexpr auto make_special_operating_modes_packet(Address::value_type addr,
+                                                   Consist cc,
+                                                   bool shunting,
+                                                   bool west,
+                                                   bool east,
+                                                   bool man) {
+  return make_special_operating_modes_packet(
     {addr, addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
     cc,
     shunting,
