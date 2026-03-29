@@ -511,7 +511,7 @@ private:
         if constexpr (EastWest<T>) {
           if (bytes[1uz] & ztl::mask<6u>) // East
             impl().eastWestDirection(addr, East);
-          else if (ztl::mask<5u>) // West
+          else if (bytes[1uz] & ztl::mask<5u>) // West
             impl().eastWestDirection(addr, West);
           else // Neither
             impl().eastWestDirection(addr, std::nullopt);
