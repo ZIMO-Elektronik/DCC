@@ -1300,9 +1300,10 @@ private:
   void updateTimePoints() {
     using std::literals::chrono_literals::operator""s;
     auto const now{std::chrono::system_clock::now()};
-    if (now - _tps.packet >= 2s) {
+    if (now - _tps.packet >= 1s) {
       _search_backoff.now();
       _tps.search = decltype(_tps.search){};
+      _tps.init = now;
     }
     _tps.packet = now;
   }
