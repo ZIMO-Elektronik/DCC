@@ -1296,7 +1296,7 @@ private:
 
   /// Update time points
   ///
-  /// In case time between two packets is >=2s allow tip-off search again.
+  /// In case time between two packets is >=1s allow tip-off search again.
   void updateTimePoints() {
     using std::literals::chrono_literals::operator""s;
     auto const now{std::chrono::system_clock::now()};
