@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.46.4
+- Bugfix reset track search after 1s without signal ([#149](https://github.com/ZIMO-Elektronik/DCC/issues/149))
+
 ## 0.46.3
 - Rename `make_special_operating_modes` to `make_special_operating_modes_packet`
 - Bugfix copy/paste error at east-west directions ([#147](https://github.com/ZIMO-Elektronik/DCC/issues/147))

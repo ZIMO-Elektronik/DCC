@@ -104,3 +104,48 @@ TEST_F(RxTest, app_search_address_change_must_clear_deque) {
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
   _mock.biDiChannel2();
 }
+
+TEST_F(RxTest, app_search_not_answered_after_30s) {
+  SetUp();
+
+  // Send whatever for at least 30s
+  for (auto const then{std::chrono::system_clock::now() + 31s};
+       std::chrono::system_clock::now() < then;)
+    ReceiveAndExecute(
+      make_speed_and_direction_packet(_addrs.primary, 1u << 5u | 0b0100u));
+
+  // Make sure to get past backoff (see RCN-218)
+  for (auto i{0.0}; i < 30.0 / 10E-3; ++i)
+    LeaveCutout()->Execute()->Receive(
+      dcc::make_binary_state_short_packet(0u, 2u, false));
+
+  // Make datagram
+  auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
+
+  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
+  _mock.biDiChannel2();
+}
+
+TEST_F(RxTest, app_search_resets_after_at_least_1s_without_signal) {
+  SetUp();
+
+  // Send whatever for at least 30s
+  for (auto const then{std::chrono::system_clock::now() + 31s};
+       std::chrono::system_clock::now() < then;)
+    ReceiveAndExecute(
+      make_speed_and_direction_packet(_addrs.primary, 1u << 5u | 0b0100u));
+
+  // Simulate lost signal
+  std::this_thread::sleep_for(2s);
+
+  // Make sure to get past backoff (see RCN-218)
+  for (auto i{0.0}; i < 30.0 / 10E-3; ++i)
+    LeaveCutout()->Execute()->Receive(
+      dcc::make_binary_state_short_packet(0u, 2u, false));
+
+  // Make datagram
+  auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
+
+  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
+  _mock.biDiChannel2();
+}
