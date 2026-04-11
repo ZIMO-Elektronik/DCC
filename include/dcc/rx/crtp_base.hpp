@@ -69,7 +69,8 @@ struct CrtpBase {
     auto const consist_addr{100u * (cv20 & 0b0111'1111u) +
                             (cv19 & 0b0111'1111u)};
     _addrs.consist = {static_cast<Address::value_type>(consist_addr),
-                      Address::ExtendedLoco};
+                      consist_addr <= 127u ? Address::BasicLoco
+                                           : Address::ExtendedLoco};
     _addrs.consist.reversed = cv19 & ztl::mask<7u>;
 
     // Legacy exception for F0

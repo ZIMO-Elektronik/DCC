@@ -9,6 +9,7 @@ DCC is an acronym for [Digital Command Control](https://en.wikipedia.org/wiki/Di
 The implementation provided here is used in the following products:
 - Command stations
   - [ZIMO KLUG](https://www.zimo.at/web2010/products/KLUG_EN.htm)
+  - [Open|Remise S3Main](https://openremise.at)
 - Decoders
   - [ZIMO small-](https://www.zimo.at/web2010/products/ms-sound-decoder_EN.htm) and [large-scale MS decoders](https://www.zimo.at/web2010/products/ms-sound-decoder-grossbahn_EN.htm)
   - [ZIMO MN decoders](https://www.zimo.at/web2010/products/mn-nicht-sound-decoder_EN.htm)

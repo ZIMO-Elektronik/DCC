@@ -28,10 +28,7 @@ struct Address {
   }
 
   friend constexpr bool operator==(Address const& lhs, Address const& rhs) {
-    return (lhs.type == BasicLoco || lhs.type == ExtendedLoco) &&
-               (rhs.type == BasicLoco || rhs.type == ExtendedLoco)
-             ? lhs.value == rhs.value
-             : lhs.value == rhs.value && lhs.type == rhs.type;
+    return lhs.value == rhs.value && lhs.type == rhs.type;
   }
 
   constexpr operator value_type&() { return value; }
