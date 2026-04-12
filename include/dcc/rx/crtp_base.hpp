@@ -403,16 +403,19 @@ private:
       case 0b1110'0000u: {
         auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
         auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
-        std::array const cv17_cv18{
-          static_cast<uint8_t>(0b1100'0000u | bytes[6uz]), bytes[7uz]};
         // Extended loco
         if (auto const a13_8{bytes[6uz] & 0x3Fu}; a13_8 < 0x28u)
-          logonAssign(did, bb, decode_address(&cv17_cv18[0uz]));
+          logonAssign(did,
+                      bb,
+                      {.value = static_cast<Address::value_type>(
+                         (bytes[6uz] & 0b0011'1111u) << 8u | bytes[7uz]),
+                       .type = Address::ExtendedLoco});
         // Accessory
         else if (a13_8 < 0x38u) break;
         // Basic loco
         else if (a13_8 < 0x39u)
-          logonAssign(did, bb, decode_address(&cv17_cv18[1uz]));
+          logonAssign(
+            did, bb, {.value = bytes[7uz], .type = Address::BasicLoco});
         // Reserved
         else if (a13_8 < 0x3Fu) break;
         // FW update
@@ -1280,7 +1283,7 @@ private:
     _sids.front() = _sids.back();
     impl().writeCv(DCC_RX_LOGON_SID_CV_ADDRESS, _sids.back());
 
-    std::array<uint8_t, 2uz> cv65300_65301;
+    std::array<uint8_t, 2uz> cv65300_65301{};
     encode_address(_addrs.logon, begin(cv65300_65301));
     impl().writeCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u, cv65300_65301[0uz]);
     impl().writeCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u, cv65300_65301[1uz]);
