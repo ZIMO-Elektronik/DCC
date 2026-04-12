@@ -2,10 +2,10 @@
 #include <dcc/dcc.hpp>
 
 TEST(address,
-     basic_and_extended_loco_address_compare_equal_based_solely_on_value) {
+     basic_and_extended_loco_address_are_not_equal_despite_same_value) {
   dcc::Address short_addr{.value = 3u, .type = dcc::Address::BasicLoco};
   dcc::Address long_addr{.value = 3u, .type = dcc::Address::ExtendedLoco};
-  EXPECT_EQ(short_addr, long_addr);
+  EXPECT_NE(short_addr, long_addr);
   EXPECT_EQ(short_addr, 3u);
   EXPECT_EQ(long_addr, 3u);
 }
