@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.46.5
-- Bugfix standard compliant loco addresses ([#151](https://github.com/ZIMO-Elektronik/DCC/issues/151))
+- `DCC_STANDARD_COMPLIANCE` determines whether short and long multi-function addresses compare equal ([#151](https://github.com/ZIMO-Elektronik/DCC/issues/151))
 
 ## 0.46.4
 - Bugfix reset track search after 1s without signal ([#149](https://github.com/ZIMO-Elektronik/DCC/issues/149))
