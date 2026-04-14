@@ -28,7 +28,12 @@ struct Address {
   }
 
   friend constexpr bool operator==(Address const& lhs, Address const& rhs) {
-    return lhs.value == rhs.value && lhs.type == rhs.type;
+#if !DCC_STANDARD_COMPLIANCE
+    if (lhs.type == BasicLoco || lhs.type == ExtendedLoco)
+      return lhs.value == rhs.value;
+    else
+#endif
+      return lhs.value == rhs.value && lhs.type == rhs.type;
   }
 
   constexpr operator value_type&() { return value; }

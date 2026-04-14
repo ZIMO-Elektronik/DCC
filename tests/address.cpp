@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <dcc/dcc.hpp>
 
+#if DCC_STANDARD_COMPLIANCE
+
 TEST(address,
      basic_and_extended_loco_address_are_not_equal_despite_same_value) {
   dcc::Address short_addr{.value = 3u, .type = dcc::Address::BasicLoco};
@@ -10,15 +12,18 @@ TEST(address,
   EXPECT_EQ(long_addr, 3u);
 }
 
+#else
+
 TEST(address,
-     basic_loco_and_basic_accessory_address_are_not_equal_despite_same_value) {
+     basic_and_extended_loco_address_compare_equal_based_solely_on_value) {
   dcc::Address short_addr{.value = 3u, .type = dcc::Address::BasicLoco};
-  dcc::Address basic_accessory_addr{.value = 3u,
-                                    .type = dcc::Address::BasicAccessory};
-  EXPECT_NE(short_addr, basic_accessory_addr);
+  dcc::Address long_addr{.value = 3u, .type = dcc::Address::ExtendedLoco};
+  EXPECT_EQ(short_addr, long_addr);
   EXPECT_EQ(short_addr, 3u);
-  EXPECT_EQ(basic_accessory_addr, 3u);
+  EXPECT_EQ(long_addr, 3u);
 }
+
+#endif
 
 TEST(address,
      basic_and_extended_accessory_address_are_not_equal_despite_same_value) {
