@@ -29,7 +29,8 @@ struct Address {
 
   friend constexpr bool operator==(Address const& lhs, Address const& rhs) {
 #if !DCC_STANDARD_COMPLIANCE
-    if (lhs.type == BasicLoco || lhs.type == ExtendedLoco)
+    if ((lhs.type == BasicLoco || lhs.type == ExtendedLoco) &&
+        (rhs.type == BasicLoco || rhs.type == ExtendedLoco))
       return lhs.value == rhs.value;
     else
 #endif
