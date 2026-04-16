@@ -13,19 +13,6 @@ struct RxTest : ::testing::Test {
 
   void SetUp() override;
 
-  RxTest* Receive(dcc::Packet const& packet);
-  RxTest* BiDiChannel1();
-  RxTest* BiDiChannel2();
-  RxTest* BiDi();
-  RxTest* LeaveCutout();
-  RxTest* Execute();
-
-  void EnterServiceMode();
-
-  void Logon();
-
-  dcc::Packet TinkerWithPacketLength(dcc::Packet packet) const;
-
   template<std::unsigned_integral T>
   static T RandomInterval(T min, T max) {
     std::mt19937 gen{std::random_device{}()};
@@ -33,14 +20,21 @@ struct RxTest : ::testing::Test {
     return dis(gen);
   }
 
-  void ReceiveAndExecute(dcc::Packet const& packet) {
-    Receive(packet)->LeaveCutout()->Execute();
-  }
+  RxTest* Receive(dcc::Packet const& packet, dcc::tx::Config cfg = {});
+  RxTest* BiDiChannel1();
+  RxTest* BiDiChannel2();
+  RxTest* BiDi();
+  RxTest* LeaveCutout();
+  RxTest* Execute();
 
-  void ReceiveAndExecuteTwice(dcc::Packet const& packet) {
-    ReceiveAndExecute(packet);
-    ReceiveAndExecute(packet);
-  }
+  void ReceiveAndExecute(dcc::Packet const& packet, dcc::tx::Config cfg = {});
+  void ReceiveAndExecuteTwice(dcc::Packet const& packet,
+                              dcc::tx::Config cfg = {});
+
+  void EnterServiceMode();
+  void Logon();
+
+  dcc::Packet TinkerWithPacketLength(dcc::Packet packet) const;
 
   NiceMock<RxMock> _mock;
   dcc::rx::Addresses _addrs{

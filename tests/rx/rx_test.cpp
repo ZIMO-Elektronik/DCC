@@ -52,8 +52,8 @@ void RxTest::SetUp() {
   }
 }
 
-RxTest* RxTest::Receive(dcc::Packet const& packet) {
-  auto timings{dcc::tx::packet2timings(packet)};
+RxTest* RxTest::Receive(dcc::Packet const& packet, dcc::tx::Config cfg) {
+  auto timings{dcc::tx::packet2timings(packet, cfg)};
   std::ranges::for_each_n(cbegin(timings),
                           size(timings),
                           [this](uint32_t time) { _mock.receive(time); });
@@ -82,6 +82,16 @@ RxTest* RxTest::LeaveCutout() {
 RxTest* RxTest::Execute() {
   _mock.execute();
   return this;
+}
+
+void RxTest::ReceiveAndExecute(dcc::Packet const& packet, dcc::tx::Config cfg) {
+  Receive(packet, cfg)->LeaveCutout()->Execute();
+}
+
+void RxTest::ReceiveAndExecuteTwice(dcc::Packet const& packet,
+                                    dcc::tx::Config cfg) {
+  ReceiveAndExecute(packet, cfg);
+  ReceiveAndExecute(packet, cfg);
 }
 
 void RxTest::EnterServiceMode() {
