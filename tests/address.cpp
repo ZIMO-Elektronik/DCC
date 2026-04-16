@@ -36,6 +36,46 @@ TEST(address,
   EXPECT_EQ(extended_accessory_addr, 3u);
 }
 
+TEST(address, loco_and_accessory_addresses_are_never_equal) {
+  {
+    dcc::Address basic_loco_addr{.value = 3u, .type = dcc::Address::BasicLoco};
+    dcc::Address basic_accessory_addr{.value = 3u,
+                                      .type = dcc::Address::BasicAccessory};
+    EXPECT_NE(basic_loco_addr, basic_accessory_addr);
+    EXPECT_EQ(basic_loco_addr, 3u);
+    EXPECT_EQ(basic_accessory_addr, 3u);
+  }
+
+  {
+    dcc::Address extended_loco_addr{.value = 3u,
+                                    .type = dcc::Address::ExtendedLoco};
+    dcc::Address basic_accessory_addr{.value = 3u,
+                                      .type = dcc::Address::BasicAccessory};
+    EXPECT_NE(extended_loco_addr, basic_accessory_addr);
+    EXPECT_EQ(extended_loco_addr, 3u);
+    EXPECT_EQ(basic_accessory_addr, 3u);
+  }
+
+  {
+    dcc::Address basic_loco_addr{.value = 3u, .type = dcc::Address::BasicLoco};
+    dcc::Address extended_accessory_addr{
+      .value = 3u, .type = dcc::Address::ExtendedAccessory};
+    EXPECT_NE(basic_loco_addr, extended_accessory_addr);
+    EXPECT_EQ(basic_loco_addr, 3u);
+    EXPECT_EQ(extended_accessory_addr, 3u);
+  }
+
+  {
+    dcc::Address extended_loco_addr{.value = 3u,
+                                    .type = dcc::Address::ExtendedLoco};
+    dcc::Address extended_accessory_addr{
+      .value = 3u, .type = dcc::Address::ExtendedAccessory};
+    EXPECT_NE(extended_loco_addr, extended_accessory_addr);
+    EXPECT_EQ(extended_loco_addr, 3u);
+    EXPECT_EQ(extended_accessory_addr, 3u);
+  }
+}
+
 TEST(address, basic_and_extended_accessory_nop) {
   auto basic_nop{dcc::make_accessory_nop_packet(
     {.value = 12u, .type = dcc::Address::BasicAccessory})};
