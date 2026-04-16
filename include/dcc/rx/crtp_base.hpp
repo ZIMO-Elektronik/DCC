@@ -92,14 +92,14 @@ struct CrtpBase {
     if constexpr (HighCurrent<T>) impl().highCurrentBiDi(cv28 & ztl::mask<6u>);
 
     // IDs
-    _did = {impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 0u),
-            impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 1u),
-            impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 2u),
-            impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 3u)};
-    _cids.front() = static_cast<decltype(_cids)::value_type>(
+    _ids.decoder = {impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 0u),
+                    impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 1u),
+                    impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 2u),
+                    impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 3u)};
+    _ids.cs.front() = static_cast<decltype(_ids.cs)::value_type>(
       (impl().readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 0u) << 8u) |
       impl().readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 1u));
-    _sids.front() = impl().readCv(DCC_RX_LOGON_SID_CV_ADDRESS);
+    _ids.session.front() = impl().readCv(DCC_RX_LOGON_SID_CV_ADDRESS);
 
     // Logon address
     std::array const logon_addr_cvs{
@@ -111,11 +111,11 @@ struct CrtpBase {
     _tps.init = std::chrono::system_clock::now();
 
     // Clear deques
-    _dyn_deque.clear();
-    _logon_deque.clear();
-    _search_deque.clear();
-    _adr_deque.clear();
-    _pom.deque.clear();
+    _deques.dyn.clear();
+    _deques.logon.clear();
+    _deques.search.clear();
+    _deques.adr.clear();
+    _deques.pom.clear();
   }
 
   /// Enable
@@ -135,38 +135,43 @@ struct CrtpBase {
   ///
   /// \param  time  Time in µs
   void receive(uint32_t time) {
-    _packet_end = false; // Whatever we got, its not packet end anymore
+    // Whatever we got, its not packet end anymore
+    _packet_end = false;
 
+    // Count consecutive one bits to determine if preamble is valid
     auto const bit{time2bit(time)};
+    bool const valid_preamble{_counts.one_bit >=
+                              DCC_RX_MIN_PREAMBLE_BITS * 2uz};
+    _counts.one_bit = bit == _1 ? (_counts.one_bit + 1uz) : 0uz;
+
+    // Reset if bit invalid
     if (bit == Invalid) return reset();
 
     // Alternate halfbit <-> bit
     if (_state > Startbit && (_is_halfbit = !_is_halfbit)) return;
 
-    if (full(_deque)) return reset(); /// \todo task full error counter?
-
     // Successfully received a bit
     switch (_state) {
       case Preamble:
-        if (bit) ++_bit_count;
-        else if (_bit_count < DCC_RX_MIN_PREAMBLE_BITS * 2uz) return reset();
-        else _state = Startbit;
+        if (bit) return;
+        else if (valid_preamble) _state = Startbit;
+        else return reset();
         break;
 
       case Startbit:
-        _packet.clear();
-        _bit_count = 0uz;
+        _packets.current.clear();
+        _counts.bit = 0uz;
         _is_halfbit = false;
-        ++_preamble_count;
+        ++_counts.preamble;
         _state = Data;
         break;
 
       case Data:
         _byte = static_cast<uint8_t>((_byte << 1u) | bit);
-        if (++_bit_count < CHAR_BIT) return;
-        _packet.push_back(_byte);
+        if (++_counts.bit < CHAR_BIT) return;
+        _packets.current.push_back(_byte);
         _checksum = static_cast<uint8_t>(_checksum ^ _byte);
-        _bit_count = _byte = 0u;
+        _counts.bit = _byte = 0u;
         _state = Endbit;
         break;
 
@@ -176,17 +181,18 @@ struct CrtpBase {
           return;
         }
         // Execute or push back valid packet
-        else if (!_checksum && size(_packet) >= 3uz) {
+        else if (!_checksum && size(_packets.current) >= 3uz) {
           _packet_end = true;
-          ++_packet_count;
-          _addrs.received = decode_address(_packet);
-          _instr = decode_instruction(_packet);
-          if (!executeHandlerMode()) _deque.push_back(_packet);
+          ++_counts.packet;
+          _addrs.received = decode_address(_packets.current);
+          _instr = decode_instruction(_packets.current);
+          if (!executeHandlerMode() && !full(_deques.packet))
+            _deques.packet.push_back(_packets.current);
         }
         // Immediately clear received address and invalid packet
         else {
           _addrs.received = {};
-          _packet.clear();
+          _packets.current.clear();
         }
         reset();
     }
@@ -229,8 +235,8 @@ struct CrtpBase {
   void datagram(Dyns&&... dyns) {
     // Block full and release empty deque to avoid getting the same datagrams
     // send over and over again...
-    if (full(_dyn_deque)) _block_dyn_deque = true;
-    else if (empty(_dyn_deque)) {
+    if (full(_deques.dyn)) _block_dyn_deque = true;
+    else if (empty(_deques.dyn)) {
       _block_dyn_deque = false;
       dyn(_qos, 7u);
     }
@@ -259,8 +265,8 @@ struct CrtpBase {
       case Address::ExtendedLoco:
         if (_addrs.received ==
             (_logon_assigned ? _addrs.logon : _addrs.primary))
-          !empty(_pom.deque) || _instr == Instruction::CvAccess ? appPom()
-                                                                : appDyn();
+          !empty(_deques.pom) || _instr == Instruction::CvAccess ? appPom()
+                                                                 : appDyn();
         else if (_addrs.received == _addrs.consist && _ch2_consist_enabled)
           appDyn();
         break;
@@ -280,9 +286,11 @@ private:
   /// \retval false Command rejected
   bool executeHandlerMode() {
     if (_addrs.received.type == Address::AutomaticLogon &&
-        (size(_packet) <= (6uz + sizeof(_checksum)) || !crc8(_packet)))
-      return executeAutomaticLogon(_addrs.received,
-                                   {cbegin(_packet) + 1, cend(_packet)});
+        (size(_packets.current) <= (6uz + sizeof(_checksum)) ||
+         !crc8(_packets.current)))
+      return executeAutomaticLogon(
+        _addrs.received,
+        {cbegin(_packets.current) + 1, cend(_packets.current)});
     else return false;
   }
 
@@ -291,13 +299,13 @@ private:
   /// \retval true  Command accepted
   /// \retval false Command rejected
   bool executeThreadMode() {
-    if (packetEnd() || empty(_deque)) return false;
+    if (packetEnd() || empty(_deques.packet)) return false;
     adr();              // Prepare address broadcasts for BiDi channel 1
     logonStore();       // Store logon information if necessary
     updateQos();        // Update quality of service
     updateTimePoints(); // Update time points for tip-off search
     auto const retval{serviceMode() ? executeService() : executeOperations()};
-    _deque.pop_front();
+    _deques.packet.pop_front();
     return retval;
   }
 
@@ -306,7 +314,7 @@ private:
   /// \retval true  Command accepted
   /// \retval false Command rejected
   bool executeOperations() {
-    auto const& packet{_deque.front()};
+    auto const& packet{_deques.packet.front()};
     switch (auto const addr{decode_address(packet)}; addr.type) {
       case Address::Broadcast: [[fallthrough]];
       case Address::BasicLoco:
@@ -327,14 +335,14 @@ private:
     countOwnEqualPackets();
 
     // Reset
-    if (auto const& packet{_deque.front()}; !packet[0uz])
+    if (auto const& packet{_deques.packet.front()}; !packet[0uz])
       ;
     // Exit
     else if ((packet[0uz] & 0xF0u) != 0b0111'0000u) serviceMode(false);
     // Register mode
     else if (size(packet) == 3uz) registerMode({cbegin(packet), cend(packet)});
     // CV access
-    else if (size(packet) == 4uz && _own_equal_packets_count == 2uz)
+    else if (size(packet) == 4uz && _counts.equal_packets == 2uz)
       executeCvAccessLong(0u, {cbegin(packet), cend(packet)});
 
     return true;
@@ -457,7 +465,7 @@ private:
       case 0b0000'0010u: [[fallthrough]];
       case 0b0000'0011u:
         if (!(bytes[1uz] & ztl::mask<7u>) &&
-            _own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+            _counts.equal_packets == !DCC_STANDARD_COMPLIANCE + 1uz)
           cvWrite(19u - 1u,
                   static_cast<uint8_t>(bytes[0uz] << 7u | bytes[1uz]));
         break;
@@ -728,9 +736,9 @@ private:
     // POM
     if (size(bytes) == 3uz + sizeof(_checksum)) {
       // Store packet for app:pom
-      if (_pom.packet != _deque.front()) {
-        _pom.deque.clear();
-        _pom.packet = _deque.front();
+      if (_packets.pom != _deques.packet.front()) {
+        _deques.pom.clear();
+        _packets.pom = _deques.packet.front();
       }
 
       // CV address
@@ -746,11 +754,10 @@ private:
         // Write byte
         case 0b11u:
           // Not enough packets
-          if (_own_equal_packets_count < 2uz)
+          if (_counts.equal_packets < 2uz)
             ;
           // Write once
-          else if (_own_equal_packets_count == 2uz)
-            cvWrite(cv_addr, bytes[2uz]);
+          else if (_counts.equal_packets == 2uz) cvWrite(cv_addr, bytes[2uz]);
           // ...otherwise just verify
           else cvVerify(cv_addr, bytes[2uz]);
           break;
@@ -760,7 +767,7 @@ private:
           auto const pos{bytes[2uz] & 0b111u};
           auto const bit{static_cast<bool>(bytes[2uz] & ztl::mask<3u>)};
           if (!(bytes[2uz] & ztl::mask<4u>)) cvVerify(cv_addr, bit, pos);
-          else if (_own_equal_packets_count == 2uz) cvWrite(cv_addr, bit, pos);
+          else if (_counts.equal_packets == 2uz) cvWrite(cv_addr, bit, pos);
           break;
         }
       }
@@ -798,21 +805,21 @@ private:
       // Acceleration adjustment (CV23)
       case 0b0010u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+        else if (_counts.equal_packets == !DCC_STANDARD_COMPLIANCE + 1uz)
           cvWrite(23u - 1u, bytes[1uz]);
         break;
 
       // Deceleration adjustment (CV24)
       case 0b0011u:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == !DCC_STANDARD_COMPLIANCE + 1uz)
+        else if (_counts.equal_packets == !DCC_STANDARD_COMPLIANCE + 1uz)
           cvWrite(24u - 1u, bytes[1uz]);
         break;
 
       // Extended address (CV17 and CV18)
       case 0b0100u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == 2uz) {
+        else if (_counts.equal_packets == 2uz) {
           cvWrite(17u - 1u, static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
           cvWrite(18u - 1u, bytes[2uz]);
           cvWrite(29u - 1u, true, 5u);
@@ -822,7 +829,7 @@ private:
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == 2uz) {
+        else if (_counts.equal_packets == 2uz) {
           cvWrite(31u - 1u, bytes[1uz]);
           cvWrite(32u - 1u, bytes[2uz]);
         }
@@ -831,7 +838,7 @@ private:
       // Consist address (CV19 and CV20)
       case 0b0110u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (_own_equal_packets_count == 2uz) {
+        else if (_counts.equal_packets == 2uz) {
           cvWrite(19u - 1u, bytes[1uz]);
           cvWrite(20u - 1u, bytes[2uz]);
         }
@@ -988,16 +995,16 @@ private:
 
   /// Count own equal packets
   void countOwnEqualPackets() {
-    if (_last_own_packet == _deque.front()) ++_own_equal_packets_count;
+    if (_packets.last == _deques.packet.front()) ++_counts.equal_packets;
     else {
-      _own_equal_packets_count = 1uz;
-      _last_own_packet = _deque.front();
+      _counts.equal_packets = 1uz;
+      _packets.last = _deques.packet.front();
     }
   }
 
   /// Reset
   void reset() {
-    _bit_count = _byte = _checksum = 0u;
+    _counts.bit = _byte = _checksum = 0u;
     _state = Preamble;
   }
 
@@ -1020,14 +1027,14 @@ private:
   /// \param  byte  CV value
   void pom(uint8_t byte) {
     if (!_ch2_data_enabled) return;
-    _pom.deque.clear();
-    _pom.deque.push_back(bidi::make_app_pom_datagram(byte));
+    _deques.pom.clear();
+    _deques.pom.push_back(bidi::make_app_pom_datagram(byte));
   }
 
   /// Track search
   void trackSearch() {
     using std::literals::chrono_literals::operator""s;
-    if (_search_backoff || !empty(_search_deque)) return;
+    if (_backoffs.search || !empty(_deques.search)) return;
     auto const now{std::chrono::system_clock::now()};
     if (std::chrono::duration_cast<std::chrono::seconds>(now - _tps.init) >=
         30s)
@@ -1035,7 +1042,7 @@ private:
     if (_tps.search == decltype(_tps.search){}) _tps.search = now;
     // Active address is logon
     if (_logon_assigned)
-      _search_deque.push_back(bidi::make_app_search_datagram(
+      _deques.search.push_back(bidi::make_app_search_datagram(
         _addrs.logon,
         0u,
         static_cast<uint8_t>(std::chrono::duration_cast<std::chrono::seconds>(
@@ -1043,7 +1050,7 @@ private:
                                .count())));
     // Active address is primary
     else if (!_addrs.consist)
-      _search_deque.push_back(bidi::make_app_search_datagram(
+      _deques.search.push_back(bidi::make_app_search_datagram(
         _addrs.primary,
         0u,
         static_cast<uint8_t>(std::chrono::duration_cast<std::chrono::seconds>(
@@ -1051,7 +1058,7 @@ private:
                                .count())));
     // Active address is consist
     else
-      _search_deque.push_back(bidi::make_app_search_datagram(
+      _deques.search.push_back(bidi::make_app_search_datagram(
         _addrs.consist,
         static_cast<uint8_t>((_addrs.consist.reversed ? 0x80u : 0u) |
                              (_addrs.consist & 0x7Fu)),
@@ -1067,21 +1074,22 @@ private:
   /// \param  sid Session ID
   void logonEnable(LogonGroup gg, uint16_t cid, uint8_t sid) {
     // Already got selected and CID/SID didn't change
-    if (_logon_selected && _cids.back() == cid && _sids.back() == sid) return;
+    if (_logon_selected && _ids.cs.back() == cid && _ids.session.back() == sid)
+      return;
     // ...otherwise clear selected
     else _logon_selected = false;
 
     // Store new CID and SID
-    _cids.back() = cid;
-    _sids.back() = sid;
+    _ids.cs.back() = cid;
+    _ids.session.back() = sid;
 
     // Skip logon if
     // - CIDs are equal and
     // - SIDs are equal if not yet logon assigned or
     // - difference between SIDs is <=1 if already logon assigned
     if ([[maybe_unused]] auto const skip{
-          _cids.back() == _cids.front() &&
-          static_cast<uint8_t>(_sids.back() - _sids.front()) <=
+          _ids.cs.back() == _ids.cs.front() &&
+          static_cast<uint8_t>(_ids.session.back() - _ids.session.front()) <=
             _logon_assigned}) {
       _logon_selected = _logon_assigned = _logon_store = true;
       return;
@@ -1093,29 +1101,29 @@ private:
     }
 
     switch (gg) {
-      case LogonGroup::All: [[fallthrough]];             // All decoders
-      case LogonGroup::Loco: break;                      // Loco decoders
-      case LogonGroup::Acc: return;                      // Accessory decoder
-      case LogonGroup::Now: _logon_backoff.now(); break; // No backoff
+      case LogonGroup::All: [[fallthrough]];              // All decoders
+      case LogonGroup::Loco: break;                       // Loco decoders
+      case LogonGroup::Acc: return;                       // Accessory decoder
+      case LogonGroup::Now: _backoffs.logon.now(); break; // No backoff
     }
 
-    if (_logon_backoff) return;
-    assert(!full(_logon_deque));
-    _logon_deque.push_back(
+    if (_backoffs.logon) return;
+    assert(!full(_deques.logon));
+    _deques.logon.push_back(
       bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
         15u,
         static_cast<uint64_t>(DCC_MANUFACTURER_ID) << 32u |
-          static_cast<uint32_t>(_did[0uz]) << 24u |
-          static_cast<uint32_t>(_did[1uz]) << 16u |
-          static_cast<uint32_t>(_did[2uz]) << 8u |
-          static_cast<uint32_t>(_did[3uz]))));
+          static_cast<uint32_t>(_ids.decoder[0uz]) << 24u |
+          static_cast<uint32_t>(_ids.decoder[1uz]) << 16u |
+          static_cast<uint32_t>(_ids.decoder[2uz]) << 8u |
+          static_cast<uint32_t>(_ids.decoder[3uz]))));
   }
 
   /// Logon select
   ///
   /// \param  did Unique ID
   void logonSelect(std::span<uint8_t const, 4uz> did) {
-    if (_logon_assigned || !std::ranges::equal(did, _did)) return;
+    if (_logon_assigned || !std::ranges::equal(did, _ids.decoder)) return;
     _logon_selected = true;
     std::array<uint8_t, 5uz> data{
       static_cast<uint8_t>(ztl::mask<7u> | (_addrs.primary >> 8u)),
@@ -1123,8 +1131,8 @@ private:
       0u,
       0u,
       0u};
-    assert(!full(_logon_deque));
-    _logon_deque.push_back(
+    assert(!full(_deques.logon));
+    _deques.logon.push_back(
       bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
         static_cast<uint64_t>(data[0uz]) << 40u |
         static_cast<uint64_t>(data[1uz]) << 32u |
@@ -1141,15 +1149,15 @@ private:
   void logonAssign(std::span<uint8_t const, 4uz> did,
                    LogonBindingBehavior bb,
                    Address addr) {
-    if (!std::ranges::equal(did, _did)) return;
+    if (!std::ranges::equal(did, _ids.decoder)) return;
     _logon_assigned = _logon_store = true;
     _addrs.consist = 0u;
     _addrs.logon = addr;
     if (bb == LogonBindingBehavior::Permanent && addr) _addrs.primary = addr;
     static constexpr std::array<uint8_t, 5uz> data{
       13u << 4u | 0u, 0u, 0u, 0u, 0u};
-    assert(!full(_logon_deque));
-    _logon_deque.push_back(
+    assert(!full(_deques.logon));
+    _deques.logon.push_back(
       bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
         static_cast<uint64_t>(data[0uz]) << 40uz |
         static_cast<uint64_t>(data[1uz]) << 32uz | data[2uz] << 24uz |
@@ -1158,30 +1166,30 @@ private:
 
   /// Add adr datagrams
   void adr() {
-    if (!_ch1_addr_enabled || !empty(_adr_deque)) return;
+    if (!_ch1_addr_enabled || !empty(_deques.adr)) return;
     // Active address is logon
     else if (_logon_assigned) {
-      _adr_deque.push_back(bidi::make_app_adr_high_datagram(_addrs.logon));
-      _adr_deque.push_back(bidi::make_app_adr_low_datagram(_addrs.logon));
+      _deques.adr.push_back(bidi::make_app_adr_high_datagram(_addrs.logon));
+      _deques.adr.push_back(bidi::make_app_adr_low_datagram(_addrs.logon));
     }
     // Active address is primary
     else if (!_addrs.consist) {
-      _adr_deque.push_back(bidi::make_app_adr_high_datagram(_addrs.primary));
-      _adr_deque.push_back(bidi::make_app_adr_low_datagram(_addrs.primary));
+      _deques.adr.push_back(bidi::make_app_adr_high_datagram(_addrs.primary));
+      _deques.adr.push_back(bidi::make_app_adr_low_datagram(_addrs.primary));
     }
     // Active address is consist
     else if (_addrs.consist < 128u) {
       auto const cv19{static_cast<uint8_t>(
         (_addrs.consist.reversed ? 0x80u : 0u) | (_addrs.consist & 0x7Fu))};
-      _adr_deque.push_back(
+      _deques.adr.push_back(
         bidi::make_app_adr_high_datagram(_addrs.consist, cv19));
-      _adr_deque.push_back(
+      _deques.adr.push_back(
         bidi::make_app_adr_low_datagram(_addrs.consist, cv19));
     }
     /// Active address is extended consist...
     else {
-      _adr_deque.push_back(bidi::make_app_adr_high_datagram(_addrs.consist));
-      _adr_deque.push_back(bidi::make_app_adr_low_datagram(_addrs.consist));
+      _deques.adr.push_back(bidi::make_app_adr_high_datagram(_addrs.consist));
+      _deques.adr.push_back(bidi::make_app_adr_low_datagram(_addrs.consist));
     }
   }
 
@@ -1190,28 +1198,28 @@ private:
   /// \param  d DV (dynamic CV)
   /// \param  x Subindex
   void dyn(uint8_t d, uint8_t x) {
-    if (!_ch2_data_enabled || full(_dyn_deque)) return;
-    _dyn_deque.push_back(bidi::make_app_dyn_datagram(d, x));
+    if (!_ch2_data_enabled || full(_deques.dyn)) return;
+    _deques.dyn.push_back(bidi::make_app_dyn_datagram(d, x));
   }
 
   /// Handle app:adr_low and app:adr_high datagrams
   void appAdr() {
-    if (empty(_adr_deque)) return;
-    _ch1 = _adr_deque.front();
+    if (empty(_deques.adr)) return;
+    _ch1 = _deques.adr.front();
     impl().transmitBiDi({cbegin(_ch1), size(_ch1)});
-    _adr_deque.pop_front();
+    _deques.adr.pop_front();
   }
 
   /// Handle app:pom
   void appPom() {
     if (!_ch2_data_enabled) return;
     // Deque contains data for this packet
-    else if (!empty(_pom.deque) &&
-             (_instr != Instruction::CvAccess || _packet == _pom.packet)) {
-      auto const& datagram{_pom.deque.front()};
+    else if (!empty(_deques.pom) && (_instr != Instruction::CvAccess ||
+                                     _packets.current == _packets.pom)) {
+      auto const& datagram{_deques.pom.front()};
       std::copy(cbegin(datagram), cend(datagram), begin(_ch2));
       impl().transmitBiDi({cbegin(_ch2), size(datagram)});
-      _pom.deque.pop_front();
+      _deques.pom.pop_front();
     }
     // Implicitly acknowledge all CV access commands
     else
@@ -1220,36 +1228,36 @@ private:
 
   /// Handle app:dyn
   void appDyn() {
-    if (empty(_dyn_deque)) return;
+    if (empty(_deques.dyn)) return;
     auto first{begin(_ch2)};
     auto const last{cend(_ch2)};
     do {
-      auto const& datagram{_dyn_deque.front()};
+      auto const& datagram{_deques.dyn.front()};
       first = std::copy_n(cbegin(datagram), size(datagram), first);
-      _dyn_deque.pop_front();
-    } while (!empty(_dyn_deque) && last - first >= ssize(_dyn_deque.front()));
+      _deques.dyn.pop_front();
+    } while (!empty(_deques.dyn) && last - first >= ssize(_deques.dyn.front()));
     impl().transmitBiDi({cbegin(_ch2), first});
   }
 
   /// Handle app:search
   void appSearch() {
-    if (empty(_search_deque)) return;
-    auto const& datagram{_search_deque.front()};
+    if (empty(_deques.search)) return;
+    auto const& datagram{_deques.search.front()};
     std::ranges::copy(datagram, begin(_ch2));
     impl().transmitBiDi({cbegin(_ch2), size(datagram)});
-    _search_deque.pop_front();
+    _deques.search.pop_front();
   }
 
   /// Handle app:logon
   void appLogon(uint32_t ch) {
-    if (empty(_logon_deque)) return;
-    if (auto const& datagram{_logon_deque.front()}; ch == 1u) {
+    if (empty(_deques.logon)) return;
+    if (auto const& datagram{_deques.logon.front()}; ch == 1u) {
       std::copy(begin(datagram), begin(datagram) + 2, begin(_ch1));
       impl().transmitBiDi({cbegin(_ch1), size(_ch1)});
     } else {
       std::copy(begin(datagram) + 2, end(datagram), begin(_ch2));
       impl().transmitBiDi({cbegin(_ch2), size(_ch2)});
-      _logon_deque.pop_front();
+      _deques.logon.pop_front();
     }
   }
 
@@ -1274,14 +1282,14 @@ private:
     impl().writeCv(19u - 1u, 0u);
     impl().writeCv(20u - 1u, 0u);
 
-    _cids.front() = _cids.back();
+    _ids.cs.front() = _ids.cs.back();
     impl().writeCv(DCC_RX_LOGON_CID_CV_ADDRESS + 0u,
-                   static_cast<uint8_t>(_cids.back() >> 8u));
+                   static_cast<uint8_t>(_ids.cs.back() >> 8u));
     impl().writeCv(DCC_RX_LOGON_CID_CV_ADDRESS + 1u,
-                   static_cast<uint8_t>(_cids.back()));
+                   static_cast<uint8_t>(_ids.cs.back()));
 
-    _sids.front() = _sids.back();
-    impl().writeCv(DCC_RX_LOGON_SID_CV_ADDRESS, _sids.back());
+    _ids.session.front() = _ids.session.back();
+    impl().writeCv(DCC_RX_LOGON_SID_CV_ADDRESS, _ids.session.back());
 
     std::array<uint8_t, 2uz> cv65300_65301{};
     encode_address(_addrs.logon, begin(cv65300_65301));
@@ -1291,11 +1299,11 @@ private:
 
   /// Update quality of service every 200 packets (roughly every 2 seconds)
   void updateQos() {
-    if (_preamble_count < 200uz) return;
+    if (_counts.preamble < 200uz) return;
     _qos = static_cast<uint8_t>(
-      100uz - (std::min(_packet_count + 1uz, _preamble_count) * 100uz) /
-                _preamble_count);
-    _packet_count = _preamble_count = 0uz;
+      100uz - (std::min(_counts.packet + 1uz, _counts.preamble) * 100uz) /
+                _counts.preamble);
+    _counts.packet = _counts.preamble = 0uz;
   }
 
   /// Update time points
@@ -1305,49 +1313,21 @@ private:
     using std::literals::chrono_literals::operator""s;
     auto const now{std::chrono::system_clock::now()};
     if (now - _tps.packet >= 1s) {
-      _search_backoff.now();
+      _backoffs.search.now();
       _tps.search = decltype(_tps.search){};
       _tps.init = now;
     }
     _tps.packet = now;
   }
 
-  // Deques
-  ztl::inplace_deque<Packet, DCC_RX_DEQUE_SIZE> _deque{};
-  ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_18>>,
-                     DCC_RX_BIDI_DEQUE_SIZE>
-    _dyn_deque{};
-  ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>>, 1uz>
-    _logon_deque{};
-  ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_36>>, 1uz>
-    _search_deque{};
-  ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_12>>, 2uz>
-    _adr_deque{};
-
-  // PoM
+  // Counts
   struct {
-    ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_12>>,
-                       1uz>
-      deque{};
-    Packet packet{};
-  } _pom{};
-
-  Packet _packet{};          ///< Current packet
-  Packet _last_own_packet{}; ///< Last packet for own address
-
-  Addresses _addrs{};
-
-  size_t _bit_count{};
-  size_t _packet_count{};
-  size_t _preamble_count{};
-  size_t _own_equal_packets_count{};
-  Instruction _instr{}; ///< Current instruction
-  uint8_t _byte{};
-  uint8_t _checksum{};    ///< On-the-fly calculated checksum
-  uint8_t _index_reg{1u}; ///< Paged mode index register
-
-  enum State : uint8_t { Preamble, Startbit, Data, Endbit } _state{};
-  enum Mode : uint8_t { Operations, Service } _mode{};
+    size_t one_bit{};       ///< Consecutive ones
+    size_t bit{};           ///< Current bits
+    size_t packet{};        ///< Successfully received packets
+    size_t preamble{};      ///< Successfully received preambles
+    size_t equal_packets{}; ///< Equal packets
+  } _counts{};
 
   // Time points
   struct {
@@ -1356,19 +1336,60 @@ private:
     std::chrono::time_point<std::chrono::system_clock> search;
   } _tps{};
 
-  std::array<uint8_t, 4uz> _did{};
+  // Deques
+  struct {
+    ztl::inplace_deque<Packet, DCC_RX_DEQUE_SIZE> packet{};
+    ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_18>>,
+                       DCC_RX_BIDI_DEQUE_SIZE>
+      dyn{};
+    ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>>,
+                       1uz>
+      logon{};
+    ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_36>>,
+                       1uz>
+      search{};
+    ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_12>>,
+                       2uz>
+      adr{};
+    ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_12>>,
+                       1uz>
+      pom{};
+  } _deques{};
+
+  // Packets
+  struct {
+    Packet current{}; ///< Current packet
+    Packet last{};    ///< Last executed packet
+    Packet pom{};     ///< Last executed PoM packet
+  } _packets{};
+
+  // Backoffs
+  struct {
+    Backoff logon{};
+    Backoff search{};
+  } _backoffs{};
+
+  // IDs
+  struct {
+    std::array<uint8_t, 4uz> decoder{}; ///< Decoder ID
+    std::array<uint16_t, 2uz> cs{};     ///< Command station ID
+    std::array<uint8_t, 2uz> session{}; ///< Session ID
+  } _ids{};
+
+  Addresses _addrs{};     ///< Addresses
+  Instruction _instr{};   ///< Current instruction
+  uint8_t _byte{};        ///< Current byte
+  uint8_t _checksum{};    ///< On-the-fly calculated checksum
+  uint8_t _index_reg{1u}; ///< Paged mode index register
 
   // Buffers
   bidi::Channel1 _ch1{};
   bidi::Channel2 _ch2{};
 
-  Backoff _logon_backoff{};
-  Backoff _search_backoff{};
-
-  std::array<uint16_t, 2uz> _cids{}; ///< Central ID
-  std::array<uint8_t, 2uz> _sids{};  ///< Session ID
-
   uint8_t _qos{}; ///< Quality of service
+
+  enum State : uint8_t { Preamble, Startbit, Data, Endbit } _state{};
+  enum Mode : uint8_t { Operations, Service } _mode{};
 
   // Not bitfields as those are most likely mutated in interrupt context
   bool _is_halfbit{};

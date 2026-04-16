@@ -2,6 +2,7 @@
 
 ## 0.46.5
 - `DCC_STANDARD_COMPLIANCE` determines whether short and long multi-function addresses compare equal ([#151](https://github.com/ZIMO-Elektronik/DCC/issues/151))
+- Bugfix NMRA truncated packet test ([#157](https://github.com/ZIMO-Elektronik/DCC/issues/157))
 
 ## 0.46.4
 - Bugfix reset track search after 1s without signal ([#149](https://github.com/ZIMO-Elektronik/DCC/issues/149))
