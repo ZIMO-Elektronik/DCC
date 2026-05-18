@@ -891,17 +891,19 @@ private:
   void cvWrite(uint32_t cv_addr, std::unsigned_integral auto... ts) {
     if (_cvs_locked && cv_addr != 15u - 1u) return;
     cvWriteImpl(cv_addr, ts...);
-    static constexpr std::array<uint8_t, 9uz> cvs{1u - 1u,
-                                                  15u - 1u,
-                                                  16u - 1u,
-                                                  17u - 1u,
-                                                  18u - 1u,
-                                                  19u - 1u,
-                                                  20u - 1u,
-                                                  28u - 1u,
-                                                  29u - 1u};
-    if (std::ranges::any_of(cvs, [cv_addr](uint8_t a) { return a == cv_addr; }))
+    if (static constexpr std::array<uint8_t, 9uz> cvs{1u - 1u,
+                                                      15u - 1u,
+                                                      16u - 1u,
+                                                      17u - 1u,
+                                                      18u - 1u,
+                                                      19u - 1u,
+                                                      20u - 1u,
+                                                      28u - 1u,
+                                                      29u - 1u};
+        std::ranges::contains(cvs, cv_addr)) {
+      if (cv_addr == 1u - 1u) impl().writeCv(29u - 1u, false, 5u);
       init();
+    }
   }
 
   /// CV byte write
@@ -1270,12 +1272,20 @@ private:
     if (!_logon_store) return;
     _logon_store = false;
 
+    // Encode logon address
+    std::array<uint8_t, 2uz> logon_addr_cvs{};
+    encode_address(_addrs.logon, begin(logon_addr_cvs));
+
     // Logon assign is permanent
     if (_addrs.primary == _addrs.logon) {
-      impl().writeCv(
-        17u - 1u, static_cast<uint8_t>(0b1100'0000u | (_addrs.primary >> 8u)));
-      impl().writeCv(18u - 1u, static_cast<uint8_t>(_addrs.primary));
-      impl().writeCv(29u - 1u, true, 5u);
+      if (_addrs.logon.type == Address::BasicLoco) {
+        impl().writeCv(1u - 1u, logon_addr_cvs[0uz]);
+        impl().writeCv(29u - 1u, false, 5u);
+      } else {
+        impl().writeCv(17u - 1u, logon_addr_cvs[0uz]);
+        impl().writeCv(18u - 1u, logon_addr_cvs[1uz]);
+        impl().writeCv(29u - 1u, true, 5u);
+      }
     }
 
     // Every assign clears eventually set consist address
@@ -1290,11 +1300,8 @@ private:
 
     _ids.session.front() = _ids.session.back();
     impl().writeCv(DCC_RX_LOGON_SID_CV_ADDRESS, _ids.session.back());
-
-    std::array<uint8_t, 2uz> cv65300_65301{};
-    encode_address(_addrs.logon, begin(cv65300_65301));
-    impl().writeCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u, cv65300_65301[0uz]);
-    impl().writeCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u, cv65300_65301[1uz]);
+    impl().writeCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u, logon_addr_cvs[0uz]);
+    impl().writeCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u, logon_addr_cvs[1uz]);
   }
 
   /// Update quality of service every 200 packets (roughly every 2 seconds)

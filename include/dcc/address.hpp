@@ -28,13 +28,7 @@ struct Address {
   }
 
   friend constexpr bool operator==(Address const& lhs, Address const& rhs) {
-#if !DCC_STANDARD_COMPLIANCE
-    if ((lhs.type == BasicLoco || lhs.type == ExtendedLoco) &&
-        (rhs.type == BasicLoco || rhs.type == ExtendedLoco))
-      return lhs.value == rhs.value;
-    else
-#endif
-      return lhs.value == rhs.value && lhs.type == rhs.type;
+    return lhs.value == rhs.value && lhs.type == rhs.type;
   }
 
   constexpr operator value_type&() { return value; }
@@ -84,7 +78,7 @@ constexpr Address decode_address(InputIt first) {
   }
   // 192-231
   else if (*first <= 231u) {
-    auto const a13_8{(*first++ & 0b0011'1111u) << 8u};
+    auto const a13_8{(*first++ & 0x3Fu) << 8u};
     auto const a7_0{*first};
     return {static_cast<Address::value_type>(a13_8 | a7_0),
             Address::ExtendedLoco};
@@ -127,9 +121,16 @@ template<std::output_iterator<uint8_t> OutputIt>
 constexpr OutputIt encode_address(Address addr, OutputIt first) {
   switch (addr.type) {
     case Address::UnknownService: break;
-    case Address::Broadcast: *first++ = 0u; break;
-    case Address::BasicLoco: *first++ = static_cast<uint8_t>(addr); break;
+    case Address::Broadcast:
+      assert(addr == 0u);
+      *first++ = 0u;
+      break;
+    case Address::BasicLoco:
+      assert(addr >= 1u && addr <= 127u);
+      *first++ = static_cast<uint8_t>(addr);
+      break;
     case Address::BasicAccessory:
+      assert(addr <= 2047u);
       *first++ = static_cast<uint8_t>(0x80u |                     //
                                       ((addr >> 2u) & 0x3Fu));    // A7-2
       *first++ = static_cast<uint8_t>(0x80u |                     //
@@ -137,6 +138,7 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
                                       ((addr & 0x03u) << 1u));    // A1-0
       break;
     case Address::ExtendedAccessory:
+      assert(addr <= 2047u);
       *first++ = static_cast<uint8_t>(0x80u |                     //
                                       ((addr >> 2u) & 0x3Fu));    // A7-2
       *first++ = static_cast<uint8_t>(((~addr & 0x0700u) >> 4u) | // A10-8
@@ -144,13 +146,23 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
                                       0x01u);                     //
       break;
     case Address::ExtendedLoco:
+      assert(addr >= 1 && addr <= 10239);
       *first++ = static_cast<uint8_t>(0xC0u | addr >> 8u);
       *first++ = static_cast<uint8_t>(addr);
       break;
     case Address::Reserved: assert(false); break;
-    case Address::DataTransfer: *first++ = 253u; break;
-    case Address::AutomaticLogon: *first++ = 254u; break;
-    case Address::Idle: *first++ = 255u; break;
+    case Address::DataTransfer:
+      assert(addr == 253u);
+      *first++ = 253u;
+      break;
+    case Address::AutomaticLogon:
+      assert(addr == 254u);
+      *first++ = 254u;
+      break;
+    case Address::Idle:
+      assert(addr == 255u);
+      *first++ = 255u;
+      break;
   }
   return first;
 }

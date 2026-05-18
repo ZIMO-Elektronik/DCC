@@ -1,7 +1,7 @@
 #include "rx_test.hpp"
 
 TEST_F(RxTest, consist_control) {
-  BASIC_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE();
+  EXPECT_CALL(_mock, readCv(_)).BASIC_ADDRESS_READ_CV_INIT_SEQUENCE();
   auto cv19{RandomInterval<uint8_t>(0u, 255u)};
   auto packet{make_set_consist_address_packet(_addrs.primary, cv19)};
 

@@ -39,14 +39,14 @@ void RxTest::SetUp() {
     /// This is weird... but not having the EXPECT_CALL inside a lambda makes
     /// GCC 14.2.1 (and 15.2.1) hang.
     std::invoke([this] {
-      EXTENDED_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE();
+      EXPECT_CALL(_mock, readCv(_)).EXTENDED_ADDRESS_READ_CV_INIT_SEQUENCE();
       _mock.init();
     });
   }
   // Basic address
   else {
     std::invoke([this] {
-      BASIC_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE();
+      EXPECT_CALL(_mock, readCv(_)).BASIC_ADDRESS_READ_CV_INIT_SEQUENCE();
       _mock.init();
     });
   }

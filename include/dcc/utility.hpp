@@ -1542,16 +1542,15 @@ constexpr auto make_logon_assign_packet(
   last = uint32_2data(did, last);
   switch (addr.type) {
     case Address::BasicLoco:
-      last = encode_address(addr, ++last);
-      packet[7uz] = static_cast<uint8_t>(std::to_underlying(bb) << 6u) | 0x38u;
-      break;
-    case Address::ExtendedLoco:
-      last = encode_address(addr, last);
-      packet[7uz] =
-        static_cast<uint8_t>(std::to_underlying(bb) << 6u) | packet[7uz];
+      *last++ = static_cast<uint8_t>(std::to_underlying(bb) << 6u) | 0x38u;
+      *last++ = static_cast<uint8_t>(addr);
       break;
     case Address::BasicAccessory: assert(false); break;
     case Address::ExtendedAccessory: assert(false); break;
+    case Address::ExtendedLoco:
+      *last++ = static_cast<uint8_t>(std::to_underlying(bb) << 6u | addr >> 8u);
+      *last++ = static_cast<uint8_t>(addr);
+      break;
     default: assert(false); break;
   }
   *last = crc8({first, last});
@@ -1650,7 +1649,7 @@ constexpr auto make_accessory_nop_packet(Address addr) {
 /// Make digital decoder - idle packet
 ///
 /// \return Digital decoder - idle packet
-consteval auto make_idle_packet() {
+constexpr auto make_idle_packet() {
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address({255u, Address::Idle}, first)};

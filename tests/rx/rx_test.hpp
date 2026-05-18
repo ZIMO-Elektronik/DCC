@@ -51,11 +51,8 @@ MATCHER_P(DatagramMatcher, datagram, "") {
   return std::equal(cbegin(datagram), cend(datagram), cbegin(arg));
 }
 
-#define BASIC_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE()                      \
-  EXPECT_CALL(_mock, readCv(_))                                                \
-    .WillOnce(Return(_cvs[29uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[1uz - 1uz]))                                         \
-    .WillOnce(Return(_cvs[19uz - 1uz]))                                        \
+#define READ_CV_INIT_SEQUENCE_COMMON()                                         \
+  WillOnce(Return(_cvs[19uz - 1uz]))                                           \
     .WillOnce(Return(_cvs[20uz - 1uz]))                                        \
     .WillOnce(Return(_cvs[15uz - 1uz]))                                        \
     .WillOnce(Return(_cvs[16uz - 1uz]))                                        \
@@ -70,22 +67,26 @@ MATCHER_P(DatagramMatcher, datagram, "") {
     .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u]))              \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u]))
 
-#define EXTENDED_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE()                   \
-  EXPECT_CALL(_mock, readCv(_))                                                \
-    .WillOnce(Return(_cvs[29uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[17uz - 1uz]))                                        \
+#define BASIC_ADDRESS_READ_CV_INIT_SEQUENCE_COMMON()                           \
+  WillOnce(Return(_cvs[1uz - 1uz])).READ_CV_INIT_SEQUENCE_COMMON()
+
+#define BASIC_ADDRESS_READ_CV_INIT_SEQUENCE()                                  \
+  WillOnce(Return(_cvs[29uz - 1uz]))                                           \
+    .BASIC_ADDRESS_READ_CV_INIT_SEQUENCE_COMMON()
+
+#define BASIC_ADDRESS_READ_CV_INIT_SEQUENCE_CHANGE_CV29(CV29)                  \
+  WillOnce(Return(_cvs[29uz - 1uz] = CV29))                                    \
+    .BASIC_ADDRESS_READ_CV_INIT_SEQUENCE_COMMON()
+
+#define EXTENDED_ADDRESS_READ_CV_INIT_SEQUENCE_COMMON()                        \
+  WillOnce(Return(_cvs[17uz - 1uz]))                                           \
     .WillOnce(Return(_cvs[18uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[19uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[20uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[15uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[16uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[28uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_SID_CV_ADDRESS]))                       \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u]))              \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u]))
+    .READ_CV_INIT_SEQUENCE_COMMON()
+
+#define EXTENDED_ADDRESS_READ_CV_INIT_SEQUENCE()                               \
+  WillOnce(Return(_cvs[29uz - 1uz]))                                           \
+    .EXTENDED_ADDRESS_READ_CV_INIT_SEQUENCE_COMMON()
+
+#define EXTENDED_ADDRESS_READ_CV_INIT_SEQUENCE_CHANGE_CV29(CV29)               \
+  WillOnce(Return(_cvs[29uz - 1uz] = CV29))                                    \
+    .EXTENDED_ADDRESS_READ_CV_INIT_SEQUENCE_COMMON()
