@@ -1,5 +1,28 @@
 #include "rx_test.hpp"
 
+TEST_F(RxTest, cv_short_cv17_18) {
+  dcc::Address const new_extended_address{.value = 1337u,
+                                          .type = dcc::Address::ExtendedLoco};
+  encode_address(new_extended_address, &_cvs[17uz - 1uz]);
+
+  // Before switching basic address init sequence is invoked twice
+  EXPECT_CALL(_mock, readCv(_))
+    .BASIC_ADDRESS_READ_CV_INIT_SEQUENCE()
+    .BASIC_ADDRESS_READ_CV_INIT_SEQUENCE()
+    .EXTENDED_ADDRESS_READ_CV_INIT_SEQUENCE_CHANGE_CV29(_cvs[29uz - 1uz] |
+                                                        ztl::mask<5u>);
+
+  // Change address
+  for (auto i{0uz}; i < 2uz; ++i)
+    ReceiveAndExecute(make_cv_access_short_write_packet(
+      _addrs.primary, 0b0100u, _cvs[17uz - 1uz], _cvs[18uz - 1uz]));
+
+  // Execute commands to address 1337
+  auto state{RandomInterval<uint8_t>(0b0'0000u, 0b1'1111u)};
+  EXPECT_CALL(_mock, function(new_extended_address.value, 0b11111u, state));
+  ReceiveAndExecute(make_f0_f4_packet(new_extended_address, state));
+}
+
 TEST_F(RxTest, cv_short_cv23) {
   auto cv23{RandomInterval<uint8_t>(0u, 255u)};
   auto packet{

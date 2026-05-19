@@ -310,12 +310,12 @@ TEST(instruction, decode_logon) {
   EXPECT_EQ(dcc::decode_instruction(&instr), dcc::Instruction::Logon);
 }
 
-TEST(instruction, decode_instruction_short_address) {
+TEST(instruction, decode_instruction_basic_address) {
   auto packet{dcc::make_set_consist_address_packet(3u, 0u)};
   EXPECT_EQ(dcc::decode_instruction(packet), dcc::Instruction::ConsistControl);
 }
 
-TEST(instruction, decode_instruction_long_address) {
+TEST(instruction, decode_instruction_extended_address) {
   {
     auto packet{dcc::make_f0_f4_packet(1022u, 0u)};
     EXPECT_EQ(dcc::decode_instruction(packet), dcc::Instruction::FunctionGroup);

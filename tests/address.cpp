@@ -1,29 +1,14 @@
 #include <gtest/gtest.h>
 #include <dcc/dcc.hpp>
 
-#if DCC_STANDARD_COMPLIANCE
-
 TEST(address,
      basic_and_extended_loco_address_are_not_equal_despite_same_value) {
-  dcc::Address short_addr{.value = 3u, .type = dcc::Address::BasicLoco};
+  dcc::Address basic_addr{.value = 3u, .type = dcc::Address::BasicLoco};
   dcc::Address long_addr{.value = 3u, .type = dcc::Address::ExtendedLoco};
-  EXPECT_NE(short_addr, long_addr);
-  EXPECT_EQ(short_addr, 3u);
+  EXPECT_NE(basic_addr, long_addr);
+  EXPECT_EQ(basic_addr, 3u);
   EXPECT_EQ(long_addr, 3u);
 }
-
-#else
-
-TEST(address,
-     basic_and_extended_loco_address_compare_equal_based_solely_on_value) {
-  dcc::Address short_addr{.value = 3u, .type = dcc::Address::BasicLoco};
-  dcc::Address long_addr{.value = 3u, .type = dcc::Address::ExtendedLoco};
-  EXPECT_EQ(short_addr, long_addr);
-  EXPECT_EQ(short_addr, 3u);
-  EXPECT_EQ(long_addr, 3u);
-}
-
-#endif
 
 TEST(address,
      basic_and_extended_accessory_address_are_not_equal_despite_same_value) {
@@ -139,36 +124,35 @@ TEST(address, decode_address) {
 TEST(address, encode_address) {
   {
     std::array<uint8_t, 2uz> data{};
-    EXPECT_EQ(dcc::encode_address(
-                dcc::Address{.value = 0u, .type = dcc::Address::Broadcast},
-                begin(data)),
-              cbegin(data) + 1);
+    EXPECT_EQ(
+      encode_address(dcc::Address{.value = 0u, .type = dcc::Address::Broadcast},
+                     begin(data)),
+      cbegin(data) + 1);
     EXPECT_EQ(data, (decltype(data){}));
   }
 
   {
     std::array<uint8_t, 2uz> data{};
-    EXPECT_EQ(dcc::encode_address(
-                dcc::Address{.value = 3u, .type = dcc::Address::BasicLoco},
-                begin(data)),
-              cbegin(data) + 1);
+    EXPECT_EQ(
+      encode_address(dcc::Address{.value = 3u, .type = dcc::Address::BasicLoco},
+                     begin(data)),
+      cbegin(data) + 1);
     EXPECT_EQ(data, (decltype(data){0b0000'0011u}));
   }
 
   {
     std::array<uint8_t, 2uz> data{};
-    EXPECT_EQ(
-      dcc::encode_address(
-        dcc::Address{.value = 1485u, .type = dcc::Address::BasicAccessory},
-        begin(data)),
-      cbegin(data) + 2);
+    EXPECT_EQ(encode_address(dcc::Address{.value = 1485u,
+                                          .type = dcc::Address::BasicAccessory},
+                             begin(data)),
+              cbegin(data) + 2);
     EXPECT_EQ(data, (decltype(data){0b1011'0011u, 0b1010'0010u}));
   }
 
   {
     std::array<uint8_t, 2uz> data{};
     EXPECT_EQ(
-      dcc::encode_address(
+      encode_address(
         dcc::Address{.value = 1485u, .type = dcc::Address::ExtendedAccessory},
         begin(data)),
       cbegin(data) + 2);
@@ -177,29 +161,27 @@ TEST(address, encode_address) {
 
   {
     std::array<uint8_t, 2uz> data{};
-    EXPECT_EQ(
-      dcc::encode_address(
-        dcc::Address{.value = 4874u, .type = dcc::Address::ExtendedLoco},
-        begin(data)),
-      cbegin(data) + 2);
+    EXPECT_EQ(encode_address(dcc::Address{.value = 4874u,
+                                          .type = dcc::Address::ExtendedLoco},
+                             begin(data)),
+              cbegin(data) + 2);
     EXPECT_EQ(data, (decltype(data){0b1101'0011u, 0b0000'1010u}));
   }
 
   {
     std::array<uint8_t, 2uz> data{};
-    EXPECT_EQ(
-      dcc::encode_address(
-        dcc::Address{.value = 254u, .type = dcc::Address::AutomaticLogon},
-        begin(data)),
-      cbegin(data) + 1);
+    EXPECT_EQ(encode_address(dcc::Address{.value = 254u,
+                                          .type = dcc::Address::AutomaticLogon},
+                             begin(data)),
+              cbegin(data) + 1);
     EXPECT_EQ(data, (decltype(data){0b1111'1110u}));
   }
 
   {
     std::array<uint8_t, 2uz> data{};
     EXPECT_EQ(
-      dcc::encode_address(
-        dcc::Address{.value = 255u, .type = dcc::Address::Idle}, begin(data)),
+      encode_address(dcc::Address{.value = 255u, .type = dcc::Address::Idle},
+                     begin(data)),
       cbegin(data) + 1);
     EXPECT_EQ(data, (decltype(data){0b1111'1111u}));
   }

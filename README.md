@@ -54,8 +54,8 @@ The DCC protocol is defined by various standards published by the [National Mode
 | [S-9.2.2 Configuration Variables For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.2_decoder_cvs_2012.07.pdf)           | [RCN-225 DCC - Protokoll Konfigurationsvariablen](https://normen.railcommunity.de/RCN-225.pdf)                           |
 
 ## Deviations from the Standard
-- **Short** and **long** multi-function decoder addresses **compare equal**. Unfortunately, the standards in this regard are ambiguous or even defect.
 - The consist control command requires **two identical** programming packets to program CV19 although this is not required by either [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) (chapter 2.4.1) or [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.1.4).
+- Writing an address to CV1 automatically clears CV29:5. Strictly speaking, this is not a deviation from the standard, as [RCN-225](https://normen.railcommunity.de/RCN-225.pdf) explicitly permits this behavior.
 - **All** CV access short form commands require **two identical** programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](https://normen.railcommunity.de/RCN-214.pdf) (chapter 3) and [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.7.2).
 - [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) specific
   - The 4-byte ID of a decoder (DID) must be available. By default this library uses CV250-253. To change the address of these CVs use the CMake option `DCC_RX_LOGON_DID_CV_ADDRESS`.
@@ -127,7 +127,7 @@ The DCC protocol is defined by various standards published by the [National Mode
 - C++23 compatible compiler
 - [CMake](https://cmake.org/) ( >= 3.25 )
 - Optional
-  - for building [Cypher]() catalog example
+  - for building [Cypher](https://zimo-elektronik.github.io/DCC) catalog example
     - [Emscripten](https://emscripten.org) ( >= 5.0.5 )
   - for building [ESP32](https://www.espressif.com/en/products/socs/esp32) [RMT](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) encoder example
     - [ESP-IDF](https://github.com/espressif/esp-idf) ( >= 5.0.3 )

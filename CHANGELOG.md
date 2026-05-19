@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.47.0
+- Short and long multi-function addresses don't compare equal ([#151](https://github.com/ZIMO-Elektronik/DCC/issues/151))
+- Clear CV29:5 when writing basic address to CV1 ([#151](https://github.com/ZIMO-Elektronik/DCC/issues/151))
+- Remove compatibility with ESP-IDF 5.1.0
+
 ## 0.46.5
 - `DCC_STANDARD_COMPLIANCE` determines whether short and long multi-function addresses compare equal ([#151](https://github.com/ZIMO-Elektronik/DCC/issues/151))
 - Bugfix NMRA truncated packet test ([#157](https://github.com/ZIMO-Elektronik/DCC/issues/157))

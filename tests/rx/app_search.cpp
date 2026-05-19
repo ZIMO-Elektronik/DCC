@@ -23,7 +23,7 @@ TEST_F(RxTest, app_search_basic_address) {
 
 TEST_F(RxTest, app_search_extended_address) {
   _addrs.primary = {.value = 3000u, .type = dcc::Address::ExtendedLoco};
-  dcc::encode_address(_addrs.primary, begin(_cvs) + 17 - 1);
+  encode_address(_addrs.primary, &_cvs[17uz - 1uz]);
   _cvs[29uz - 1uz] = _cvs[29uz - 1uz] | ztl::mask<5u>;
   SetUp();
 
@@ -83,7 +83,7 @@ TEST_F(
 }
 
 TEST_F(RxTest, app_search_address_change_must_clear_deque) {
-  BASIC_ADDRESS_EXPECT_CALL_READ_CV_INIT_SEQUENCE();
+  EXPECT_CALL(_mock, readCv(_)).BASIC_ADDRESS_READ_CV_INIT_SEQUENCE();
 
   // Make sure to get past backoff (see RCN-218)
   for (auto i{0.0}; i < 30.0 / 10E-3; ++i)
@@ -93,7 +93,7 @@ TEST_F(RxTest, app_search_address_change_must_clear_deque) {
 
   // Change address
   for (auto i{0uz}; i < 2uz; ++i)
-    ReceiveAndExecute(make_cv_access_long_write_packet(_addrs.primary, 0u, 4u));
+    ReceiveAndExecute(make_cv_access_long_write_packet(_addrs.primary, 0u, 7u));
 
   // Receive any broadcast
   Receive(dcc::make_speed_and_direction_packet(0u, 0u));

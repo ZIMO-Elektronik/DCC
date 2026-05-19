@@ -103,11 +103,11 @@ void broadcast() {
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
   if (!strcmp(instrs[static_cast<size_t>(i)], "Decoder Control"))
-    decoder_control({.type = dcc::Address::Broadcast});
+    decoder_control({.value = 0u, .type = dcc::Address::Broadcast});
   else if (!strcmp(instrs[static_cast<size_t>(i)], "Speed & Direction"))
-    speed_and_direction({.type = dcc::Address::Broadcast});
+    speed_and_direction({.value = 0u, .type = dcc::Address::Broadcast});
   else if (!strcmp(instrs[static_cast<size_t>(i)], "Feature Expansion"))
-    feature_expansion({.type = dcc::Address::Broadcast});
+    feature_expansion({.value = 0u, .type = dcc::Address::Broadcast});
 }
 
 // Broadcast decoder control

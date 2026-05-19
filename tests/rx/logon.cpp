@@ -26,8 +26,7 @@ TEST_F(RxTest, logon_with_unknown_cid_basic_loco) {
 
   // Assign address 42
   _addrs.logon = {.value = 42u, .type = dcc::Address::BasicLoco};
-  Receive(
-    dcc::make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
+  Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
   BiDi();
 
   // Execute commands to address 42
@@ -52,8 +51,7 @@ TEST_F(RxTest, logon_with_unknown_cid_extended_loco) {
 
   // Assign address 1001
   _addrs.logon = {.value = 1001u, .type = dcc::Address::ExtendedLoco};
-  Receive(
-    dcc::make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
+  Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
   BiDi();
 
   // Execute commands to address 1001
@@ -99,8 +97,7 @@ TEST_F(RxTest, force_new_logon_with_known_cid_and_sid_plus_2) {
 
   // Assign address 1001
   _addrs.logon = {.value = 1001u, .type = dcc::Address::ExtendedLoco};
-  Receive(
-    dcc::make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
+  Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
   BiDi();
 
   // Execute commands to address 1001
@@ -136,4 +133,65 @@ TEST_F(
   // Enable (again with new SID), expect ID15
   Receive(make_logon_enable_packet(dcc::LogonGroup::Now, _cid + 1u, _sid + 1u));
   BiDi();
+}
+
+TEST_F(RxTest, permanent_assign_to_basic_address) {
+  EXPECT_CALL(_mock, transmitBiDi(_)).Times(3 * 2);
+
+  // Enable
+  Receive(make_logon_enable_packet(
+    dcc::LogonGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+  BiDi();
+
+  // Select
+  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
+  BiDi();
+
+  // Assign address 42
+  _addrs.logon = {.value = 42u, .type = dcc::Address::BasicLoco};
+  Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID,
+                                   _did,
+                                   _addrs.logon,
+                                   dcc::LogonBindingBehavior::Permanent));
+  BiDi();
+
+  // Execute commands to address 42
+  InSequence s;
+  EXPECT_CALL(_mock, writeCv(1u - 1u, 42u)).Times(1);
+  EXPECT_CALL(_mock, writeCv(29u - 1u, false, 5u)).Times(1);
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
+  ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
+}
+
+TEST_F(RxTest, permanent_assign_to_extended_address) {
+  EXPECT_CALL(_mock, transmitBiDi(_)).Times(3 * 2);
+
+  // Enable
+  Receive(make_logon_enable_packet(
+    dcc::LogonGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+  BiDi();
+
+  // Select
+  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
+  BiDi();
+
+  // Assign address 1042
+  _addrs.logon = {.value = 1042u, .type = dcc::Address::ExtendedLoco};
+  Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID,
+                                   _did,
+                                   _addrs.logon,
+                                   dcc::LogonBindingBehavior::Permanent));
+  BiDi();
+
+  // Execute commands to address 1042
+  InSequence s;
+  EXPECT_CALL(_mock, writeCv(17u - 1u, _)).Times(1);
+  EXPECT_CALL(_mock, writeCv(18u - 1u, _)).Times(1);
+  EXPECT_CALL(_mock, writeCv(29u - 1u, true, 5u)).Times(1);
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
+  ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 }

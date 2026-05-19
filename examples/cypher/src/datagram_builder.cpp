@@ -42,7 +42,7 @@ namespace broadcast {
 
 // Broadcast
 void broadcast(State::Datagram& datagram) {
-  datagram.addr = {.type = dcc::Address::Broadcast}; // Default
+  datagram.addr = {.value = 0u, .type = dcc::Address::Broadcast}; // Default
   channel2(datagram);
   if (std::ranges::all_of(datagram.bytes, [](auto b) { return !b; })) return;
   ImGui::SeparatorText("Done");
