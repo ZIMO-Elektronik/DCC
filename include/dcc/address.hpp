@@ -122,7 +122,7 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
   switch (addr.type) {
     case Address::UnknownService: break;
     case Address::Broadcast:
-      assert(addr == 0u);
+      assert(!addr);
       *first++ = 0u;
       break;
     case Address::BasicLoco:
@@ -146,7 +146,7 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
                                       0x01u);                     //
       break;
     case Address::ExtendedLoco:
-      assert(addr >= 1 && addr <= 10239);
+      assert(addr >= 1u && addr <= 10239u);
       *first++ = static_cast<uint8_t>(0xC0u | addr >> 8u);
       *first++ = static_cast<uint8_t>(addr);
       break;

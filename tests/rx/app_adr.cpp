@@ -85,9 +85,10 @@ TEST_F(RxTest, app_adr_alternate_consist_address) {
 TEST_F(RxTest, app_adr_alternate_long_consist_address) {
   _cvs[19uz - 1uz] = 83u;
   _cvs[20uz - 1uz] = 12u;
-  _addrs.consist = static_cast<dcc::Address::value_type>(
-    100u * (_cvs[20uz - 1uz] & 0b0111'1111u) +
-    (_cvs[19uz - 1uz] & 0b0111'1111u));
+  _addrs.consist = dcc::Address{.value = static_cast<dcc::Address::value_type>(
+                                  100u * (_cvs[20uz - 1uz] & 0b0111'1111u) +
+                                  (_cvs[19uz - 1uz] & 0b0111'1111u)),
+                                .type = dcc::Address::ExtendedLoco};
   SetUp();
 
   // Make datagram
