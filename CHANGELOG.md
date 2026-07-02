@@ -1,6 +1,7 @@
 # Changelog
 
 ##
+- Remove high-current BiDi support (must be implemented by the user)
 - Bugfix `esp_linux_helper.h` is deprecated ([#165](https://github.com/ZIMO-Elektronik/DCC/issues/165))
 
 ## 0.47.0

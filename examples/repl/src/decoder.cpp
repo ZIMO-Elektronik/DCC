@@ -39,6 +39,8 @@ void Decoder::serviceAck() {}
 
 void Decoder::transmitBiDi(std::span<uint8_t const>) {}
 
+void Decoder::error() {}
+
 uint8_t Decoder::readCv(uint32_t cv_addr, [[maybe_unused]] uint8_t byte) {
   auto const red_byte{
     static_cast<uint8_t>(cv_addr < size(_cvs) ? _cvs[cv_addr] : 0u)};

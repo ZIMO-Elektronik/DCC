@@ -69,7 +69,7 @@ constexpr Address decode_address(InputIt first) {
   // 128-191
   else if (*first <= 191u) {
     auto const a7_2{(*first++ & 0x3Fu) << 2u};
-    auto const a10_8{(~*first & 0x70u) << 4u};
+    auto const a10_8{(~static_cast<uint32_t>(*first) & 0x70u) << 4u};
     auto const a1_0{(*first >> 1u) & 0x03u};
     return {static_cast<Address::value_type>(a10_8 | a7_2 | a1_0),
             (*first & 0b1000'0000u) || !(*first & 0b1000'0001u)
@@ -131,19 +131,21 @@ constexpr OutputIt encode_address(Address addr, OutputIt first) {
       break;
     case Address::BasicAccessory:
       assert(addr <= 2047u);
-      *first++ = static_cast<uint8_t>(0x80u |                     //
-                                      ((addr >> 2u) & 0x3Fu));    // A7-2
-      *first++ = static_cast<uint8_t>(0x80u |                     //
-                                      ((~addr & 0x0700u) >> 4u) | // A10-8
-                                      ((addr & 0x03u) << 1u));    // A1-0
+      *first++ = static_cast<uint8_t>(0x80u |                  //
+                                      ((addr >> 2u) & 0x3Fu)); // A7-2
+      *first++ = static_cast<uint8_t>(
+        0x80u |                                            //
+        ((~static_cast<uint32_t>(addr) & 0x0700u) >> 4u) | // A10-8
+        ((addr & 0x03u) << 1u));                           // A1-0
       break;
     case Address::ExtendedAccessory:
       assert(addr <= 2047u);
-      *first++ = static_cast<uint8_t>(0x80u |                     //
-                                      ((addr >> 2u) & 0x3Fu));    // A7-2
-      *first++ = static_cast<uint8_t>(((~addr & 0x0700u) >> 4u) | // A10-8
-                                      ((addr & 0x03u) << 1u) |    // A1-0
-                                      0x01u);                     //
+      *first++ = static_cast<uint8_t>(0x80u |                  //
+                                      ((addr >> 2u) & 0x3Fu)); // A7-2
+      *first++ = static_cast<uint8_t>(
+        ((~static_cast<uint32_t>(addr) & 0x0700u) >> 4u) | // A10-8
+        ((addr & 0x03u) << 1u) |                           // A1-0
+        0x01u);                                            //
       break;
     case Address::ExtendedLoco:
       assert(addr >= 1u && addr <= 10239u);

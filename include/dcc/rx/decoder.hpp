@@ -10,28 +10,17 @@
 
 #pragma once
 
-#include "../address.hpp"
+#include "bidi.hpp"
+#include "errorable.hpp"
+#include "operable.hpp"
 #include "readable.hpp"
+#include "serviceable.hpp"
 #include "writable.hpp"
 
 namespace dcc::rx {
 
 template<typename T>
-concept Decoder = Readable<T> && Writable<T> &&
-                  requires(T t,
-                           Address::value_type addr,
-                           bool dir,
-                           int32_t speed,
-                           uint32_t mask,
-                           uint32_t state,
-                           bool service_mode,
-                           std::span<uint8_t const> bytes) {
-                    { t.direction(addr, dir) };
-                    { t.speed(addr, speed) };
-                    { t.function(addr, mask, state) };
-                    { t.serviceModeHook(service_mode) };
-                    { t.serviceAck() };
-                    { t.transmitBiDi(bytes) };
-                  };
+concept Decoder = Operable<T> && Serviceable<T> && BiDi<T> && Errorable<T> &&
+                  Readable<T> && Writable<T>;
 
 } // namespace dcc::rx

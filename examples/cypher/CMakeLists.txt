@@ -6,7 +6,8 @@ target_compile_definitions(
                    IMGUI_DEFINE_MATH_OPERATORS)
 
 target_common_warnings(DCCypher PRIVATE)
-target_common_errors(DCCypher PRIVATE)
+target_common_errors(DCCypher PRIVATE -Werror -Wno-c++98-compat-extra-semi
+                     -Wno-dollar-in-identifier-extension)
 
 # imgui still doesn't come with a CMakeLists.txt *sigh*
 cpmaddpackage(

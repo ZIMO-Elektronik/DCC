@@ -468,7 +468,9 @@ void feature_expansion_binary_state_control_long_form(
   State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - Binary State Control Long Form";
   packet.desc_strs.back() +=
-    std::format("\n- Address={}", (bytes[2uz] << 7u) | (bytes[1uz] & 0x7Fu));
+    std::format("\n- Address={}",
+                (static_cast<uint32_t>(bytes[2uz]) << 7u) |
+                  (static_cast<uint32_t>(bytes[1uz]) & 0x7Fu));
   packet.desc_strs.back() +=
     std::format("\n- State={}", bytes[1uz] & ztl::mask<7u> ? 1 : 0);
   packet.pattern_str += " 0 11000000 0 DLLLLLLL 0 HHHHHHHH";
@@ -504,8 +506,9 @@ void feature_expansion_time_and_date(State::Packet& packet,
       std::array buf{bytes[3uz], bytes[2uz]};
       memcpy(&f16, data(buf), sizeof(f16));
 #else
-      auto const f16{
-        dcc::float16_to_float32(bytes[2uz] << 8u | bytes[3uz] << 0u)};
+      auto const f16{dcc::float16_to_float32(
+        static_cast<uint16_t>(static_cast<uint32_t>(bytes[2uz]) << 8u |
+                              static_cast<uint32_t>(bytes[3uz]) << 0u))};
 #endif
       packet.desc_strs.back() +=
         std::format("\n- Time Scale={}", static_cast<float>(f16));

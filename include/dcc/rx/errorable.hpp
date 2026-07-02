@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// High current
+/// Errorable
 ///
-/// \file   dcc/rx/high_current.hpp
+/// \file   dcc/rx/errorable.hpp
 /// \author Vincent Hamp
-/// \date   29/11/2022
+/// \date   03/07/2026
 
 #pragma once
 
@@ -15,8 +15,8 @@
 namespace dcc::rx {
 
 template<typename T>
-concept HighCurrent = requires(T t, bool high_current) {
-  { t.highCurrentBiDi(high_current) };
+concept Errorable = requires(T t) {
+  { t.error() } -> std::same_as<void>;
 };
 
 } // namespace dcc::rx

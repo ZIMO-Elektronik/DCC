@@ -2,24 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// East-west
+/// BiDi
 ///
-/// \file   dcc/rx/east_west.hpp
+/// \file   dcc/rx/BiDi.hpp
 /// \author Vincent Hamp
-/// \date   29/11/2022
+/// \date   03/07/2026
 
 #pragma once
 
 #include <concepts>
 #include <cstdint>
-#include <optional>
+#include <span>
 
 namespace dcc::rx {
 
 template<typename T>
-concept EastWest =
-  requires(T t, uint16_t addr, std::optional<int32_t> opt_dir) {
-    { t.eastWestDirection(addr, opt_dir) } -> std::same_as<void>;
-  };
+concept BiDi = requires(T t, std::span<uint8_t const> bytes) {
+  { t.transmitBiDi(bytes) } -> std::same_as<void>;
+};
 
 } // namespace dcc::rx

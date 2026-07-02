@@ -37,7 +37,6 @@
 #include "backoff.hpp"
 #include "decoder.hpp"
 #include "east_west.hpp"
-#include "high_current.hpp"
 #include "timing.hpp"
 
 namespace dcc::rx {
@@ -89,7 +88,6 @@ struct CrtpBase {
     _ch2_data_enabled = bidi_enabled && (cv28 & ztl::mask<1u>);
     _logon_enabled = bidi_enabled && (cv28 & ztl::mask<7u>);
     _ch2_consist_enabled = bidi_enabled && ch2_consist_enabled;
-    if constexpr (HighCurrent<T>) impl().highCurrentBiDi(cv28 & ztl::mask<6u>);
 
     // IDs
     _ids.decoder = {impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 0u),
@@ -200,8 +198,8 @@ struct CrtpBase {
 
   /// Execute received commands
   ///
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool execute() { return executeThreadMode(); }
 
   /// Service mode
@@ -282,8 +280,8 @@ private:
 
   /// Execute in handler mode (interrupt context)
   ///
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeHandlerMode() {
     if (_addrs.received.type == Address::AutomaticLogon &&
         (size(_packets.current) <= (6uz + sizeof(_checksum)) ||
@@ -296,8 +294,8 @@ private:
 
   /// Execute in thread mode
   ///
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeThreadMode() {
     if (packetEnd() || empty(_deques.packet)) return false;
     adr();              // Prepare address broadcasts for BiDi channel 1
@@ -311,8 +309,8 @@ private:
 
   /// Execute commands in operations mode
   ///
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeOperations() {
     auto const& packet{_deques.packet.front()};
     switch (auto const addr{decode_address(packet)}; addr.type) {
@@ -352,8 +350,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeOperationsAddressed(Address addr,
                                   std::span<uint8_t const> bytes) {
     // Address is broadcast
@@ -394,60 +392,22 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeAutomaticLogon(Address addr, std::span<uint8_t const> bytes) {
     if (!_logon_enabled || addr != 254u) return false;
-
     switch (bytes[0uz] & 0xF0u) {
-      // SELECT
-      case 0b1101'0000u: {
-        auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
-        logonSelect(did);
-        break;
-      }
-
-      // LOGON_ASSIGN
-      case 0b1110'0000u: {
-        auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
-        auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
-        // Extended loco
-        if (auto const a13_8{bytes[6uz] & 0x3Fu}; a13_8 < 0x28u)
-          logonAssign(did,
-                      bb,
-                      {.value = static_cast<Address::value_type>(
-                         (bytes[6uz] & 0b0011'1111u) << 8u | bytes[7uz]),
-                       .type = Address::ExtendedLoco});
-        // Accessory
-        else if (a13_8 < 0x38u) break;
-        // Basic loco
-        else if (a13_8 < 0x39u)
-          logonAssign(
-            did, bb, {.value = bytes[7uz], .type = Address::BasicLoco});
-        // Reserved
-        else if (a13_8 < 0x3Fu) break;
-        // FW update
-        else if (a13_8 < 0x40u) break;
-        break;
-      }
-
-      // LOGON_ENABLE
-      case 0b1111'0000u: {
-        auto const gg{static_cast<LogonGroup>(bytes[0uz] & 0b11u)};
-        auto const cid{data2uint16(&bytes[1uz])};
-        auto const sid{bytes[3uz]};
-        logonEnable(gg, cid, sid);
-        break;
-      }
+      case 0b1111'0000u: logonEnable(bytes); break;
+      case 0b1101'0000u: return logonSelect(bytes);
+      case 0b1110'0000u: logonAssign(bytes); break;
     }
-
     return true;
   }
 
   /// Execute decoder control
   ///
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeDecoderControl(std::span<uint8_t const>) const {
     /// \todo
     return false;
@@ -456,8 +416,8 @@ private:
   /// Execute consist control
   ///
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeConsistControl(std::span<uint8_t const> bytes) {
     if (size(bytes) != 2uz + sizeof(_checksum)) return false;
 
@@ -479,8 +439,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeAdvancedOperations(Address::value_type addr,
                                  std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
@@ -543,8 +503,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeSpeedDirection(Address::value_type addr,
                              std::span<uint8_t const> bytes) {
     if (size(bytes) != 1uz + sizeof(_checksum)) return false;
@@ -578,8 +538,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeFunctionGroup(Address::value_type addr,
                             std::span<uint8_t const> bytes) {
     if (size(bytes) != 1uz + sizeof(_checksum)) return false;
@@ -621,8 +581,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeFeatureExpansion(Address::value_type addr,
                                std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
@@ -709,8 +669,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeCvAccess(Address::value_type addr,
                        std::span<uint8_t const> bytes) {
     return bytes[0uz] & ztl::mask<4u> ? executeCvAccessShort(addr, bytes)
@@ -721,8 +681,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeCvAccessLong(Address::value_type addr,
                            std::span<uint8_t const> bytes) {
     if (size(bytes) < 3uz + sizeof(_checksum) ||
@@ -789,8 +749,8 @@ private:
   ///
   /// \param  addr  Address
   /// \param  bytes Raw bytes
-  /// \retval true  Command accepted
-  /// \retval false Command rejected
+  /// \retval true  Command executed
+  /// \retval false Command not executed
   bool executeCvAccessShort(Address::value_type addr,
                             std::span<uint8_t const> bytes) {
     if (addr && addr == _addrs.consist) return false;
@@ -1071,10 +1031,11 @@ private:
 
   /// Logon enable
   ///
-  /// \param  gg  Logon group
-  /// \param  cid Command station ID
-  /// \param  sid Session ID
-  void logonEnable(LogonGroup gg, uint16_t cid, uint8_t sid) {
+  /// \param  bytes Raw bytes
+  void logonEnable(std::span<uint8_t const> bytes) {
+    auto const cid{data2uint16(&bytes[1uz])};
+    auto const sid{bytes[3uz]};
+
     // Already got selected and CID/SID didn't change
     if (_logon_selected && _ids.cs.back() == cid && _ids.session.back() == sid)
       return;
@@ -1102,7 +1063,8 @@ private:
       _addrs.logon = {};
     }
 
-    switch (gg) {
+    switch ([[maybe_unused]] auto const gg{
+      static_cast<LogonGroup>(bytes[0uz] & 0b11u)}) {
       case LogonGroup::All: [[fallthrough]];              // All decoders
       case LogonGroup::Loco: break;                       // Loco decoders
       case LogonGroup::Acc: return;                       // Accessory decoder
@@ -1110,22 +1072,45 @@ private:
     }
 
     if (_backoffs.logon) return;
-    assert(!full(_deques.logon));
-    _deques.logon.push_back(
-      bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
-        15u,
-        static_cast<uint64_t>(DCC_MANUFACTURER_ID) << 32u |
-          static_cast<uint32_t>(_ids.decoder[0uz]) << 24u |
-          static_cast<uint32_t>(_ids.decoder[1uz]) << 16u |
-          static_cast<uint32_t>(_ids.decoder[2uz]) << 8u |
-          static_cast<uint32_t>(_ids.decoder[3uz]))));
+    _deques.logon.clear();
+    _deques.logon.push_back(bidi::make_app_decoder_unique_datagram(
+      DCC_MANUFACTURER_ID, _ids.decoder));
+    if (++_counts.decoder_unique > 3uz) {}
   }
 
   /// Logon select
   ///
-  /// \param  did Unique ID
-  void logonSelect(std::span<uint8_t const, 4uz> did) {
-    if (_logon_assigned || !std::ranges::equal(did, _ids.decoder)) return;
+  /// \param  bytes Raw bytes
+  /// \retval true  Command executed
+  /// \retval false Command not executed
+  bool logonSelect(std::span<uint8_t const> bytes) {
+    if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
+        _logon_assigned || !std::ranges::equal(did, _ids.decoder))
+      return true;
+
+    switch (bytes[6uz]) {
+      // ShortInfo
+      case 0b1111'1111u: break;
+      // Read block
+      case 0b1111'1110u: [[fallthrough]];
+      // Write block
+      case 0b1111'1100u: [[fallthrough]];
+      // Set decoder internal status
+      case 0b1111'1011u: [[fallthrough]];
+      // Reserved
+      default:
+        _deques.logon.clear();
+        _deques.logon.push_back({bidi::nak,
+                                 bidi::nak,
+                                 bidi::nak,
+                                 bidi::nak,
+                                 bidi::nak,
+                                 bidi::nak,
+                                 bidi::nak,
+                                 bidi::nak});
+        return true;
+    }
+
     _logon_selected = true;
     std::array<uint8_t, 5uz> data{
       static_cast<uint8_t>(ztl::mask<7u> | (_addrs.primary >> 8u)),
@@ -1133,7 +1118,7 @@ private:
       0u,
       0u,
       0u};
-    assert(!full(_deques.logon));
+    _deques.logon.clear();
     _deques.logon.push_back(
       bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
         static_cast<uint64_t>(data[0uz]) << 40u |
@@ -1141,29 +1126,59 @@ private:
         static_cast<uint32_t>(data[2uz]) << 24u |
         static_cast<uint32_t>(data[3uz]) << 16u |
         static_cast<uint32_t>(data[4uz]) << 8u | crc8(data))));
+    return true;
   }
 
   /// Logon assign
   ///
-  /// \param  did   Unique ID
-  /// \param  bb    Logon binding behavior
-  /// \param  addr  Assigned address
-  void logonAssign(std::span<uint8_t const, 4uz> did,
-                   LogonBindingBehavior bb,
-                   Address addr) {
-    if (!std::ranges::equal(did, _ids.decoder)) return;
+  /// \param  bytes Raw bytes
+  void logonAssign(std::span<uint8_t const> bytes) {
+    if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
+        !std::ranges::equal(did, _ids.decoder))
+      return;
+
+    Address addr{.value = std::numeric_limits<Address::value_type>::max()};
+    if (auto const a13_8{bytes[6uz] & 0x3Fu}; a13_8 < 0x28u)
+      addr = {.value = static_cast<Address::value_type>(
+                (bytes[6uz] & 0b0011'1111u) << 8u | bytes[7uz]),
+              .type = Address::ExtendedLoco};
+    // Accessory
+    else if (a13_8 < 0x38u) {
+    }
+    // Basic loco
+    else if (a13_8 < 0x39u)
+      addr = {.value = bytes[7uz], .type = Address::BasicLoco};
+    // Reserved
+    else if (a13_8 < 0x3Fu) {
+    }
+    // FW update
+    else if (a13_8 < 0x40u) {}
+
+    // Don't accept assign
+    if (addr == std::numeric_limits<Address::value_type>::max()) {
+      _deques.logon.clear();
+      _deques.logon.push_back({bidi::nak,
+                               bidi::nak,
+                               bidi::nak,
+                               bidi::nak,
+                               bidi::nak,
+                               bidi::nak,
+                               bidi::nak,
+                               bidi::nak});
+      return;
+    }
+
+    // Accept assign
     _logon_assigned = _logon_store = true;
     _addrs.consist = 0u;
     _addrs.logon = addr;
-    if (bb == LogonBindingBehavior::Permanent && addr) _addrs.primary = addr;
-    static constexpr std::array<uint8_t, 5uz> data{
-      13u << 4u | 0u, 0u, 0u, 0u, 0u};
-    assert(!full(_deques.logon));
+    // ... and permanent
+    if (auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
+        bb == LogonBindingBehavior::Permanent && addr)
+      _addrs.primary = addr;
+    _deques.logon.clear();
     _deques.logon.push_back(
-      bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
-        static_cast<uint64_t>(data[0uz]) << 40uz |
-        static_cast<uint64_t>(data[1uz]) << 32uz | data[2uz] << 24uz |
-        data[3uz] << 16uz | data[4uz] << 8uz | crc8(data))));
+      bidi::make_app_decoder_state_datagram(0xFFu, 0u, 0u, 0u));
   }
 
   /// Add adr datagrams
@@ -1329,18 +1344,19 @@ private:
 
   // Counts
   struct {
-    size_t one_bit{};       ///< Consecutive ones
-    size_t bit{};           ///< Current bits
-    size_t packet{};        ///< Successfully received packets
-    size_t preamble{};      ///< Successfully received preambles
-    size_t equal_packets{}; ///< Equal packets
+    size_t one_bit{};        ///< Consecutive ones
+    size_t bit{};            ///< Current bits
+    size_t packet{};         ///< Successfully received packets
+    size_t preamble{};       ///< Successfully received preambles
+    size_t equal_packets{};  ///< Equal packets
+    size_t decoder_unique{}; ///< app:decoder_unique transmissions
   } _counts{};
 
   // Time points
   struct {
-    std::chrono::time_point<std::chrono::system_clock> init;
-    std::chrono::time_point<std::chrono::system_clock> packet;
-    std::chrono::time_point<std::chrono::system_clock> search;
+    std::chrono::time_point<std::chrono::system_clock> init{};
+    std::chrono::time_point<std::chrono::system_clock> packet{};
+    std::chrono::time_point<std::chrono::system_clock> search{};
   } _tps{};
 
   // Deques

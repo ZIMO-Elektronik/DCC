@@ -19,6 +19,16 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        },
+        {
+            "name": "STM32",
+            "toolchainFile": "CMakeModules/cmake/toolchain-arm-none-eabi-gcc.cmake",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "ARCH": "-mcpu=cortex-m7",
+                "CMAKE_BUILD_TYPE": "Release",
+                "UNITY_BUILD": "ON"
+            }
         }
     ]
 }
