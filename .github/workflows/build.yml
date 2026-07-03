@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
       - uses: mymindstorm/setup-emsdk@v16
         with:
-          version: 4.0.18
+          version: 6.0.2
       - run: |
           emcmake cmake --preset "Release"
           cmake --build build --target DCCypher

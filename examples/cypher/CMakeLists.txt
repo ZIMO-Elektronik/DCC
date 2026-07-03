@@ -57,8 +57,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
     imgui
     PUBLIC
     "--shell-file=${CMAKE_CURRENT_LIST_DIR}/index.html"
-    "-sALLOW_MEMORY_GROWTH=1"
-    "-sFULL_ES3=1"
+    "-sINITIAL_MEMORY=128MB"
+    "-sEXPORT_ES6=0"
     "-sUSE_SDL=2"
     "-sUSE_WEBGL2=1")
 endif()
