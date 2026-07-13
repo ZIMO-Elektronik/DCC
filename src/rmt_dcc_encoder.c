@@ -13,8 +13,9 @@
 #include <esp_check.h>
 #include <esp_heap_caps.h>
 #include <limits.h>
+#include <string.h>
 
-#if __has_include(<esp_linux_helper.h>)
+#if CONFIG_IDF_TARGET_LINUX && !defined(__containerof)
 #  include <esp_linux_helper.h>
 #endif
 
