@@ -1,5 +1,8 @@
 # Changelog
 
+##
+- Bugfix `esp_linux_helper.h` is deprecated ([#165](https://github.com/ZIMO-Elektronik/DCC/issues/165))
+
 ## 0.47.0
 - Short and long multi-function addresses don't compare equal ([#151](https://github.com/ZIMO-Elektronik/DCC/issues/151))
 - Clear CV29:5 when writing basic address to CV1 ([#151](https://github.com/ZIMO-Elektronik/DCC/issues/151))
