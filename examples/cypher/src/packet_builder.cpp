@@ -152,7 +152,7 @@ void speed_and_direction(dcc::Address addr) {
                       &min,
                       &max,
                       speed_labels[static_cast<size_t>(speed + 1)]);
-  rggggg = dcc::encode_rggggg(r, speed) | c << 4u;
+  rggggg = static_cast<uint8_t>(dcc::encode_rggggg(r, speed) | c << 4u);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
     state.packets.push_back(
@@ -494,9 +494,10 @@ void consist_control_set_consist_address(dcc::Address addr) {
   ImGui::Checkbox("Reversed", &r);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.packets.push_back({.addr = addr,
-                             .bytes = dcc::make_set_consist_address_packet(
-                               addr, r << 7u | consist_addr)});
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_set_consist_address_packet(
+         addr, static_cast<uint8_t>(r << 7u | consist_addr))});
 }
 
 // Loco advanced operations

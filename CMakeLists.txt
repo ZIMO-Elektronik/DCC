@@ -28,7 +28,7 @@ endif()
 FetchContent_Declare(
   CMakeModules
   GIT_REPOSITORY "https://github.com/ZIMO-Elektronik/CMakeModules"
-  GIT_TAG v0.12.3
+  GIT_TAG v0.12.4
   SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
 FetchContent_MakeAvailable(CMakeModules)
 
@@ -141,7 +141,7 @@ target_compile_definitions(
 if(PROJECT_IS_TOP_LEVEL AND NOT ESP_PLATFORM)
   target_include_directories(DCC INTERFACE include)
   target_common_warnings(DCC INTERFACE)
-  target_common_errors(DCC INTERFACE -Wfatal-errors)
+  target_common_errors(DCC INTERFACE)
 else()
   target_include_directories(DCC SYSTEM INTERFACE include)
 endif()

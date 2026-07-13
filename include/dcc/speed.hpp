@@ -84,7 +84,7 @@ constexpr uint8_t encode_rggggg(bool dir, int32_t speed, bool cv29_1 = true) {
     if (!(speed % 2)) rggggg |= ztl::mask<4u>;
   }
 
-  return static_cast<uint8_t>(static_cast<uint32_t>(dir << 5u) | rggggg);
+  return static_cast<uint8_t>(static_cast<uint32_t>(dir) << 5u | rggggg);
 }
 
 /// Decode direction and speed byte
@@ -114,7 +114,7 @@ constexpr uint8_t encode_rggggggg(bool dir, int32_t speed) {
   else if (speed < 0) return static_cast<uint8_t>(dir << 7u) | 0b1u;
   // 126 speed steps
   else
-    return static_cast<uint8_t>(static_cast<uint32_t>(dir << 7u) |
+    return static_cast<uint8_t>(static_cast<uint32_t>(dir) << 7u |
                                 static_cast<uint32_t>(speed + 1));
 }
 

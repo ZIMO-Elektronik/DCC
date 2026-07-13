@@ -132,8 +132,9 @@ void app_adr_low(State::Datagram& datagram) {
   ImGui::Checkbox("Consist", &consist);
   static bool r{};
   if (consist) ImGui::Checkbox("Reversed", &r);
-  std::ranges::copy(make_app_adr_low_datagram(addr, r << 7u | consist),
-                    begin(datagram.bytes));
+  std::ranges::copy(
+    make_app_adr_low_datagram(addr, static_cast<uint8_t>(r << 7u | consist)),
+    begin(datagram.bytes));
 }
 
 // Loco app:adr_info1
@@ -631,7 +632,8 @@ void app_stat1(State::Datagram& datagram) {
     aspect, 0u, static_cast<uint8_t>(smath::pow(2u, i ? 8u : 5u) - 1u));
   auto const aspect_low_bits{aspect & 0b1'1111u};
   auto const first{make_app_stat1_datagram(
-    static_cast<uint8_t>(bit6 << 6u | bit5 << 5u | aspect_low_bits))};
+    static_cast<uint8_t>(static_cast<uint32_t>(bit6) << 6u |
+                         static_cast<uint32_t>(bit5) << 5u | aspect_low_bits))};
   std::ranges::copy(first, begin(datagram.bytes) + channel1_size);
   if (!strcmp(types[static_cast<size_t>(i)], "Extended Accessory") &&
       aspect != aspect_low_bits) {

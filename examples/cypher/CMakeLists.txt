@@ -6,7 +6,8 @@ target_compile_definitions(
                    IMGUI_DEFINE_MATH_OPERATORS)
 
 target_common_warnings(DCCypher PRIVATE)
-target_common_errors(DCCypher PRIVATE)
+target_common_errors(DCCypher PRIVATE -Werror -Wno-c++98-compat-extra-semi
+                     -Wno-dollar-in-identifier-extension)
 
 # imgui still doesn't come with a CMakeLists.txt *sigh*
 cpmaddpackage(
@@ -56,8 +57,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
     imgui
     PUBLIC
     "--shell-file=${CMAKE_CURRENT_LIST_DIR}/index.html"
-    "-sALLOW_MEMORY_GROWTH=1"
-    "-sFULL_ES3=1"
+    "-sINITIAL_MEMORY=128MB"
+    "-sEXPORT_ES6=0"
     "-sUSE_SDL=2"
     "-sUSE_WEBGL2=1")
 endif()

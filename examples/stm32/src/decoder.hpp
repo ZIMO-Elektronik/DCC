@@ -24,6 +24,9 @@ private:
   // Transmit BiDi
   void transmitBiDi(std::span<uint8_t const> bytes);
 
+  // Error
+  void error();
+
   // Read CV
   uint8_t readCv(uint32_t cv_addr, uint8_t byte = 0u);
 

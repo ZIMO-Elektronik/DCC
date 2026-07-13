@@ -10,9 +10,6 @@ void style() {
   // #365F91
   static constexpr ImColor dark_blue(0x36, 0x5F, 0x91, 0xFF);
 
-  // #FFFFFE
-  static constexpr ImColor yellow(0xFF, 0xFF, 0xFE, 0xFF);
-
   // ImGui
   {
     ImGuiStyle* style{&ImGui::GetStyle()};

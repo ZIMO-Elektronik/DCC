@@ -195,3 +195,10 @@ TEST_F(RxTest, permanent_assign_to_extended_address) {
   EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 }
+
+TEST_F(RxTest, transmitting_decoder_unique_more_than_3_times_triggers_error) {
+  EXPECT_CALL(_mock, error());
+  for (auto i{0uz}; i <= 3uz; ++i)
+    ReceiveAndExecute(make_logon_enable_packet(
+      dcc::LogonGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+}

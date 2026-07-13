@@ -47,7 +47,7 @@ namespace ImGui {
 
 // Like InputScalar, but with binary
 bool InputBinary(char const* label,
-                 ImGuiDataType data_type,
+                 [[maybe_unused]] ImGuiDataType data_type,
                  void* p_data,
                  void const*,
                  void const*,

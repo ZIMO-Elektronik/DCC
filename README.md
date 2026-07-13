@@ -278,6 +278,9 @@ private:
   // Transmit BiDi
   void transmitBiDi(std::span<uint8_t const> bytes);
 
+  // Error
+  void error();
+
   // Read CV
   uint8_t readCv(uint32_t cv_addr, uint8_t byte = 0u);
 
@@ -320,7 +323,7 @@ Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enou
     ```
 
 #### Optional
-There are various optional methods that can be implemented if required. One of them are asynchronous CV methods that contain a callback as the last parameter. These methods allow to return immediately and execute the callback at a later point in time. Another addition can enable or disable high-current BiDi if the corresponding bit is set in CV29. And last but not least, the east-west direction according to [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) is supported.
+There are various optional methods that can be implemented if required. One example is asynchronous CV methods that contain a callback as the last parameter. These methods allow to return immediately and execute the callback at a later point in time. Another addition is the east-west direction according to [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) special operating modes instruction.
 ```cpp
   // Read CV asynchronously
   void readCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
@@ -328,9 +331,6 @@ There are various optional methods that can be implemented if required. One of t
   // Write CV asynchronously
   void
   writeCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
-
-  // High-current BiDi
-  void highCurrentBiDi(bool high_current);
 
   // Set east-west direction
   void eastWestDirection(uint32_t addr, std::optional<bool> dir);

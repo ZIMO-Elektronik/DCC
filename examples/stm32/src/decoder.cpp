@@ -32,6 +32,8 @@ void Decoder::serviceAck() {}
 
 void Decoder::transmitBiDi(std::span<uint8_t const> bytes) {}
 
+void Decoder::error() {}
+
 uint8_t Decoder::readCv(uint32_t cv_addr, uint8_t) {
   if (cv_addr >= size(_cvs)) return 0u;
   return _cvs[cv_addr];

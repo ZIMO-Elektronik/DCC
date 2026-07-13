@@ -38,7 +38,8 @@ namespace dcc {
 template<std::random_access_iterator RandomIt>
 requires(sizeof(std::iter_value_t<RandomIt>) == 1uz)
 constexpr auto data2uint16(RandomIt first) {
-  return static_cast<uint16_t>(first[0uz] << 8u | first[1uz] << 0u);
+  return static_cast<uint16_t>(static_cast<uint32_t>(first[0uz]) << 8u |
+                               static_cast<uint32_t>(first[1uz]) << 0u);
 }
 
 /// uint16 to data
@@ -62,8 +63,10 @@ constexpr auto uint16_2data(uint16_t hword, OutputIt out) {
 template<std::random_access_iterator RandomIt>
 requires(sizeof(std::iter_value_t<RandomIt>) == 1uz)
 constexpr auto data2uint32(RandomIt first) {
-  return static_cast<uint32_t>(first[0uz] << 24u | first[1uz] << 16u |
-                               first[2uz] << 8u | first[3uz] << 0u);
+  return static_cast<uint32_t>(first[0uz]) << 24u |
+         static_cast<uint32_t>(first[1uz]) << 16u |
+         static_cast<uint32_t>(first[2uz]) << 8u |
+         static_cast<uint32_t>(first[3uz]) << 0u;
 }
 
 /// uint32_t to data
@@ -551,7 +554,7 @@ make_binary_state_long_packet(Address addr, uint16_t bin_addr, bool d) {
   auto last{encode_address(addr, first)};
   *last++ = 0b1100'0000u;
   *last++ =
-    static_cast<uint8_t>(static_cast<uint32_t>(d << 7u) | (bin_addr & 0x7Fu));
+    static_cast<uint8_t>(static_cast<uint32_t>(d) << 7u | (bin_addr & 0x7Fu));
   *last++ = static_cast<uint8_t>(bin_addr >> 7u);
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
@@ -1045,7 +1048,7 @@ make_binary_state_short_packet(Address addr, uint8_t bin_addr, bool d) {
   auto last{encode_address(addr, first)};
   *last++ = 0b1101'1101u;
   *last++ =
-    static_cast<uint8_t>(static_cast<uint32_t>(d << 7u) | (bin_addr & 0x7Fu));
+    static_cast<uint8_t>(static_cast<uint32_t>(d) << 7u | (bin_addr & 0x7Fu));
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
@@ -1200,7 +1203,7 @@ constexpr auto make_cv_access_long_verify_packet(Address addr,
   auto last{encode_address(addr, first)};
   *last++ = static_cast<uint8_t>(0b1110'1000u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
-  auto const d{static_cast<uint32_t>(bit << 3u)};
+  auto const d{static_cast<uint32_t>(bit) << 3u};
   *last++ = static_cast<uint8_t>(0b1110'0000u | d | (pos & 0b111u));
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
@@ -1229,7 +1232,7 @@ constexpr auto make_cv_access_long_write_packet(Address addr,
   auto last{encode_address(addr, first)};
   *last++ = static_cast<uint8_t>(0b1110'1000u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
-  auto const d{static_cast<uint32_t>(bit << 3u)};
+  auto const d{static_cast<uint32_t>(bit) << 3u};
   *last++ = static_cast<uint8_t>(0b1111'0000u | d | (pos & 0b111u));
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
@@ -1289,7 +1292,7 @@ constexpr auto make_cv_access_long_verify_service_packet(uint32_t cv_addr,
   auto last{first};
   *last++ = static_cast<uint8_t>(0b0111'1000u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
-  auto const d{static_cast<uint32_t>(bit << 3u)};
+  auto const d{static_cast<uint32_t>(bit) << 3u};
   *last++ = static_cast<uint8_t>(0b1110'0000u | d | (pos & 0b111u));
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
@@ -1311,7 +1314,7 @@ constexpr auto make_cv_access_long_write_service_packet(uint32_t cv_addr,
   auto last{first};
   *last++ = static_cast<uint8_t>(0b0111'1000u | (cv_addr & 0x3FFu) >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr);
-  auto const d{static_cast<uint32_t>(bit << 3u)};
+  auto const d{static_cast<uint32_t>(bit) << 3u};
   *last++ = static_cast<uint8_t>(0b1111'0000u | d | (pos & 0b111u));
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
@@ -1475,7 +1478,7 @@ constexpr auto make_cv_access_xpom_write_packet(
   *last++ = static_cast<uint8_t>(cv_addr >> 16u);
   *last++ = static_cast<uint8_t>(cv_addr >> 8u);
   *last++ = static_cast<uint8_t>(cv_addr >> 0u);
-  auto const d{static_cast<uint32_t>(bit << 3u)};
+  auto const d{static_cast<uint32_t>(bit) << 3u};
   *last++ = static_cast<uint8_t>(0b1111'0000u | d | (pos & 0b111u));
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
@@ -1583,19 +1586,9 @@ constexpr auto make_logon_assign_packet(
   *last++ = static_cast<uint8_t>(0b1110'0000u | (manufacturer_id >> 8u));
   *last++ = static_cast<uint8_t>(manufacturer_id);
   last = uint32_2data(did, last);
-  switch (addr.type) {
-    case Address::BasicLoco:
-      *last++ = static_cast<uint8_t>(std::to_underlying(bb) << 6u) | 0x38u;
-      *last++ = static_cast<uint8_t>(addr);
-      break;
-    case Address::BasicAccessory: assert(false); break;
-    case Address::ExtendedAccessory: assert(false); break;
-    case Address::ExtendedLoco:
-      *last++ = static_cast<uint8_t>(std::to_underlying(bb) << 6u | addr >> 8u);
-      *last++ = static_cast<uint8_t>(addr);
-      break;
-    default: assert(false); break;
-  }
+  last = encode_logon_address(addr, last);
+  *(last - 2) =
+    static_cast<uint8_t>(std::to_underlying(bb) << 6u | *(last - 2));
   *last = crc8({first, last});
   ++last;
   *last = exor({first, last});
