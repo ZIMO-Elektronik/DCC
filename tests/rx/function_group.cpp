@@ -26,7 +26,7 @@ TEST_F(RxTest, function_group_f8_f5) {
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,
                        0xFu << 5u,
-                       static_cast<uint32_t>(state << 5u)));
+                       static_cast<uint32_t>(state) << 5u));
   ReceiveAndExecute(make_f5_f8_packet(_addrs.primary, state));
 }
 
@@ -35,6 +35,6 @@ TEST_F(RxTest, function_group_f12_f9) {
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,
                        0xFu << 9u,
-                       static_cast<uint32_t>(state << 9u)));
+                       static_cast<uint32_t>(state) << 9u));
   ReceiveAndExecute(make_f9_f12_packet(_addrs.primary, state));
 }

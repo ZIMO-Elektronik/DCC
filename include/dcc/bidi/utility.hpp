@@ -92,7 +92,7 @@ constexpr auto make_app_ext_datagram(app::Ext ext) {
          (ext.t < app::Ext::Reserved8 && ext.p <= 0x7FFu));
   return encode_datagram(make_datagram<Bits::_18>(
     app::Ext::id,
-    static_cast<uint32_t>(std::to_underlying(ext.t) << 8u) | ext.p));
+    static_cast<uint32_t>(std::to_underlying(ext.t)) << 8u | ext.p));
 }
 
 /// \todo not yet specified
@@ -104,7 +104,7 @@ constexpr auto make_app_info_datagram() {}
 constexpr auto make_app_dyn_datagram(uint8_t d, uint8_t x) {
   assert(x < smath::pow(2u, 6u));
   return encode_datagram(
-    make_datagram<Bits::_18>(app::Dyn::id, static_cast<uint32_t>(d << 6u | x)));
+    make_datagram<Bits::_18>(app::Dyn::id, static_cast<uint32_t>(d) << 6u | x));
 }
 
 /// Make app:xpom datagram
@@ -113,10 +113,12 @@ constexpr auto make_app_dyn_datagram(uint8_t d, uint8_t x) {
 constexpr auto make_app_xpom_datagram(uint8_t ss,
                                       std::span<uint8_t const, 4uz> bytes) {
   assert(ss < size(app::Xpom::ids));
-  return encode_datagram(make_datagram<Bits::_36>(
-    app::Xpom::ids[ss],
-    static_cast<uint32_t>(bytes[0uz] << 24u | bytes[1uz] << 16u |
-                          bytes[2uz] << 8u | bytes[3uz] << 0u)));
+  return encode_datagram(
+    make_datagram<Bits::_36>(app::Xpom::ids[ss],
+                             static_cast<uint32_t>(bytes[0uz]) << 24u |
+                               static_cast<uint32_t>(bytes[1uz]) << 16u |
+                               static_cast<uint32_t>(bytes[2uz]) << 8u |
+                               static_cast<uint32_t>(bytes[3uz]) << 0u));
 }
 
 /// Make app:CV-auto datagram
@@ -125,7 +127,7 @@ constexpr auto make_app_xpom_datagram(uint8_t ss,
 constexpr auto make_app_cv_auto_datagram(uint32_t cv_addr, uint8_t byte) {
   assert(cv_addr < smath::pow(2u, 24u));
   return encode_datagram(make_datagram<Bits::_36>(
-    app::CvAuto::id, cv_addr << 8u | static_cast<uint32_t>(byte << 0u)));
+    app::CvAuto::id, cv_addr << 8u | static_cast<uint32_t>(byte) << 0u));
 }
 
 /// \todo not yet specified
@@ -220,9 +222,9 @@ constexpr auto make_app_decoder_state_datagram(uint8_t change_flags,
   return encode_datagram(
     make_datagram<Bits::_48>(static_cast<uint64_t>(data[0uz]) << 40uz | //
                              static_cast<uint64_t>(data[1uz]) << 32uz | //
-                             static_cast<uint32_t>(data[2uz] << 24uz) | //
-                             static_cast<uint32_t>(data[3uz] << 16uz) | //
-                             static_cast<uint32_t>(data[4uz] << 8uz) |  //
+                             static_cast<uint32_t>(data[2uz]) << 24uz | //
+                             static_cast<uint32_t>(data[3uz]) << 16uz | //
+                             static_cast<uint32_t>(data[4uz]) << 8uz |  //
                              crc8(data)));                              //
 }
 

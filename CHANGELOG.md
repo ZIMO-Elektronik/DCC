@@ -4,7 +4,7 @@
 - More fine-grained concepts (e.g. `BiDi` or `Operable`)
 - Add XPOM support ([#122](https://github.com/ZIMO-Elektronik/DCC/issues/122))
 - [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) compliance ([#161](https://github.com/ZIMO-Elektronik/DCC/issues/161))
-  - 4th transmission of `app:decoder_unique triggers` invokes `error()`
+  - 4th transmission of `app:decoder_unique` invokes `error()`
   - Unsupported SELECT queries are answered with 8x NAK
 - Remove high-current BiDi support (must be implemented by the user)
 - Bugfix `esp_linux_helper.h` is deprecated ([#165](https://github.com/ZIMO-Elektronik/DCC/issues/165))

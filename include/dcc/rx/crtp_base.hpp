@@ -95,7 +95,8 @@ struct CrtpBase {
                     impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 2u),
                     impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 3u)};
     _ids.cs.front() = static_cast<decltype(_ids.cs)::value_type>(
-      (impl().readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 0u) << 8u) |
+      static_cast<uint32_t>(impl().readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 0u))
+        << 8u |
       impl().readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 1u));
     _ids.session.front() = impl().readCv(DCC_RX_LOGON_SID_CV_ADDRESS);
 
@@ -467,19 +468,19 @@ private:
         // F7-F0
         if (size(bytes) > 3uz)
           impl().function(
-            addr, 0xFFu << 0u, static_cast<uint32_t>(bytes[2uz] << 0u));
+            addr, 0xFFu << 0u, static_cast<uint32_t>(bytes[2uz]) << 0u);
         // F15-F8
         if (size(bytes) > 4uz)
           impl().function(
-            addr, 0xFFu << 8u, static_cast<uint32_t>(bytes[3uz] << 8u));
+            addr, 0xFFu << 8u, static_cast<uint32_t>(bytes[3uz]) << 8u);
         // F23-F16
         if (size(bytes) > 5uz)
           impl().function(
-            addr, 0xFFu << 16u, static_cast<uint32_t>(bytes[4uz] << 16u));
+            addr, 0xFFu << 16u, static_cast<uint32_t>(bytes[4uz]) << 16u);
         // F31-F24
         if (size(bytes) > 6uz)
           impl().function(
-            addr, 0xFFu << 0u, static_cast<uint32_t>(bytes[5uz] << 24u));
+            addr, 0xFFu << 0u, static_cast<uint32_t>(bytes[5uz]) << 24u);
         // Adjust length before fallthrough
         bytes = bytes.subspan<0uz, 2uz + sizeof(_checksum)>();
         [[fallthrough]];
@@ -642,7 +643,7 @@ private:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         impl().function(addr,
                         ztl::mask<20u, 19u, 18u, 17u, 16u, 15u, 14u, 13u>,
-                        static_cast<uint32_t>(bytes[1uz] << 13u));
+                        static_cast<uint32_t>(bytes[1uz]) << 13u);
         break;
 
       // F28-F27-F26-F25-F24-F23-F22-F21
@@ -650,7 +651,7 @@ private:
         if (size(bytes) != 2uz + sizeof(_checksum)) return false;
         impl().function(addr,
                         ztl::mask<28u, 27u, 26u, 25u, 24u, 23u, 22u, 21u>,
-                        static_cast<uint32_t>(bytes[1uz] << 21u));
+                        static_cast<uint32_t>(bytes[1uz]) << 21u);
         break;
 
       // F36-F35-F34-F33-F32-F31-F30-F29
@@ -756,8 +757,9 @@ private:
           }))
         return true;
 
-      auto const cv_addr{static_cast<uint32_t>(
-        bytes[1uz] << 16u | bytes[2uz] << 8u | bytes[3uz] << 0u)};
+      uint32_t const cv_addr{static_cast<uint32_t>(bytes[1uz]) << 16u |
+                             static_cast<uint32_t>(bytes[2uz]) << 8u |
+                             static_cast<uint32_t>(bytes[3uz]) << 0u};
 
       switch (kk) {
         // Reserved

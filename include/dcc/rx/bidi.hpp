@@ -4,7 +4,7 @@
 
 /// BiDi
 ///
-/// \file   dcc/rx/BiDi.hpp
+/// \file   dcc/rx/bidi.hpp
 /// \author Vincent Hamp
 /// \date   03/07/2026
 

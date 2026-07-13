@@ -533,7 +533,8 @@ void feature_expansion_command_station_feature_identification(
   switch ([[maybe_unused]] auto const iiii{bytes[1uz] & 0x0Fu}) {
     case 0b1111u: {
       dcc::LocoFeatures const feats{
-        static_cast<uint16_t>(bytes[2uz] << 8u | bytes[3uz] << 0u)};
+        static_cast<uint16_t>(static_cast<uint32_t>(bytes[2uz]) << 8u |
+                              static_cast<uint32_t>(bytes[3uz]) << 0u)};
       packet.desc_strs.back() += "\n- Loco Features";
       packet.desc_strs.back() += std::format(
         "\n- Basic Addresses 100-127 as Extended={}",
@@ -583,7 +584,8 @@ void feature_expansion_command_station_feature_identification(
     }
     case 0b1110u: {
       dcc::AccessoryBroadcastFeatures const feats{
-        static_cast<uint16_t>(bytes[2uz] << 8u | bytes[3uz] << 0u)};
+        static_cast<uint16_t>(static_cast<uint32_t>(bytes[2uz]) << 8u |
+                              static_cast<uint32_t>(bytes[3uz]) << 0u)};
       packet.desc_strs.back() += "\n- Accessory and Broadcast Features";
       packet.desc_strs.back() += std::format(
         "\n- Addresses Offset by 4={}",
@@ -623,7 +625,8 @@ void feature_expansion_command_station_feature_identification(
     }
     case 0b1101u: {
       dcc::BiDiFeatures const feats{
-        static_cast<uint16_t>(bytes[2uz] << 8u | bytes[3uz] << 0u)};
+        static_cast<uint16_t>(static_cast<uint32_t>(bytes[2uz]) << 8u |
+                              static_cast<uint32_t>(bytes[3uz]) << 0u)};
       packet.desc_strs.back() += "\n- RailCom Features";
       packet.desc_strs.back() += std::format(
         "\n- RailCom={}",
@@ -813,8 +816,9 @@ void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {
   auto const ss{bytes[0uz] & 0b11u};
   auto const page_str{
     std::format("Page CV31={} CV32={}", bytes[1uz], bytes[2uz])};
-  auto const cv_addr{static_cast<uint32_t>(
-    bytes[1uz] << 16u | bytes[2uz] << 8u | bytes[3uz] << 0u)};
+  auto const cv_addr{static_cast<uint32_t>(bytes[1uz]) << 16u |
+                     static_cast<uint32_t>(bytes[2uz]) << 8u |
+                     static_cast<uint32_t>(bytes[3uz]) << 0u};
   packet.desc_strs.back() += std::format("\n- Sequence Number={:02b}", ss);
   switch (kk) {
     case 0b01u:
