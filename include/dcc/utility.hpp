@@ -1583,19 +1583,9 @@ constexpr auto make_logon_assign_packet(
   *last++ = static_cast<uint8_t>(0b1110'0000u | (manufacturer_id >> 8u));
   *last++ = static_cast<uint8_t>(manufacturer_id);
   last = uint32_2data(did, last);
-  switch (addr.type) {
-    case Address::BasicLoco:
-      *last++ = static_cast<uint8_t>(std::to_underlying(bb) << 6u) | 0x38u;
-      *last++ = static_cast<uint8_t>(addr);
-      break;
-    case Address::BasicAccessory: assert(false); break;
-    case Address::ExtendedAccessory: assert(false); break;
-    case Address::ExtendedLoco:
-      *last++ = static_cast<uint8_t>(std::to_underlying(bb) << 6u | addr >> 8u);
-      *last++ = static_cast<uint8_t>(addr);
-      break;
-    default: assert(false); break;
-  }
+  last = encode_logon_address(addr, last);
+  *(last - 2) =
+    static_cast<uint8_t>(std::to_underlying(bb) << 6u | *(last - 2));
   *last = crc8({first, last});
   ++last;
   *last = exor({first, last});

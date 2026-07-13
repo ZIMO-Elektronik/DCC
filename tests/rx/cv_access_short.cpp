@@ -1,8 +1,8 @@
 #include "rx_test.hpp"
 
-TEST_F(RxTest, cv_short_cv17_18) {
-  dcc::Address const new_extended_address{.value = 1337u,
-                                          .type = dcc::Address::ExtendedLoco};
+TEST_F(RxTest, cv_access_short_cv17_18) {
+  dcc::Address new_extended_address{.value = 1337u,
+                                    .type = dcc::Address::ExtendedLoco};
   encode_address(new_extended_address, &_cvs[17uz - 1uz]);
 
   // Before switching basic address init sequence is invoked twice
@@ -23,7 +23,7 @@ TEST_F(RxTest, cv_short_cv17_18) {
   ReceiveAndExecute(make_f0_f4_packet(new_extended_address, state));
 }
 
-TEST_F(RxTest, cv_short_cv23) {
+TEST_F(RxTest, cv_access_short_cv23) {
   auto cv23{RandomInterval<uint8_t>(0u, 255u)};
   auto packet{
     dcc::make_cv_access_short_write_packet(_addrs.primary, 0b0010u, cv23)};
@@ -37,7 +37,7 @@ TEST_F(RxTest, cv_short_cv23) {
   else ReceiveAndExecuteTwice(packet);
 }
 
-TEST_F(RxTest, cv_short_cv31_32) {
+TEST_F(RxTest, cv_access_short_cv31_32) {
   uint8_t cv31{145u};
   uint8_t cv32{0u};
   auto packet{dcc::make_cv_access_short_write_packet(

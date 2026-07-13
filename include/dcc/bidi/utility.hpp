@@ -203,20 +203,20 @@ constexpr auto make_app_error_datagram(app::Error::Code code) {
 ///
 /// \param  change_flags  Change flags
 /// \param  change_count  Change count
-/// \param  cv131074      ShortInfo byte1
-/// \param  cv131075      ShortInfo byte2
+/// \param  cv131075      Extended capabilities byte 2
+/// \param  cv131076      Extended capabilities byte 3
 /// \return app:decoder_state datagram
 constexpr auto make_app_decoder_state_datagram(uint8_t change_flags,
                                                uint16_t change_count,
-                                               uint8_t cv131074,
-                                               uint8_t cv131075) {
+                                               uint8_t cv131075,
+                                               uint8_t cv131076) {
   std::array const data{
     static_cast<uint8_t>(app::DecoderState::id << 4u | change_flags >> 4u), //
     static_cast<uint8_t>((change_flags & 0x0Fu) |
                          static_cast<uint32_t>(change_count >> 8u)), //
     static_cast<uint8_t>(change_count),                              //
-    cv131074,                                                        //
-    cv131075};                                                       //
+    cv131075,                                                        //
+    cv131076};                                                       //
   return encode_datagram(
     make_datagram<Bits::_48>(static_cast<uint64_t>(data[0uz]) << 40uz | //
                              static_cast<uint64_t>(data[1uz]) << 32uz | //

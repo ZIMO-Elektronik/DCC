@@ -1,34 +1,34 @@
 #include "rx_test.hpp"
 
-TEST_F(RxTest, cv_long_verify_bit_service_mode) {
+TEST_F(RxTest, cv_access_long_verify_bit_service_mode) {
   EnterServiceMode();
 
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{RandomInterval(0u, 1u)};
-  auto position{RandomInterval(0u, 7u)};
+  auto bit{static_cast<bool>(RandomInterval(0u, 1u))};
+  auto pos{RandomInterval(0u, 7u)};
   auto packet{
-    dcc::make_cv_access_long_verify_service_packet(cv_addr, bit, position)};
+    dcc::make_cv_access_long_verify_service_packet(cv_addr, bit, pos)};
 
   // 5 or more identical packets
-  EXPECT_CALL(_mock, readCv(cv_addr, bit, position)).WillOnce(Return(bit));
+  EXPECT_CALL(_mock, readCv(cv_addr, bit, pos)).WillOnce(Return(bit));
   EXPECT_CALL(_mock, serviceAck());
   for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
 }
 
-TEST_F(RxTest, cv_long_verify_bit_operations_mode) {
+TEST_F(RxTest, cv_access_long_verify_bit_operations_mode) {
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{RandomInterval(0u, 1u)};
-  auto position{RandomInterval(0u, 7u)};
-  auto packet{dcc::make_cv_access_long_verify_packet(
-    _addrs.primary, cv_addr, bit, position)};
+  auto bit{static_cast<bool>(RandomInterval(0u, 1u))};
+  auto pos{RandomInterval(0u, 7u)};
+  auto packet{
+    dcc::make_cv_access_long_verify_packet(_addrs.primary, cv_addr, bit, pos)};
 
-  EXPECT_CALL(_mock, readCv(cv_addr, bit, position)).WillOnce(Return(bit));
+  EXPECT_CALL(_mock, readCv(cv_addr, bit, pos)).WillOnce(Return(bit));
 
   ReceiveAndExecute(packet);
 }
 
-TEST_F(RxTest, cv_long_verify_byte_operations_mode) {
+TEST_F(RxTest, cv_access_long_verify_byte_operations_mode) {
   auto cv_addr{RandomInterval(0u, smath::pow(2u, 10u) - 1u)};
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
 
@@ -41,7 +41,7 @@ TEST_F(RxTest, cv_long_verify_byte_operations_mode) {
   ReceiveAndExecute(packet);
 }
 
-TEST_F(RxTest, cv_long_verify_byte_service_mode) {
+TEST_F(RxTest, cv_access_long_verify_byte_service_mode) {
   EnterServiceMode();
 
   auto cv_addr{RandomInterval(0u, smath::pow(2u, 10u) - 1u)};
@@ -53,36 +53,35 @@ TEST_F(RxTest, cv_long_verify_byte_service_mode) {
   for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
 }
 
-TEST_F(RxTest, cv_long_write_bit_service_mode) {
+TEST_F(RxTest, cv_access_long_write_bit_service_mode) {
   EnterServiceMode();
 
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{RandomInterval(0u, 1u)};
-  auto position{RandomInterval(0u, 7u)};
-  auto packet{
-    dcc::make_cv_access_long_write_service_packet(cv_addr, bit, position)};
+  auto bit{static_cast<bool>(RandomInterval(0u, 1u))};
+  auto pos{RandomInterval(0u, 7u)};
+  auto packet{dcc::make_cv_access_long_write_service_packet(cv_addr, bit, pos)};
 
   // 5 or more identical packets
-  EXPECT_CALL(_mock, writeCv(cv_addr, bit, position)).WillOnce(Return(bit));
+  EXPECT_CALL(_mock, writeCv(cv_addr, bit, pos)).WillOnce(Return(bit));
   EXPECT_CALL(_mock, serviceAck());
   for (auto i{0uz}; i < 5uz; ++i) ReceiveAndExecute(packet);
 }
 
-TEST_F(RxTest, cv_long_write_bit_operations_mode) {
+TEST_F(RxTest, cv_access_long_write_bit_operations_mode) {
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{RandomInterval(0u, 1u)};
-  auto position{RandomInterval(0u, 7u)};
+  auto bit{static_cast<bool>(RandomInterval(0u, 1u))};
+  auto pos{RandomInterval(0u, 7u)};
   auto packet{
-    make_cv_access_long_write_packet(_addrs.primary, cv_addr, bit, position)};
+    make_cv_access_long_write_packet(_addrs.primary, cv_addr, bit, pos)};
 
   // 2 or more identical packets
-  EXPECT_CALL(_mock, writeCv(cv_addr, bit, position)).WillOnce(Return(bit));
+  EXPECT_CALL(_mock, writeCv(cv_addr, bit, pos)).WillOnce(Return(bit));
   for (auto i{0uz}; i < 2uz; ++i) ReceiveAndExecute(packet);
 }
 
-TEST_F(RxTest, cv_long_write_byte_operations_mode) {
+TEST_F(RxTest, cv_access_long_write_byte_operations_mode) {
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
@@ -98,11 +97,10 @@ TEST_F(RxTest, cv_long_write_byte_operations_mode) {
 
 TEST_F(
   RxTest,
-  cv_long_write_byte_operations_mode_requires_two_identical_not_back_to_back_packets) {
+  cv_access_long_write_byte_operations_mode_requires_two_identical_not_back_to_back_packets) {
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
-  auto cv_packet{
-    make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
+  auto packet{make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
 
   EXPECT_CALL(_mock,
               writeCv(Matcher<uint32_t>(cv_addr),
@@ -110,21 +108,20 @@ TEST_F(
                       Matcher<std::function<void(uint8_t)>>(_)))
     .WillOnce(InvokeArgument<2uz>(byte));
 
-  ReceiveAndExecute(cv_packet);
+  ReceiveAndExecute(packet);
 
   auto other_packet_to_different_address{dcc::make_f0_f4_packet(42u, 0b1u)};
   ReceiveAndExecute(other_packet_to_different_address);
 
-  ReceiveAndExecute(cv_packet);
+  ReceiveAndExecute(packet);
 }
 
 TEST_F(
   RxTest,
-  cv_long_write_byte_operations_mode_interrupted_by_packet_to_same_address) {
+  cv_access_long_write_byte_operations_mode_interrupted_by_packet_to_same_address) {
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
-  auto cv_packet{
-    make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
+  auto packet{make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
 
   EXPECT_CALL(_mock,
               writeCv(Matcher<uint32_t>(cv_addr),
@@ -132,15 +129,15 @@ TEST_F(
                       Matcher<std::function<void(uint8_t)>>(_)))
     .Times(0);
 
-  ReceiveAndExecute(cv_packet);
+  ReceiveAndExecute(packet);
 
   auto other_packet_to_same_address{make_f0_f4_packet(_addrs.primary, 0b1u)};
   ReceiveAndExecute(other_packet_to_same_address);
 
-  ReceiveAndExecute(cv_packet);
+  ReceiveAndExecute(packet);
 }
 
-TEST_F(RxTest, cv_long_write_byte_service_mode) {
+TEST_F(RxTest, cv_access_long_write_byte_service_mode) {
   EnterServiceMode();
 
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
