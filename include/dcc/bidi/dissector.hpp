@@ -74,16 +74,34 @@ struct Dissector : std::ranges::view_interface<Dissector> {
   using iterator_category = std::input_iterator_tag;
 
   constexpr Dissector() = default;
+
   constexpr Dissector(Datagram<> encoded, Address addr)
     : _encoded{encoded}, _addr{addr} {
-    if (validate()) {
-      _decoded = decode_datagram(_encoded);
-      _i = static_cast<size_type>(
-        (_encoded[0uz] == 0u) +
-        (_encoded[1uz] == 0u)); // No channel 1 data if first two bytes are 0
-    } else
-      _i = std::numeric_limits<size_type>::max(); // No channel 1 and 2 data
+    // Validate channel 1 (popcount must be 4)
+    if (std::span<uint8_t, channel1_size> ch1{std::begin(_encoded),
+                                              std::begin(_encoded) + 2};
+        std::ranges::any_of(
+          ch1, [](uint8_t b) { return std::popcount(b) != CHAR_BIT / 2; })) {
+      std::ranges::fill(ch1, 0u);
+      _i = 2u; // Skip channel 1
+    }
+
+    // Validate channel 2 (popcount must be 4 or byte zero)
+    if (std::span<uint8_t, channel2_size> ch2{std::begin(_encoded) + 2,
+                                              std::end(_encoded)};
+        std::ranges::any_of(ch2, [](uint8_t b) {
+          return std::popcount(b) != CHAR_BIT / 2 && b;
+        })) {
+      std::ranges::fill(ch2, 0u);
+      if (_i == 2u) {
+        _i = std::numeric_limits<size_type>::max(); // Skip channel 1 and 2
+        return;
+      }
+    }
+
+    _decoded = decode_datagram(_encoded);
   }
+
   constexpr Dissector(Datagram<> encoded, Packet packet)
     : Dissector{encoded, decode_address(packet)} {}
 
@@ -219,12 +237,6 @@ struct Dissector : std::ranges::view_interface<Dissector> {
   }
 
 private:
-  constexpr bool validate() const {
-    return std::ranges::all_of(_encoded, [](uint8_t b) {
-      return !b || std::popcount(b) == CHAR_BIT / 2;
-    });
-  }
-
   constexpr std::span<uint8_t const> next() const {
     // No more data
     if (!_encoded[_i]) return {};
