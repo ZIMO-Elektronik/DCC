@@ -7,6 +7,7 @@
   - 4th transmission of `app:decoder_unique` invokes `error()`
   - Unsupported SELECT queries are answered with 8x NAK
 - Remove high-current BiDi support (must be implemented by the user)
+- Bugfix `bidi::Dissector` invalidates valid channel 2 data ([#163](https://github.com/ZIMO-Elektronik/DCC/issues/163))
 - Bugfix `esp_linux_helper.h` is deprecated ([#165](https://github.com/ZIMO-Elektronik/DCC/issues/165))
 
 ## 0.47.0

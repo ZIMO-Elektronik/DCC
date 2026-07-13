@@ -110,49 +110,60 @@ TEST(Dissector, channel_1_and_2) {
 }
 
 TEST(Dissector, channel_1) {
-  {
-    dcc::Packet packet{0x03u, 0xA0u, 0xA3u};
-    Datagram<> datagram{0x99u, 0xA5u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u};
-    Dissector dissector{datagram, packet};
-    std::vector<Dissector::value_type> expected{
-      app::AdrLow{.d = 3u}}; // Address
-    std::vector<Dissector::value_type> result{};
-    std::ranges::copy(dissector, back_inserter(result));
-    EXPECT_EQ(expected, result);
-  }
+  dcc::Packet packet{0x03u, 0xA0u, 0xA3u};
+  Datagram<> datagram{0x99u, 0xA5u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u};
+  Dissector dissector{datagram, packet};
+  std::vector<Dissector::value_type> expected{app::AdrLow{.d = 3u}}; // Address
+  std::vector<Dissector::value_type> result{};
+  std::ranges::copy(dissector, back_inserter(result));
+  EXPECT_EQ(expected, result);
+}
+
+TEST(Dissector, channel_1_cant_contain_zeros) {
+  dcc::Packet packet{0x03u, 0xA0u, 0xA3u};
+  Datagram<> datagram{0x99u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u};
+  Dissector dissector{datagram, packet};
+  EXPECT_EQ(cbegin(dissector), cend(dissector));
 }
 
 TEST(Dissector, channel_2) {
-  {
-    dcc::Packet packet{0x03u, 0x3Fu, 0x80u, 0xBCu};
-    Datagram<> datagram{0x00u, 0x00u, 0x59u, 0xB1u, 0x66, 0x5Au, 0xACu, 0xACu};
-    Dissector dissector{datagram, packet};
-    std::vector<Dissector::value_type> expected{
-      app::Dyn{.d = 79u, .x = 26u}, // Temperature
-      app::Dyn{.d = 0u, .x = 0u}};  // Speed
-    std::vector<Dissector::value_type> result{};
-    std::ranges::copy(dissector, back_inserter(result));
-    EXPECT_EQ(expected, result);
-  }
-}
-
-TEST(Dissector, invalid) {
-  {
-    dcc::Packet packet{0x03u, 0x3Fu, 0x80u, 0xBCu};
-    Datagram<> datagram{0x00u, 0x00u, 0xD9u, 0xB1u, 0x66, 0x5Au, 0xACu, 0xACu};
-    Dissector dissector{datagram, packet};
-    std::vector<Dissector::value_type> expected{};
-    std::vector<Dissector::value_type> result{};
-    std::ranges::copy(dissector, back_inserter(result));
-    EXPECT_EQ(expected, result);
-  }
+  dcc::Packet packet{0x03u, 0x3Fu, 0x80u, 0xBCu};
+  Datagram<> datagram{0x00u, 0x00u, 0x59u, 0xB1u, 0x66, 0x5Au, 0xACu, 0xACu};
+  Dissector dissector{datagram, packet};
+  std::vector<Dissector::value_type> expected{
+    app::Dyn{.d = 79u, .x = 26u}, // Temperature
+    app::Dyn{.d = 0u, .x = 0u}};  // Speed
+  std::vector<Dissector::value_type> result{};
+  std::ranges::copy(dissector, back_inserter(result));
+  EXPECT_EQ(expected, result);
 }
 
 TEST(Dissector, unknown_id) {
-  {
-    dcc::Packet packet{0x03u, 0x3Fu, 0x80u, 0xBCu};
-    Datagram<> datagram{0x2Du, 0xCAu, 0x59u, 0x96u, 0x66u, 0x5Au, 0xACu, 0xACu};
-    Dissector dissector{datagram, packet};
-    EXPECT_EQ(cbegin(dissector), cend(dissector));
-  }
+  dcc::Packet packet{0x03u, 0x3Fu, 0x80u, 0xBCu};
+  Datagram<> datagram{0x2Du, 0xCAu, 0x59u, 0x96u, 0x66u, 0x5Au, 0xACu, 0xACu};
+  Dissector dissector{datagram, packet};
+  EXPECT_EQ(cbegin(dissector), cend(dissector));
+}
+
+TEST(Dissector, invalid_channel_2) {
+  dcc::Packet packet{0x03u, 0x3Fu, 0x80u, 0xBCu};
+  Datagram<> datagram{0x00u, 0x00u, 0xD9u, 0xB1u, 0x66, 0x5Au, 0xACu, 0xACu};
+  Dissector dissector{datagram, packet};
+  std::vector<Dissector::value_type> expected{};
+  std::vector<Dissector::value_type> result{};
+  std::ranges::copy(dissector, back_inserter(result));
+  EXPECT_EQ(expected, result);
+}
+
+TEST(Dissector, ignore_invalid_channel_1) {
+  dcc::Packet packet{0x03u, 0xDFu, 0x00u, 0xDCu};
+  Datagram<> datagram{0xA3u, 0xACu, 0x5Au, 0x74u, 0x5Cu, 0x5Au, 0xACu, 0xACu};
+  datagram[0uz] += 0b1u;
+  Dissector dissector{datagram, packet};
+  std::vector<Dissector::value_type> expected{
+    app::Dyn{.d = 19u, .x = 27u}, // Direction status byte
+    app::Dyn{.d = 0u, .x = 0u}};  // QoS
+  std::vector<Dissector::value_type> result{};
+  std::ranges::copy(dissector, back_inserter(result));
+  EXPECT_EQ(expected, result);
 }
