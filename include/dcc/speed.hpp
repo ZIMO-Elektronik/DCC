@@ -72,9 +72,10 @@ constexpr int32_t decode_rggggg(uint8_t rggggg, bool cv29_1 = true) {
 /// \return Direction and speed byte
 constexpr uint8_t encode_rggggg(bool dir, int32_t speed, bool cv29_1 = true) {
   // Halt
-  if (!speed) return static_cast<uint8_t>(dir << 5u);
+  if (!speed) return static_cast<uint8_t>(static_cast<uint32_t>(dir) << 5u);
   // EStop
-  else if (speed < 0) return static_cast<uint8_t>(dir << 5u) | 0b1u;
+  else if (speed < 0)
+    return static_cast<uint8_t>(static_cast<uint32_t>(dir) << 5u) | 0b1u;
 
   auto rggggg{static_cast<uint32_t>(speed + 1)};
 
@@ -109,9 +110,10 @@ constexpr int32_t decode_rggggggg(uint8_t rggggggg) {
 /// \return Direction and speed byte
 constexpr uint8_t encode_rggggggg(bool dir, int32_t speed) {
   // Halt
-  if (!speed) return static_cast<uint8_t>(dir << 7u);
+  if (!speed) return static_cast<uint8_t>(static_cast<uint32_t>(dir) << 7u);
   // EStop
-  else if (speed < 0) return static_cast<uint8_t>(dir << 7u) | 0b1u;
+  else if (speed < 0)
+    return static_cast<uint8_t>(static_cast<uint32_t>(dir) << 7u) | 0b1u;
   // 126 speed steps
   else
     return static_cast<uint8_t>(static_cast<uint32_t>(dir) << 7u |

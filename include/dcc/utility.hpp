@@ -37,9 +37,23 @@ namespace dcc {
 /// \return uint16_t
 template<std::random_access_iterator RandomIt>
 requires(sizeof(std::iter_value_t<RandomIt>) == 1uz)
-constexpr auto data2uint16(RandomIt first) {
+constexpr uint16_t data2uint16(RandomIt first) {
   return static_cast<uint16_t>(static_cast<uint32_t>(first[0uz]) << 8u |
                                static_cast<uint32_t>(first[1uz]) << 0u);
+}
+
+/// Data to uint32_t
+///
+/// \tparam RandomIt  std::random_access_iterator
+/// \param  first     Beginning of the source range
+/// \return uint32_t
+template<std::random_access_iterator RandomIt>
+requires(sizeof(std::iter_value_t<RandomIt>) == 1uz)
+constexpr uint32_t data2uint32(RandomIt first) {
+  return static_cast<uint32_t>(first[0uz]) << 24u |
+         static_cast<uint32_t>(first[1uz]) << 16u |
+         static_cast<uint32_t>(first[2uz]) << 8u |
+         static_cast<uint32_t>(first[3uz]) << 0u;
 }
 
 /// uint16 to data
@@ -53,20 +67,6 @@ constexpr auto uint16_2data(uint16_t hword, OutputIt out) {
   *out++ = static_cast<uint8_t>(hword >> 8u);
   *out++ = static_cast<uint8_t>(hword >> 0u);
   return out;
-}
-
-/// Data to uint32_t
-///
-/// \tparam RandomIt  std::random_access_iterator
-/// \param  first     Beginning of the source range
-/// \return uint32_t
-template<std::random_access_iterator RandomIt>
-requires(sizeof(std::iter_value_t<RandomIt>) == 1uz)
-constexpr auto data2uint32(RandomIt first) {
-  return static_cast<uint32_t>(first[0uz]) << 24u |
-         static_cast<uint32_t>(first[1uz]) << 16u |
-         static_cast<uint32_t>(first[2uz]) << 8u |
-         static_cast<uint32_t>(first[3uz]) << 0u;
 }
 
 /// uint32_t to data
