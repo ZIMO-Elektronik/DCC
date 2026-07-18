@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.48.1
+- Bugfix RMT encoder [#168](https://github.com/ZIMO-Elektronik/DCC/issues/168)
+
 ## 0.48.0
 - Add XPOM support ([#122](https://github.com/ZIMO-Elektronik/DCC/issues/122))
 - [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) compliance ([#161](https://github.com/ZIMO-Elektronik/DCC/issues/161))

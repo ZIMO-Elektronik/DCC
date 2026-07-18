@@ -213,10 +213,13 @@ static size_t RMT_IRAM_ATTR rmt_encode_dcc_data(rmt_dcc_encoder_t* dcc_encoder,
                           &state);
   encoded_symbols += tmp;
   dcc_encoder->num_symbols += tmp;
-  if (state & RMT_ENCODING_COMPLETE &&
-      dcc_encoder->num_symbols >= data_size * CHAR_BIT) {
-    dcc_encoder->num_symbols = 0u;
-    dcc_encoder->state = End;
+  if (state & RMT_ENCODING_COMPLETE) {
+    if (dcc_encoder->num_symbols >= data_size * CHAR_BIT) {
+      dcc_encoder->num_symbols = 0u;
+      dcc_encoder->state = End;
+    } else {
+      dcc_encoder->state = Start;
+    }
   }
 
   *ret_state = state;
