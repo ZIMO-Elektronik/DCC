@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.48.2
+- Bugfix pending `app:pom` blocks `app:xpom` ([#170](https://github.com/ZIMO-Elektronik/DCC/issues/170))
+
 ## 0.48.1
 - Bugfix RMT encoder [#168](https://github.com/ZIMO-Elektronik/DCC/issues/168)
 
