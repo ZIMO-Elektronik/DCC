@@ -265,9 +265,9 @@ struct CrtpBase {
         if (_addrs.received ==
             (_logon_assigned ? _addrs.logon : _addrs.primary)) {
           if (_instr == Instruction::CvAccess)
-            !empty(_deques.pom) ? appPom() : appXpom();
-          else if (!empty(_deques.pom)) appPom();
+            !empty(_deques.xpom) ? appXpom() : appPom();
           else if (!empty(_deques.xpom)) appXpom();
+          else if (!empty(_deques.pom)) appPom();
           else appDyn();
         } else if (_addrs.received == _addrs.consist && _ch2_consist_enabled)
           appDyn();

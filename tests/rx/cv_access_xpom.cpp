@@ -10,7 +10,6 @@ TEST_F(RxTest, cv_access_xpom_verify_bytes) {
   EXPECT_CALL(_mock, readCv(cv_addr + 1u)).WillOnce(Return(1u));
   EXPECT_CALL(_mock, readCv(cv_addr + 2u)).WillOnce(Return(2u));
   EXPECT_CALL(_mock, readCv(cv_addr + 3u)).WillOnce(Return(3u));
-
   ReceiveAndExecute(packet);
 }
 
@@ -27,7 +26,6 @@ TEST_F(RxTest, cv_access_xpom_write_bytes) {
     EXPECT_CALL(_mock, readCv(cv_addr + 1u)).WillOnce(Return(1u));
     EXPECT_CALL(_mock, readCv(cv_addr + 2u)).WillOnce(Return(2u));
     EXPECT_CALL(_mock, readCv(cv_addr + 3u)).WillOnce(Return(3u));
-
     ReceiveAndExecuteTwice(packet);
   }
 
@@ -44,7 +42,6 @@ TEST_F(RxTest, cv_access_xpom_write_bytes) {
     EXPECT_CALL(_mock, writeCv(cv_addr + 1u, cv1)).WillOnce(Return(1u));
     EXPECT_CALL(_mock, readCv(cv_addr + 2u)).WillOnce(Return(2u));
     EXPECT_CALL(_mock, readCv(cv_addr + 3u)).WillOnce(Return(3u));
-
     ReceiveAndExecuteTwice(packet);
   }
 
@@ -62,7 +59,6 @@ TEST_F(RxTest, cv_access_xpom_write_bytes) {
     EXPECT_CALL(_mock, writeCv(cv_addr + 1u, cv1)).WillOnce(Return(cv1));
     EXPECT_CALL(_mock, writeCv(cv_addr + 2u, cv2)).WillOnce(Return(cv2));
     EXPECT_CALL(_mock, readCv(cv_addr + 3u)).WillOnce(Return(3u));
-
     ReceiveAndExecuteTwice(packet);
   }
 
@@ -81,7 +77,6 @@ TEST_F(RxTest, cv_access_xpom_write_bytes) {
     EXPECT_CALL(_mock, writeCv(cv_addr + 1u, cv1)).WillOnce(Return(cv1));
     EXPECT_CALL(_mock, writeCv(cv_addr + 2u, cv2)).WillOnce(Return(cv2));
     EXPECT_CALL(_mock, writeCv(cv_addr + 3u, cv3)).WillOnce(Return(cv3));
-
     ReceiveAndExecuteTwice(packet);
   }
 }
@@ -100,6 +95,5 @@ TEST_F(RxTest, cv_access_xpom_write_bit) {
   EXPECT_CALL(_mock, readCv(cv_addr + 1u)).WillOnce(Return(1u));
   EXPECT_CALL(_mock, readCv(cv_addr + 2u)).WillOnce(Return(2u));
   EXPECT_CALL(_mock, readCv(cv_addr + 3u)).WillOnce(Return(3u));
-
   ReceiveAndExecuteTwice(packet);
 }

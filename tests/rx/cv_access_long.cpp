@@ -24,7 +24,6 @@ TEST_F(RxTest, cv_access_long_verify_bit_operations_mode) {
     dcc::make_cv_access_long_verify_packet(_addrs.primary, cv_addr, bit, pos)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, bit, pos)).WillOnce(Return(bit));
-
   ReceiveAndExecute(packet);
 }
 
@@ -37,7 +36,6 @@ TEST_F(RxTest, cv_access_long_verify_byte_operations_mode) {
                      Matcher<uint8_t>(_),
                      Matcher<std::function<void(uint8_t)>>(_)))
     .WillOnce(InvokeArgument<2uz>(RandomInterval<uint8_t>(0u, 255u)));
-
   ReceiveAndExecute(packet);
 }
 
