@@ -764,7 +764,7 @@ void cv_access_long_form(State::Packet& packet,
       packet.desc_strs.back() +=
         bytes[2uz] & ztl::mask<4u> ? "\n- Write Bit" : "\n- Verify Bit";
       packet.desc_strs.back() +=
-        std::format("\n- CV{}:{}={}", cv_addr + 1u, pos, bit ? 0 : 1);
+        std::format("\n- CV{}:{}={}", cv_addr + 1u, pos, bit ? 1 : 0);
       packet.pattern_str += packet.addr.type == dcc::Address::UnknownService
                               ? " 0 1110KKVV 0 VVVVVVVV 0 111KDBBB"
                               : " 0 0111KKVV 0 VVVVVVVV 0 111KDBBB";
