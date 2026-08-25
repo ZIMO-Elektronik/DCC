@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.48.3
+- Bugfix `DCCypher` example CV access bit manipulation description bit inverted ([#173](https://github.com/ZIMO-Elektronik/DCC/issues/173))
+
 ## 0.48.2
 - Bugfix pending `app:pom` blocks `app:xpom` ([#170](https://github.com/ZIMO-Elektronik/DCC/issues/170))
 
