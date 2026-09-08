@@ -46,17 +46,17 @@ set(DCC_MAX_PACKET_SIZE
     18u
     CACHE STRING "Maximum size of a packet in bytes")
 set(DCC_RX_LOGON_DID_CV_ADDRESS
-    249u
-    CACHE STRING "First CV address of decoder ID")
+    65288u
+    CACHE STRING "First CV address of DID")
 set(DCC_RX_LOGON_CID_CV_ADDRESS
     65296u
-    CACHE STRING "First CV address of last CID")
+    CACHE STRING "First CV address of CID")
 set(DCC_RX_LOGON_SID_CV_ADDRESS
     65298u
-    CACHE STRING "First CV address of last SID")
+    CACHE STRING "First CV address of SID")
 set(DCC_RX_LOGON_ADDRESS_CV_ADDRESS
     65299u
-    CACHE STRING "First CV address of last logon address")
+    CACHE STRING "First CV address of logon address")
 set(DCC_RX_MIN_PREAMBLE_BITS
     10u
     CACHE STRING "Minimum number of preamble bits of decoder")

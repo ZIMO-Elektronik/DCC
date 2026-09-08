@@ -90,10 +90,14 @@ struct CrtpBase {
     _ch2_consist_enabled = bidi_enabled && ch2_consist_enabled;
 
     // IDs
-    _ids.decoder = {impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 0u),
-                    impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 1u),
+    // The "Manufacturer Unique Number" in the BiDi CV page is stored in
+    // little-endian format; however, we read it into the array in big-endian
+    // format to make it easier to compare with the bytes from a DCC packet
+    // later on.
+    _ids.decoder = {impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 3u),
                     impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 2u),
-                    impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 3u)};
+                    impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 1u),
+                    impl().readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 0u)};
     _ids.cs.front() = static_cast<decltype(_ids.cs)::value_type>(
       static_cast<uint32_t>(impl().readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 0u))
         << 8u |

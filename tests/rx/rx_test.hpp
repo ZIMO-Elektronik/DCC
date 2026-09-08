@@ -57,15 +57,15 @@ MATCHER_P(DatagramMatcher, datagram, "") {
     .WillOnce(Return(_cvs[15uz - 1uz]))                                        \
     .WillOnce(Return(_cvs[16uz - 1uz]))                                        \
     .WillOnce(Return(_cvs[28uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz]))                 \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz]))                 \
+    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz]))                 \
+    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz]))                 \
+    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz]))                 \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz]))                 \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz]))                 \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_SID_CV_ADDRESS]))                       \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u]))              \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u]))
+    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz]))             \
+    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]))
 
 #define BASIC_ADDRESS_READ_CV_INIT_SEQUENCE_COMMON()                           \
   WillOnce(Return(_cvs[1uz - 1uz])).READ_CV_INIT_SEQUENCE_COMMON()

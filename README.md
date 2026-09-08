@@ -58,8 +58,8 @@ The DCC protocol is defined by various standards published by the [National Mode
 - Writing an address to CV1 automatically clears CV29:5. Strictly speaking, this is not a deviation from the standard, as [RCN-225](https://normen.railcommunity.de/RCN-225.pdf) explicitly permits this behavior.
 - **All** CV access short form commands require **two identical** programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](https://normen.railcommunity.de/RCN-214.pdf) (chapter 3) and [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.7.2).
 - [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) specific
-  - The 4-byte ID of a decoder (DID) must be available. By default this library uses CV250-253. To change the address of these CVs use the CMake option `DCC_RX_LOGON_DID_CV_ADDRESS`.
-  - During logon, the decoder must be able to store 2 bytes central ID (CID), 1 byte session ID (SID), and 2 bytes logon address. By default this library uses CV17-21 in the RailCom block (CV31=0 and CV32=255). To change the addresses for these CVs use the CMake options `DCC_RX_LOGON_CID_CV_ADDRESS`, `DCC_RX_LOGON_SID_CV_ADDRESS`, and `DCC_RX_LOGON_ADDRESS_CV_ADDRESS`.
+  - The 4-byte unique ID of a decoder (DID) must be available. By default this library uses CV265-268 in the BiDi CV page (CV31=0 and CV32=255). To change the address of these CVs use the CMake option `DCC_RX_LOGON_DID_CV_ADDRESS`.
+  - During logon, the decoder must be able to store 2 bytes central ID (CID), 1 byte session ID (SID), and 2 bytes logon address. By default this library uses CV273-277 in the BiDi CV page (CV31=0 and CV32=255). To change the addresses of these CVs use the CMake options `DCC_RX_LOGON_CID_CV_ADDRESS`, `DCC_RX_LOGON_SID_CV_ADDRESS`, and `DCC_RX_LOGON_ADDRESS_CV_ADDRESS`.
 
 > [!NOTE]  
 > Standards compliance can be enforced with the CMake option `DCC_STANDARD_COMPLIANCE`. However, this option is disabled by default.
@@ -168,7 +168,7 @@ set(DCC_RX_DEQUE_SIZE
 The library itself is header-only, so technically it can't be built. However, if run as top-level CMake project then, depending on the target platform, different examples can be built.
 
 #### Cypher
-Cypher (or DCCypher) is a kind of online catalog of available DCC commands and RailCom messages. It allows users to create packets and datagrams via a wizard and then visualizes them. The app is built using [ImGui](https://github.com/ocornut/imgui), [SDL2](https://github.com/libsdl-org/SDL) and [Emscripten](https://github.com/emscripten-core/emscripten). A hosted version of this app can be found [here](https://zimo-elektronik.github.io/DCC).
+Cypher (or DCCypher) is a kind of online catalog of available DCC commands and BiDi messages. It allows users to create packets and datagrams via a wizard and then visualizes them. The app is built using [ImGui](https://github.com/ocornut/imgui), [SDL2](https://github.com/libsdl-org/SDL) and [Emscripten](https://github.com/emscripten-core/emscripten). A hosted version of this app can be found [here](https://zimo-elektronik.github.io/DCC).
 ![cypher](https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/cypher.png)
 
 #### Repl
