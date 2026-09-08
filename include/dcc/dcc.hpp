@@ -13,4 +13,4 @@
 #include "bidi/baudrate.hpp"
 #include "bidi/dissector.hpp"
 #include "rx/crtp_base.hpp"
-#include "tx/crtp_base.hpp"
+#include "tx/base.hpp"
