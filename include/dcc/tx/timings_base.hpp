@@ -2,17 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// DCC
+/// Transmit timings base
 ///
-/// \file   dcc/dcc.hpp
+/// \file   dcc/tx/timings_base.hpp
 /// \author Vincent Hamp
-/// \date   04/01/2022
+/// \date   08/09/2026
 
 #pragma once
 
-#include "bidi/baudrate.hpp"
-#include "bidi/dissector.hpp"
-#include "rx/crtp_base.hpp"
-#include "tx/base.hpp"
-#include "tx/packets_base.hpp"
-#include "tx/timings_base.hpp"
+#include "base.hpp"
+
+namespace dcc::tx {
+
+using TimingsBase = Base<Timings>;
+
+} // namespace dcc::tx

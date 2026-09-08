@@ -8,41 +8,41 @@ on:
 
 jobs:
   arm-none-eabi-gcc:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/arm-none-eabi-gcc.yml@v0.3.2
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/arm-none-eabi-gcc.yml@v0.4.0
     with:
       arch: -mcpu=cortex-m7
       target: DCCStm32Decoder DCCStm32CommandStation
 
   emscripten:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: mymindstorm/setup-emsdk@v16
         with:
-          version: 6.0.2
+          version: 6.0.9
       - run: |
           emcmake cmake --preset "Release"
           cmake --build build --target DCCypher
 
   esp-elf-gcc:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
-        esp_idf_version: [latest, v6.0.2, v5.5.5, v5.4.4, v5.3.5, v5.2.7]
+        esp_idf_version: [latest, v6.0.2, v5.5.5, v5.4.4]
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: espressif/esp-idf-ci-action@v1.2.0
+      - uses: espressif/esp-idf-ci-action@v1
         with:
           path: examples/esp32
           esp_idf_version: ${{ matrix.esp_idf_version }}
           target: esp32
 
   x86_64-linux-gnu-gcc:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.3.2
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/x86_64-linux-gnu-gcc.yml@v0.4.0
     with:
       pre-build: |
         sudo apt update -y

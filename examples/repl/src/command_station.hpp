@@ -2,8 +2,8 @@
 
 #include <dcc/dcc.hpp>
 
-struct CommandStation : dcc::tx::Base<> {
-  friend dcc::tx::Base<>;
+struct CommandStation : dcc::tx::PacketsBase {
+  friend dcc::tx::PacketsBase;
 
 private:
   // BiDi start

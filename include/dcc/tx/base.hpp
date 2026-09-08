@@ -29,11 +29,11 @@ namespace dcc::tx {
 
 /// Base for transmitting DCC
 ///
-/// \tparam D Deque value type
-template<typename D = Packet>
-requires(std::same_as<D, Packet> || std::same_as<D, Timings>)
+/// \tparam T Deque value type
+template<typename T>
+requires(std::same_as<T, Packet> || std::same_as<T, Timings>)
 struct Base {
-  using value_type = detail::QueuedPacket<D>;
+  using value_type = detail::QueuedPacket<T>;
 
   /// Initialize
   ///
@@ -46,9 +46,9 @@ struct Base {
            cfg.bit0_duration >= Bit0Min && cfg.bit0_duration <= Bit0Max);  //
     _cfg = cfg;
     _idle_packet.address = _addrs.current = decode_address(packet);
-    if constexpr (std::same_as<D, Packet>)
+    if constexpr (std::same_as<T, Packet>)
       _idle_packet.packet = TimingsAdapter{packet, _cfg};
-    else if constexpr (std::same_as<D, Timings>)
+    else if constexpr (std::same_as<T, Timings>)
       _idle_packet.packet = bytes2timings(packet, _cfg);
     _first = begin(_idle_packet.packet);
     _last = cend(_idle_packet.packet);
@@ -85,8 +85,8 @@ struct Base {
     if (self._first != self._last) return self.packetTiming();
 
     // Packet end
-    if constexpr (requires(Self&& self) {
-                    { self.packetEnd() };
+    if constexpr (requires(Self&& s) {
+                    { s.packetEnd() } -> std::same_as<void>;
                   })
       if (self._bidi_state == Pre) self.packetEnd();
 
@@ -156,8 +156,8 @@ protected:
       // Cutout start
       case Start:
         self.toggleTrackOutputs();
-        if constexpr (requires(Self self) {
-                        { self.biDiStart() };
+        if constexpr (requires(Self&& s) {
+                        { s.biDiStart() } -> std::same_as<void>;
                       })
           self.biDiStart();
         retval = static_cast<Timings::value_type>(bidi::Timing::TTS1 -
@@ -166,8 +166,8 @@ protected:
 
       // Channel 1 start
       case Channel1:
-        if constexpr (requires(Self self) {
-                        { self.biDiChannel1() };
+        if constexpr (requires(Self&& s) {
+                        { s.biDiChannel1() } -> std::same_as<void>;
                       })
           self.biDiChannel1();
         retval = static_cast<Timings::value_type>(bidi::Timing::TTS2 -
@@ -176,8 +176,8 @@ protected:
 
       // Channel 2 start
       case Channel2:
-        if constexpr (requires(Self self) {
-                        { self.biDiChannel2() };
+        if constexpr (requires(Self&& s) {
+                        { s.biDiChannel2() } -> std::same_as<void>;
                       })
           self.biDiChannel2();
         retval = static_cast<Timings::value_type>(bidi::Timing::TTC2 -
@@ -186,8 +186,8 @@ protected:
 
       // Cutout end
       case End:
-        if constexpr (requires(Self self) {
-                        { self.biDiEnd() };
+        if constexpr (requires(Self&& s) {
+                        { s.biDiEnd() } -> std::same_as<void>;
                       })
           self.biDiEnd();
         retval = static_cast<Timings::value_type>(bidi::Timing::TCE -
@@ -206,17 +206,17 @@ protected:
   ///
   /// \param  bytes Bytes containing DCC packet
   void pushBack(std::span<uint8_t const> bytes) {
-    if constexpr (std::same_as<D, Packet>)
+    if constexpr (std::same_as<T, Packet>)
       _deque.push_back({decode_address(bytes), {bytes, _cfg}});
-    else if constexpr (std::same_as<D, Timings>)
+    else if constexpr (std::same_as<T, Timings>)
       _deque.push_back({decode_address(bytes), bytes2timings(bytes, _cfg)});
   }
 
   /// Toggle track outputs
   template<typename Self>
   void toggleTrackOutputs(this Self&& self) {
-    if constexpr (requires(Self self, bool N, bool P) {
-                    { self.trackOutputs(N, P) };
+    if constexpr (requires(Self&& s, bool N, bool P) {
+                    { s.trackOutputs(N, P) } -> std::same_as<void>;
                   }) {
       // By default the phase is "positive", so P > N for the first half bit.
       self.trackOutputs(self._polarity, !self._polarity);

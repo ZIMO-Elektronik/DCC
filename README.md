@@ -348,12 +348,12 @@ This distinction is important because the receiver prevents both
 > That means the methods `execute`, `biDiChannel1` and `biDiChannel2` can only be called in their respective phase. If called outside of the phase, they return immediately.
 
 ### Transmitter
-As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::Base`. There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.
+As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::Base` (or one of its aliases). There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.
 ```cpp
 #include <dcc/dcc.hpp>
 
-struct CommandStation : dcc::tx::Base<> {
-  friend dcc::tx::Base<>;
+struct CommandStation : dcc::tx::PacketsBase {
+  friend dcc::tx::PacketsBase;
 
 private:
   // Write track outputs
@@ -403,14 +403,17 @@ Again, inheriting from the base class isn't sufficient:
     ```
 
 #### Packet vs. Timings
-If you look at the signature of the transmitter base, you will see that it has a second template parameter which can be either `dcc::Packet` or `dcc::tx::Timings`.
+If you look at the signature of the transmitter base, you will see that it has a template parameter which can be either `dcc::Packet` or `dcc::tx::Timings`.
 ```cpp
-template<typename D = Packet>
-requires(std::same_as<D, Packet> || std::same_as<D, Timings>)
+template<typename T>
+requires(std::same_as<T, Packet> || std::same_as<T, Timings>)
 struct Base
 ```
 
 This parameter determines whether the transmitter stores packets to be sent as bytes or as bit timings. The trade-off is simple, packets require **less RAM** but **more instructions** in the interrupt, timings require **more RAM** but **fewer instructions** in the interrupt.
+
+> [!TIP]
+> `dcc::tx::PacketsBase` and `dcc::tx::TransmitBase` are available as corresponding aliases.
 
 #### BiDi Dissector
 If enabled and implemented, the base class of the transmitter offers callbacks for the corresponding BiDi (RailCom) timings (e.g. `biDiChannel1`), but receiving the UART data itself is the **responsibility of the user**. Theoretically, two bytes can be read in channel 1 and up to eight bytes in channel 2. Unfortunately, decoding the UART data is very error-prone due to the crappy encoding and because the data itself is **context-sensitive**. For this reason, there is a separate `dcc::bidi::Dissector` class that can be used to iterate over the data. Dereferencing the iterator returns a [std::variant](https://www.cppreference.com/w/cpp/utility/variant.html) sum type of all possible datagrams.

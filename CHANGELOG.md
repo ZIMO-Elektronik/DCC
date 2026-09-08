@@ -1,5 +1,11 @@
 # Changelog
 
+##
+- Switch from [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern) to [decuding **this**](https://cppreference.com/cpp/language/function#Explicit_object_parameter) ([#56](https://github.com/ZIMO-Elektronik/DCC/issues/56))
+- Rename `rx::CrtpBase` to `rx::Base`
+- Rename `tx::CrtpBase` to `tx::Base`
+- Add `tx::PacketsBase` and `tx::TimingsBase` aliases
+
 ## 0.48.3
 - Bugfix `DCCypher` example CV access bit manipulation description bit inverted ([#173](https://github.com/ZIMO-Elektronik/DCC/issues/173))
 
