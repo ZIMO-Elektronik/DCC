@@ -252,12 +252,12 @@ There is also a virtual com port (baud rate 115200) on the micro USB plug (CN1) 
 
 ## Usage
 ### Receiver
-To create a receiver (decoder) class it is necessary to derive from `dcc::rx::CrtpBase`. As the name suggest this class relies on [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern) to implement static polymorphism. The template argument of the base is checked with a concept called [Decoder](include/dcc/rx/decoder.hpp). This concept verifies that the following methods can be called from the base. The friend declarations are only necessary if the methods the base needs to call are not public.
+To create a receiver (decoder) class it is necessary to derive from `dcc::rx::Base`. The class relies on [deducing **this**](https://cppreference.com/cpp/language/function#Explicit_object_parameter) to implement static polymorphism. The explicit object parameter in the base is checked with a concept called [Decoder](include/dcc/rx/decoder.hpp). This concept verifies that the following methods can be called from the base. The friend declarations are only necessary if the methods the base needs to call are not public.
 ```cpp
 #include <dcc/dcc.hpp>
 
-struct Decoder : dcc::rx::CrtpBase<Decoder> {
-  friend dcc::rx::CrtpBase<Decoder>;
+struct Decoder : dcc::rx::Base {
+  friend dcc::rx::Base;
 
 private:
   // Set direction (1 forward, 0 backward)

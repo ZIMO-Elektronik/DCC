@@ -79,14 +79,13 @@ struct Base {
   /// Get next bit duration to transmit in µs
   ///
   /// \return Bit duration in µs
-  template<typename Self>
-  Timings::value_type transmit(this Self&& self) {
+  Timings::value_type transmit(this auto&& self) {
     // Packet timings
     if (self._first != self._last) return self.packetTiming();
 
     // Packet end
-    if constexpr (requires(Self&& s) {
-                    { s.packetEnd() } -> std::same_as<void>;
+    if constexpr (requires {
+                    { self.packetEnd() } -> std::same_as<void>;
                   })
       if (self._bidi_state == Pre) self.packetEnd();
 
@@ -129,6 +128,7 @@ struct Base {
 protected:
   constexpr Base() = default;
 
+private:
   /// Packet timing
   ///
   /// \return Next timings from current packet
@@ -142,8 +142,7 @@ protected:
   /// BiDi timing
   ///
   /// \return Next BiDi timing
-  template<typename Self>
-  Timings::value_type biDiTiming(this Self&& self) {
+  Timings::value_type biDiTiming(this auto&& self) {
     Timings::value_type retval{};
 
     switch (self._bidi_state) {
@@ -156,8 +155,8 @@ protected:
       // Cutout start
       case Start:
         self.toggleTrackOutputs();
-        if constexpr (requires(Self&& s) {
-                        { s.biDiStart() } -> std::same_as<void>;
+        if constexpr (requires {
+                        { self.biDiStart() } -> std::same_as<void>;
                       })
           self.biDiStart();
         retval = static_cast<Timings::value_type>(bidi::Timing::TTS1 -
@@ -166,8 +165,8 @@ protected:
 
       // Channel 1 start
       case Channel1:
-        if constexpr (requires(Self&& s) {
-                        { s.biDiChannel1() } -> std::same_as<void>;
+        if constexpr (requires {
+                        { self.biDiChannel1() } -> std::same_as<void>;
                       })
           self.biDiChannel1();
         retval = static_cast<Timings::value_type>(bidi::Timing::TTS2 -
@@ -176,8 +175,8 @@ protected:
 
       // Channel 2 start
       case Channel2:
-        if constexpr (requires(Self&& s) {
-                        { s.biDiChannel2() } -> std::same_as<void>;
+        if constexpr (requires {
+                        { self.biDiChannel2() } -> std::same_as<void>;
                       })
           self.biDiChannel2();
         retval = static_cast<Timings::value_type>(bidi::Timing::TTC2 -
@@ -186,8 +185,8 @@ protected:
 
       // Cutout end
       case End:
-        if constexpr (requires(Self&& s) {
-                        { s.biDiEnd() } -> std::same_as<void>;
+        if constexpr (requires {
+                        { self.biDiEnd() } -> std::same_as<void>;
                       })
           self.biDiEnd();
         retval = static_cast<Timings::value_type>(bidi::Timing::TCE -
@@ -213,10 +212,9 @@ protected:
   }
 
   /// Toggle track outputs
-  template<typename Self>
-  void toggleTrackOutputs(this Self&& self) {
-    if constexpr (requires(Self&& s, bool N, bool P) {
-                    { s.trackOutputs(N, P) } -> std::same_as<void>;
+  void toggleTrackOutputs(this auto&& self) {
+    if constexpr (requires(bool N, bool P) {
+                    { self.trackOutputs(N, P) } -> std::same_as<void>;
                   }) {
       // By default the phase is "positive", so P > N for the first half bit.
       self.trackOutputs(self._polarity, !self._polarity);

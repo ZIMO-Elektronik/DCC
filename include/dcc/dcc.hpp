@@ -12,7 +12,7 @@
 
 #include "bidi/baudrate.hpp"
 #include "bidi/dissector.hpp"
-#include "rx/crtp_base.hpp"
+#include "rx/base.hpp"
 #include "tx/base.hpp"
 #include "tx/packets_base.hpp"
 #include "tx/timings_base.hpp"

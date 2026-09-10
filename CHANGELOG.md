@@ -1,6 +1,6 @@
 # Changelog
 
-##
+## 0.49.0
 - Use manufacturer unique number (MUN) from [BiDi CV page]((https://normen.railcommunity.de/RCN-217.pdf)) as [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) DID ([#56](https://github.com/ZIMO-Elektronik/DCC/issues/56))
 - Switch from [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern) to [decuding **this**](https://cppreference.com/cpp/language/function#Explicit_object_parameter) ([#56](https://github.com/ZIMO-Elektronik/DCC/issues/56))
 - Rename `rx::CrtpBase` to `rx::Base`
