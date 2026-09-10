@@ -18,14 +18,14 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: mymindstorm/setup-emsdk@v14
+      - uses: mymindstorm/setup-emsdk@v16
         with:
-          version: 5.0.5
+          version: 6.0.9
       - run: |
           emcmake cmake --preset "Release"
           cmake --build build --target DCCypher

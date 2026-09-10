@@ -58,8 +58,8 @@ The DCC protocol is defined by various standards published by the [National Mode
 - Writing an address to CV1 automatically clears CV29:5. Strictly speaking, this is not a deviation from the standard, as [RCN-225](https://normen.railcommunity.de/RCN-225.pdf) explicitly permits this behavior.
 - **All** CV access short form commands require **two identical** programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](https://normen.railcommunity.de/RCN-214.pdf) (chapter 3) and [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.7.2).
 - [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) specific
-  - The 4-byte ID of a decoder (DID) must be available. By default this library uses CV250-253. To change the address of these CVs use the CMake option `DCC_RX_LOGON_DID_CV_ADDRESS`.
-  - During logon, the decoder must be able to store 2 bytes central ID (CID), 1 byte session ID (SID), and 2 bytes logon address. By default this library uses CV17-21 in the RailCom block (CV31=0 and CV32=255). To change the addresses for these CVs use the CMake options `DCC_RX_LOGON_CID_CV_ADDRESS`, `DCC_RX_LOGON_SID_CV_ADDRESS`, and `DCC_RX_LOGON_ADDRESS_CV_ADDRESS`.
+  - The 4-byte unique ID of a decoder (DID) must be available. By default this library uses CV265-268 in the BiDi CV page (CV31=0 and CV32=255). To change the address of these CVs use the CMake option `DCC_RX_LOGON_DID_CV_ADDRESS`.
+  - During logon, the decoder must be able to store 2 bytes central ID (CID), 1 byte session ID (SID), and 2 bytes logon address. By default this library uses CV273-277 in the BiDi CV page (CV31=0 and CV32=255). To change the addresses of these CVs use the CMake options `DCC_RX_LOGON_CID_CV_ADDRESS`, `DCC_RX_LOGON_SID_CV_ADDRESS`, and `DCC_RX_LOGON_ADDRESS_CV_ADDRESS`.
 
 > [!NOTE]  
 > Standards compliance can be enforced with the CMake option `DCC_STANDARD_COMPLIANCE`. However, this option is disabled by default.
@@ -168,7 +168,7 @@ set(DCC_RX_DEQUE_SIZE
 The library itself is header-only, so technically it can't be built. However, if run as top-level CMake project then, depending on the target platform, different examples can be built.
 
 #### Cypher
-Cypher (or DCCypher) is a kind of online catalog of available DCC commands and RailCom messages. It allows users to create packets and datagrams via a wizard and then visualizes them. The app is built using [ImGui](https://github.com/ocornut/imgui), [SDL2](https://github.com/libsdl-org/SDL) and [Emscripten](https://github.com/emscripten-core/emscripten). A hosted version of this app can be found [here](https://zimo-elektronik.github.io/DCC).
+Cypher (or DCCypher) is a kind of online catalog of available DCC commands and BiDi messages. It allows users to create packets and datagrams via a wizard and then visualizes them. The app is built using [ImGui](https://github.com/ocornut/imgui), [SDL2](https://github.com/libsdl-org/SDL) and [Emscripten](https://github.com/emscripten-core/emscripten). A hosted version of this app can be found [here](https://zimo-elektronik.github.io/DCC).
 ![cypher](https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/cypher.png)
 
 #### Repl
@@ -252,12 +252,12 @@ There is also a virtual com port (baud rate 115200) on the micro USB plug (CN1) 
 
 ## Usage
 ### Receiver
-To create a receiver (decoder) class it is necessary to derive from `dcc::rx::CrtpBase`. As the name suggest this class relies on [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern) to implement static polymorphism. The template argument of the base is checked with a concept called [Decoder](include/dcc/rx/decoder.hpp). This concept verifies that the following methods can be called from the base. The friend declarations are only necessary if the methods the base needs to call are not public.
+To create a receiver (decoder) class it is necessary to derive from `dcc::rx::Base`. The class relies on [deducing **this**](https://cppreference.com/cpp/language/function#Explicit_object_parameter) to implement static polymorphism. The explicit object parameter in the base is checked with a concept called [Decoder](include/dcc/rx/decoder.hpp). This concept verifies that the following methods can be called from the base. The friend declarations are only necessary if the methods the base needs to call are not public.
 ```cpp
 #include <dcc/dcc.hpp>
 
-struct Decoder : dcc::rx::CrtpBase<Decoder> {
-  friend dcc::rx::CrtpBase<Decoder>;
+struct Decoder : dcc::rx::Base {
+  friend dcc::rx::Base;
 
 private:
   // Set direction (1 forward, 0 backward)
@@ -348,12 +348,12 @@ This distinction is important because the receiver prevents both
 > That means the methods `execute`, `biDiChannel1` and `biDiChannel2` can only be called in their respective phase. If called outside of the phase, they return immediately.
 
 ### Transmitter
-As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::CrtpBase`. There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.
+As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::Base` (or one of its aliases). There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.
 ```cpp
 #include <dcc/dcc.hpp>
 
-struct CommandStation : dcc::tx::CrtpBase<CommandStation> {
-  friend dcc::tx::CrtpBase<CommandStation>;
+struct CommandStation : dcc::tx::PacketsBase {
+  friend dcc::tx::PacketsBase;
 
 private:
   // Write track outputs
@@ -403,14 +403,17 @@ Again, inheriting from the base class isn't sufficient:
     ```
 
 #### Packet vs. Timings
-If you look at the signature of the transmitter base, you will see that it has a second template parameter which can be either `dcc::Packet` or `dcc::tx::Timings`.
+If you look at the signature of the transmitter base, you will see that it has a template parameter which can be either `dcc::Packet` or `dcc::tx::Timings`.
 ```cpp
-template<typename T, typename D = Packet>
-requires(std::same_as<D, Packet> || std::same_as<D, Timings>)
-struct CrtpBase
+template<typename T>
+requires(std::same_as<T, Packet> || std::same_as<T, Timings>)
+struct Base
 ```
 
 This parameter determines whether the transmitter stores packets to be sent as bytes or as bit timings. The trade-off is simple, packets require **less RAM** but **more instructions** in the interrupt, timings require **more RAM** but **fewer instructions** in the interrupt.
+
+> [!TIP]
+> `dcc::tx::PacketsBase` and `dcc::tx::TransmitBase` are available as corresponding aliases.
 
 #### BiDi Dissector
 If enabled and implemented, the base class of the transmitter offers callbacks for the corresponding BiDi (RailCom) timings (e.g. `biDiChannel1`), but receiving the UART data itself is the **responsibility of the user**. Theoretically, two bytes can be read in channel 1 and up to eight bytes in channel 2. Unfortunately, decoding the UART data is very error-prone due to the crappy encoding and because the data itself is **context-sensitive**. For this reason, there is a separate `dcc::bidi::Dissector` class that can be used to iterate over the data. Dereferencing the iterator returns a [std::variant](https://www.cppreference.com/w/cpp/utility/variant.html) sum type of all possible datagrams.

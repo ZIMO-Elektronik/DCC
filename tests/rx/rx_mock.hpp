@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include <dcc/dcc.hpp>
 
-struct RxMock : dcc::rx::CrtpBase<RxMock> {
+struct RxMock : dcc::rx::Base {
   MOCK_METHOD(void, direction, (uint16_t, int32_t), ());
   MOCK_METHOD(void, speed, (uint16_t, int32_t), ());
   MOCK_METHOD(void, function, (uint16_t, uint32_t, uint32_t), ());

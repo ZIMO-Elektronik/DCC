@@ -10,11 +10,11 @@ RxTest::RxTest() {
   _cvs[16uz - 1uz] = 0u;           // Lock compare
   _cvs[28uz - 1uz] = 0b1000'0011u; // RailCom
 
-  // Decoder ID
-  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz] = static_cast<uint8_t>(_did >> 24u);
-  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz] = static_cast<uint8_t>(_did >> 16u);
-  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz] = static_cast<uint8_t>(_did >> 8u);
-  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz] = static_cast<uint8_t>(_did >> 0u);
+  // Decoder ID (little endian)
+  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz] = static_cast<uint8_t>(_did >> 0u);
+  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz] = static_cast<uint8_t>(_did >> 8u);
+  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz] = static_cast<uint8_t>(_did >> 16u);
+  _cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz] = static_cast<uint8_t>(_did >> 24u);
 
   // CID
   _cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz] = static_cast<uint8_t>(_cid >> 8u);

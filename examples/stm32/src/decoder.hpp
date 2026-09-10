@@ -2,8 +2,8 @@
 
 #include <dcc/dcc.hpp>
 
-struct Decoder : dcc::rx::CrtpBase<Decoder> {
-  friend dcc::rx::CrtpBase<Decoder>;
+struct Decoder : dcc::rx::Base {
+  friend dcc::rx::Base;
 
 private:
   // Set direction (1 forward, 0 backward)
