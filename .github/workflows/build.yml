@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-26.04
     strategy:
       matrix:
-        esp_idf_version: [latest, v6.0.2, v5.5.5, v5.4.4]
+        esp_idf_version: [latest, v6.1, v6.0.3, v5.5.5]
     steps:
       - uses: actions/checkout@v6
         with:

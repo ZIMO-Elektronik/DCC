@@ -19,12 +19,6 @@
 #  include <esp_linux_helper.h>
 #endif
 
-#if defined(CONFIG_RMT_TX_ISR_HANDLER_IN_IRAM)
-#  define RMT_IRAM_ATTR IRAM_ATTR
-#else
-#  define RMT_IRAM_ATTR
-#endif
-
 static char const* TAG = "rmt";
 
 /// DCC encoder
@@ -51,7 +45,7 @@ typedef struct {
 /// \param  ret_state     Returned current encoder state
 /// \param  symbol        Symbol representing current bit
 /// \return Number of RMT symbols that the primary data has been encoded into
-static size_t RMT_IRAM_ATTR
+static size_t RMT_ENCODER_FUNC_ATTR
 rmt_encode_dcc_bit(rmt_dcc_encoder_t* dcc_encoder,
                    rmt_channel_handle_t channel,
                    rmt_encode_state_t* ret_state,
@@ -71,9 +65,10 @@ rmt_encode_dcc_bit(rmt_dcc_encoder_t* dcc_encoder,
 /// \param  channel       RMT TX channel handle
 /// \param  ret_state     Returned current encoder state
 /// \return Number of RMT symbols that the primary data has been encoded into
-static size_t RMT_IRAM_ATTR rmt_encode_dcc_bidi(rmt_dcc_encoder_t* dcc_encoder,
-                                                rmt_channel_handle_t channel,
-                                                rmt_encode_state_t* ret_state) {
+static size_t RMT_ENCODER_FUNC_ATTR
+rmt_encode_dcc_bidi(rmt_dcc_encoder_t* dcc_encoder,
+                    rmt_channel_handle_t channel,
+                    rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0u;
   rmt_encode_state_t state = RMT_ENCODING_RESET;
   rmt_encoder_handle_t copy_encoder = dcc_encoder->copy_encoder;
@@ -111,7 +106,7 @@ static size_t RMT_IRAM_ATTR rmt_encode_dcc_bidi(rmt_dcc_encoder_t* dcc_encoder,
 /// \param  channel       RMT TX channel handle
 /// \param  ret_state     Returned current encoder state
 /// \return Number of RMT symbols that the primary data has been encoded into
-static size_t RMT_IRAM_ATTR
+static size_t RMT_ENCODER_FUNC_ATTR
 rmt_encode_dcc_zimo0(rmt_dcc_encoder_t* dcc_encoder,
                      rmt_channel_handle_t channel,
                      rmt_encode_state_t* ret_state) {
@@ -140,7 +135,7 @@ rmt_encode_dcc_zimo0(rmt_dcc_encoder_t* dcc_encoder,
 /// \param  channel       RMT TX channel handle
 /// \param  ret_state     Returned current encoder state
 /// \return Number of RMT symbols that the primary data has been encoded into
-static size_t RMT_IRAM_ATTR
+static size_t RMT_ENCODER_FUNC_ATTR
 rmt_encode_dcc_preamble(rmt_dcc_encoder_t* dcc_encoder,
                         rmt_channel_handle_t channel,
                         rmt_encode_state_t* ret_state) {
@@ -174,7 +169,7 @@ rmt_encode_dcc_preamble(rmt_dcc_encoder_t* dcc_encoder,
 /// \param  channel       RMT TX channel handle
 /// \param  ret_state     Returned current encoder state
 /// \return Number of RMT symbols that the primary data has been encoded into
-static size_t RMT_IRAM_ATTR
+static size_t RMT_ENCODER_FUNC_ATTR
 rmt_encode_dcc_start(rmt_dcc_encoder_t* dcc_encoder,
                      rmt_channel_handle_t channel,
                      rmt_encode_state_t* ret_state) {
@@ -195,11 +190,12 @@ rmt_encode_dcc_start(rmt_dcc_encoder_t* dcc_encoder,
 /// \param  data_size     Size of primary_data, in bytes
 /// \param  ret_state     Returned current encoder state
 /// \return Number of RMT symbols that the primary data has been encoded into
-static size_t RMT_IRAM_ATTR rmt_encode_dcc_data(rmt_dcc_encoder_t* dcc_encoder,
-                                                rmt_channel_handle_t channel,
-                                                void const* primary_data,
-                                                size_t data_size,
-                                                rmt_encode_state_t* ret_state) {
+static size_t RMT_ENCODER_FUNC_ATTR
+rmt_encode_dcc_data(rmt_dcc_encoder_t* dcc_encoder,
+                    rmt_channel_handle_t channel,
+                    void const* primary_data,
+                    size_t data_size,
+                    rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0u;
   rmt_encode_state_t state = RMT_ENCODING_RESET;
   rmt_encoder_handle_t bytes_encoder = dcc_encoder->bytes_encoder;
@@ -232,9 +228,10 @@ static size_t RMT_IRAM_ATTR rmt_encode_dcc_data(rmt_dcc_encoder_t* dcc_encoder,
 /// \param  channel       RMT TX channel handle
 /// \param  ret_state     Returned current encoder state
 /// \return Number of RMT symbols that the primary data has been encoded into
-static size_t RMT_IRAM_ATTR rmt_encode_dcc_end(rmt_dcc_encoder_t* dcc_encoder,
-                                               rmt_channel_handle_t channel,
-                                               rmt_encode_state_t* ret_state) {
+static size_t RMT_ENCODER_FUNC_ATTR
+rmt_encode_dcc_end(rmt_dcc_encoder_t* dcc_encoder,
+                   rmt_channel_handle_t channel,
+                   rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0u;
   rmt_encode_state_t state = RMT_ENCODING_RESET;
   encoded_symbols +=
@@ -255,11 +252,12 @@ static size_t RMT_IRAM_ATTR rmt_encode_dcc_end(rmt_dcc_encoder_t* dcc_encoder,
 /// \param  data_size     Size of primary_data, in bytes
 /// \param  ret_state     Returned current encoder state
 /// \return Number of RMT symbols that the primary data has been encoded into
-static size_t RMT_IRAM_ATTR rmt_encode_dcc(rmt_encoder_t* encoder,
-                                           rmt_channel_handle_t channel,
-                                           void const* primary_data,
-                                           size_t data_size,
-                                           rmt_encode_state_t* ret_state) {
+static size_t RMT_ENCODER_FUNC_ATTR
+rmt_encode_dcc(rmt_encoder_t* encoder,
+               rmt_channel_handle_t channel,
+               void const* primary_data,
+               size_t data_size,
+               rmt_encode_state_t* ret_state) {
   size_t encoded_symbols = 0;
   rmt_encode_state_t state = RMT_ENCODING_RESET;
   rmt_encode_state_t session_state = RMT_ENCODING_RESET;
@@ -354,7 +352,8 @@ static esp_err_t rmt_del_dcc_encoder(rmt_encoder_t* encoder) {
 ///                             argument
 /// \retval ESP_FAIL            Reset RMT DCC encoder failed because of other
 ///                             error
-static esp_err_t RMT_IRAM_ATTR rmt_dcc_encoder_reset(rmt_encoder_t* encoder) {
+static esp_err_t RMT_ENCODER_FUNC_ATTR
+rmt_dcc_encoder_reset(rmt_encoder_t* encoder) {
   rmt_dcc_encoder_t* dcc_encoder =
     __containerof(encoder, rmt_dcc_encoder_t, base);
   rmt_encoder_reset(dcc_encoder->copy_encoder);
