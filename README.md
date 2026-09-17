@@ -130,7 +130,7 @@ The DCC protocol is defined by various standards published by the [National Mode
   - for building [Cypher](https://zimo-elektronik.github.io/DCC) catalog example
     - [Emscripten](https://emscripten.org) ( >= 5.0.5 )
   - for building [ESP32](https://www.espressif.com/en/products/socs/esp32) [RMT](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/rmt.html) encoder example
-    - [ESP-IDF](https://github.com/espressif/esp-idf) ( >= 5.0.3 )
+    - [ESP-IDF](https://github.com/espressif/esp-idf) ( >= 5.5.0 )
   - for building [STM32](https://www.st.com/en/microcontrollers-microprocessors/stm32-32-bit-arm-cortex-mcus.html) example
     - [arm-none-eabi-gcc](https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases) ( >= 14.1.0 )
 
@@ -232,7 +232,7 @@ cmake --build build --target DCCStm32Decoder DCCStm32CommandStation
 
 This example builds two firmwares, one for the decoder (`DCCStm32Decoder.hex`) and one for the command station (`DCCStm32CommandStation.hex`). Both files must be flashed onto a development board each (e.g. with the [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html)).
 
-Since this example simulates real transmission over a track, it is also **necessary to connect** the two **PE5** pins (N track) and the two **PE6** pins (P track) with each other. The command station uses the pins as outputs to send a DCC signal, the decoder uses the pins as inputs to receive the same signal again. The development board with command station firmware can be recognized by the permanently lit red LED.
+Since this example simulates real transmission over a track, it is also **necessary to connect** the two **PE5** pins (P track) and the two **PE6** pins (N track) with each other. The command station uses the pins as outputs to send a DCC signal, the decoder uses the pins as inputs to receive the same signal again. The development board with command station firmware can be recognized by the permanently lit red LED.
 
 During ongoing operation, the following steps are repeated in an endless loop:
 1.  Accelerate loco "3" to speed step 42 in forward direction
@@ -252,12 +252,12 @@ There is also a virtual com port (baud rate 115200) on the micro USB plug (CN1) 
 
 ## Usage
 ### Receiver
-To create a receiver (decoder) class it is necessary to derive from `dcc::rx::Base`. The class relies on [deducing **this**](https://cppreference.com/cpp/language/function#Explicit_object_parameter) to implement static polymorphism. The explicit object parameter in the base is checked with a concept called [Decoder](include/dcc/rx/decoder.hpp). This concept verifies that the following methods can be called from the base. The friend declarations are only necessary if the methods the base needs to call are not public.
+To create a receiver (decoder) class it is necessary to derive from `dcc::rx::Base`. The class relies on [deducing **this**](https://cppreference.com/cpp/language/function#Explicit_object_parameter) to implement static polymorphism. The explicit object parameter in the base is checked with a concept called [Decoder](include/dcc/rx/decoder.hpp). This concept verifies that the following methods can be called from the base.
 ```cpp
 #include <dcc/dcc.hpp>
 
 struct Decoder : dcc::rx::Base {
-  friend dcc::rx::Base;
+  friend dcc::rx::Base; // Only necessary if methods called from base are private
 
 private:
   // Set direction (1 forward, 0 backward)
@@ -353,7 +353,7 @@ As before for the receiver, for the transmitter (command station) we need to der
 #include <dcc/dcc.hpp>
 
 struct CommandStation : dcc::tx::PacketsBase {
-  friend dcc::tx::PacketsBase;
+  friend dcc::tx::PacketsBase; // Only necessary if methods called from base are private
 
 private:
   // Write track outputs
@@ -413,7 +413,7 @@ struct Base
 This parameter determines whether the transmitter stores packets to be sent as bytes or as bit timings. The trade-off is simple, packets require **less RAM** but **more instructions** in the interrupt, timings require **more RAM** but **fewer instructions** in the interrupt.
 
 > [!TIP]
-> `dcc::tx::PacketsBase` and `dcc::tx::TransmitBase` are available as corresponding aliases.
+> `dcc::tx::PacketsBase` and `dcc::tx::TimingsBase` are available as corresponding aliases.
 
 #### BiDi Dissector
 If enabled and implemented, the base class of the transmitter offers callbacks for the corresponding BiDi (RailCom) timings (e.g. `biDiChannel1`), but receiving the UART data itself is the **responsibility of the user**. Theoretically, two bytes can be read in channel 1 and up to eight bytes in channel 2. Unfortunately, decoding the UART data is very error-prone due to the crappy encoding and because the data itself is **context-sensitive**. For this reason, there is a separate `dcc::bidi::Dissector` class that can be used to iterate over the data. Dereferencing the iterator returns a [std::variant](https://www.cppreference.com/w/cpp/utility/variant.html) sum type of all possible datagrams.

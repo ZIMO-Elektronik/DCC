@@ -2,19 +2,8 @@ cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 include(FetchContent)
 
 if(ESP_PLATFORM)
-  # >5.3.0 requires esp_driver_rmt
-  if(IDF_VERSION_MAJOR GREATER 5 OR (IDF_VERSION_MAJOR EQUAL 5
-                                     AND IDF_VERSION_MINOR GREATER_EQUAL 3))
-    set(ESP_DRIVER_RMT_COMPONENT esp_driver_rmt)
-  endif()
-  idf_component_register(
-    SRCS
-    src/rmt_dcc_encoder.c
-    INCLUDE_DIRS
-    include
-    REQUIRES
-    driver
-    ${ESP_DRIVER_RMT_COMPONENT})
+  idf_component_register(SRCS src/rmt_dcc_encoder.c INCLUDE_DIRS include
+                         REQUIRES esp_driver_rmt)
 
   # Change OUTPUT_NAME from DCC to lib__idf_DCC to avoid conflicts
   set_target_properties(${COMPONENT_LIB} PROPERTIES PREFIX "")
