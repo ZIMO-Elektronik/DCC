@@ -735,17 +735,20 @@ private:
         (addr && addr == self._addrs.consist))
       return false;
 
+    // Store address
+    self._addrs.pom = addr;
+
+    // Store packet (app:pom only)
+    if (self._packets.pom != self._deques.packet.front()) {
+      self._deques.pom.clear();
+      self._packets.pom = self._deques.packet.front();
+    }
+
     // Type
     auto const kk{bytes[0uz] >> 2u & 0b11u};
 
     // POM
     if (size(bytes) == 3uz + sizeof(_checksum)) {
-      // Store packet for app:pom
-      if (self._packets.pom != self._deques.packet.front()) {
-        self._deques.pom.clear();
-        self._packets.pom = self._deques.packet.front();
-      }
-
       uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
 
       switch (kk) {

@@ -19,6 +19,7 @@ struct Addresses {
   Address consist{};
   Address logon{};
   Address received{};
+  Address pom{};
 };
 
 } // namespace dcc::rx
