@@ -59,10 +59,7 @@ TEST_F(RxTest, writing_cv1_clears_cv29_5) {
   // Write CV1=3 (which clears CV29:5)
   uint8_t cv_addr{1u - 1u};
   uint8_t byte{3u};
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(cv_addr),
-                      Matcher<uint8_t>(byte),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
     .WillOnce(InvokeArgument<2uz>(byte));
   EXPECT_CALL(_mock, writeCv(29u - 1u, false, 5u)).WillOnce(Return(false));
   ReceiveAndExecuteTwice(

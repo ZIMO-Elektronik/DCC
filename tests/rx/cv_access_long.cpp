@@ -31,10 +31,7 @@ TEST_F(RxTest, cv_access_long_verify_byte_operations_mode) {
   auto cv_addr{RandomInterval(0u, smath::pow(2u, 10u) - 1u)};
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
 
-  EXPECT_CALL(_mock,
-              readCv(Matcher<uint32_t>(cv_addr),
-                     Matcher<uint8_t>(_),
-                     Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, readCv(cv_addr, _, A<std::function<void(uint8_t)>>()))
     .WillOnce(InvokeArgument<2uz>(RandomInterval<uint8_t>(0u, 255u)));
   ReceiveAndExecute(packet);
 }
@@ -75,8 +72,9 @@ TEST_F(RxTest, cv_access_long_write_bit_operations_mode) {
     make_cv_access_long_write_packet(_addrs.primary, cv_addr, bit, pos)};
 
   // 2 or more identical packets
-  EXPECT_CALL(_mock, writeCv(cv_addr, bit, pos)).WillOnce(Return(bit));
-  for (auto i{0uz}; i < 2uz; ++i) ReceiveAndExecute(packet);
+  EXPECT_CALL(_mock, writeCv(cv_addr, bit, pos, A<std::function<void(bool)>>()))
+    .WillOnce(InvokeArgument<3uz>(bit));
+  ReceiveAndExecuteTwice(packet);
 }
 
 TEST_F(RxTest, cv_access_long_write_byte_operations_mode) {
@@ -84,10 +82,7 @@ TEST_F(RxTest, cv_access_long_write_byte_operations_mode) {
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
 
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(cv_addr),
-                      Matcher<uint8_t>(byte),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
     .WillOnce(InvokeArgument<2uz>(byte));
   ReceiveAndExecuteTwice(
     make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte));
@@ -100,10 +95,7 @@ TEST_F(
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
   auto packet{make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
 
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(cv_addr),
-                      Matcher<uint8_t>(byte),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
     .WillOnce(InvokeArgument<2uz>(byte));
 
   ReceiveAndExecute(packet);
@@ -121,10 +113,7 @@ TEST_F(
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
   auto packet{make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
 
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(cv_addr),
-                      Matcher<uint8_t>(byte),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
     .Times(0);
 
   ReceiveAndExecute(packet);

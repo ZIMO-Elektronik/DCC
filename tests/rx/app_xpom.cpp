@@ -31,10 +31,7 @@ TEST_F(RxTest, app_xpom_has_higher_priority_than_app_pom) {
     make_cv_access_xpom_verify_packet(_addrs.primary, ss, cv_addr)};
 
   // Leave a ID0 app:pom datagram in the queue
-  EXPECT_CALL(_mock,
-              readCv(Matcher<uint32_t>(cv_addr),
-                     Matcher<uint8_t>(_),
-                     Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, readCv(cv_addr, _, A<std::function<void(uint8_t)>>()))
     .WillOnce(InvokeArgument<2uz>(cv_values[0uz]));
   ReceiveAndExecute(pom_packet);
 

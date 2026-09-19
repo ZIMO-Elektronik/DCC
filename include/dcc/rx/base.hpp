@@ -893,7 +893,8 @@ private:
   ///
   /// \param  cv_addr CV address
   /// \param  byte    CV value
-  void cvVerifyImpl(this Decoder auto&& self, uint32_t cv_addr, uint8_t byte) {
+  void
+  cvVerifyImpl(this Decoder auto&& self, uint32_t cv_addr, uint8_t byte = 0u) {
     auto cb{[&self, byte](uint8_t read_byte) {
       if (!self.serviceMode()) self.pom(read_byte);
       else if (byte == read_byte) self.serviceAck();
@@ -913,7 +914,7 @@ private:
                     uint32_t cv_addr,
                     bool bit,
                     uint32_t pos) {
-    if ((self.readCv(cv_addr, bit, pos) == bit) && self.serviceMode())
+    if ((bit == self.readCv(cv_addr, bit, pos)) && self.serviceMode())
       self.serviceAck();
   }
 
@@ -956,8 +957,14 @@ private:
                    uint32_t cv_addr,
                    bool bit,
                    uint32_t pos) {
-    if ((self.writeCv(cv_addr, bit, pos) == bit) && self.serviceMode())
-      self.serviceAck();
+    auto cb{[&self, cv_addr, bit](bool read_bit) {
+      if (!self.serviceMode()) self.cvVerifyImpl(cv_addr);
+      else if (bit == read_bit) self.serviceAck();
+    }};
+    if (self.serviceMode() || !AsyncWritable<decltype(self)>)
+      std::invoke(cb, self.writeCv(cv_addr, bit, pos));
+    else if constexpr (AsyncWritable<decltype(self)>)
+      self.writeCv(cv_addr, bit, pos, cb);
   }
 
   /// XPOM bytes verify

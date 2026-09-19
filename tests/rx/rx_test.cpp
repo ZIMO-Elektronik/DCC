@@ -1,7 +1,10 @@
 #include "rx_test.hpp"
 #include <algorithm>
+#include <cassert>
 
 RxTest::RxTest() {
+  _last_packet = {};
+
   _cvs[29uz - 1uz] = 0b1010u; // Decoder configuration
   _cvs[1uz - 1uz] = static_cast<uint8_t>(_addrs.primary); // Primary address
   _cvs[19uz - 1uz] = 0u;           // Consist address low byte
@@ -53,11 +56,18 @@ void RxTest::SetUp() {
 }
 
 RxTest* RxTest::Receive(dcc::Packet const& packet, dcc::tx::Config cfg) {
+  _last_packet = packet;
   auto timings{dcc::tx::packet2timings(packet, cfg)};
   std::ranges::for_each_n(cbegin(timings),
                           size(timings),
                           [this](uint32_t time) { _mock.receive(time); });
   return this;
+}
+
+// Receive any packet to enter cutout
+RxTest* RxTest::EnterCutout(dcc::Packet const& packet) {
+  EXPECT_NE(packet, dcc::Packet{});
+  return Receive(packet);
 }
 
 RxTest* RxTest::BiDiChannel1() {
@@ -70,11 +80,9 @@ RxTest* RxTest::BiDiChannel2() {
   return this;
 }
 
-RxTest* RxTest::BiDi() { return BiDiChannel1()->BiDiChannel2(); }
-
+// Receive additional preamble bit before calling execute to avoid being inside
+// a cutout and getting execution blocked!
 RxTest* RxTest::LeaveCutout() {
-  // Receive additional preamble bit before calling execute to avoid being
-  // inside a cutout and getting execution blocked!
   _mock.receive(dcc::rx::Timing::Bit1);
   return this;
 }
@@ -94,21 +102,23 @@ void RxTest::ReceiveAndExecuteTwice(dcc::Packet const& packet,
   ReceiveAndExecute(packet, cfg);
 }
 
+void RxTest::BiDi() { BiDiChannel1()->BiDiChannel2(); }
+
 void RxTest::EnterServiceMode() {
   EXPECT_CALL(_mock, serviceModeHook(true));
-  Receive(dcc::make_reset_packet())->LeaveCutout()->Execute();
+  ReceiveAndExecute(dcc::make_reset_packet());
 }
 
+// Quick logon with known CID and SID
 void RxTest::Logon() {
   EXPECT_CALL(_mock, readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u))
     .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz]));
   EXPECT_CALL(_mock, readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u))
     .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]));
-
-  // Enable
   Receive(dcc::make_logon_enable_packet(dcc::LogonGroup::Now, _cid, _sid));
 }
 
+// Tinker with the length of a valid packet
 dcc::Packet RxTest::TinkerWithPacketLength(dcc::Packet packet) const {
   packet.back() = RandomInterval<uint8_t>(0u, 255u);
   packet.push_back(dcc::exor({cbegin(packet), cend(packet)}));
