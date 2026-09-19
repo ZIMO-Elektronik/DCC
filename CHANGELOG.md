@@ -1,6 +1,7 @@
 # Changelog
 
 ##
+- Revert CV access packets are answered with 2x ACKs as long as busy ([#114](https://github.com/ZIMO-Elektronik/DCC/issues/114))
 - Bugfix CV bit write in operations mode answered with POM ID0 datagram ([#172](https://github.com/ZIMO-Elektronik/DCC/issues/172))
 
 ## 0.49.0

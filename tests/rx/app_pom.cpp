@@ -90,6 +90,7 @@ TEST_F(RxTest, app_pom_clear_internal_queue_on_unknown_cv_access_packet) {
     make_cv_access_long_verify_packet(_addrs.primary, cv_addr + 1u)};
   Receive(other_cv_packet)->LeaveCutout()->Execute()->Receive(other_cv_packet);
 
-  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(acks))).Times(1);
+  auto datagram{make_app_pom_datagram(byte)};
+  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
   _mock.biDiChannel2();
 }
