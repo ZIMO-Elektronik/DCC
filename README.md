@@ -325,15 +325,17 @@ Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enou
 #### Optional
 There are various optional methods that can be implemented if required. One example is asynchronous CV methods that contain a callback as the last parameter. These methods allow to return immediately and execute the callback at a later point in time. Another addition is the east-west direction according to [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) special operating modes instruction.
 ```cpp
-  // Read CV asynchronously
-  void readCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
+// Read CV asynchronously
+void readCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
 
-  // Write CV asynchronously
-  void
-  writeCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
+// Write CV asynchronously
+void writeCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
 
-  // Set east-west direction
-  void eastWestDirection(uint32_t addr, std::optional<bool> dir);
+// Write CV bit asynchronously
+void writeCv(uint32_t cv_addr, bool bit, uint32_t pos, std::function<void(bool)> cb);
+
+// Set east-west direction
+void eastWestDirection(uint32_t addr, std::optional<bool> dir);
 ```
 
 #### Phases

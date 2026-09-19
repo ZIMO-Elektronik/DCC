@@ -1,5 +1,9 @@
 # Changelog
 
+##
+- Revert CV access packets are answered with 2x ACKs as long as busy ([#114](https://github.com/ZIMO-Elektronik/DCC/issues/114))
+- Bugfix CV bit write in operations mode answered with POM ID0 datagram ([#172](https://github.com/ZIMO-Elektronik/DCC/issues/172))
+
 ## 0.49.0
 - Use manufacturer unique number (MUN) from [BiDi CV page]((https://normen.railcommunity.de/RCN-217.pdf)) as [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) DID ([#56](https://github.com/ZIMO-Elektronik/DCC/issues/56))
 - Switch from [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern) to [deducing **this**](https://cppreference.com/cpp/language/function#Explicit_object_parameter) ([#56](https://github.com/ZIMO-Elektronik/DCC/issues/56))

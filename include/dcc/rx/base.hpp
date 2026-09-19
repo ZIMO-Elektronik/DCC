@@ -248,8 +248,12 @@ struct Base {
     if (!self.packetEnd()) return;
     switch (self._addrs.received.type) {
       case Address::BasicLoco: [[fallthrough]];
-      case Address::ExtendedLoco: self.appAdr(); break;
-      case Address::AutomaticLogon: self.appLogon(1u); break;
+      case Address::ExtendedLoco:
+        if (!empty(self._deques.adr)) self.appAdr();
+        break;
+      case Address::AutomaticLogon:
+        if (!empty(self._deques.logon)) self.appLogon(1u);
+        break;
       default: break;
     }
   }
@@ -258,21 +262,29 @@ struct Base {
   void biDiChannel2(this Decoder auto&& self) {
     if (!self.packetEnd()) return;
     switch (self._addrs.received.type) {
-      case Address::Broadcast: self.appSearch(); break;
+      case Address::Broadcast:
+        if (!empty(self._deques.search)) self.appSearch();
+        break;
       case Address::BasicLoco: [[fallthrough]];
       case Address::ExtendedLoco:
+        // Primary or logon
         if (self._addrs.received ==
             (self._logon_assigned ? self._addrs.logon : self._addrs.primary)) {
-          if (self._instr == Instruction::CvAccess)
-            !empty(self._deques.xpom) ? self.appXpom() : self.appPom();
-          else if (!empty(self._deques.xpom)) self.appXpom();
-          else if (!empty(self._deques.pom)) self.appPom();
-          else self.appDyn();
-        } else if (self._addrs.received == self._addrs.consist &&
-                   self._ch2_consist_enabled)
-          self.appDyn();
+          if (!empty(self._deques.xpom)) self.appXpom();
+          else if (!empty(self._deques.pom) &&
+                   (self._instr != Instruction::CvAccess ||
+                    self._packets.current == self._packets.pom))
+            self.appPom();
+          else if (!empty(self._deques.dyn)) self.appDyn();
+        }
+        // Consist
+        else if (self._addrs.received == self._addrs.consist &&
+                 self._ch2_consist_enabled)
+          if (!empty(self._deques.dyn)) self.appDyn();
         break;
-      case Address::AutomaticLogon: self.appLogon(2u); break;
+      case Address::AutomaticLogon:
+        if (!empty(self._deques.logon)) self.appLogon(2u);
+        break;
       default: break;
     }
   }
@@ -893,7 +905,8 @@ private:
   ///
   /// \param  cv_addr CV address
   /// \param  byte    CV value
-  void cvVerifyImpl(this Decoder auto&& self, uint32_t cv_addr, uint8_t byte) {
+  void
+  cvVerifyImpl(this Decoder auto&& self, uint32_t cv_addr, uint8_t byte = 0u) {
     auto cb{[&self, byte](uint8_t read_byte) {
       if (!self.serviceMode()) self.pom(read_byte);
       else if (byte == read_byte) self.serviceAck();
@@ -913,7 +926,7 @@ private:
                     uint32_t cv_addr,
                     bool bit,
                     uint32_t pos) {
-    if ((self.readCv(cv_addr, bit, pos) == bit) && self.serviceMode())
+    if ((bit == self.readCv(cv_addr, bit, pos)) && self.serviceMode())
       self.serviceAck();
   }
 
@@ -956,8 +969,14 @@ private:
                    uint32_t cv_addr,
                    bool bit,
                    uint32_t pos) {
-    if ((self.writeCv(cv_addr, bit, pos) == bit) && self.serviceMode())
-      self.serviceAck();
+    auto cb{[&self, cv_addr, bit](bool read_bit) {
+      if (!self.serviceMode()) self.cvVerifyImpl(cv_addr);
+      else if (bit == read_bit) self.serviceAck();
+    }};
+    if (self.serviceMode() || !AsyncWritable<decltype(self)>)
+      std::invoke(cb, self.writeCv(cv_addr, bit, pos));
+    else if constexpr (AsyncWritable<decltype(self)>)
+      self.writeCv(cv_addr, bit, pos, cb);
   }
 
   /// XPOM bytes verify
@@ -1379,7 +1398,7 @@ private:
 
   /// Handle app:adr_low and app:adr_high datagrams
   void appAdr(this Decoder auto&& self) {
-    if (empty(self._deques.adr)) return;
+    assert(!empty(self._deques.adr));
     self._ch1 = self._deques.adr.front();
     self.transmitBiDi({cbegin(self._ch1), size(self._ch1)});
     self._deques.adr.pop_front();
@@ -1387,23 +1406,16 @@ private:
 
   /// Handle app:pom
   void appPom(this Decoder auto&& self) {
-    // Deque contains data for this packet
-    if (!empty(self._deques.pom) &&
-        (self._packets.current == self._packets.pom ||
-         self._instr != Instruction::CvAccess)) {
-      auto const& dg{self._deques.pom.front()};
-      std::copy(cbegin(dg), cend(dg), begin(self._ch2));
-      self.transmitBiDi({cbegin(self._ch2), size(dg)});
-      self._deques.pom.pop_front();
-    }
-    // Implicitly acknowledge all CV access commands
-    else if (self._ch2_data_enabled)
-      self.transmitBiDi({&bidi::acks[0uz].value(), size(bidi::acks)});
+    assert(!empty(self._deques.pom));
+    auto const& dg{self._deques.pom.front()};
+    std::copy(cbegin(dg), cend(dg), begin(self._ch2));
+    self.transmitBiDi({cbegin(self._ch2), size(dg)});
+    self._deques.pom.pop_front();
   }
 
   /// Handle app:dyn
   void appDyn(this Decoder auto&& self) {
-    if (empty(self._deques.dyn)) return;
+    assert(!empty(self._deques.dyn));
     auto first{begin(self._ch2)};
     auto const last{cend(self._ch2)};
     do {
@@ -1417,20 +1429,16 @@ private:
 
   /// Handle app:xpom
   void appXpom(this Decoder auto&& self) {
-    if (!empty(self._deques.xpom)) {
-      auto const& dg{self._deques.xpom.front()};
-      std::copy(cbegin(dg), cend(dg), begin(self._ch2));
-      self.transmitBiDi({cbegin(self._ch2), size(dg)});
-      self._deques.xpom.pop_front();
-    }
-    // Implicitly acknowledge all CV access commands
-    else if (self._ch2_data_enabled)
-      self.transmitBiDi({&bidi::acks[0uz].value(), size(bidi::acks)});
+    assert(!empty(self._deques.xpom));
+    auto const& dg{self._deques.xpom.front()};
+    std::copy(cbegin(dg), cend(dg), begin(self._ch2));
+    self.transmitBiDi({cbegin(self._ch2), size(dg)});
+    self._deques.xpom.pop_front();
   }
 
   /// Handle app:search
   void appSearch(this Decoder auto&& self) {
-    if (empty(self._deques.search)) return;
+    assert(!empty(self._deques.search));
     auto const& dg{self._deques.search.front()};
     std::ranges::copy(dg, begin(self._ch2));
     self.transmitBiDi({cbegin(self._ch2), size(dg)});
@@ -1439,7 +1447,7 @@ private:
 
   /// Handle app:logon
   void appLogon(this Decoder auto&& self, uint32_t ch) {
-    if (empty(self._deques.logon)) return;
+    assert(!empty(self._deques.logon));
     if (auto const& dg{self._deques.logon.front()}; ch == 1u) {
       std::copy(begin(dg), begin(dg) + 2, begin(self._ch1));
       self.transmitBiDi({cbegin(self._ch1), size(self._ch1)});

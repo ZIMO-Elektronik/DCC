@@ -12,14 +12,18 @@
 
 #include <concepts>
 #include <cstdint>
-#include <functional>
 
 namespace dcc::rx {
 
 template<typename T>
-concept AsyncWritable = requires(
-  T t, uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb) {
-  { t.writeCv(cv_addr, byte, cb) } -> std::same_as<void>;
-};
+concept AsyncWritable =
+  requires(T t, uint32_t cv_addr, uint8_t byte, bool bit, uint32_t pos) {
+    {
+      t.writeCv(cv_addr, byte, [](uint8_t) {})
+    } -> std::same_as<void>;
+    {
+      t.writeCv(cv_addr, bit, pos, [](bool) {})
+    } -> std::same_as<void>;
+  };
 
 } // namespace dcc::rx

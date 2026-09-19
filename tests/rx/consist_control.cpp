@@ -5,10 +5,7 @@ TEST_F(RxTest, consist_control) {
   auto cv19{RandomInterval<uint8_t>(0u, 255u)};
   auto packet{make_set_consist_address_packet(_addrs.primary, cv19)};
 
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(19u - 1u),
-                      Matcher<uint8_t>(cv19),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(19u - 1u, cv19, A<std::function<void(uint8_t)>>()))
     .WillOnce(InvokeArgument<2uz>(cv19));
   if constexpr (DCC_STANDARD_COMPLIANCE) ReceiveAndExecute(packet);
   else ReceiveAndExecuteTwice(packet);
@@ -19,10 +16,7 @@ TEST_F(RxTest, consist_control_wrong_packet_length) {
   auto packet{TinkerWithPacketLength(
     make_set_consist_address_packet(_addrs.primary, cv19))};
 
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(19u - 1u),
-                      Matcher<uint8_t>(cv19),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(19u - 1u, cv19, A<std::function<void(uint8_t)>>()))
     .Times(0);
   if constexpr (DCC_STANDARD_COMPLIANCE) ReceiveAndExecute(packet);
   else ReceiveAndExecuteTwice(packet);
@@ -32,10 +26,7 @@ TEST_F(RxTest, consist_control_wrong_packet_length) {
 TEST_F(RxTest, consist_control_wrong_encoding) {
   dcc::Packet packet{static_cast<uint8_t>(_addrs.primary), 0x16u, 0x15u, 0x00u};
 
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(19u - 1u),
-                      Matcher<uint8_t>(_),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(19u - 1u, _, A<std::function<void(uint8_t)>>()))
     .Times(0);
   if constexpr (DCC_STANDARD_COMPLIANCE) ReceiveAndExecute(packet);
   else ReceiveAndExecuteTwice(packet);

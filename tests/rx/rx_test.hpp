@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <random>
 #include "rx_mock.hpp"
 
@@ -21,27 +22,36 @@ struct RxTest : ::testing::Test {
   }
 
   RxTest* Receive(dcc::Packet const& packet, dcc::tx::Config cfg = {});
+  RxTest* EnterCutout(dcc::Packet const& packet = _last_packet);
   RxTest* BiDiChannel1();
   RxTest* BiDiChannel2();
-  RxTest* BiDi();
   RxTest* LeaveCutout();
   RxTest* Execute();
 
+  // Helpers
   void ReceiveAndExecute(dcc::Packet const& packet, dcc::tx::Config cfg = {});
   void ReceiveAndExecuteTwice(dcc::Packet const& packet,
                               dcc::tx::Config cfg = {});
-
+  void BiDi();
   void EnterServiceMode();
   void Logon();
-
   dcc::Packet TinkerWithPacketLength(dcc::Packet packet) const;
 
+  static inline dcc::Packet _last_packet{};
+
+  // Mocks
   NiceMock<RxMock> _mock;
+
+  // Addresses
   dcc::rx::Addresses _addrs{
     .primary = {.value = 3u, .type = dcc::Address::BasicLoco},
     .consist = {.value = 4u, .type = dcc::Address::BasicLoco},
     .logon = {.value = 1000u, .type = dcc::Address::ExtendedLoco}};
+
+  // CVs
   std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
+
+  // IDs for logon
   uint32_t _did{0xAABBCCDDu};
   uint16_t _cid{0xABCDu};
   uint8_t _sid{0x2Au};

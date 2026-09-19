@@ -7,10 +7,7 @@ TEST_F(RxTest, cv15_not_equal_cv15_activates_decoder_lock) {
 
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(cv_addr),
-                      Matcher<uint8_t>(byte),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
     .Times(0);
   ReceiveAndExecuteTwice(
     dcc::make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte));
@@ -23,10 +20,7 @@ TEST_F(RxTest, cv15_zero_deactivates_decoder_lock) {
 
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(cv_addr),
-                      Matcher<uint8_t>(byte),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
     .WillOnce(InvokeArgument<2uz>(byte));
   ReceiveAndExecuteTwice(
     dcc::make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte));
@@ -39,10 +33,7 @@ TEST_F(RxTest, cv16_zero_deactivates_decoder_lock) {
 
   auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
   auto byte{RandomInterval<uint8_t>(0u, 255u)};
-  EXPECT_CALL(_mock,
-              writeCv(Matcher<uint32_t>(cv_addr),
-                      Matcher<uint8_t>(byte),
-                      Matcher<std::function<void(uint8_t)>>(_)))
+  EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
     .WillOnce(InvokeArgument<2uz>(byte));
   ReceiveAndExecuteTwice(
     dcc::make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte));
