@@ -5,10 +5,13 @@ TEST_F(RxTest, cv_access_short_cv17_18) {
                                     .type = dcc::Address::ExtendedLoco};
   encode_address(new_extended_address, &_cvs[17uz - 1uz]);
 
-  // Before switching basic address init sequence is invoked twice
+  // CV17, CV18 and CV29:5 will be written
+  EXPECT_CALL(_mock, writeCv(17u - 1u, _cvs[17uz - 1uz]));
+  EXPECT_CALL(_mock, writeCv(18u - 1u, _cvs[18uz - 1uz]));
+  EXPECT_CALL(_mock,
+              writeCv(29u - 1u, true, 5u, A<std::function<void(bool)>>()));
+  // ... then init sequence will be read
   EXPECT_CALL(_mock, readCv(_))
-    .BASIC_ADDRESS_READ_CV_INIT_SEQUENCE()
-    .BASIC_ADDRESS_READ_CV_INIT_SEQUENCE()
     .EXTENDED_ADDRESS_READ_CV_INIT_SEQUENCE_CHANGE_CV29(_cvs[29uz - 1uz] |
                                                         ztl::mask<5u>);
 
@@ -40,9 +43,7 @@ TEST_F(RxTest, cv_access_short_cv31_32) {
   auto packet{dcc::make_cv_access_short_write_packet(
     _addrs.primary, 0b0101u, cv31, cv32)};
 
-  EXPECT_CALL(_mock, writeCv(31u - 1u, cv31, A<std::function<void(uint8_t)>>()))
-    .WillOnce(InvokeArgument<2uz>(cv31));
-  EXPECT_CALL(_mock, writeCv(32u - 1u, cv32, A<std::function<void(uint8_t)>>()))
-    .WillOnce(InvokeArgument<2uz>(cv32));
+  EXPECT_CALL(_mock, writeCv(31u - 1u, cv31));
+  EXPECT_CALL(_mock, writeCv(32u - 1u, cv32));
   ReceiveAndExecuteTwice(packet);
 }

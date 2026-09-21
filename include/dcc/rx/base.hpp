@@ -107,12 +107,10 @@ struct Base {
     // Initialization time point
     self._tps.init = std::chrono::system_clock::now();
 
-    // Clear deques
-    self._deques.dyn.clear();
+    // Clear address related deques
     self._deques.logon.clear();
     self._deques.search.clear();
     self._deques.adr.clear();
-    self._deques.pom.clear();
   }
 
   /// Enable
@@ -248,12 +246,8 @@ struct Base {
     if (!self.packetEnd()) return;
     switch (self._addrs.received.type) {
       case Address::BasicLoco: [[fallthrough]];
-      case Address::ExtendedLoco:
-        if (!empty(self._deques.adr)) self.appAdr();
-        break;
-      case Address::AutomaticLogon:
-        if (!empty(self._deques.logon)) self.appLogon(1u);
-        break;
+      case Address::ExtendedLoco: self.appAdr(); break;
+      case Address::AutomaticLogon: self.appLogon(1u); break;
       default: break;
     }
   }
@@ -262,29 +256,27 @@ struct Base {
   void biDiChannel2(this Decoder auto&& self) {
     if (!self.packetEnd()) return;
     switch (self._addrs.received.type) {
-      case Address::Broadcast:
-        if (!empty(self._deques.search)) self.appSearch();
-        break;
+      case Address::Broadcast: self.appSearch(); break;
       case Address::BasicLoco: [[fallthrough]];
       case Address::ExtendedLoco:
-        // Primary or logon
-        if (self._addrs.received ==
-            (self._logon_assigned ? self._addrs.logon : self._addrs.primary)) {
-          if (!empty(self._deques.xpom)) self.appXpom();
-          else if (!empty(self._deques.pom) &&
-                   (self._instr != Instruction::CvAccess ||
-                    self._packets.current == self._packets.pom))
-            self.appPom();
-          else if (!empty(self._deques.dyn)) self.appDyn();
-        }
+        // POM
+        if (self._addrs.received == self._addrs.pom &&
+            (!empty(self._deques.xpom) ||
+             (!empty(self._deques.pom) &&
+              (self._instr != Instruction::CvAccess ||
+               self._packets.current == self._packets.pom))))
+          !empty(self._deques.xpom) ? self.appXpom() : self.appPom();
+        // Logon or primary
+        else if (self._addrs.received == (self._logon_assigned
+                                            ? self._addrs.logon
+                                            : self._addrs.primary))
+          self.appDyn();
         // Consist
         else if (self._addrs.received == self._addrs.consist &&
                  self._ch2_consist_enabled)
-          if (!empty(self._deques.dyn)) self.appDyn();
+          self.appDyn();
         break;
-      case Address::AutomaticLogon:
-        if (!empty(self._deques.logon)) self.appLogon(2u);
-        break;
+      case Address::AutomaticLogon: self.appLogon(2u); break;
       default: break;
     }
   }
@@ -368,7 +360,8 @@ private:
       self.registerMode({cbegin(packet), cend(packet)});
     // CV access
     else if (size(packet) == 4uz && self._counts.equal_packets == 2uz)
-      self.executeCvAccessLong(0u, {cbegin(packet), cend(packet)});
+      self.executeCvAccessLong({.value = 0u, .type = Address::UnknownService},
+                               {cbegin(packet), cend(packet)});
 
     return true;
   }
@@ -481,7 +474,7 @@ private:
   /// \retval true  Command executed
   /// \retval false Command not executed
   bool executeAdvancedOperations(this Decoder auto&& self,
-                                 Address::value_type addr,
+                                 Address addr,
                                  std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
       // Speed, direction and function
@@ -546,7 +539,7 @@ private:
   /// \retval true  Command executed
   /// \retval false Command not executed
   bool executeSpeedDirection(this Decoder auto&& self,
-                             Address::value_type addr,
+                             Address addr,
                              std::span<uint8_t const> bytes) {
     if (size(bytes) != 1uz + sizeof(_checksum)) return false;
 
@@ -582,7 +575,7 @@ private:
   /// \retval true  Command executed
   /// \retval false Command not executed
   bool executeFunctionGroup(this Decoder auto&& self,
-                            Address::value_type addr,
+                            Address addr,
                             std::span<uint8_t const> bytes) {
     if (size(bytes) != 1uz + sizeof(_checksum)) return false;
 
@@ -626,7 +619,7 @@ private:
   /// \retval true  Command executed
   /// \retval false Command not executed
   bool executeFeatureExpansion(this Decoder auto&& self,
-                               Address::value_type addr,
+                               Address addr,
                                std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
       // Binary state control instruction long form (3 bytes)
@@ -715,7 +708,7 @@ private:
   /// \retval true  Command executed
   /// \retval false Command not executed
   bool executeCvAccess(this Decoder auto&& self,
-                       Address::value_type addr,
+                       Address addr,
                        std::span<uint8_t const> bytes) {
     return bytes[0uz] & ztl::mask<4u> ? self.executeCvAccessShort(addr, bytes)
                                       : self.executeCvAccessLong(addr, bytes);
@@ -728,24 +721,27 @@ private:
   /// \retval true  Command executed
   /// \retval false Command not executed
   bool executeCvAccessLong(this Decoder auto&& self,
-                           Address::value_type addr,
+                           Address addr,
                            std::span<uint8_t const> bytes) {
     if (size(bytes) < 3uz + sizeof(_checksum) ||
         size(bytes) > 8uz + sizeof(_checksum) ||
         (addr && addr == self._addrs.consist))
       return false;
 
+    // Store address
+    self._addrs.pom = addr;
+
+    // Store packet (app:pom only)
+    if (self._packets.pom != self._deques.packet.front()) {
+      self._deques.pom.clear();
+      self._packets.pom = self._deques.packet.front();
+    }
+
     // Type
     auto const kk{bytes[0uz] >> 2u & 0b11u};
 
     // POM
     if (size(bytes) == 3uz + sizeof(_checksum)) {
-      // Store packet for app:pom
-      if (self._packets.pom != self._deques.packet.front()) {
-        self._deques.pom.clear();
-        self._packets.pom = self._deques.packet.front();
-      }
-
       uint32_t const cv_addr{(bytes[0uz] & 0b11u) << 8u | bytes[1uz]};
 
       switch (kk) {
@@ -829,9 +825,18 @@ private:
   /// \retval true  Command executed
   /// \retval false Command not executed
   bool executeCvAccessShort(this Decoder auto&& self,
-                            Address::value_type addr,
+                            Address addr,
                             std::span<uint8_t const> bytes) {
     if (addr && addr == self._addrs.consist) return false;
+
+    // Store address
+    self._addrs.pom = addr;
+
+    // Store packet (app:pom only)
+    if (self._packets.pom != self._deques.packet.front()) {
+      self._deques.pom.clear();
+      self._packets.pom = self._deques.packet.front();
+    }
 
     // Type
     auto const kkkk{bytes[0uz] & 0x0Fu};
@@ -857,30 +862,25 @@ private:
       // Extended address (CV17 and CV18)
       case 0b0100u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (self._counts.equal_packets == 2uz) {
+        else if (self._counts.equal_packets == 2uz)
           self.cvWrite(17u - 1u,
-                       static_cast<uint8_t>(0b1100'0000u | bytes[1uz]));
-          self.cvWrite(18u - 1u, bytes[2uz]);
-          self.cvWrite(29u - 1u, true, 5u);
-        }
+                       static_cast<uint8_t>(0b1100'0000u | bytes[1uz]),
+                       18u - 1u,
+                       bytes[2uz]);
         break;
 
       // Index high and index low (CV31 and CV32)
       case 0b0101u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (self._counts.equal_packets == 2uz) {
-          self.cvWrite(31u - 1u, bytes[1uz]);
-          self.cvWrite(32u - 1u, bytes[2uz]);
-        }
+        else if (self._counts.equal_packets == 2uz)
+          self.cvWrite(31u - 1u, bytes[1uz], 32u - 1u, bytes[2uz]);
         break;
 
       // Consist address (CV19 and CV20)
       case 0b0110u:
         if (size(bytes) != 3uz + sizeof(_checksum)) return false;
-        else if (self._counts.equal_packets == 2uz) {
-          self.cvWrite(19u - 1u, bytes[1uz]);
-          self.cvWrite(20u - 1u, bytes[2uz]);
-        }
+        else if (self._counts.equal_packets == 2uz)
+          self.cvWrite(19u - 1u, bytes[1uz], 20u - 1u, bytes[2uz]);
         break;
 
       // Reserved
@@ -960,6 +960,22 @@ private:
       self.writeCv(cv_addr, byte, cb);
   }
 
+  /// CV two bytes write
+  ///
+  /// \param  cv_addr0  CV address of first byte
+  /// \param  byte0     CV value of first byte
+  /// \param  cv_addr1  CV address of second byte
+  /// \param  byte1     CV value of second byte
+  void cvWriteImpl(this Decoder auto&& self,
+                   uint32_t cv_addr0,
+                   uint8_t byte0,
+                   uint32_t cv_addr1,
+                   uint8_t byte1) {
+    self.pom(self.writeCv(cv_addr0, byte0), self.writeCv(cv_addr1, byte1));
+    if (cv_addr0 == 17u - 1u && cv_addr1 == 18u - 1u)
+      self.cvWriteImpl(29u - 1u, true, 5u);
+  }
+
   /// CV bit write
   ///
   /// \param  cv_addr CV address
@@ -1009,7 +1025,9 @@ private:
                  auto... ts) {
     if (self._cvs_locked && cv_addr != 15u - 1u) return;
     self.xpomWriteImpl(ss, cv_addr, ts...);
-    if (std::ranges::contains(_init_cv_addrs, cv_addr)) {
+    if (std::ranges::any_of(_init_cv_addrs, [cv_addr](auto v) {
+          return v >= cv_addr && v <= cv_addr + 3u;
+        })) {
       if (cv_addr == 1u - 1u) self.writeCv(29u - 1u, false, 5u);
       self.init();
     }
@@ -1089,7 +1107,7 @@ private:
   /// \param  addr  Address
   /// \param  xf    Number of binary state
   /// \param  state Binary state
-  void binaryState(Address::value_type, uint32_t xf, bool state) {
+  void binaryState(Address, uint32_t xf, bool state) {
     switch (xf) {
       case 2u:
         if (!state) trackSearch();
@@ -1105,7 +1123,7 @@ private:
   /// \param  dir   Direction
   /// \param  speed Speed
   void directionSpeed(this Decoder auto&& self,
-                      Address::value_type addr,
+                      Address addr,
                       bool dir,
                       int32_t speed) {
     // Ignore direction on broadcast
@@ -1150,11 +1168,15 @@ private:
 
   /// Add to POM deque
   ///
-  /// \param  byte  CV value
-  void pom(uint8_t byte) {
+  /// \param  bytes CV values
+  void pom(std::unsigned_integral auto... bytes)
+    requires(sizeof...(bytes) >= 1uz && sizeof...(bytes) <= 2uz)
+  {
     if (!_ch2_data_enabled) return;
     _deques.pom.clear();
-    _deques.pom.push_back(bidi::make_app_pom_datagram(byte));
+    (_deques.pom.push_back(
+       bidi::make_app_pom_datagram(static_cast<uint8_t>(bytes))),
+     ...);
   }
 
   /// Add to XPOM deque
@@ -1398,7 +1420,7 @@ private:
 
   /// Handle app:adr_low and app:adr_high datagrams
   void appAdr(this Decoder auto&& self) {
-    assert(!empty(self._deques.adr));
+    if (empty(self._deques.adr)) return;
     self._ch1 = self._deques.adr.front();
     self.transmitBiDi({cbegin(self._ch1), size(self._ch1)});
     self._deques.adr.pop_front();
@@ -1406,16 +1428,21 @@ private:
 
   /// Handle app:pom
   void appPom(this Decoder auto&& self) {
-    assert(!empty(self._deques.pom));
-    auto const& dg{self._deques.pom.front()};
-    std::copy(cbegin(dg), cend(dg), begin(self._ch2));
-    self.transmitBiDi({cbegin(self._ch2), size(dg)});
-    self._deques.pom.pop_front();
+    if (empty(self._deques.pom)) return;
+    auto first{begin(self._ch2)};
+    auto const last{cend(self._ch2)};
+    do {
+      auto const& dg{self._deques.pom.front()};
+      first = std::copy_n(cbegin(dg), size(dg), first);
+      self._deques.pom.pop_front();
+    } while (!empty(self._deques.pom) &&
+             last - first >= ssize(self._deques.pom.front()));
+    self.transmitBiDi({cbegin(self._ch2), first});
   }
 
   /// Handle app:dyn
   void appDyn(this Decoder auto&& self) {
-    assert(!empty(self._deques.dyn));
+    if (empty(self._deques.dyn)) return;
     auto first{begin(self._ch2)};
     auto const last{cend(self._ch2)};
     do {
@@ -1429,7 +1456,7 @@ private:
 
   /// Handle app:xpom
   void appXpom(this Decoder auto&& self) {
-    assert(!empty(self._deques.xpom));
+    if (empty(self._deques.xpom)) return;
     auto const& dg{self._deques.xpom.front()};
     std::copy(cbegin(dg), cend(dg), begin(self._ch2));
     self.transmitBiDi({cbegin(self._ch2), size(dg)});
@@ -1438,7 +1465,7 @@ private:
 
   /// Handle app:search
   void appSearch(this Decoder auto&& self) {
-    assert(!empty(self._deques.search));
+    if (empty(self._deques.search)) return;
     auto const& dg{self._deques.search.front()};
     std::ranges::copy(dg, begin(self._ch2));
     self.transmitBiDi({cbegin(self._ch2), size(dg)});
@@ -1447,7 +1474,7 @@ private:
 
   /// Handle app:logon
   void appLogon(this Decoder auto&& self, uint32_t ch) {
-    assert(!empty(self._deques.logon));
+    if (empty(self._deques.logon)) return;
     if (auto const& dg{self._deques.logon.front()}; ch == 1u) {
       std::copy(begin(dg), begin(dg) + 2, begin(self._ch1));
       self.transmitBiDi({cbegin(self._ch1), size(self._ch1)});
@@ -1566,7 +1593,7 @@ private:
                        2uz>
       adr{};
     ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_12>>,
-                       1uz>
+                       2uz>
       pom{};
     ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_36>>,
                        4uz>
