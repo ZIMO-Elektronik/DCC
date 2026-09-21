@@ -1,6 +1,7 @@
 # Changelog
 
 ##
+- Add POM ID0 datagrams from [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) 4.3.2 ([#20](https://github.com/ZIMO-Elektronik/DCC/issues/20))
 - Revert CV access packets are answered with 2x ACKs as long as busy ([#114](https://github.com/ZIMO-Elektronik/DCC/issues/114))
 - Bugfix CV bit write in operations mode answered with POM ID0 datagram ([#172](https://github.com/ZIMO-Elektronik/DCC/issues/172))
 
@@ -64,7 +65,7 @@
 
 ## 0.45.0
 - Block `rx::CrtpBase::biDiChannel1` and `rx::CrtpBase::biDiChannel2` outside of BiDi cutout ([#110](https://github.com/ZIMO-Elektronik/DCC/issues/110))
-- Bugfix [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) explicitly requires that ID0 datagrams must follow any packet ([#113](https://github.com/ZIMO-Elektronik/DCC/issues/113))
+- Bugfix [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) explicitly requires that POM ID0 datagrams must follow any packet ([#113](https://github.com/ZIMO-Elektronik/DCC/issues/113))
 - Bugfix CV access packets are answered with 2x ACKs as long as busy ([#114](https://github.com/ZIMO-Elektronik/DCC/issues/114))
 - Bugfix unknown BiDi ID causes out of bounds access ([#130](https://github.com/ZIMO-Elektronik/DCC/issues/130))
 
@@ -196,7 +197,7 @@
 - Bugfix standard compliant CV28
   - Logon must be enabled by CV28:7 and ignores CV28:1 and CV28:0
 - Bugfix standard compliant [RCN-217](https://normen.railcommunity.de/RCN-217.pdf)
-  - Reply with active address in channel 1 (instead of just primary)
+  - Respond with active address in channel 1 (instead of just primary)
 - Bugfix standard compliant [RCN-218](https://normen.railcommunity.de/RCN-218.pdf)
   - Logon address is only temporary
 

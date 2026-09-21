@@ -13,7 +13,7 @@ TEST_F(RxTest, app_adr_alternate_primary_address) {
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
-    LeaveCutout()->Execute()->Receive(packet);
+    LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
     _mock.biDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
@@ -34,7 +34,7 @@ TEST_F(RxTest, app_adr_alternate_logon_address) {
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
-    LeaveCutout()->Execute()->Receive(packet);
+    LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
     _mock.biDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
@@ -68,7 +68,7 @@ TEST_F(RxTest, app_adr_alternate_consist_address) {
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
-    LeaveCutout()->Execute()->Receive(packet);
+    LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
     _mock.biDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
@@ -95,7 +95,7 @@ TEST_F(RxTest, app_adr_alternate_long_consist_address) {
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
-    LeaveCutout()->Execute()->Receive(packet);
+    LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
     _mock.biDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
@@ -114,7 +114,7 @@ TEST_F(RxTest, app_adr_broadcast) {
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
-    LeaveCutout()->Execute()->Receive(packet);
+    LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(0);
     _mock.biDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(0);

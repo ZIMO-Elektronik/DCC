@@ -14,7 +14,7 @@ TEST_F(RxTest, app_xpom) {
   EXPECT_CALL(_mock, readCv(cv_addr + 1u)).WillOnce(Return(cv_values[1uz]));
   EXPECT_CALL(_mock, readCv(cv_addr + 2u)).WillOnce(Return(cv_values[2uz]));
   EXPECT_CALL(_mock, readCv(cv_addr + 3u)).WillOnce(Return(cv_values[3uz]));
-  Receive(packet)->LeaveCutout()->Execute()->Receive(packet);
+  Receive(packet)->LeaveCutout()->Execute()->EnterCutout();
 
   auto datagram{make_app_xpom_datagram(ss, cv_values)};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
