@@ -1312,13 +1312,14 @@ private:
     }
 
     _logon_selected = true;
-    std::array<uint8_t, 5uz> short_info{
-      ztl::mask<7u>, // Special format & address
-      0u,            // Address
-      63u,           // Highest function
-      ztl::mask<6u>, // XPOM
-      0u};
-    encode_logon_address(_addrs.primary, begin(short_info) + 1);
+    std::array<uint8_t, 5uz> short_info;
+    encode_logon_address(_addrs.primary, begin(short_info));
+    short_info[0uz] =
+      static_cast<uint8_t>(ztl::mask<7u> | short_info[0uz]); // Special format
+    short_info[2uz] = 63u;                                   // Highest function
+    short_info[3uz] = ztl::mask<6u>;                         // XPOM
+    short_info[4uz] = 0u;
+    short_info[5uz] = crc8(short_info);
     _deques.logon.clear();
     _deques.logon.push_back(
       bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
@@ -1326,7 +1327,8 @@ private:
         static_cast<uint64_t>(short_info[1uz]) << 32u |
         static_cast<uint32_t>(short_info[2uz]) << 24u |
         static_cast<uint32_t>(short_info[3uz]) << 16u |
-        static_cast<uint32_t>(short_info[4uz]) << 8u | crc8(short_info))));
+        static_cast<uint32_t>(short_info[4uz]) << 8u |
+        static_cast<uint32_t>(short_info[5uz]) << 0u)));
     return true;
   }
 
