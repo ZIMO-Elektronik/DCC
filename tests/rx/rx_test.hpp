@@ -2,7 +2,6 @@
 
 #include <gtest/gtest.h>
 #include <algorithm>
-#include <random>
 #include "rx_mock.hpp"
 
 using namespace ::testing;
@@ -14,27 +13,24 @@ struct RxTest : ::testing::Test {
 
   void SetUp() override;
 
-  template<std::unsigned_integral T>
-  static T RandomInterval(T min, T max) {
-    std::mt19937 gen{std::random_device{}()};
-    std::uniform_int_distribution<T> dis{min, max};
-    return dis(gen);
-  }
-
   RxTest* Receive(dcc::Packet const& packet, dcc::tx::Config cfg = {});
   RxTest* EnterCutout(dcc::Packet const& packet = _last_packet);
   RxTest* BiDiChannel1();
   RxTest* BiDiChannel2();
   RxTest* LeaveCutout();
   RxTest* Execute();
+  RxTest* ReceiveAndExecute(dcc::Packet const& packet,
+                            dcc::tx::Config cfg = {});
+  RxTest* ReceiveAndExecuteTwice(dcc::Packet const& packet,
+                                 dcc::tx::Config cfg = {});
+  RxTest* BiDi();
 
   // Helpers
-  void ReceiveAndExecute(dcc::Packet const& packet, dcc::tx::Config cfg = {});
-  void ReceiveAndExecuteTwice(dcc::Packet const& packet,
-                              dcc::tx::Config cfg = {});
-  void BiDi();
   void EnterServiceMode();
   void Logon();
+  void ReadDataSpace(uint8_t data_space,
+                     uint32_t cv_addr = 0u,
+                     uint8_t cv_count = 0u);
   dcc::Packet TinkerWithPacketLength(dcc::Packet packet) const;
 
   static inline dcc::Packet _last_packet{};
@@ -49,7 +45,7 @@ struct RxTest : ::testing::Test {
     .logon = {.value = 1000u, .type = dcc::Address::ExtendedLoco}};
 
   // CVs
-  std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
+  std::array<uint8_t, smath::pow(2uz, 18uz)> _cvs{};
 
   // IDs for logon
   uint32_t _did{0xAABBCCDDu};
@@ -67,15 +63,19 @@ MATCHER_P(DatagramMatcher, datagram, "") {
     .WillOnce(Return(_cvs[15uz - 1uz]))                                        \
     .WillOnce(Return(_cvs[16uz - 1uz]))                                        \
     .WillOnce(Return(_cvs[28uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 3uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 2uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 1uz]))                 \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_DID_CV_ADDRESS + 0uz]))                 \
+    .WillOnce(Return(_cvs[65292uz - 1uz]))                                     \
+    .WillOnce(Return(_cvs[65291uz - 1uz]))                                     \
+    .WillOnce(Return(_cvs[65290uz - 1uz]))                                     \
+    .WillOnce(Return(_cvs[65289uz - 1uz]))                                     \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz]))                 \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz]))                 \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_SID_CV_ADDRESS]))                       \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz]))             \
-    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]))
+    .WillOnce(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]))             \
+    .WillOnce(Return(_cvs[131073u]))                                           \
+    .WillOnce(Return(_cvs[131074u]))                                           \
+    .WillOnce(Return(_cvs[131075u]))                                           \
+    .WillOnce(Return(_cvs[131076u]))
 
 #define BASIC_ADDRESS_READ_CV_INIT_SEQUENCE_COMMON()                           \
   WillOnce(Return(_cvs[1uz - 1uz])).READ_CV_INIT_SEQUENCE_COMMON()

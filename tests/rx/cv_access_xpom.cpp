@@ -1,8 +1,9 @@
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
 TEST_F(RxTest, cv_access_xpom_verify_bytes) {
-  auto ss{RandomInterval<uint8_t>(0u, 3u)};
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
+  auto ss{random_interval<uint8_t>(0u, 3u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
   auto packet{make_cv_access_xpom_verify_packet(_addrs.primary, ss, cv_addr)};
 
   InSequence s;
@@ -16,8 +17,8 @@ TEST_F(RxTest, cv_access_xpom_verify_bytes) {
 TEST_F(RxTest, cv_access_xpom_write_bytes) {
   {
     uint8_t ss{0b00u};
-    auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-    auto cv0{RandomInterval<uint8_t>(0u, 255u)};
+    auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+    auto cv0{random_interval<uint8_t>(0u, 255u)};
     auto packet{
       make_cv_access_xpom_write_packet(_addrs.primary, ss, cv_addr, cv0)};
 
@@ -31,9 +32,9 @@ TEST_F(RxTest, cv_access_xpom_write_bytes) {
 
   {
     uint8_t ss{0b01u};
-    auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-    auto cv0{RandomInterval<uint8_t>(0u, 255u)};
-    auto cv1{RandomInterval<uint8_t>(0u, 255u)};
+    auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+    auto cv0{random_interval<uint8_t>(0u, 255u)};
+    auto cv1{random_interval<uint8_t>(0u, 255u)};
     auto packet{
       make_cv_access_xpom_write_packet(_addrs.primary, ss, cv_addr, cv0, cv1)};
 
@@ -47,10 +48,10 @@ TEST_F(RxTest, cv_access_xpom_write_bytes) {
 
   {
     uint8_t ss{0b10u};
-    auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-    auto cv0{RandomInterval<uint8_t>(0u, 255u)};
-    auto cv1{RandomInterval<uint8_t>(0u, 255u)};
-    auto cv2{RandomInterval<uint8_t>(0u, 255u)};
+    auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+    auto cv0{random_interval<uint8_t>(0u, 255u)};
+    auto cv1{random_interval<uint8_t>(0u, 255u)};
+    auto cv2{random_interval<uint8_t>(0u, 255u)};
     auto packet{make_cv_access_xpom_write_packet(
       _addrs.primary, ss, cv_addr, cv0, cv1, cv2)};
 
@@ -64,11 +65,11 @@ TEST_F(RxTest, cv_access_xpom_write_bytes) {
 
   {
     uint8_t ss{0b11u};
-    auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-    auto cv0{RandomInterval<uint8_t>(0u, 255u)};
-    auto cv1{RandomInterval<uint8_t>(0u, 255u)};
-    auto cv2{RandomInterval<uint8_t>(0u, 255u)};
-    auto cv3{RandomInterval<uint8_t>(0u, 255u)};
+    auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+    auto cv0{random_interval<uint8_t>(0u, 255u)};
+    auto cv1{random_interval<uint8_t>(0u, 255u)};
+    auto cv2{random_interval<uint8_t>(0u, 255u)};
+    auto cv3{random_interval<uint8_t>(0u, 255u)};
     auto packet{make_cv_access_xpom_write_packet(
       _addrs.primary, ss, cv_addr, cv0, cv1, cv2, cv3)};
 
@@ -82,10 +83,10 @@ TEST_F(RxTest, cv_access_xpom_write_bytes) {
 }
 
 TEST_F(RxTest, cv_access_xpom_write_bit) {
-  auto ss{RandomInterval<uint8_t>(0u, 3u)};
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{static_cast<bool>(RandomInterval(0u, 1u))};
-  auto pos{RandomInterval(0u, 7u)};
+  auto ss{random_interval<uint8_t>(0u, 3u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto bit{static_cast<bool>(random_interval(0u, 1u))};
+  auto pos{random_interval(0u, 7u)};
   auto packet{
     make_cv_access_xpom_write_packet(_addrs.primary, ss, cv_addr, bit, pos)};
 

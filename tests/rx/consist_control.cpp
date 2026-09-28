@@ -1,8 +1,9 @@
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
 TEST_F(RxTest, consist_control) {
   EXPECT_CALL(_mock, readCv(_)).BASIC_ADDRESS_READ_CV_INIT_SEQUENCE();
-  auto cv19{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv19{random_interval<uint8_t>(0u, 255u)};
   auto packet{make_set_consist_address_packet(_addrs.primary, cv19)};
 
   EXPECT_CALL(_mock, writeCv(19u - 1u, cv19, A<std::function<void(uint8_t)>>()))
@@ -12,7 +13,7 @@ TEST_F(RxTest, consist_control) {
 }
 
 TEST_F(RxTest, consist_control_wrong_packet_length) {
-  auto cv19{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv19{random_interval<uint8_t>(0u, 255u)};
   auto packet{TinkerWithPacketLength(
     make_set_consist_address_packet(_addrs.primary, cv19))};
 

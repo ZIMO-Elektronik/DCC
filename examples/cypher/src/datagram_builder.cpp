@@ -25,6 +25,7 @@ void loco(State::Datagram& datagram);
     void app_adr_high(State::Datagram& datagram);
     void app_adr_low(State::Datagram& datagram);
     void app_adr_info1(State::Datagram& datagram);
+    void app_adr_short(State::Datagram& datagram);
   void channel2(State::Datagram& datagram);
     void app_pom(State::Datagram& datagram);
     void app_ext(State::Datagram& datagram);
@@ -99,7 +100,7 @@ void loco(State::Datagram& datagram) {
 void channel1(State::Datagram& datagram) {
   ImGui::SeparatorText("Channel 1");
   static constexpr std::array apps{
-    "", "app:adr_high", "app:adr_low", "app:info1"};
+    "", "app:adr_high", "app:adr_low", "app:info1", "app:adr_short"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(apps), ssize(apps));
   if (!strcmp(apps[static_cast<size_t>(i)], "app:adr_high"))
@@ -108,6 +109,8 @@ void channel1(State::Datagram& datagram) {
     app_adr_low(datagram);
   else if (!strcmp(apps[static_cast<size_t>(i)], "app:info1"))
     app_adr_info1(datagram);
+  else if (!strcmp(apps[static_cast<size_t>(i)], "app:adr_short"))
+    app_adr_short(datagram);
 }
 
 // Loco app:adr_high
@@ -146,10 +149,19 @@ void app_adr_info1(State::Datagram& datagram) {
   ImGui::Checkbox("Driving", &f[2uz]);
   ImGui::Checkbox("Consist", &f[3uz]);
   ImGui::Checkbox("Addressing Request", &f[4uz]);
-  auto const dg{make_app_info1_datagram(
-    {static_cast<app::Info1::Flags>(f[4uz] << 4u | f[3uz] << 3u | f[2uz] << 2u |
-                                    f[1uz] << 1u | f[0uz] << 0u)})};
-  std::ranges::copy(dg, begin(datagram.bytes));
+  std::ranges::copy(
+    make_app_info1_datagram({static_cast<app::Info1::Flags>(pack_bits(f))}),
+    begin(datagram.bytes));
+}
+
+// Loco app:adr_short
+void app_adr_short(State::Datagram& datagram) {
+  ImGui::SeparatorText("Parameters");
+  static dcc::Address::value_type addr{3};
+  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr);
+  addr = std::clamp<dcc::Address::value_type>(addr, 1u, 255u);
+  std::ranges::copy(make_app_adr_short_datagram(static_cast<uint8_t>(addr)),
+                    begin(datagram.bytes));
 }
 
 // Loco channel2
@@ -162,7 +174,7 @@ void channel2(State::Datagram& datagram) {
     // "app:info",
     "app:dyn",
     "app:xpom",
-    "app:CV-auto",
+    "app:cv_auto",
     // "app:block"
   };
   static int i{};
@@ -175,7 +187,7 @@ void channel2(State::Datagram& datagram) {
     app_dyn<0uz>(datagram, mob_app_dyn_labels);
   else if (!strcmp(apps[static_cast<size_t>(i)], "app:xpom"))
     app_xpom(datagram);
-  else if (!strcmp(apps[static_cast<size_t>(i)], "app:CV-auto"))
+  else if (!strcmp(apps[static_cast<size_t>(i)], "app:cv_auto"))
     app_cv_auto(datagram);
   else if (!strcmp(apps[static_cast<size_t>(i)], "app:block"))
     app_block(datagram);
@@ -484,7 +496,7 @@ void app_xpom(State::Datagram& datagram) {
                     begin(datagram.bytes) + channel1_size);
 }
 
-// Loco app:CV-auto
+// Loco app:cv_auto
 void app_cv_auto(State::Datagram& datagram) {
   ImGui::SeparatorText("Parameters");
   static uint32_t cv_addr{0u};

@@ -12,10 +12,12 @@
 
 #include <cassert>
 #include <cstdint>
+#include <ztl/bits.hpp>
 #include "../address.hpp"
 #include "../crc8.hpp"
 #include "app/adr_high.hpp"
 #include "app/adr_low.hpp"
+#include "app/adr_short.hpp"
 #include "app/block.hpp"
 #include "app/cv_auto.hpp"
 #include "app/decoder_state.hpp"
@@ -23,7 +25,6 @@
 #include "app/dyn.hpp"
 #include "app/error.hpp"
 #include "app/ext.hpp"
-#include "app/info.hpp"
 #include "app/info1.hpp"
 #include "app/pom.hpp"
 #include "app/search.hpp"
@@ -71,7 +72,7 @@ constexpr auto make_app_adr_low_datagram(Address::value_type addr,
       app::AdrLow::id, (cv19 & 0x80) | (addr & 0x7Fu)));
   else
     return encode_datagram(
-      make_datagram<Bits::_12>(app::AdrLow::id, addr & 0xFFu));
+      make_datagram<Bits::_12>(app::AdrLow::id, static_cast<uint8_t>(addr)));
 }
 
 /// Make app:info1 datagram
@@ -81,6 +82,15 @@ constexpr auto make_app_adr_low_datagram(Address::value_type addr,
 constexpr auto make_app_info1_datagram(app::Info1 info1) {
   return encode_datagram(
     make_datagram<Bits::_12>(app::Info1::id, std::to_underlying(info1.d)));
+}
+
+/// Make app:adr_short datagram
+///
+/// \param  addr  Address
+/// \return app:adr_short datagram
+constexpr auto make_app_adr_short_datagram(Address::value_type addr) {
+  return encode_datagram(
+    make_datagram<Bits::_12>(app::AdrShort::id, static_cast<uint8_t>(addr)));
 }
 
 /// Make app:ext datagram
@@ -121,9 +131,9 @@ constexpr auto make_app_xpom_datagram(uint8_t ss,
                                static_cast<uint32_t>(bytes[3uz]) << 0u));
 }
 
-/// Make app:CV-auto datagram
+/// Make app:cv_auto datagram
 ///
-/// \return app:CV-auto datagram
+/// \return app:cv_auto datagram
 constexpr auto make_app_cv_auto_datagram(uint32_t cv_addr, uint8_t byte) {
   assert(cv_addr < smath::pow(2u, 24u));
   return encode_datagram(make_datagram<Bits::_36>(
@@ -212,20 +222,20 @@ constexpr auto make_app_decoder_state_datagram(uint8_t change_flags,
                                                uint16_t change_count,
                                                uint8_t cv131075,
                                                uint8_t cv131076) {
-  std::array const data{
-    static_cast<uint8_t>(app::DecoderState::id << 4u | change_flags >> 4u), //
-    static_cast<uint8_t>((change_flags & 0x0Fu) |
-                         static_cast<uint32_t>(change_count >> 8u)), //
-    static_cast<uint8_t>(change_count),                              //
-    cv131075,                                                        //
-    cv131076};                                                       //
+  std::array const decoder_state{
+    static_cast<uint8_t>(app::DecoderState::id << 4u | change_flags >> 4u),
+    static_cast<uint8_t>(static_cast<uint32_t>(change_flags) << 4u |
+                         static_cast<uint32_t>(change_count) >> 8u),
+    static_cast<uint8_t>(change_count),
+    cv131075,
+    cv131076};
   return encode_datagram(
-    make_datagram<Bits::_48>(static_cast<uint64_t>(data[0uz]) << 40uz | //
-                             static_cast<uint64_t>(data[1uz]) << 32uz | //
-                             static_cast<uint32_t>(data[2uz]) << 24uz | //
-                             static_cast<uint32_t>(data[3uz]) << 16uz | //
-                             static_cast<uint32_t>(data[4uz]) << 8uz |  //
-                             crc8(data)));                              //
+    make_datagram<Bits::_48>(static_cast<uint64_t>(decoder_state[0uz]) << 40u |
+                             static_cast<uint64_t>(decoder_state[1uz]) << 32u |
+                             static_cast<uint32_t>(decoder_state[2uz]) << 24u |
+                             static_cast<uint32_t>(decoder_state[3uz]) << 16u |
+                             static_cast<uint32_t>(decoder_state[4uz]) << 8u |
+                             static_cast<uint32_t>(crc8(decoder_state)) << 0u));
 }
 
 /// Make app:decoder_unique datagram
@@ -241,6 +251,43 @@ make_app_decoder_unique_datagram(uint16_t mid,
     static_cast<uint64_t>(mid) << 32u | static_cast<uint32_t>(did[0uz]) << 24u |
       static_cast<uint32_t>(did[1uz]) << 16u |
       static_cast<uint32_t>(did[2uz]) << 8u | static_cast<uint32_t>(did[3uz])));
+}
+
+/// Make ShortInfo datagram
+///
+/// \param  addr      Address
+/// \param  byte2     Highest function assignment, aspect or output pairs
+/// \param  cv131073  Extended capabilities byte 0
+/// \param  cv131074  Extended capabilities byte 1
+/// \return ShortInfo datagram
+constexpr auto make_short_info_datagram(Address addr,
+                                        uint8_t byte2,
+                                        uint8_t cv131073,
+                                        uint8_t cv131074) {
+  std::array<uint8_t, 5uz> short_info{0u, 0u, byte2, cv131073, cv131074};
+  encode_logon_address(addr, begin(short_info));
+  short_info[0uz] =
+    static_cast<uint8_t>(ztl::mask<7u> | (short_info[0uz] & 0x3Fu));
+  return encode_datagram(
+    make_datagram<Bits::_48>(static_cast<uint64_t>(short_info[0uz]) << 40u |
+                             static_cast<uint64_t>(short_info[1uz]) << 32u |
+                             static_cast<uint32_t>(short_info[2uz]) << 24u |
+                             static_cast<uint32_t>(short_info[3uz]) << 16u |
+                             static_cast<uint32_t>(short_info[4uz]) << 8u |
+                             static_cast<uint32_t>(crc8(short_info)) << 0u));
+}
+
+/// Make GET_DATA datagram
+///
+/// \return GET_DATA datagram
+constexpr auto make_get_data_datagram(std::span<uint8_t const, 6uz> bytes) {
+  return encode_datagram(
+    make_datagram<Bits::_48>(static_cast<uint64_t>(bytes[0uz]) << 40u |
+                             static_cast<uint64_t>(bytes[1uz]) << 32u |
+                             static_cast<uint32_t>(bytes[2uz]) << 24u |
+                             static_cast<uint32_t>(bytes[3uz]) << 16u |
+                             static_cast<uint32_t>(bytes[4uz]) << 8u |
+                             static_cast<uint32_t>(bytes[5uz]) << 0u));
 }
 
 } // namespace dcc::bidi

@@ -1,7 +1,18 @@
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
+TEST_F(RxTest, invalid_checksum) {
+  auto packet{
+    make_speed_and_direction_packet(_addrs.primary, 1u << 5u | 0b1010u)};
+  packet.back() = static_cast<uint8_t>(packet.back() << 1u);
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward)).Times(0);
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<28>(17)))
+    .Times(0);
+  ReceiveAndExecute(packet);
+}
+
 TEST_F(RxTest, invalid_bit_resets_internal_state_machine) {
-  auto state{RandomInterval<uint8_t>(0b0'0000u, 0b1'1111u)};
+  auto state{random_interval<uint8_t>(0b0'0000u, 0b1'1111u)};
   EXPECT_CALL(_mock, function(_addrs.primary.value, 0b11111u, state)).Times(0);
 
   // Sprinkle invalid timings into the packet
@@ -9,7 +20,7 @@ TEST_F(RxTest, invalid_bit_resets_internal_state_machine) {
          dcc::tx::packet2timings(make_f0_f4_packet(_addrs.primary, state))};
        auto t : timings) {
     _mock.receive(t);
-    _mock.receive(RandomInterval<uint32_t>(
+    _mock.receive(random_interval<uint32_t>(
       dcc::rx::Timing::Bit0MaxAnalog, std::numeric_limits<uint32_t>::max()));
     _mock.execute();
   }

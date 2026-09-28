@@ -1,7 +1,8 @@
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
 TEST_F(RxTest, feature_expansion_f20_f13) {
-  auto state{RandomInterval<uint8_t>(0x00u, 0xFFu)};
+  auto state{random_interval<uint8_t>(0x00u, 0xFFu)};
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,
                        0xFFu << 13u,
@@ -10,7 +11,7 @@ TEST_F(RxTest, feature_expansion_f20_f13) {
 }
 
 TEST_F(RxTest, feature_expansion_f20_f13_wrong_packet_length) {
-  auto state{RandomInterval<uint8_t>(0x00u, 0xFFu)};
+  auto state{random_interval<uint8_t>(0x00u, 0xFFu)};
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,
                        0xFFu << 13u,
@@ -21,7 +22,7 @@ TEST_F(RxTest, feature_expansion_f20_f13_wrong_packet_length) {
 }
 
 TEST_F(RxTest, feature_expansion_f28_f21) {
-  auto state{RandomInterval<uint8_t>(0x00u, 0xFFu)};
+  auto state{random_interval<uint8_t>(0x00u, 0xFFu)};
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,
                        0xFFu << 21u,

@@ -286,11 +286,7 @@ void feature_expansion_command_station_feature_identification(
       state.packets.push_back(
         {.addr = addr,
          .bytes = dcc::make_command_station_feature_identification_packet(
-           dcc::LocoFeatures{static_cast<uint16_t>(
-             feats[13uz] << 13u | feats[12uz] << 12u | feats[11uz] << 11u |
-             feats[10uz] << 10u | feats[9uz] << 9u | feats[8uz] << 8u |
-             feats[5uz] << 5u | feats[4uz] << 4u | feats[3uz] << 3u |
-             feats[2uz] << 2u | feats[1uz] << 1u | feats[0uz] << 0u)})});
+           dcc::LocoFeatures{pack_bits<uint16_t>(feats)})});
   } else if (!strcmp(feat_types[static_cast<size_t>(i)],
                      "Accessory and Broadcast Features")) {
     static std::array<bool, CHAR_BIT * sizeof(uint16_t)> feats{};
@@ -306,10 +302,7 @@ void feature_expansion_command_station_feature_identification(
       state.packets.push_back(
         {.addr = addr,
          .bytes = dcc::make_command_station_feature_identification_packet(
-           dcc::AccessoryBroadcastFeatures{static_cast<uint16_t>(
-             feats[11uz] << 11u | feats[10uz] << 10u | feats[9uz] << 9u |
-             feats[8uz] << 8u | feats[3uz] << 3u | feats[1uz] << 1u |
-             feats[0uz] << 0u)})});
+           dcc::AccessoryBroadcastFeatures{pack_bits<uint16_t>(feats)})});
   } else if (!strcmp(feat_types[static_cast<size_t>(i)], "BiDi Features")) {
     static std::array<bool, CHAR_BIT * sizeof(uint16_t)> feats{};
     ImGui::Checkbox("RailCom", &feats[0uz]);
@@ -317,6 +310,8 @@ void feature_expansion_command_station_feature_identification(
     ImGui::Checkbox("NOP for Accessories", &feats[2uz]);
     ImGui::Checkbox("POM Read", &feats[3uz]);
     ImGui::Checkbox("XPOM Read", &feats[4uz]);
+    ImGui::Checkbox("app:cv_auto POM Read", &feats[5uz]);
+    ImGui::Checkbox("app:adr_short", &feats[6uz]);
     ImGui::Checkbox("app:dyn Container Levels", &feats[8uz]);
     ImGui::Checkbox("app:dyn Operating Parameters", &feats[9uz]);
     ImGui::Checkbox("app:dyn Track Voltage", &feats[10uz]);
@@ -326,10 +321,7 @@ void feature_expansion_command_station_feature_identification(
       state.packets.push_back(
         {.addr = addr,
          .bytes = dcc::make_command_station_feature_identification_packet(
-           dcc::BiDiFeatures{static_cast<uint16_t>(
-             feats[15uz] << 15u | feats[10uz] << 10u | feats[9uz] << 9u |
-             feats[8uz] << 8u | feats[4uz] << 4u | feats[3uz] << 3u |
-             feats[2uz] << 2u | feats[1uz] << 1u | feats[0uz] << 0u)})});
+           dcc::BiDiFeatures{pack_bits<uint16_t>(feats)})});
   }
 }
 
