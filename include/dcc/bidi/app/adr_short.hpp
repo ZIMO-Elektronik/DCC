@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// BiDi app:cv_auto
+/// BiDi app:adr_short
 ///
-/// \file   dcc/bidi/app/cv_auto.hpp
+/// \file   dcc/bidi/app/adr_short.hpp
 /// \author Vincent Hamp
-/// \date   17/06/2025
+/// \date   28/09/2026
 
 #pragma once
 
@@ -14,11 +14,10 @@
 
 namespace dcc::bidi::app {
 
-struct CvAuto {
-  static constexpr uint8_t id{12u};
-  uint32_t v{};
+struct AdrShort {
+  static constexpr uint8_t id{4u};
   uint8_t d{};
-  constexpr bool operator==(CvAuto const&) const = default;
+  constexpr bool operator==(AdrShort const&) const = default;
 };
 
 } // namespace dcc::bidi::app

@@ -158,6 +158,9 @@ void dissector(State::Datagram& datagram) {
                     ext->t ? app_ext_type_labels[ext->t]
                            : "Address Only (TTTT = 0000-0111)");
       datagram.desc_strs.back() += std::format("\n- Position={}", ext->p);
+    } else if (auto const adr_short{get_if<app::AdrShort>(&dg)}) {
+      datagram.desc_strs.push_back("app:adr_short");
+      datagram.desc_strs.back() += std::format("\n- Address={} ", adr_short->d);
     } else if ([[maybe_unused]] auto const info{get_if<app::Info>(&dg)}) {
       datagram.desc_strs.push_back("app:info");
       datagram.desc_strs.push_back("\\todo");
@@ -381,7 +384,7 @@ void dissector(State::Datagram& datagram) {
       datagram.desc_strs.back() += std::format("\n- CV[2]={}", xpom->d[2uz]);
       datagram.desc_strs.back() += std::format("\n- CV[3]={}", xpom->d[3uz]);
     } else if (auto const cv_auto{get_if<app::CvAuto>(&dg)}) {
-      datagram.desc_strs.push_back("app:CV-auto");
+      datagram.desc_strs.push_back("app:cv_auto");
       datagram.desc_strs.back() +=
         std::format("\n- CV{}={}", cv_auto->v + 1u, cv_auto->d);
     } else if ([[maybe_unused]] auto const block{get_if<app::Block>(&dg)}) {

@@ -465,6 +465,14 @@ void add_loco_datagrams() {
     state.datagrams.push_back(datagram);
   }
 
+  // app:adr_short
+  {
+    State::Datagram datagram{.addr = random_loco_address()};
+    std::ranges::copy(make_app_adr_short_datagram(random_interval<uint8_t>()),
+                      begin(datagram.bytes));
+    state.datagrams.push_back(datagram);
+  }
+
   // app:dyn
   // Speed2
   {
@@ -558,7 +566,7 @@ void add_loco_datagrams() {
     state.datagrams.push_back(datagram);
   }
 
-  // app:CV-auto
+  // app:cv_auto
   {
     State::Datagram datagram{.addr = random_loco_address()};
     std::ranges::copy(make_app_cv_auto_datagram(

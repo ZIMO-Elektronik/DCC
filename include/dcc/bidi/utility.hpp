@@ -16,6 +16,7 @@
 #include "../crc8.hpp"
 #include "app/adr_high.hpp"
 #include "app/adr_low.hpp"
+#include "app/adr_short.hpp"
 #include "app/block.hpp"
 #include "app/cv_auto.hpp"
 #include "app/decoder_state.hpp"
@@ -23,7 +24,6 @@
 #include "app/dyn.hpp"
 #include "app/error.hpp"
 #include "app/ext.hpp"
-#include "app/info.hpp"
 #include "app/info1.hpp"
 #include "app/pom.hpp"
 #include "app/search.hpp"
@@ -71,7 +71,7 @@ constexpr auto make_app_adr_low_datagram(Address::value_type addr,
       app::AdrLow::id, (cv19 & 0x80) | (addr & 0x7Fu)));
   else
     return encode_datagram(
-      make_datagram<Bits::_12>(app::AdrLow::id, addr & 0xFFu));
+      make_datagram<Bits::_12>(app::AdrLow::id, static_cast<uint8_t>(addr)));
 }
 
 /// Make app:info1 datagram
@@ -81,6 +81,15 @@ constexpr auto make_app_adr_low_datagram(Address::value_type addr,
 constexpr auto make_app_info1_datagram(app::Info1 info1) {
   return encode_datagram(
     make_datagram<Bits::_12>(app::Info1::id, std::to_underlying(info1.d)));
+}
+
+/// Make app:adr_short datagram
+///
+/// \param  addr  Address
+/// \return app:adr_short datagram
+constexpr auto make_app_adr_short_datagram(Address::value_type addr) {
+  return encode_datagram(
+    make_datagram<Bits::_12>(app::AdrShort::id, static_cast<uint8_t>(addr)));
 }
 
 /// Make app:ext datagram
@@ -121,9 +130,9 @@ constexpr auto make_app_xpom_datagram(uint8_t ss,
                                static_cast<uint32_t>(bytes[3uz]) << 0u));
 }
 
-/// Make app:CV-auto datagram
+/// Make app:cv_auto datagram
 ///
-/// \return app:CV-auto datagram
+/// \return app:cv_auto datagram
 constexpr auto make_app_cv_auto_datagram(uint32_t cv_addr, uint8_t byte) {
   assert(cv_addr < smath::pow(2u, 24u));
   return encode_datagram(make_datagram<Bits::_36>(

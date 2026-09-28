@@ -571,6 +571,14 @@ constexpr T random_interval(T min = std::numeric_limits<T>::min(),
   }
 }
 
+// Pack bool random_access_range to bits
+template<std::unsigned_integral T = size_t, std::ranges::random_access_range R>
+constexpr T pack_bits(R&& r) {
+  T retval{};
+  for (auto i{0uz}; i < size(r); ++i) retval |= static_cast<T>(r[i] << i);
+  return retval;
+}
+
 dcc::Address random_loco_address();
 dcc::Address random_basic_loco_address();
 dcc::Address random_extended_loco_address();

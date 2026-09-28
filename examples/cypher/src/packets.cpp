@@ -540,46 +540,46 @@ void feature_expansion_command_station_feature_identification(
         "\n- Basic Addresses 100-127 as Extended={}",
         static_cast<bool>(feats &
                           dcc::LocoFeatures::BasicAddresses100_127AsExtended)
-          ? 0
-          : 1);
+          ? 1
+          : 0);
       packet.desc_strs.back() +=
         std::format("\n- Extended Addresses 10000-10239={}",
                     static_cast<bool>(
                       feats & dcc::LocoFeatures::ExtendedAddresses10000_10239)
-                      ? 0
-                      : 1);
+                      ? 1
+                      : 0);
       packet.desc_strs.back() += std::format(
         "\n- 128 Speed Steps={}",
-        static_cast<bool>(feats & dcc::LocoFeatures::SpeedSteps128) ? 0 : 1);
+        static_cast<bool>(feats & dcc::LocoFeatures::SpeedSteps128) ? 1 : 0);
       packet.desc_strs.back() +=
         std::format("\n- Speed, Direction and Functions={}",
-                    static_cast<bool>(feats & dcc::LocoFeatures::SDF) ? 0 : 1);
+                    static_cast<bool>(feats & dcc::LocoFeatures::SDF) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- POM Write={}",
-        static_cast<bool>(feats & dcc::LocoFeatures::PomWrite) ? 0 : 1);
+        static_cast<bool>(feats & dcc::LocoFeatures::PomWrite) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- XPOM Write={}",
-        static_cast<bool>(feats & dcc::LocoFeatures::XpomWrite) ? 0 : 1);
+        static_cast<bool>(feats & dcc::LocoFeatures::XpomWrite) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- F13-F28={}",
-        static_cast<bool>(feats & dcc::LocoFeatures::F13_F28) ? 0 : 1);
+        static_cast<bool>(feats & dcc::LocoFeatures::F13_F28) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- F29-F68={}",
-        static_cast<bool>(feats & dcc::LocoFeatures::F29_F68) ? 0 : 1);
+        static_cast<bool>(feats & dcc::LocoFeatures::F29_F68) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- Binary State Short={}",
-        static_cast<bool>(feats & dcc::LocoFeatures::BinaryStateShort) ? 0 : 1);
+        static_cast<bool>(feats & dcc::LocoFeatures::BinaryStateShort) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- Binary State Long={}",
-        static_cast<bool>(feats & dcc::LocoFeatures::BinaryStateLong) ? 0 : 1);
+        static_cast<bool>(feats & dcc::LocoFeatures::BinaryStateLong) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- Analog Function={}",
-        static_cast<bool>(feats & dcc::LocoFeatures::AnalogFunction) ? 0 : 1);
+        static_cast<bool>(feats & dcc::LocoFeatures::AnalogFunction) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- Special Operating Modes={}",
         static_cast<bool>(feats & dcc::LocoFeatures::SpecialOperatingModes)
-          ? 0
-          : 1);
+          ? 1
+          : 0);
       break;
     }
     case 0b1110u: {
@@ -591,36 +591,36 @@ void feature_expansion_command_station_feature_identification(
         "\n- Addresses Offset by 4={}",
         static_cast<bool>(feats &
                           dcc::AccessoryBroadcastFeatures::AddressesOffsetBy4)
-          ? 0
-          : 1);
+          ? 1
+          : 0);
       packet.desc_strs.back() += std::format(
         "\n- Extended={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::Extended)
-          ? 0
-          : 1);
+          ? 1
+          : 0);
       packet.desc_strs.back() += std::format(
         "\n- POM Write={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::PomWrite)
-          ? 0
-          : 1);
+          ? 1
+          : 0);
       packet.desc_strs.back() += std::format(
         "\n- Time={}",
-        static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::Time) ? 0
-                                                                         : 1);
+        static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::Time) ? 1
+                                                                         : 0);
       packet.desc_strs.back() += std::format(
         "\n- Date={}",
-        static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::Date) ? 0
-                                                                         : 1);
+        static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::Date) ? 1
+                                                                         : 0);
       packet.desc_strs.back() += std::format(
         "\n- Time Scale={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::TimeScale)
-          ? 0
-          : 1);
+          ? 1
+          : 0);
       packet.desc_strs.back() += std::format(
         "\n- System Time={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::SystemTime)
-          ? 0
-          : 1);
+          ? 1
+          : 0);
       break;
     }
     case 0b1101u: {
@@ -630,37 +630,43 @@ void feature_expansion_command_station_feature_identification(
       packet.desc_strs.back() += "\n- RailCom Features";
       packet.desc_strs.back() += std::format(
         "\n- RailCom={}",
-        static_cast<bool>(feats & dcc::BiDiFeatures::RailCom) ? 0 : 1);
+        static_cast<bool>(feats & dcc::BiDiFeatures::RailCom) ? 1 : 0);
       packet.desc_strs.back() +=
         std::format("\n- DCC-A={}",
-                    static_cast<bool>(feats & dcc::BiDiFeatures::DccA) ? 0 : 1);
+                    static_cast<bool>(feats & dcc::BiDiFeatures::DccA) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- NOP for Accessories={}",
-        static_cast<bool>(feats & dcc::BiDiFeatures::NopForAccessories) ? 0
-                                                                        : 1);
+        static_cast<bool>(feats & dcc::BiDiFeatures::NopForAccessories) ? 1
+                                                                        : 0);
       packet.desc_strs.back() += std::format(
         "\n- POM Read={}",
-        static_cast<bool>(feats & dcc::BiDiFeatures::PomRead) ? 0 : 1);
+        static_cast<bool>(feats & dcc::BiDiFeatures::PomRead) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- XPOM Read={}",
-        static_cast<bool>(feats & dcc::BiDiFeatures::XpomRead) ? 0 : 1);
+        static_cast<bool>(feats & dcc::BiDiFeatures::XpomRead) ? 1 : 0);
+      packet.desc_strs.back() += std::format(
+        "\n- app:cv_auto POM Read={}",
+        static_cast<bool>(feats & dcc::BiDiFeatures::PomID12) ? 1 : 0);
+      packet.desc_strs.back() += std::format(
+        "\n- app:adr_short={}",
+        static_cast<bool>(feats & dcc::BiDiFeatures::AdrsID4) ? 1 : 0);
       packet.desc_strs.back() += std::format(
         "\n- app:dyn Container Levels={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::AppDynContainerLevels)
-          ? 0
-          : 1);
+          ? 1
+          : 0);
       packet.desc_strs.back() += std::format(
         "\n- app:dyn Operating Parameters={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::AppDynOperatingParams)
-          ? 0
-          : 1);
+          ? 1
+          : 0);
       packet.desc_strs.back() += std::format(
         "\n- app:dyn Track Voltage={}",
-        static_cast<bool>(feats & dcc::BiDiFeatures::AppDynTrackVoltage) ? 0
-                                                                         : 1);
+        static_cast<bool>(feats & dcc::BiDiFeatures::AppDynTrackVoltage) ? 1
+                                                                         : 0);
       packet.desc_strs.back() += std::format(
         "\n- RailCom+={}",
-        static_cast<bool>(feats & dcc::BiDiFeatures::RailComPlus) ? 0 : 1);
+        static_cast<bool>(feats & dcc::BiDiFeatures::RailComPlus) ? 1 : 0);
       break;
     }
   }
