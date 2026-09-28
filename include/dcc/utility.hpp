@@ -829,22 +829,22 @@ ZTL_MAKE_ENUM_CLASS_FLAGS(AccessoryBroadcastFeatures)
 
 /// BiDi features for command station feature identification instruction
 enum struct BiDiFeatures : uint16_t {
-  RailComPlus = 1u << 0u,
-  Reserved14 = 1u << 1u,
-  Reserved13 = 1u << 2u,
-  Reserved12 = 1u << 3u,
-  Reserved11 = 1u << 4u,
-  AppDynTrackVoltage = 1u << 5u,
-  AppDynOperatingParams = 1u << 6u,
-  AppDynContainerLevels = 1u << 7u,
-  Reserved7 = 1u << 8u,
-  Reserved6 = 1u << 9u,
-  Reserved5 = 1u << 10u,
-  XpomRead = 1u << 11u,
-  PomRead = 1u << 12u,
-  NopForAccessories = 1u << 13u,
-  DccA = 1u << 14u,
-  RailCom = 1u << 15u
+  RailCom = 1u << 0u,
+  DccA = 1u << 1u,
+  NopForAccessories = 1u << 2u,
+  PomRead = 1u << 3u,
+  XpomRead = 1u << 4u,
+  PomID12 = 1u << 5u,
+  AdrsID4 = 1u << 6u,
+  Reserved7 = 1u << 7u,
+  AppDynContainerLevels = 1u << 8u,
+  AppDynOperatingParams = 1u << 9u,
+  AppDynTrackVoltage = 1u << 10u,
+  Reserved11 = 1u << 11u,
+  Reserved12 = 1u << 12u,
+  Reserved13 = 1u << 13u,
+  Reserved14 = 1u << 14u,
+  RailComPlus = 1u << 15u
 };
 
 ZTL_MAKE_ENUM_CLASS_FLAGS(BiDiFeatures)

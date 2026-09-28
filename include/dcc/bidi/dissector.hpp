@@ -18,6 +18,7 @@
 #include "acks.hpp"
 #include "app/adr_high.hpp"
 #include "app/adr_low.hpp"
+#include "app/adr_short.hpp"
 #include "app/block.hpp"
 #include "app/cv_auto.hpp"
 #include "app/dyn.hpp"
@@ -41,31 +42,32 @@ namespace dcc::bidi {
 
 /// Dissect datagrams
 struct Dissector : std::ranges::view_interface<Dissector> {
-  using value_type = std::variant<Ack,          // ACK
-                                  Nak,          // NAK
-                                                //
-                                  app::Pom,     // ID0
-                                  app::AdrHigh, // ID1
-                                  app::AdrLow,  // ID2
-                                  app::Info1,   // ID3
-                                  app::Ext,     // ID3
-                                  app::Info,    // ID4
-                                  app::Dyn,     // ID7
-                                  app::Xpom,    // ID8-11
-                                  app::CvAuto,  // ID12
-                                  app::Block,   // ID13
-                                  app::Search,  // ID14
-                                                //
-                                  app::Srq,     //
-                                                // ID0
-                                  app::Stat4,   // ID3
-                                  app::Stat1,   // ID4
-                                  app::Time,    // ID5
-                                  app::Error,   // ID6
-                                                // ID7
-                                                // ID8-11
-                                  app::Test     // ID12
-                                  >;            // ID13
+  using value_type = std::variant<Ack,           // ACK
+                                  Nak,           // NAK
+                                                 //
+                                  app::Pom,      // ID0
+                                  app::AdrHigh,  // ID1
+                                  app::AdrLow,   // ID2
+                                  app::Info1,    // ID3
+                                  app::Ext,      // ID3
+                                  app::AdrShort, // ID4
+                                  app::Info,     // ID4
+                                  app::Dyn,      // ID7
+                                  app::Xpom,     // ID8-11
+                                  app::CvAuto,   // ID12
+                                  app::Block,    // ID13
+                                  app::Search,   // ID14
+                                                 //
+                                  app::Srq,      //
+                                                 // ID0
+                                  app::Stat4,    // ID3
+                                  app::Stat1,    // ID4
+                                  app::Time,     // ID5
+                                  app::Error,    // ID6
+                                                 // ID7
+                                                 // ID8-11
+                                  app::Test      // ID12
+                                  >;             // ID13
 
   using size_type = ztl::smallest_unsigned_t<bundled_channels_size>;
   using difference_type = std::make_signed_t<size_type>;
@@ -135,62 +137,69 @@ struct Dissector : std::ranges::view_interface<Dissector> {
 
     switch (_addr.type) {
       case Address::Broadcast:
-        switch (id) {
-          case app::AdrHigh::id:
-            return app::AdrHigh{.d = static_cast<uint8_t>(d)};
-          case app::AdrLow::id:
-            return app::AdrLow{.d = static_cast<uint8_t>(d)};
-          case app::Search::id:
-            return app::Search{.d = static_cast<uint8_t>(d)};
-          default: return {};
-        }
+        // Channel 1
+        if (_i < 2uz) return {};
+        // Channel 2
+        else switch (id) {
+            case app::AdrHigh::id:
+              return app::AdrHigh{.d = static_cast<uint8_t>(d)};
+            case app::AdrLow::id:
+              return app::AdrLow{.d = static_cast<uint8_t>(d)};
+            case app::Search::id:
+              return app::Search{.d = static_cast<uint8_t>(d)};
+            default: return {};
+          }
 
       case Address::BasicLoco: [[fallthrough]];
       case Address::ExtendedLoco:
-        switch (id) {
-          case app::Pom::id: return app::Pom{.d = static_cast<uint8_t>(d)};
-          case app::AdrHigh::id:
-            return app::AdrHigh{.d = static_cast<uint8_t>(d)};
-          case app::AdrLow::id:
-            return app::AdrLow{.d = static_cast<uint8_t>(d)};
-          // case app::Info1::id: [[fallthrough]];
-          case app::Ext::id:
-            if (_i < 2uz)
+        // Channel 1
+        if (_i < 2uz) switch (id) {
+            case app::AdrHigh::id:
+              return app::AdrHigh{.d = static_cast<uint8_t>(d)};
+            case app::AdrLow::id:
+              return app::AdrLow{.d = static_cast<uint8_t>(d)};
+            case app::Info1::id:
               return app::Info1{.d = static_cast<app::Info1::Flags>(d)};
-            else {
+            case app::AdrShort::id:
+              return app::AdrShort{.d = static_cast<uint8_t>(d)};
+            default: return {};
+          }
+        // Channel 2
+        else switch (id) {
+            case app::Pom::id: return app::Pom{.d = static_cast<uint8_t>(d)};
+            case app::Ext::id: {
               app::Ext::Type const type{static_cast<uint8_t>(d >> 8u)};
               return app::Ext{
                 .t = type >= app::Ext::Reserved8 ? type : app::Ext::AddressOnly,
                 .p = static_cast<uint16_t>(
                   d & (type >= app::Ext::Reserved8 ? 0x00FFu : 0x07FFu))};
             }
-          case app::Info::id: return app::Info{};
-          case app::Dyn::id:
-            return app::Dyn{.d = static_cast<uint8_t>(d >> 6u),
-                            .x = static_cast<uint8_t>(d & 0x3Fu)};
-          case app::Xpom::ids[0uz]: [[fallthrough]];
-          case app::Xpom::ids[1uz]: [[fallthrough]];
-          case app::Xpom::ids[2uz]: [[fallthrough]];
-          case app::Xpom::ids[3uz]:
-            return app::Xpom{.ss = static_cast<uint8_t>(id & 0b11u),
-                             .d = {static_cast<uint8_t>(d >> 24u),
-                                   static_cast<uint8_t>(d >> 16u),
-                                   static_cast<uint8_t>(d >> 8u),
-                                   static_cast<uint8_t>(d >> 0u)}};
-          case app::CvAuto::id:
-            return app::CvAuto{.v = static_cast<uint32_t>(d >> 8u),
-                               .d = static_cast<uint8_t>(d)};
-          case app::Block::id: return app::Block{};
-          case app::Search::id:
-            return app::Search{.d = static_cast<uint8_t>(d)};
-          default: return {};
-        }
+            case app::Info::id: return app::Info{};
+            case app::Dyn::id:
+              return app::Dyn{.d = static_cast<uint8_t>(d >> 6u),
+                              .x = static_cast<uint8_t>(d & 0x3Fu)};
+            case app::Xpom::ids[0uz]: [[fallthrough]];
+            case app::Xpom::ids[1uz]: [[fallthrough]];
+            case app::Xpom::ids[2uz]: [[fallthrough]];
+            case app::Xpom::ids[3uz]:
+              return app::Xpom{.ss = static_cast<uint8_t>(id & 0b11u),
+                               .d = {static_cast<uint8_t>(d >> 24u),
+                                     static_cast<uint8_t>(d >> 16u),
+                                     static_cast<uint8_t>(d >> 8u),
+                                     static_cast<uint8_t>(d >> 0u)}};
+            case app::CvAuto::id:
+              return app::CvAuto{.v = static_cast<uint32_t>(d >> 8u),
+                                 .d = static_cast<uint8_t>(d)};
+            case app::Block::id: return app::Block{};
+            default: return {};
+          }
 
       case Address::BasicAccessory: [[fallthrough]];
       case Address::ExtendedAccessory:
-        // app:srq
-        if (!_i) return app::Srq{.d = static_cast<decltype(app::Srq::d)>(data)};
-        // others
+        // Channel 1
+        if (_i < 2uz)
+          return app::Srq{.d = static_cast<decltype(app::Srq::d)>(data)};
+        // Channel 2
         else switch (id) {
             case app::Pom::id: return app::Pom{.d = static_cast<uint8_t>(d)};
             case app::Stat4::id:
@@ -249,47 +258,55 @@ private:
     switch (auto const id{static_cast<uint8_t>(_decoded[_i] >> 2u)};
             _addr.type) {
       case Address::Broadcast:
-        switch (id) {
-          case app::AdrHigh::id: [[fallthrough]];
-          case app::AdrLow::id: [[fallthrough]];
-          case app::Search::id:
-            return {&_decoded[_i], datagram_size<Bits::_12>};
-          default: return {};
-        }
+        // Channel 1
+        if (_i < 2uz) return {};
+        // Channel 2
+        else switch (id) {
+            case app::AdrHigh::id: [[fallthrough]];
+            case app::AdrLow::id: [[fallthrough]];
+            case app::Search::id:
+              return {&_decoded[_i], datagram_size<Bits::_12>};
+            default: return {};
+          }
 
       case Address::BasicLoco: [[fallthrough]];
       case Address::ExtendedLoco:
-        switch (id) {
-          case app::Pom::id: // (double) POM must be at start of channel 2
-            if (_i == channel1_size ||
-                (_i - datagram_size<Bits::_12> == channel1_size &&
-                 _decoded[channel1_size] >> 2u == id))
+        // Channel 1
+        if (_i < 2uz) switch (id) {
+            case app::AdrHigh::id: [[fallthrough]];
+            case app::AdrLow::id: [[fallthrough]];
+            case app::Info1::id: [[fallthrough]];
+            case app::AdrShort::id:
               return {&_decoded[_i], datagram_size<Bits::_12>};
-            return {};
-          case app::AdrHigh::id: [[fallthrough]];
-          case app::AdrLow::id:
-            return {&_decoded[_i], datagram_size<Bits::_12>};
-          // case app::Info1::id: [[fallthrough]];
-          case app::Ext::id:
-            return {&_decoded[_i],
-                    _i < 2u ? datagram_size<Bits::_12>
-                            : datagram_size<Bits::_18>};
-          case app::Info::id: return {&_decoded[_i], datagram_size<Bits::_36>};
-          case app::Dyn::id: return {&_decoded[_i], datagram_size<Bits::_18>};
-          case app::Xpom::ids[0uz]: [[fallthrough]];
-          case app::Xpom::ids[1uz]: [[fallthrough]];
-          case app::Xpom::ids[2uz]: [[fallthrough]];
-          case app::Xpom::ids[3uz]: [[fallthrough]];
-          case app::CvAuto::id: [[fallthrough]];
-          case app::Block::id: return {&_decoded[_i], datagram_size<Bits::_36>};
-          default: return {};
-        }
+            default: return {};
+          }
+        // Channel 2
+        else switch (id) {
+            case app::Pom::id: // (double) POM must be at start of channel 2
+              if (_i == channel1_size ||
+                  (_i - datagram_size<Bits::_12> == channel1_size &&
+                   _decoded[channel1_size] >> 2u == id))
+                return {&_decoded[_i], datagram_size<Bits::_12>};
+              else return {};
+            case app::Ext::id: return {&_decoded[_i], datagram_size<Bits::_18>};
+            case app::Info::id:
+              return {&_decoded[_i], datagram_size<Bits::_36>};
+            case app::Dyn::id: return {&_decoded[_i], datagram_size<Bits::_18>};
+            case app::Xpom::ids[0uz]: [[fallthrough]];
+            case app::Xpom::ids[1uz]: [[fallthrough]];
+            case app::Xpom::ids[2uz]: [[fallthrough]];
+            case app::Xpom::ids[3uz]: [[fallthrough]];
+            case app::CvAuto::id: [[fallthrough]];
+            case app::Block::id:
+              return {&_decoded[_i], datagram_size<Bits::_36>};
+            default: return {};
+          }
 
       case Address::BasicAccessory: [[fallthrough]];
       case Address::ExtendedAccessory:
-        // app:srq
-        if (!_i) return {&_decoded[_i], datagram_size<Bits::_12>};
-        // others
+        // Channel 1
+        if (_i < 2uz) return {&_decoded[_i], datagram_size<Bits::_12>};
+        // Channel 2
         else switch (id) {
             case app::Pom::id: [[fallthrough]];
             case app::Stat4::id: [[fallthrough]];
