@@ -1330,7 +1330,7 @@ private:
                                  bidi::acks[0uz],
                                  bidi::acks[0uz],
                                  bidi::acks[0uz]});
-        return false;
+        return true;
 
       // Write block
       case 0b1111'1100u: break;

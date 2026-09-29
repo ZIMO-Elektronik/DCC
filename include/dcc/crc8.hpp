@@ -60,13 +60,13 @@ constexpr uint8_t crc8(uint8_t byte) { return detail::crc8_lut[byte]; }
 /// The polynomial representations is 0x31.
 ///
 /// \param  bytes Bytes to calculate CRC8 for
+/// \param  init  Initial value
 /// \return CRC8
-constexpr uint8_t crc8(std::span<uint8_t const> bytes) {
+constexpr uint8_t crc8(std::span<uint8_t const> bytes, uint8_t init = 0u) {
   return std::accumulate(
-    cbegin(bytes),
-    cend(bytes),
-    static_cast<uint8_t>(0u),
-    [](uint8_t a, uint8_t b) { return crc8(static_cast<uint8_t>(a ^ b)); });
+    cbegin(bytes), cend(bytes), init, [](uint8_t a, uint8_t b) {
+      return crc8(static_cast<uint8_t>(a ^ b));
+    });
 }
 
 /// CRC8 (Dallas/Maxim)
