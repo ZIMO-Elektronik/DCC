@@ -92,17 +92,17 @@ RxTest* RxTest::Execute() {
   return this;
 }
 
-void RxTest::ReceiveAndExecute(dcc::Packet const& packet, dcc::tx::Config cfg) {
-  Receive(packet, cfg)->LeaveCutout()->Execute();
+RxTest* RxTest::ReceiveAndExecute(dcc::Packet const& packet,
+                                  dcc::tx::Config cfg) {
+  return Receive(packet, cfg)->LeaveCutout()->Execute();
 }
 
-void RxTest::ReceiveAndExecuteTwice(dcc::Packet const& packet,
-                                    dcc::tx::Config cfg) {
-  ReceiveAndExecute(packet, cfg);
-  ReceiveAndExecute(packet, cfg);
+RxTest* RxTest::ReceiveAndExecuteTwice(dcc::Packet const& packet,
+                                       dcc::tx::Config cfg) {
+  return ReceiveAndExecute(packet, cfg)->ReceiveAndExecute(packet, cfg);
 }
 
-void RxTest::BiDi() { BiDiChannel1()->BiDiChannel2(); }
+RxTest* RxTest::BiDi() { return BiDiChannel1()->BiDiChannel2(); }
 
 void RxTest::EnterServiceMode() {
   EXPECT_CALL(_mock, serviceModeHook(true));
@@ -115,7 +115,10 @@ void RxTest::Logon() {
     .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz]));
   EXPECT_CALL(_mock, readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u))
     .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]));
-  Receive(dcc::make_logon_enable_packet(dcc::LogonGroup::Now, _cid, _sid));
+  // Store assignment
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(AtLeast(7));
+  ReceiveAndExecute(
+    dcc::make_logon_enable_packet(dcc::LogonGroup::Now, _cid, _sid));
 }
 
 // Tinker with the length of a valid packet

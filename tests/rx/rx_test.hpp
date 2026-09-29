@@ -27,12 +27,13 @@ struct RxTest : ::testing::Test {
   RxTest* BiDiChannel2();
   RxTest* LeaveCutout();
   RxTest* Execute();
+  RxTest* ReceiveAndExecute(dcc::Packet const& packet,
+                            dcc::tx::Config cfg = {});
+  RxTest* ReceiveAndExecuteTwice(dcc::Packet const& packet,
+                                 dcc::tx::Config cfg = {});
+  RxTest* BiDi();
 
   // Helpers
-  void ReceiveAndExecute(dcc::Packet const& packet, dcc::tx::Config cfg = {});
-  void ReceiveAndExecuteTwice(dcc::Packet const& packet,
-                              dcc::tx::Config cfg = {});
-  void BiDi();
   void EnterServiceMode();
   void Logon();
   dcc::Packet TinkerWithPacketLength(dcc::Packet packet) const;

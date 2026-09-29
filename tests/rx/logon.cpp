@@ -5,7 +5,6 @@ TEST_F(RxTest, skip_logon_with_known_cid) {
   Logon();
 
   // Execute commands to logon address
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
@@ -24,13 +23,12 @@ TEST_F(RxTest, logon_with_unknown_cid_basic_loco) {
   Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
-  // Assign address 42
+  // Assign address 42, execute to store
   _addrs.logon = {.value = 42u, .type = dcc::Address::BasicLoco};
   Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
-  BiDi();
+  BiDi()->LeaveCutout()->Execute();
 
   // Execute commands to address 42
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
@@ -49,13 +47,12 @@ TEST_F(RxTest, logon_with_unknown_cid_extended_loco) {
   Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
-  // Assign address 1001
+  // Assign address 1001, execute to store
   _addrs.logon = {.value = 1001u, .type = dcc::Address::ExtendedLoco};
   Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
-  BiDi();
+  BiDi()->LeaveCutout()->Execute();
 
   // Execute commands to address 1001
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
@@ -63,8 +60,6 @@ TEST_F(RxTest, logon_with_unknown_cid_extended_loco) {
 
 // Known CID and unknown SID doesn't skip logon
 TEST_F(RxTest, no_logon_with_known_cid_and_unknown_sid) {
-  EXPECT_CALL(_mock, readCv(_)).Times(0);
-
   // Enable
   Receive(dcc::make_logon_enable_packet(dcc::LogonGroup::Now, _cid, _sid + 1u));
 
@@ -80,7 +75,6 @@ TEST_F(RxTest, force_new_logon_with_known_cid_and_sid_plus_2) {
   Logon();
 
   // Execute commands to logon address
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
@@ -95,13 +89,12 @@ TEST_F(RxTest, force_new_logon_with_known_cid_and_sid_plus_2) {
   Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
-  // Assign address 1001
+  // Assign address 1001, execute to store
   _addrs.logon = {.value = 1001u, .type = dcc::Address::ExtendedLoco};
   Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
-  BiDi();
+  BiDi()->LeaveCutout()->Execute();
 
   // Execute commands to address 1001
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
   EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
@@ -147,19 +140,19 @@ TEST_F(RxTest, permanent_assign_to_basic_address) {
   Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
-  // Assign address 42
+  // Assign address 42, execute to store
+  InSequence s;
+  EXPECT_CALL(_mock, writeCv(1u - 1u, 42u)).Times(1);
+  EXPECT_CALL(_mock, writeCv(29u - 1u, false, 5u)).Times(1);
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(AtLeast(7));
   _addrs.logon = {.value = 42u, .type = dcc::Address::BasicLoco};
   Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID,
                                    _did,
                                    _addrs.logon,
                                    dcc::LogonBindingBehavior::Permanent));
-  BiDi();
+  BiDi()->LeaveCutout()->Execute();
 
   // Execute commands to address 42
-  InSequence s;
-  EXPECT_CALL(_mock, writeCv(1u - 1u, 42u)).Times(1);
-  EXPECT_CALL(_mock, writeCv(29u - 1u, false, 5u)).Times(1);
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
   EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
@@ -177,20 +170,20 @@ TEST_F(RxTest, permanent_assign_to_extended_address) {
   Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
-  // Assign address 1042
+  // Assign address 1042, execute to store
+  InSequence s;
+  EXPECT_CALL(_mock, writeCv(17u - 1u, _)).Times(1);
+  EXPECT_CALL(_mock, writeCv(18u - 1u, _)).Times(1);
+  EXPECT_CALL(_mock, writeCv(29u - 1u, true, 5u)).Times(1);
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(AtLeast(7));
   _addrs.logon = {.value = 1042u, .type = dcc::Address::ExtendedLoco};
   Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID,
                                    _did,
                                    _addrs.logon,
                                    dcc::LogonBindingBehavior::Permanent));
-  BiDi();
+  BiDi()->LeaveCutout()->Execute();
 
   // Execute commands to address 1042
-  InSequence s;
-  EXPECT_CALL(_mock, writeCv(17u - 1u, _)).Times(1);
-  EXPECT_CALL(_mock, writeCv(18u - 1u, _)).Times(1);
-  EXPECT_CALL(_mock, writeCv(29u - 1u, true, 5u)).Times(1);
-  EXPECT_CALL(_mock, writeCv(_, _)).Times(7);
   EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
   EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));

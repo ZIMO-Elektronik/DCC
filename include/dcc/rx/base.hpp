@@ -303,7 +303,6 @@ private:
   bool executeThreadMode(this Decoder auto&& self) {
     if (self.packetEnd() || empty(self._deques.packet)) return false;
     self.adr();              // Prepare address broadcasts for BiDi channel 1
-    self.logonStore();       // Store logon information if necessary
     self.updateQos();        // Update quality of service
     self.updateTimePoints(); // Update time points for tip-off search
     auto const& packet{self._deques.packet.front()};
@@ -426,7 +425,7 @@ private:
     switch (bytes[0uz] & 0xF0u) {
       case 0b1111'0000u: return self.logonEnable(bytes, handler_mode);
       case 0b1101'0000u: return self.logonSelect(bytes);
-      case 0b1110'0000u: return self.logonAssign(bytes);
+      case 0b1110'0000u: return self.logonAssign(bytes, handler_mode);
     }
 
     return true;
@@ -1230,9 +1229,10 @@ private:
   bool logonEnable(this Decoder auto&& self,
                    std::span<uint8_t const> bytes,
                    bool handler_mode) {
-    // Check error conditions if we're not in handler mode
-    if (!handler_mode && self._counts.decoder_unique > 3uz) {
-      self.error();
+    // In thread mode check for assignment and error
+    if (!handler_mode) {
+      self.logonStore();
+      if (self._counts.decoder_unique > 3uz) self.error();
       return true;
     }
 
@@ -1259,8 +1259,8 @@ private:
           static_cast<uint8_t>(self._ids.session.back() -
                                self._ids.session.front()) <=
             self._logon_assigned}) {
-      self._logon_selected = self._logon_assigned = self._logon_store = true;
-      return true;
+      self._logon_selected = self._logon_assigned = true;
+      return false; // Keep packet for storing assignment
     }
     // ...otherwise force new logon
     else {
@@ -1342,6 +1342,7 @@ private:
       default: break;
     }
 
+    // Not supported
     _deques.logon.push_back({bidi::nak,
                              bidi::nak,
                              bidi::nak,
@@ -1355,40 +1356,49 @@ private:
 
   /// Logon assign
   ///
-  /// \param  bytes Raw bytes
-  /// \retval true  Command executed
-  /// \retval false Command not executed
-  bool logonAssign(std::span<uint8_t const> bytes) {
+  /// \param  bytes         Raw bytes
+  /// \param  handler_mode  Handler mode
+  /// \retval true          Command executed
+  /// \retval false         Command not executed
+  bool logonAssign(this Decoder auto&& self,
+                   std::span<uint8_t const> bytes,
+                   bool handler_mode) {
+    // In thread mode check for assignment
+    if (!handler_mode) {
+      self.logonStore();
+      return true;
+    }
+
     if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
-        !std::ranges::equal(did, _ids.decoder))
+        !std::ranges::equal(did, self._ids.decoder))
       return true;
 
     auto const addr{decode_logon_address(cbegin(bytes) + 6)};
 
     // Don't accept assign
     if (addr.type != Address::BasicLoco && addr.type != Address::ExtendedLoco) {
-      _deques.logon.clear();
-      _deques.logon.push_back({bidi::nak,
-                               bidi::nak,
-                               bidi::nak,
-                               bidi::nak,
-                               bidi::nak,
-                               bidi::nak,
-                               bidi::nak,
-                               bidi::nak});
+      self._deques.logon.clear();
+      self._deques.logon.push_back({bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak});
       return true;
     }
 
     // Accept assign
-    _logon_assigned = _logon_store = true;
-    _addrs.consist = 0u;
-    _addrs.logon = addr;
+    self._logon_assigned = true;
+    self._addrs.consist = 0u;
+    self._addrs.logon = addr;
     // ... and permanent
     if (auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
         bb == LogonBindingBehavior::Permanent && addr)
-      _addrs.primary = addr;
-    _deques.logon.clear();
-    _deques.logon.push_back(bidi::make_app_decoder_state_datagram(
+      self._addrs.primary = addr;
+    self._deques.logon.clear();
+    self._deques.logon.push_back(bidi::make_app_decoder_state_datagram(
       0xFFu,           // Change flags
       0u,              // Change count
       ztl::mask<7u,    // app:dyn ID7:27
@@ -1400,7 +1410,9 @@ private:
                 3u,    // SDF
                 2u,    // Binary state control long
                 1u>)); // Binary state control short
-    return true;
+
+    // Keep packet for storing assignment
+    return false;
   }
 
   /// Add adr datagrams
@@ -1514,8 +1526,7 @@ private:
   /// cutout. This is so time-critical that logon information can only be stored
   /// asynchronously...
   void logonStore(this Decoder auto&& self) {
-    if (!self._logon_store) return;
-    self._logon_store = false;
+    if (!self._logon_assigned) return;
 
     // Encode logon address
     std::array<uint8_t, 2uz> logon_addr_cvs{};
@@ -1667,7 +1678,6 @@ private:
   bool _logon_enabled{};
   bool _logon_selected{};
   bool _logon_assigned{};
-  bool _logon_store{};
 
   bool _enabled : 1 {};
   bool _cvs_locked : 1 {};
