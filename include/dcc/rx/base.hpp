@@ -310,7 +310,7 @@ private:
     auto const addr{decode_address(packet)};
     auto const retval{self.serviceMode()
                         ? self.executeService()
-                        : self.executeOperations(addr, packet)};
+                        : self.executeOperations(addr, packet, false)};
     self._deques.packet.pop_front();
     return retval;
   }
@@ -325,7 +325,7 @@ private:
   bool executeOperations(this Decoder auto&& self,
                          Address addr,
                          Packet const& packet,
-                         bool handler_mode = false) {
+                         bool handler_mode) {
     switch (addr.type) {
       case Address::Broadcast: [[fallthrough]];
       case Address::BasicLoco:
@@ -423,11 +423,8 @@ private:
                              bool handler_mode) {
     if (!self._logon_enabled) return true;
 
-    // Check error conditions if we're not in handler mode
-    if (!handler_mode && self._counts.decoder_unique > 3uz) self.error();
-
     switch (bytes[0uz] & 0xF0u) {
-      case 0b1111'0000u: return self.logonEnable(bytes);
+      case 0b1111'0000u: return self.logonEnable(bytes, handler_mode);
       case 0b1101'0000u: return self.logonSelect(bytes);
       case 0b1110'0000u: return self.logonAssign(bytes);
     }
@@ -1226,56 +1223,67 @@ private:
 
   /// Logon enable
   ///
-  /// \param  bytes Raw bytes
-  /// \retval true  Command executed
-  /// \retval false Command not executed
-  bool logonEnable(std::span<uint8_t const> bytes) {
+  /// \param  bytes         Raw bytes
+  /// \param  handler_mode  Handler mode
+  /// \retval true          Command executed
+  /// \retval false         Command not executed
+  bool logonEnable(this Decoder auto&& self,
+                   std::span<uint8_t const> bytes,
+                   bool handler_mode) {
+    // Check error conditions if we're not in handler mode
+    if (!handler_mode && self._counts.decoder_unique > 3uz) {
+      self.error();
+      return true;
+    }
+
     auto const cid{data2uint16(&bytes[1uz])};
     auto const sid{bytes[3uz]};
 
     // Already got selected and CID/SID didn't change
-    if (_logon_selected && _ids.cs.back() == cid && _ids.session.back() == sid)
+    if (self._logon_selected && self._ids.cs.back() == cid &&
+        self._ids.session.back() == sid)
       return true;
     // ...otherwise clear selected
-    else _logon_selected = false;
+    else self._logon_selected = false;
 
     // Store new CID and SID
-    _ids.cs.back() = cid;
-    _ids.session.back() = sid;
+    self._ids.cs.back() = cid;
+    self._ids.session.back() = sid;
 
     // Skip logon if
     // - CIDs are equal and
     // - SIDs are equal if not yet logon assigned or
     // - difference between SIDs is <=1 if already logon assigned
     if ([[maybe_unused]] auto const skip{
-          _ids.cs.back() == _ids.cs.front() &&
-          static_cast<uint8_t>(_ids.session.back() - _ids.session.front()) <=
-            _logon_assigned}) {
-      _logon_selected = _logon_assigned = _logon_store = true;
+          self._ids.cs.back() == self._ids.cs.front() &&
+          static_cast<uint8_t>(self._ids.session.back() -
+                               self._ids.session.front()) <=
+            self._logon_assigned}) {
+      self._logon_selected = self._logon_assigned = self._logon_store = true;
       return true;
     }
     // ...otherwise force new logon
     else {
-      _logon_assigned = false;
-      _addrs.logon = {};
+      self._logon_assigned = false;
+      self._addrs.logon = {};
     }
 
     switch ([[maybe_unused]] auto const gg{
       static_cast<LogonGroup>(bytes[0uz] & 0b11u)}) {
-      case LogonGroup::All: [[fallthrough]];              // All decoders
-      case LogonGroup::Loco: break;                       // Loco decoders
-      case LogonGroup::Acc: return true;                  // Accessory decoder
-      case LogonGroup::Now: _backoffs.logon.now(); break; // No backoff
+      case LogonGroup::All: [[fallthrough]]; // All decoders
+      case LogonGroup::Loco: break;          // Loco decoders
+      case LogonGroup::Acc: return true;     // Accessory decoder
+      case LogonGroup::Now: self._backoffs.logon.now(); break; // No backoff
     }
 
-    if (_backoffs.logon) return true;
-    _deques.logon.clear();
-    _deques.logon.push_back(bidi::make_app_decoder_unique_datagram(
-      DCC_MANUFACTURER_ID, _ids.decoder));
+    if (self._backoffs.logon) return true;
+    self._deques.logon.clear();
+    self._deques.logon.push_back(bidi::make_app_decoder_unique_datagram(
+      DCC_MANUFACTURER_ID, self._ids.decoder));
 
     // Return false after 3 app:decoder_unique datagrams. This keeps the packet
     // in the deque to be picked up and executed in thread mode.
-    return ++_counts.decoder_unique <= 3uz;
+    return ++self._counts.decoder_unique <= 3uz;
   }
 
   /// Logon select
@@ -1288,46 +1296,60 @@ private:
         _logon_assigned || !std::ranges::equal(did, _ids.decoder))
       return true;
 
+    _deques.logon.clear();
+
     switch (bytes[6uz]) {
       // ShortInfo
-      case 0b1111'1111u: break;
-      // Read block
-      case 0b1111'1110u: [[fallthrough]];
-      // Write block
-      case 0b1111'1100u: [[fallthrough]];
-      // Set decoder internal status
-      case 0b1111'1011u: [[fallthrough]];
-      // Reserved
-      default:
-        _deques.logon.clear();
-        _deques.logon.push_back({bidi::nak,
-                                 bidi::nak,
-                                 bidi::nak,
-                                 bidi::nak,
-                                 bidi::nak,
-                                 bidi::nak,
-                                 bidi::nak,
-                                 bidi::nak});
+      case 0b1111'1111u:
+        _logon_selected = true;
+        std::array<uint8_t, 5uz> short_info;
+        encode_logon_address(_addrs.primary, begin(short_info));
+        short_info[0uz] = static_cast<uint8_t>(
+          ztl::mask<7u> | short_info[0uz]); // Special format
+        short_info[2uz] = 63u;              // Highest function
+        short_info[3uz] = ztl::mask<6u>;    // XPOM
+        short_info[4uz] = 0u;
+        _deques.logon.push_back(
+          bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
+            static_cast<uint64_t>(short_info[0uz]) << 40u |
+            static_cast<uint64_t>(short_info[1uz]) << 32u |
+            static_cast<uint32_t>(short_info[2uz]) << 24u |
+            static_cast<uint32_t>(short_info[3uz]) << 16u |
+            static_cast<uint32_t>(short_info[4uz]) << 8u |
+            static_cast<uint32_t>(crc8(short_info)) << 0u)));
         return true;
+
+      // Read block
+      case 0b1111'1110u:
+        if (bytes[7uz] >= 8uz) break;
+        _deques.logon.push_back({bidi::acks[0uz],
+                                 bidi::acks[0uz],
+                                 bidi::acks[0uz],
+                                 bidi::acks[0uz],
+                                 bidi::acks[0uz],
+                                 bidi::acks[0uz],
+                                 bidi::acks[0uz],
+                                 bidi::acks[0uz]});
+        return false;
+
+      // Write block
+      case 0b1111'1100u: break;
+
+      // Set decoder internal status
+      case 0b1111'1011u: break;
+
+      // Reserved
+      default: break;
     }
 
-    _logon_selected = true;
-    std::array<uint8_t, 5uz> short_info;
-    encode_logon_address(_addrs.primary, begin(short_info));
-    short_info[0uz] =
-      static_cast<uint8_t>(ztl::mask<7u> | short_info[0uz]); // Special format
-    short_info[2uz] = 63u;                                   // Highest function
-    short_info[3uz] = ztl::mask<6u>;                         // XPOM
-    short_info[4uz] = 0u;
-    _deques.logon.clear();
-    _deques.logon.push_back(
-      bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
-        static_cast<uint64_t>(short_info[0uz]) << 40u |
-        static_cast<uint64_t>(short_info[1uz]) << 32u |
-        static_cast<uint32_t>(short_info[2uz]) << 24u |
-        static_cast<uint32_t>(short_info[3uz]) << 16u |
-        static_cast<uint32_t>(short_info[4uz]) << 8u |
-        static_cast<uint32_t>(crc8(short_info)) << 0u)));
+    _deques.logon.push_back({bidi::nak,
+                             bidi::nak,
+                             bidi::nak,
+                             bidi::nak,
+                             bidi::nak,
+                             bidi::nak,
+                             bidi::nak,
+                             bidi::nak});
     return true;
   }
 
