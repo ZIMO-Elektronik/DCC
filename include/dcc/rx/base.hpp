@@ -420,14 +420,11 @@ private:
   bool executeAutomaticLogon(this Decoder auto&& self,
                              std::span<uint8_t const> bytes,
                              bool handler_mode) {
-    if (!self._logon_enabled) return true;
-
-    switch (bytes[0uz] & 0xF0u) {
-      case 0b1111'0000u: return self.logonEnable(bytes, handler_mode);
-      case 0b1101'0000u: return self.logonSelect(bytes);
-      case 0b1110'0000u: return self.logonAssign(bytes, handler_mode);
-    }
-
+    if (self._logon_enabled) switch (bytes[0uz] & 0xF0u) {
+        case 0b1111'0000u: return self.executeLogonEnable(bytes, handler_mode);
+        case 0b1101'0000u: return self.executeLogonSelect(bytes, handler_mode);
+        case 0b1110'0000u: return self.executeLogonAssign(bytes, handler_mode);
+      }
     return true;
   }
 
@@ -886,6 +883,219 @@ private:
     return true;
   }
 
+  /// Execute logon enable
+  ///
+  /// \param  bytes         Raw bytes
+  /// \param  handler_mode  Handler mode
+  /// \retval true          Command executed
+  /// \retval false         Command not executed
+  bool executeLogonEnable(this Decoder auto&& self,
+                          std::span<uint8_t const> bytes,
+                          bool handler_mode) {
+    if (size(bytes) != 4uz + sizeof(_checksum)) return true;
+
+    // In thread mode check for assignment and error
+    if (!handler_mode) {
+      self.logonStore();
+      if (self._counts.decoder_unique > 3uz) self.error();
+      return true;
+    }
+
+    auto const cid{data2uint16(&bytes[1uz])};
+    auto const sid{bytes[3uz]};
+
+    // Already got selected and CID/SID didn't change
+    if (self._logon_selected && self._ids.cs.back() == cid &&
+        self._ids.session.back() == sid)
+      return true;
+    // ...otherwise clear selected
+    else self._logon_selected = false;
+
+    // Store new CID and SID
+    self._ids.cs.back() = cid;
+    self._ids.session.back() = sid;
+
+    // Skip logon if
+    // - CIDs are equal and
+    // - SIDs are equal if not yet logon assigned or
+    // - difference between SIDs is <=1 if already logon assigned
+    if ([[maybe_unused]] auto const skip{
+          self._ids.cs.back() == self._ids.cs.front() &&
+          static_cast<uint8_t>(self._ids.session.back() -
+                               self._ids.session.front()) <=
+            self._logon_assigned}) {
+      self._logon_selected = self._logon_assigned = true;
+      return false; // Keep packet for storing assignment
+    }
+    // ...otherwise force new logon
+    else {
+      self._logon_assigned = false;
+      self._addrs.logon = {};
+    }
+
+    switch ([[maybe_unused]] auto const gg{
+      static_cast<LogonGroup>(bytes[0uz] & 0b11u)}) {
+      case LogonGroup::All: [[fallthrough]]; // All decoders
+      case LogonGroup::Loco: break;          // Loco decoders
+      case LogonGroup::Acc: return true;     // Accessory decoder
+      case LogonGroup::Now: self._backoffs.logon.now(); break; // No backoff
+    }
+
+    if (self._backoffs.logon) return true;
+    self._deques.logon.clear();
+    self._deques.logon.push_back(bidi::make_app_decoder_unique_datagram(
+      DCC_MANUFACTURER_ID, self._ids.decoder));
+
+    // Return false after 3 app:decoder_unique datagrams. This keeps the packet
+    // in the deque to be picked up and executed in thread mode.
+    return ++self._counts.decoder_unique <= 3uz;
+  }
+
+  /// Execute logon select
+  ///
+  /// \param  bytes         Raw bytes
+  /// \param  handler_mode  Handler mode
+  /// \retval true          Command executed
+  /// \retval false         Command not executed
+  bool executeLogonSelect(this Decoder auto&& self,
+                          std::span<uint8_t const> bytes,
+                          bool handler_mode) {
+    if (size(bytes) != 7uz + sizeof(_checksum) + sizeof(_checksum) &&
+        size(bytes) != 8uz + sizeof(_checksum) + sizeof(_checksum) &&
+        size(bytes) != 12uz + sizeof(_checksum) + sizeof(_checksum))
+      return true;
+
+    if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
+        self._logon_assigned || !std::ranges::equal(did, self._ids.decoder))
+      return true;
+
+    self._deques.logon.clear();
+
+    switch (bytes[6uz]) {
+      // ShortInfo
+      case 0b1111'1111u:
+        self._logon_selected = true;
+        std::array<uint8_t, 5uz> short_info;
+        encode_logon_address(self._addrs.primary, begin(short_info));
+        short_info[0uz] = static_cast<uint8_t>(
+          ztl::mask<7u> | short_info[0uz]); // Special format
+        short_info[2uz] = 63u;              // Highest function
+        short_info[3uz] = ztl::mask<6u>;    // XPOM
+        short_info[4uz] = 0u;
+        self._deques.logon.push_back(
+          bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
+            static_cast<uint64_t>(short_info[0uz]) << 40u |
+            static_cast<uint64_t>(short_info[1uz]) << 32u |
+            static_cast<uint32_t>(short_info[2uz]) << 24u |
+            static_cast<uint32_t>(short_info[3uz]) << 16u |
+            static_cast<uint32_t>(short_info[4uz]) << 8u |
+            static_cast<uint32_t>(crc8(short_info)) << 0u)));
+        return true;
+
+      // Read block
+      case 0b1111'1110u:
+        // In thread mode
+        if (!handler_mode) {
+          return true;
+        }
+        // ...
+        else {
+          self._deques.logon.push_back({bidi::acks[0uz],
+                                        bidi::acks[0uz],
+                                        bidi::acks[0uz],
+                                        bidi::acks[0uz],
+                                        bidi::acks[0uz],
+                                        bidi::acks[0uz],
+                                        bidi::acks[0uz],
+                                        bidi::acks[0uz]});
+          return false;
+        }
+
+      // Write block
+      case 0b1111'1100u: break;
+
+      // Set decoder internal status
+      case 0b1111'1011u: break;
+
+      // Reserved
+      default: break;
+    }
+
+    // Not supported
+    self._deques.logon.push_back({bidi::nak,
+                                  bidi::nak,
+                                  bidi::nak,
+                                  bidi::nak,
+                                  bidi::nak,
+                                  bidi::nak,
+                                  bidi::nak,
+                                  bidi::nak});
+    return true;
+  }
+
+  /// Execute logon assign
+  ///
+  /// \param  bytes         Raw bytes
+  /// \param  handler_mode  Handler mode
+  /// \retval true          Command executed
+  /// \retval false         Command not executed
+  bool executeLogonAssign(this Decoder auto&& self,
+                          std::span<uint8_t const> bytes,
+                          bool handler_mode) {
+    if (size(bytes) != 8uz + sizeof(_checksum) + sizeof(_checksum)) return true;
+
+    // In thread mode check for assignment
+    if (!handler_mode) {
+      self.logonStore();
+      return true;
+    }
+
+    if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
+        !std::ranges::equal(did, self._ids.decoder))
+      return true;
+
+    auto const addr{decode_logon_address(cbegin(bytes) + 6)};
+
+    // Don't accept assign
+    if (addr.type != Address::BasicLoco && addr.type != Address::ExtendedLoco) {
+      self._deques.logon.clear();
+      self._deques.logon.push_back({bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak,
+                                    bidi::nak});
+      return true;
+    }
+
+    // Accept assign
+    self._logon_assigned = true;
+    self._addrs.consist = 0u;
+    self._addrs.logon = addr;
+    // ... and permanent
+    if (auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
+        bb == LogonBindingBehavior::Permanent && addr)
+      self._addrs.primary = addr;
+    self._deques.logon.clear();
+    self._deques.logon.push_back(bidi::make_app_decoder_state_datagram(
+      0xFFu,           // Change flags
+      0u,              // Change count
+      ztl::mask<7u,    // app:dyn ID7:27
+                6u,    // app:dyn ID7:26
+                4u,    // app:dyn ID7:7
+                3u>,   // app:dyn ID7:0-1
+      ztl::mask<6u,    // Special operating modes
+                4u,    // CV access short
+                3u,    // SDF
+                2u,    // Binary state control long
+                1u>)); // Binary state control short
+
+    // Keep packet for storing assignment
+    return false;
+  }
+
   /// CV byte and bit verify
   ///
   /// \param  cv_addr CV address
@@ -1061,6 +1271,9 @@ private:
     self.xpomVerifyImpl(ss, cv_addr);
   }
 
+  ///
+  void blockRead(this Decoder auto&& self, uint32_t cv_addr) {}
+
   /// Register mode
   ///
   /// \param  bytes Raw bytes
@@ -1218,201 +1431,6 @@ private:
         static_cast<uint8_t>(std::chrono::duration_cast<std::chrono::seconds>(
                                _tps.search - _tps.init)
                                .count())));
-  }
-
-  /// Logon enable
-  ///
-  /// \param  bytes         Raw bytes
-  /// \param  handler_mode  Handler mode
-  /// \retval true          Command executed
-  /// \retval false         Command not executed
-  bool logonEnable(this Decoder auto&& self,
-                   std::span<uint8_t const> bytes,
-                   bool handler_mode) {
-    // In thread mode check for assignment and error
-    if (!handler_mode) {
-      self.logonStore();
-      if (self._counts.decoder_unique > 3uz) self.error();
-      return true;
-    }
-
-    auto const cid{data2uint16(&bytes[1uz])};
-    auto const sid{bytes[3uz]};
-
-    // Already got selected and CID/SID didn't change
-    if (self._logon_selected && self._ids.cs.back() == cid &&
-        self._ids.session.back() == sid)
-      return true;
-    // ...otherwise clear selected
-    else self._logon_selected = false;
-
-    // Store new CID and SID
-    self._ids.cs.back() = cid;
-    self._ids.session.back() = sid;
-
-    // Skip logon if
-    // - CIDs are equal and
-    // - SIDs are equal if not yet logon assigned or
-    // - difference between SIDs is <=1 if already logon assigned
-    if ([[maybe_unused]] auto const skip{
-          self._ids.cs.back() == self._ids.cs.front() &&
-          static_cast<uint8_t>(self._ids.session.back() -
-                               self._ids.session.front()) <=
-            self._logon_assigned}) {
-      self._logon_selected = self._logon_assigned = true;
-      return false; // Keep packet for storing assignment
-    }
-    // ...otherwise force new logon
-    else {
-      self._logon_assigned = false;
-      self._addrs.logon = {};
-    }
-
-    switch ([[maybe_unused]] auto const gg{
-      static_cast<LogonGroup>(bytes[0uz] & 0b11u)}) {
-      case LogonGroup::All: [[fallthrough]]; // All decoders
-      case LogonGroup::Loco: break;          // Loco decoders
-      case LogonGroup::Acc: return true;     // Accessory decoder
-      case LogonGroup::Now: self._backoffs.logon.now(); break; // No backoff
-    }
-
-    if (self._backoffs.logon) return true;
-    self._deques.logon.clear();
-    self._deques.logon.push_back(bidi::make_app_decoder_unique_datagram(
-      DCC_MANUFACTURER_ID, self._ids.decoder));
-
-    // Return false after 3 app:decoder_unique datagrams. This keeps the packet
-    // in the deque to be picked up and executed in thread mode.
-    return ++self._counts.decoder_unique <= 3uz;
-  }
-
-  /// Logon select
-  ///
-  /// \param  bytes Raw bytes
-  /// \retval true  Command executed
-  /// \retval false Command not executed
-  bool logonSelect(std::span<uint8_t const> bytes) {
-    if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
-        _logon_assigned || !std::ranges::equal(did, _ids.decoder))
-      return true;
-
-    _deques.logon.clear();
-
-    switch (bytes[6uz]) {
-      // ShortInfo
-      case 0b1111'1111u:
-        _logon_selected = true;
-        std::array<uint8_t, 5uz> short_info;
-        encode_logon_address(_addrs.primary, begin(short_info));
-        short_info[0uz] = static_cast<uint8_t>(
-          ztl::mask<7u> | short_info[0uz]); // Special format
-        short_info[2uz] = 63u;              // Highest function
-        short_info[3uz] = ztl::mask<6u>;    // XPOM
-        short_info[4uz] = 0u;
-        _deques.logon.push_back(
-          bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
-            static_cast<uint64_t>(short_info[0uz]) << 40u |
-            static_cast<uint64_t>(short_info[1uz]) << 32u |
-            static_cast<uint32_t>(short_info[2uz]) << 24u |
-            static_cast<uint32_t>(short_info[3uz]) << 16u |
-            static_cast<uint32_t>(short_info[4uz]) << 8u |
-            static_cast<uint32_t>(crc8(short_info)) << 0u)));
-        return true;
-
-      // Read block
-      case 0b1111'1110u:
-        if (bytes[7uz] >= 8uz) break;
-        _deques.logon.push_back({bidi::acks[0uz],
-                                 bidi::acks[0uz],
-                                 bidi::acks[0uz],
-                                 bidi::acks[0uz],
-                                 bidi::acks[0uz],
-                                 bidi::acks[0uz],
-                                 bidi::acks[0uz],
-                                 bidi::acks[0uz]});
-        return true;
-
-      // Write block
-      case 0b1111'1100u: break;
-
-      // Set decoder internal status
-      case 0b1111'1011u: break;
-
-      // Reserved
-      default: break;
-    }
-
-    // Not supported
-    _deques.logon.push_back({bidi::nak,
-                             bidi::nak,
-                             bidi::nak,
-                             bidi::nak,
-                             bidi::nak,
-                             bidi::nak,
-                             bidi::nak,
-                             bidi::nak});
-    return true;
-  }
-
-  /// Logon assign
-  ///
-  /// \param  bytes         Raw bytes
-  /// \param  handler_mode  Handler mode
-  /// \retval true          Command executed
-  /// \retval false         Command not executed
-  bool logonAssign(this Decoder auto&& self,
-                   std::span<uint8_t const> bytes,
-                   bool handler_mode) {
-    // In thread mode check for assignment
-    if (!handler_mode) {
-      self.logonStore();
-      return true;
-    }
-
-    if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
-        !std::ranges::equal(did, self._ids.decoder))
-      return true;
-
-    auto const addr{decode_logon_address(cbegin(bytes) + 6)};
-
-    // Don't accept assign
-    if (addr.type != Address::BasicLoco && addr.type != Address::ExtendedLoco) {
-      self._deques.logon.clear();
-      self._deques.logon.push_back({bidi::nak,
-                                    bidi::nak,
-                                    bidi::nak,
-                                    bidi::nak,
-                                    bidi::nak,
-                                    bidi::nak,
-                                    bidi::nak,
-                                    bidi::nak});
-      return true;
-    }
-
-    // Accept assign
-    self._logon_assigned = true;
-    self._addrs.consist = 0u;
-    self._addrs.logon = addr;
-    // ... and permanent
-    if (auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
-        bb == LogonBindingBehavior::Permanent && addr)
-      self._addrs.primary = addr;
-    self._deques.logon.clear();
-    self._deques.logon.push_back(bidi::make_app_decoder_state_datagram(
-      0xFFu,           // Change flags
-      0u,              // Change count
-      ztl::mask<7u,    // app:dyn ID7:27
-                6u,    // app:dyn ID7:26
-                4u,    // app:dyn ID7:7
-                3u>,   // app:dyn ID7:0-1
-      ztl::mask<6u,    // Special operating modes
-                4u,    // CV access short
-                3u,    // SDF
-                2u,    // Binary state control long
-                1u>)); // Binary state control short
-
-    // Keep packet for storing assignment
-    return false;
   }
 
   /// Add adr datagrams
