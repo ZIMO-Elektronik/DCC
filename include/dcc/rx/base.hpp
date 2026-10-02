@@ -39,6 +39,10 @@
 #include "east_west.hpp"
 #include "timing.hpp"
 
+static_assert(static_cast<size_t>(
+                std::ceil((256 + std::ceil(256.0 / 31.0) * 2) / 6.0)) == 46uz);
+static_assert(static_cast<uint32_t>(std::pow(256.0, 2.0)) == 256u * 256u);
+
 namespace dcc::rx {
 
 /// Base for receiving DCC
@@ -1312,10 +1316,6 @@ private:
 
     // CRC
     uint8_t crc;
-
-    static_assert(static_cast<size_t>(std::ceil(
-                    (256 + std::ceil(256.0 / 31.0) * 2) / 6.0)) == 46uz);
-    static_assert(static_cast<uint32_t>(std::pow(256.0, 2.0)) == 256u * 256u);
 
     for (;;) {
       uint8_t byte;
