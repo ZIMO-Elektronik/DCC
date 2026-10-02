@@ -996,42 +996,11 @@ private:
       case 0b1111'1110u:
         // In thread mode
         if (!handler_mode) {
-          switch (bytes[7uz]) {
-            case 0u:
-              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 0u * 256u, 31uz);
-              break;
-            case 1u:
-              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 1u * 256u, 32uz);
-              break;
-            case 2u:
-              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 3u * 256u, 28uz);
-              break;
-            case 3u:
-              self.dataSpaceRead(static_cast<uint32_t>(bytes[8uz]) << 16u |
-                                   static_cast<uint32_t>(bytes[9uz]) << 8u |
-                                   static_cast<uint32_t>(bytes[10uz]) << 0u,
-                                 bytes[11uz]);
-              break;
-            case 4u:
-              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 4u * 256u, 256uz);
-              break;
-            case 5u:
-              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 5u * 256u,
-                                 63uz + 63uz);
-              break;
-            case 6u:
-              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 6u * 256u,
-                                 41uz + 41uz + 21uz + 21uz);
-              break;
-            case 7u:
-              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 7u * 256u,
-                                 16uz + 16uz + 92uz);
-              break;
-          }
+          self.dataSpaceRead(bytes);
           return true;
         }
         // ...
-        else {
+        else if (bytes[7uz] < 8uz) {
           self._deques.logon.push_back({bidi::acks[0uz],
                                         bidi::acks[0uz],
                                         bidi::acks[0uz],
@@ -1042,6 +1011,7 @@ private:
                                         bidi::acks[0uz]});
           return false;
         }
+        break;
 
       // Write block
       case 0b1111'1100u: break;
@@ -1305,11 +1275,86 @@ private:
 
   ///
   void dataSpaceRead([[maybe_unused]] this Decoder auto&& self,
-                     [[maybe_unused]] uint32_t cv_addr,
-                     [[maybe_unused]] size_t count) {
-    /*
-    So... das hier wird jetzt außer Oasch nur Oasch
-    */
+                     std::span<uint8_t const> bytes) {
+    static constexpr std::array data_space_sizes{
+      31uz,                      // Extended capabilities
+      32uz,                      // SpaceInfo
+      28uz,                      // ShortGUI
+      31uz,                      // CV-Read
+      256uz,                     // Icons
+      63uz + 63uz,               // Long name
+      41uz + 41uz + 21uz + 21uz, // Product information
+      16uz + 16uz + 92uz};       // Vehicle-specific information
+
+    uint8_t const data_space{bytes[7uz]};
+    uint32_t const cv_addr{data_space == 3u
+                             ? static_cast<uint32_t>(bytes[8uz]) << 16u |
+                                 static_cast<uint32_t>(bytes[9uz]) << 8u |
+                                 static_cast<uint32_t>(bytes[10uz]) << 0u
+                             : 2u * smath::pow(256u, 2u) + data_space * 256u};
+    size_t const data_space_size{
+      data_space == 3u
+        ? std::min<size_t>(bytes[11uz], data_space_sizes[data_space])
+        : data_space_sizes[data_space]};
+
+    // Größe des nächsten SCHEISS Blocks
+    size_t block_size{std::min<size_t>(31uz, data_space_size)};
+    // Wo ma grad sind im Block
+    size_t block_count{};
+
+    // Daten für nächstes SCHEISS Datagram
+    [[maybe_unused]] bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>>
+      datagram{};
+    [[maybe_unused]] size_t datagram_count{};
+
+    // Zähler für echte Daten, sprich OHNE Header und CRC
+    size_t data_count{};
+
+    // CRC
+    uint8_t crc;
+
+    static_assert(static_cast<size_t>(std::ceil(
+                    (256 + std::ceil(256.0 / 31.0) * 2) / 6.0)) == 46uz);
+    static_assert(static_cast<uint32_t>(std::pow(256.0, 2.0)) == 256u * 256u);
+
+    for (;;) {
+      uint8_t byte;
+
+      // Header
+      if (!block_count) {
+        byte =
+          static_cast<uint8_t>((data_count ? ztl::mask<5u> : 0u) | block_size);
+        crc = crc8(byte ^ data_space); // Data space als Init
+      }
+      // Data
+      else if (block_count <= block_size) {
+        byte = self.readCv(static_cast<uint32_t>(cv_addr + data_count++));
+        crc = crc8(byte ^ crc);
+      }
+      // CRC
+      else
+        byte = crc;
+
+      datagram[datagram_count++] = byte;
+      ++block_count;
+
+      if (datagram_count == size(datagram)) {
+        datagram_count = 0uz;
+        // pushy push here
+        datagram = {};
+      }
+
+      //
+      if (block_count == block_size + 1uz) {
+        //
+      }
+
+      //
+    }
+
+    if (datagram_count) {
+      // pushy push rest
+    }
   }
 
   /// Register mode
