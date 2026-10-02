@@ -39,10 +39,6 @@
 #include "east_west.hpp"
 #include "timing.hpp"
 
-static_assert(static_cast<size_t>(
-                std::ceil((256 + std::ceil(256.0 / 31.0) * 2) / 6.0)) == 46uz);
-static_assert(static_cast<uint32_t>(std::pow(256.0, 2.0)) == 256u * 256u);
-
 namespace dcc::rx {
 
 /// Base for receiving DCC
@@ -898,6 +894,8 @@ private:
                           bool handler_mode) {
     if (size(bytes) != 4uz + sizeof(_checksum)) return true;
 
+    self._deques.logon.clear();
+
     // In thread mode check for assignment and error
     if (!handler_mode) {
       self.logonStore();
@@ -946,7 +944,6 @@ private:
     }
 
     if (self._backoffs.logon) return true;
-    self._deques.logon.clear();
     self._deques.logon.push_back(bidi::make_app_decoder_unique_datagram(
       DCC_MANUFACTURER_ID, self._ids.decoder));
 
@@ -969,11 +966,11 @@ private:
         size(bytes) != 12uz + sizeof(_checksum) + sizeof(_checksum))
       return true;
 
+    self._deques.logon.clear();
+
     if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
         self._logon_assigned || !std::ranges::equal(did, self._ids.decoder))
       return true;
-
-    self._deques.logon.clear();
 
     switch (bytes[6uz]) {
       // ShortInfo
@@ -1050,6 +1047,8 @@ private:
                           bool handler_mode) {
     if (size(bytes) != 8uz + sizeof(_checksum) + sizeof(_checksum)) return true;
 
+    self._deques.logon.clear();
+
     // In thread mode check for assignment
     if (!handler_mode) {
       self.logonStore();
@@ -1064,7 +1063,6 @@ private:
 
     // Don't accept assign
     if (addr.type != Address::BasicLoco && addr.type != Address::ExtendedLoco) {
-      self._deques.logon.clear();
       self._deques.logon.push_back({bidi::nak,
                                     bidi::nak,
                                     bidi::nak,
@@ -1084,7 +1082,6 @@ private:
     if (auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
         bb == LogonBindingBehavior::Permanent && addr)
       self._addrs.primary = addr;
-    self._deques.logon.clear();
     self._deques.logon.push_back(bidi::make_app_decoder_state_datagram(
       0xFFu,           // Change flags
       0u,              // Change count
@@ -1307,15 +1304,17 @@ private:
     size_t block_count{};
 
     // Daten für nächstes SCHEISS Datagram
-    [[maybe_unused]] bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>>
-      datagram{};
-    [[maybe_unused]] size_t datagram_count{};
+    std::array<uint8_t, 6uz> datagram{};
+    size_t datagram_count{};
 
     // Zähler für echte Daten, sprich OHNE Header und CRC
     size_t data_count{};
 
     // CRC
     uint8_t crc;
+
+    static_assert(static_cast<size_t>(smath::ceil(
+                    (256.0 + smath::ceil(256.0 / 31.0) * 2.0) / 6.0)) == 46uz);
 
     for (;;) {
       uint8_t byte;
@@ -1344,9 +1343,21 @@ private:
         datagram = {};
       }
 
-      //
+      // Block done
       if (block_count == block_size + 1uz) {
+        // All data written
+        if (data_count == data_space_size) {
+          // Done
+          if (block_size != 31uz) break;
+
+          // Last block shit
+          block_size = 0uz;
+        }
         //
+        else
+          block_size = std::min<size_t>(31uz, data_space_size - data_count);
+
+        block_count = 0uz;
       }
 
       //
