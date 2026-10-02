@@ -1275,8 +1275,7 @@ private:
   }
 
   ///
-  void dataSpaceRead([[maybe_unused]] this Decoder auto&& self,
-                     std::span<uint8_t const> bytes) {
+  void dataSpaceRead(this Decoder auto&& self, std::span<uint8_t const> bytes) {
     static constexpr std::array data_space_sizes{
       31uz,                      // Extended capabilities
       32uz,                      // SpaceInfo
@@ -1288,33 +1287,30 @@ private:
       16uz + 16uz + 92uz};       // Vehicle-specific information
 
     uint8_t const data_space{bytes[7uz]};
+    assert(data_space < 8u);
     uint32_t const cv_addr{data_space == 3u
                              ? static_cast<uint32_t>(bytes[8uz]) << 16u |
                                  static_cast<uint32_t>(bytes[9uz]) << 8u |
                                  static_cast<uint32_t>(bytes[10uz]) << 0u
                              : 2u * smath::pow(256u, 2u) + data_space * 256u};
+
+    // Data space size and count
     size_t const data_space_size{
       data_space == 3u
         ? std::min<size_t>(bytes[11uz], data_space_sizes[data_space])
         : data_space_sizes[data_space]};
+    size_t data_count{};
 
-    // Größe des nächsten SCHEISS Blocks
+    // Block size and count
     size_t block_size{std::min<size_t>(31uz, data_space_size)};
-    // Wo ma grad sind im Block
     size_t block_count{};
 
-    // Daten für nächstes SCHEISS Datagram
+    // Datagram and count
     std::array<uint8_t, 6uz> datagram{};
     size_t datagram_count{};
 
-    // Zähler für echte Daten, sprich OHNE Header und CRC
-    size_t data_count{};
-
     // CRC
     uint8_t crc;
-
-    static_assert(static_cast<size_t>(smath::ceil(
-                    (256.0 + smath::ceil(256.0 / 31.0) * 2.0) / 6.0)) == 46uz);
 
     for (;;) {
       uint8_t byte;
@@ -1337,35 +1333,47 @@ private:
       datagram[datagram_count++] = byte;
       ++block_count;
 
+      // Datagram done
       if (datagram_count == size(datagram)) {
         datagram_count = 0uz;
-        // pushy push here
+        self._deques.logon.push_back(
+          bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
+            static_cast<uint64_t>(datagram[0uz]) << 40u |
+            static_cast<uint64_t>(datagram[1uz]) << 32u |
+            static_cast<uint32_t>(datagram[2uz]) << 24u |
+            static_cast<uint32_t>(datagram[3uz]) << 16u |
+            static_cast<uint32_t>(datagram[4uz]) << 8u |
+            static_cast<uint32_t>(datagram[5uz]) << 0u)));
         datagram = {};
       }
 
       // Block done
       if (block_count == block_size + 1uz) {
-        // All data written
-        if (data_count == data_space_size) {
-          // Done
-          if (block_size != 31uz) break;
+        block_count = 0uz;
 
-          // Last block shit
-          block_size = 0uz;
+        // Data done
+        if (data_count == data_space_size) {
+          // Special case
+          if (block_size == 31uz) block_size = 0uz;
+          // Done
+          else break;
         }
-        //
+        // Next block
         else
           block_size = std::min<size_t>(31uz, data_space_size - data_count);
-
-        block_count = 0uz;
       }
-
-      //
     }
 
-    if (datagram_count) {
-      // pushy push rest
-    }
+    // Residual
+    if (datagram_count)
+      self._deques.logon.push_back(
+        bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
+          static_cast<uint64_t>(datagram[0uz]) << 40u |
+          static_cast<uint64_t>(datagram[1uz]) << 32u |
+          static_cast<uint32_t>(datagram[2uz]) << 24u |
+          static_cast<uint32_t>(datagram[3uz]) << 16u |
+          static_cast<uint32_t>(datagram[4uz]) << 8u |
+          static_cast<uint32_t>(datagram[5uz]) << 0u)));
   }
 
   /// Register mode
@@ -1726,12 +1734,13 @@ private:
   // Deques
   struct {
     ztl::inplace_deque<Packet, DCC_RX_DEQUE_SIZE> packet{};
+    ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>>,
+                       static_cast<size_t>(smath::ceil(
+                         (256.0 + smath::ceil(256.0 / 31.0) * 2.0) / 6.0))>
+      logon{};
     ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_18>>,
                        DCC_RX_BIDI_DEQUE_SIZE>
       dyn{};
-    ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>>,
-                       1uz>
-      logon{};
     ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_36>>,
                        1uz>
       search{};
