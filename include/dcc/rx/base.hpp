@@ -996,6 +996,38 @@ private:
       case 0b1111'1110u:
         // In thread mode
         if (!handler_mode) {
+          switch (bytes[7uz]) {
+            case 0u:
+              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 0u * 256u, 31uz);
+              break;
+            case 1u:
+              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 1u * 256u, 32uz);
+              break;
+            case 2u:
+              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 3u * 256u, 28uz);
+              break;
+            case 3u:
+              self.dataSpaceRead(static_cast<uint32_t>(bytes[8uz]) << 16u |
+                                   static_cast<uint32_t>(bytes[9uz]) << 8u |
+                                   static_cast<uint32_t>(bytes[10uz]) << 0u,
+                                 bytes[11uz]);
+              break;
+            case 4u:
+              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 4u * 256u, 256uz);
+              break;
+            case 5u:
+              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 5u * 256u,
+                                 63uz + 63uz);
+              break;
+            case 6u:
+              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 6u * 256u,
+                                 41uz + 41uz + 21uz + 21uz);
+              break;
+            case 7u:
+              self.dataSpaceRead(2u * smath::pow(256u, 2u) + 7u * 256u,
+                                 16uz + 16uz + 92uz);
+              break;
+          }
           return true;
         }
         // ...
@@ -1272,7 +1304,13 @@ private:
   }
 
   ///
-  void blockRead(this Decoder auto&& self, uint32_t cv_addr) {}
+  void dataSpaceRead([[maybe_unused]] this Decoder auto&& self,
+                     [[maybe_unused]] uint32_t cv_addr,
+                     [[maybe_unused]] size_t count) {
+    /*
+    So... das hier wird jetzt außer Oasch nur Oasch
+    */
+  }
 
   /// Register mode
   ///
