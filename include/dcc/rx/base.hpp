@@ -1737,8 +1737,7 @@ private:
   struct {
     ztl::inplace_deque<Packet, DCC_RX_DEQUE_SIZE> packet{};
     ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>>,
-                       static_cast<size_t>(smath::ceil(
-                         (256.0 + smath::ceil(256.0 / 31.0) * 2.0) / 6.0))>
+                       DCC_RX_LOGON_DEQUE_SIZE>
       logon{};
     ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_18>>,
                        DCC_RX_BIDI_DEQUE_SIZE>

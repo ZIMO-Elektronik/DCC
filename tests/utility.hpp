@@ -19,9 +19,16 @@
       EXPECT_EQ_MACRO, true, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))            \
   } while (0)
 
-template<std::unsigned_integral T>
-static T random_interval(T min, T max) {
+template<typename T>
+requires(std::integral<T> || std::floating_point<T>)
+constexpr T random_interval(T min = std::numeric_limits<T>::min(),
+                            T max = std::numeric_limits<T>::max()) {
   std::mt19937 gen{std::random_device{}()};
-  std::uniform_int_distribution<T> dis{min, max};
-  return dis(gen);
+  if constexpr (std::integral<T>) {
+    std::uniform_int_distribution<T> dis{min, max};
+    return dis(gen);
+  } else {
+    std::uniform_real_distribution<T> dis{min, max};
+    return dis(gen);
+  }
 }

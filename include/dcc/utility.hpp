@@ -259,16 +259,14 @@ constexpr auto make_set_consist_address_packet(Address::value_type addr,
 
 /// Make advanced operations - speed, direction and functions packet
 ///
-/// \tparam Fs...     Type of functions
 /// \param  addr      Address
 /// \param  rggggggg  Speed and direction byte
 /// \param  fs...     Functions
 /// \return Advanced operations - speed, direction and functions packet
-template<std::unsigned_integral... Fs>
-requires(sizeof...(Fs) >= 1uz && sizeof...(Fs) <= 4uz)
-constexpr auto make_speed_direction_and_functions_packet(Address addr,
-                                                         uint8_t rggggggg,
-                                                         Fs... fs) {
+constexpr auto make_speed_direction_and_functions_packet(
+  Address addr, uint8_t rggggggg, std::unsigned_integral auto... fs)
+  requires(sizeof...(fs) >= 1uz && sizeof...(fs) <= 4uz)
+{
   assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   Packet packet{};
   auto first{begin(packet)};
@@ -283,15 +281,14 @@ constexpr auto make_speed_direction_and_functions_packet(Address addr,
 
 /// Make advanced operations - speed, direction and functions packet
 ///
-/// \tparam Fs...     Type of functions
 /// \param  addr      Address
 /// \param  rggggggg  Speed and direction byte
 /// \param  fs...     Functions
 /// \return Advanced operations - speed, direction and functions packet
-template<std::unsigned_integral... Fs>
-requires(sizeof...(Fs) >= 1uz && sizeof...(Fs) <= 4uz)
 constexpr auto make_speed_direction_and_functions_packet(
-  Address::value_type addr, uint8_t rggggggg, Fs... fs) {
+  Address::value_type addr, uint8_t rggggggg, std::unsigned_integral auto... fs)
+  requires(sizeof...(fs) >= 1uz && sizeof...(fs) <= 4uz)
+{
   return make_speed_direction_and_functions_packet(
     {.value = addr,
      .type = addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
@@ -1408,19 +1405,19 @@ constexpr auto make_cv_access_xpom_verify_packet(Address::value_type addr,
 
 /// Make CV access XPOM packet for writing CVs
 ///
-/// \tparam Cvs...  Type of CVs
 /// \param  addr    Address
 /// \param  ss      Sequence number
 /// \param  cv_addr CV address
 /// \param  cvs...  CV values
 /// \return CV access XPOM packet for writing CVs
-template<std::unsigned_integral... Cvs>
-requires(sizeof...(Cvs) >= 1uz && sizeof...(Cvs) <= 4uz &&
-         ((!std::same_as<Cvs, bool>) && ...))
-constexpr auto make_cv_access_xpom_write_packet(Address addr,
-                                                uint8_t ss,
-                                                uint32_t cv_addr,
-                                                Cvs... cvs) {
+constexpr auto
+make_cv_access_xpom_write_packet(Address addr,
+                                 uint8_t ss,
+                                 uint32_t cv_addr,
+                                 std::unsigned_integral auto... cvs)
+  requires(sizeof...(cvs) >= 1uz && sizeof...(cvs) <= 4uz &&
+           ((!std::same_as<decltype(cvs), bool>) && ...))
+{
   assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   assert(cv_addr < smath::pow(2u, 24u));
   Packet packet{};
@@ -1438,19 +1435,19 @@ constexpr auto make_cv_access_xpom_write_packet(Address addr,
 
 /// Make CV access XPOM packet for writing CVs
 ///
-/// \tparam Cvs...  Type of CVs
 /// \param  addr    Address
 /// \param  ss      Sequence number
 /// \param  cv_addr CV address
 /// \param  cvs...  CV values
 /// \return CV access XPOM packet for writing CVs
-template<std::unsigned_integral... Cvs>
-requires(sizeof...(Cvs) >= 1uz && sizeof...(Cvs) <= 4uz &&
-         ((!std::same_as<Cvs, bool>) && ...))
-constexpr auto make_cv_access_xpom_write_packet(Address::value_type addr,
-                                                uint8_t ss,
-                                                uint32_t cv_addr,
-                                                Cvs... cvs) {
+constexpr auto
+make_cv_access_xpom_write_packet(Address::value_type addr,
+                                 uint8_t ss,
+                                 uint32_t cv_addr,
+                                 std::unsigned_integral auto... cvs)
+  requires(sizeof...(cvs) >= 1uz && sizeof...(cvs) <= 4uz &&
+           ((!std::same_as<decltype(cvs), bool>) && ...))
+{
   return make_cv_access_xpom_write_packet(
     {.value = addr,
      .type = addr <= 127u ? Address::BasicLoco : Address::ExtendedLoco},
@@ -1538,10 +1535,19 @@ make_logon_enable_packet(LogonGroup gg, uint16_t cid, uint8_t session_id) {
 ///
 /// \param  manufacturer_id Manufacturer ID
 /// \param  did             Unique ID
+/// \param  subcommand      Subcommand
+/// \param  data_space      Number of data space
+/// \param  cv_addr         CV address
+/// \param  cv_count        Number of CVs requested
 /// \return LOGON_SELECT packet
 constexpr auto make_logon_select_packet(uint16_t manufacturer_id,
                                         uint32_t did,
-                                        uint8_t subcommand = 0b1111'1111u) {
+                                        uint8_t subcommand = 0b1111'1111u,
+                                        uint8_t data_space = 0u,
+                                        uint32_t cv_addr = 0u,
+                                        uint8_t cv_count = 0u) {
+  assert((subcommand == 0b1111'1111u || subcommand == 0b1111'1110u) &&
+         data_space < 8u);
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address({254u, Address::AutomaticLogon}, first)};
@@ -1549,6 +1555,15 @@ constexpr auto make_logon_select_packet(uint16_t manufacturer_id,
   *last++ = static_cast<uint8_t>(manufacturer_id);
   last = uint32_2data(did, last);
   *last++ = subcommand;
+  switch (subcommand) {
+    // ShortInfo
+    case 0b1111'1111u: break;
+    // Read block
+    case 0b1111'1110u:
+      *last++ = data_space;
+      if (data_space == 3u) last = uint32_2data(cv_addr << 8u | cv_count, last);
+      break;
+  }
   *last = crc8({first, last});
   ++last;
   *last = exor({first, last});
