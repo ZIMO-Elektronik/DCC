@@ -1,3 +1,4 @@
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
 TEST_F(RxTest, cv15_not_equal_cv15_activates_decoder_lock) {

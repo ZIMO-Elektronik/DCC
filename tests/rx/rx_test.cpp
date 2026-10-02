@@ -1,9 +1,10 @@
 #include "rx_test.hpp"
 #include <algorithm>
 #include <cassert>
+#include "../utility.hpp"
 
 RxTest::RxTest() {
-  _last_packet = {};
+  _last_packet = {}; // Clear static packet
 
   _cvs[29uz - 1uz] = 0b1010u; // Decoder configuration
   _cvs[1uz - 1uz] = static_cast<uint8_t>(_addrs.primary); // Primary address

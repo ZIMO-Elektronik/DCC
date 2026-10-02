@@ -1,4 +1,5 @@
 
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
 using namespace dcc::bidi;

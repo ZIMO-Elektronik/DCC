@@ -1,3 +1,4 @@
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
 TEST_F(RxTest, consist_shall_not_act_on_cv_manipulation) {

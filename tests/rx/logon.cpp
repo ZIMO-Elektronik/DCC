@@ -1,3 +1,4 @@
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
 // Known CID skips logon

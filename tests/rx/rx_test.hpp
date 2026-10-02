@@ -2,7 +2,6 @@
 
 #include <gtest/gtest.h>
 #include <algorithm>
-#include <random>
 #include "rx_mock.hpp"
 
 using namespace ::testing;
@@ -13,13 +12,6 @@ struct RxTest : ::testing::Test {
   virtual ~RxTest();
 
   void SetUp() override;
-
-  template<std::unsigned_integral T>
-  static T RandomInterval(T min, T max) {
-    std::mt19937 gen{std::random_device{}()};
-    std::uniform_int_distribution<T> dis{min, max};
-    return dis(gen);
-  }
 
   RxTest* Receive(dcc::Packet const& packet, dcc::tx::Config cfg = {});
   RxTest* EnterCutout(dcc::Packet const& packet = _last_packet);
