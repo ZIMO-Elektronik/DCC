@@ -2,7 +2,6 @@
 
 #include <gtest/gtest.h>
 #include <algorithm>
-#include <random>
 #include "rx_mock.hpp"
 
 using namespace ::testing;
@@ -14,25 +13,19 @@ struct RxTest : ::testing::Test {
 
   void SetUp() override;
 
-  template<std::unsigned_integral T>
-  static T RandomInterval(T min, T max) {
-    std::mt19937 gen{std::random_device{}()};
-    std::uniform_int_distribution<T> dis{min, max};
-    return dis(gen);
-  }
-
   RxTest* Receive(dcc::Packet const& packet, dcc::tx::Config cfg = {});
   RxTest* EnterCutout(dcc::Packet const& packet = _last_packet);
   RxTest* BiDiChannel1();
   RxTest* BiDiChannel2();
   RxTest* LeaveCutout();
   RxTest* Execute();
+  RxTest* ReceiveAndExecute(dcc::Packet const& packet,
+                            dcc::tx::Config cfg = {});
+  RxTest* ReceiveAndExecuteTwice(dcc::Packet const& packet,
+                                 dcc::tx::Config cfg = {});
+  RxTest* BiDi();
 
   // Helpers
-  void ReceiveAndExecute(dcc::Packet const& packet, dcc::tx::Config cfg = {});
-  void ReceiveAndExecuteTwice(dcc::Packet const& packet,
-                              dcc::tx::Config cfg = {});
-  void BiDi();
   void EnterServiceMode();
   void Logon();
   dcc::Packet TinkerWithPacketLength(dcc::Packet packet) const;

@@ -1,9 +1,10 @@
 #include "rx_test.hpp"
 #include <algorithm>
 #include <cassert>
+#include "../utility.hpp"
 
 RxTest::RxTest() {
-  _last_packet = {};
+  _last_packet = {}; // Clear static packet
 
   _cvs[29uz - 1uz] = 0b1010u; // Decoder configuration
   _cvs[1uz - 1uz] = static_cast<uint8_t>(_addrs.primary); // Primary address
@@ -92,17 +93,17 @@ RxTest* RxTest::Execute() {
   return this;
 }
 
-void RxTest::ReceiveAndExecute(dcc::Packet const& packet, dcc::tx::Config cfg) {
-  Receive(packet, cfg)->LeaveCutout()->Execute();
+RxTest* RxTest::ReceiveAndExecute(dcc::Packet const& packet,
+                                  dcc::tx::Config cfg) {
+  return Receive(packet, cfg)->LeaveCutout()->Execute();
 }
 
-void RxTest::ReceiveAndExecuteTwice(dcc::Packet const& packet,
-                                    dcc::tx::Config cfg) {
-  ReceiveAndExecute(packet, cfg);
-  ReceiveAndExecute(packet, cfg);
+RxTest* RxTest::ReceiveAndExecuteTwice(dcc::Packet const& packet,
+                                       dcc::tx::Config cfg) {
+  return ReceiveAndExecute(packet, cfg)->ReceiveAndExecute(packet, cfg);
 }
 
-void RxTest::BiDi() { BiDiChannel1()->BiDiChannel2(); }
+RxTest* RxTest::BiDi() { return BiDiChannel1()->BiDiChannel2(); }
 
 void RxTest::EnterServiceMode() {
   EXPECT_CALL(_mock, serviceModeHook(true));
@@ -115,12 +116,15 @@ void RxTest::Logon() {
     .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0uz]));
   EXPECT_CALL(_mock, readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u))
     .WillRepeatedly(Return(_cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz]));
-  Receive(dcc::make_logon_enable_packet(dcc::LogonGroup::Now, _cid, _sid));
+  // Store assignment
+  EXPECT_CALL(_mock, writeCv(_, _)).Times(AtLeast(7));
+  ReceiveAndExecute(
+    dcc::make_logon_enable_packet(dcc::LogonGroup::Now, _cid, _sid));
 }
 
 // Tinker with the length of a valid packet
 dcc::Packet RxTest::TinkerWithPacketLength(dcc::Packet packet) const {
-  packet.back() = RandomInterval<uint8_t>(0u, 255u);
+  packet.back() = random_interval<uint8_t>(0u, 255u);
   packet.push_back(dcc::exor({cbegin(packet), cend(packet)}));
   return packet;
 }

@@ -1,3 +1,4 @@
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
 TEST_F(RxTest, consist_shall_not_act_on_cv_manipulation) {
@@ -5,8 +6,8 @@ TEST_F(RxTest, consist_shall_not_act_on_cv_manipulation) {
   SetUp();
 
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
     .Times(0);
