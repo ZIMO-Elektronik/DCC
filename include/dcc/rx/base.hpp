@@ -1274,7 +1274,9 @@ private:
     self.xpomVerifyImpl(ss, cv_addr);
   }
 
+  /// Data space read
   ///
+  /// \param  bytes Raw bytes
   void dataSpaceRead(this Decoder auto&& self, std::span<uint8_t const> bytes) {
     static constexpr std::array data_space_sizes{
       31uz,                      // Extended capabilities
@@ -1335,7 +1337,6 @@ private:
 
       // Datagram done
       if (datagram_count == size(datagram)) {
-        datagram_count = 0uz;
         self._deques.logon.push_back(
           bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
             static_cast<uint64_t>(datagram[0uz]) << 40u |
@@ -1344,16 +1345,15 @@ private:
             static_cast<uint32_t>(datagram[3uz]) << 16u |
             static_cast<uint32_t>(datagram[4uz]) << 8u |
             static_cast<uint32_t>(datagram[5uz]) << 0u)));
+        datagram_count = 0uz;
         datagram = {};
       }
 
       // Block done
       if (block_count == block_size + 1uz) {
-        block_count = 0uz;
-
         // Data done
         if (data_count == data_space_size) {
-          // Special case
+          // Special last block case
           if (block_size == 31uz) block_size = 0uz;
           // Done
           else break;
@@ -1361,6 +1361,8 @@ private:
         // Next block
         else
           block_size = std::min<size_t>(31uz, data_space_size - data_count);
+
+        block_count = 0uz;
       }
     }
 
