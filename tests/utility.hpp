@@ -20,7 +20,7 @@
   } while (0)
 
 template<std::unsigned_integral T>
-static T RandomInterval(T min, T max) {
+static T random_interval(T min, T max) {
   std::mt19937 gen{std::random_device{}()};
   std::uniform_int_distribution<T> dis{min, max};
   return dis(gen);

@@ -5,8 +5,8 @@
 using namespace dcc::bidi;
 
 TEST_F(RxTest, app_xpom) {
-  auto ss{RandomInterval<uint8_t>(0u, 3u)};
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
+  auto ss{random_interval<uint8_t>(0u, 3u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
   std::array<uint8_t, 4uz> cv_values{0u, 1u, 2u, 3u};
   auto packet{make_cv_access_xpom_verify_packet(_addrs.primary, ss, cv_addr)};
 
@@ -24,8 +24,8 @@ TEST_F(RxTest, app_xpom) {
 
 // https://github.com/ZIMO-Elektronik/DCC/issues/170
 TEST_F(RxTest, app_xpom_has_higher_priority_than_app_pom) {
-  auto ss{RandomInterval<uint8_t>(0u, 3u)};
-  auto cv_addr{RandomInterval(0u, smath::pow(2u, 10u) - 1u)};
+  auto ss{random_interval<uint8_t>(0u, 3u)};
+  auto cv_addr{random_interval(0u, smath::pow(2u, 10u) - 1u)};
   std::array<uint8_t, 4uz> cv_values{0u, 1u, 2u, 3u};
   auto pom_packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
   auto xpom_packet{

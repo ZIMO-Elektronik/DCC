@@ -22,13 +22,13 @@ TEST_F(RxTest, cv_access_short_cv17_18) {
       _addrs.primary, 0b0100u, _cvs[17uz - 1uz], _cvs[18uz - 1uz]));
 
   // Execute commands to address 1337
-  auto state{RandomInterval<uint8_t>(0b0'0000u, 0b1'1111u)};
+  auto state{random_interval<uint8_t>(0b0'0000u, 0b1'1111u)};
   EXPECT_CALL(_mock, function(new_extended_address.value, 0b11111u, state));
   ReceiveAndExecute(make_f0_f4_packet(new_extended_address, state));
 }
 
 TEST_F(RxTest, cv_access_short_cv23) {
-  auto cv23{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv23{random_interval<uint8_t>(0u, 255u)};
   auto packet{
     dcc::make_cv_access_short_write_packet(_addrs.primary, 0b0010u, cv23)};
 

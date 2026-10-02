@@ -4,8 +4,8 @@
 using namespace dcc::bidi;
 
 TEST_F(RxTest, app_pom) {
-  auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv_addr{random_interval<uint8_t>(0u, 255u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, _, A<std::function<void(uint8_t)>>()))
@@ -43,9 +43,9 @@ TEST_F(RxTest, app_pom_responds_to_address_that_sent_request) {
 
 TEST_F(RxTest, app_pom_respond_to_cv_access_long_write_bit_operations_mode) {
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
-  auto pos{RandomInterval(0u, 7u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
+  auto pos{random_interval(0u, 7u)};
   auto bit{static_cast<bool>(byte & (1u << pos))};
   auto packet{
     make_cv_access_long_write_packet(_addrs.primary, cv_addr, bit, pos)};
@@ -128,8 +128,8 @@ TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
   _cvs[28uz - 1uz] = static_cast<uint8_t>(_cvs[28uz - 1uz] & 0b1111'11101u);
   SetUp();
 
-  auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv_addr{random_interval<uint8_t>(0u, 255u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, _, A<std::function<void(uint8_t)>>()))
@@ -141,8 +141,8 @@ TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
 }
 
 TEST_F(RxTest, app_pom_responds_to_all_loco_packets) {
-  auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv_addr{random_interval<uint8_t>(0u, 255u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, _, A<std::function<void(uint8_t)>>()))
@@ -160,8 +160,8 @@ TEST_F(RxTest, app_pom_responds_to_all_loco_packets) {
 
 // https://github.com/ZIMO-Elektronik/DCC/issues/105
 TEST_F(RxTest, app_pom_clear_internal_queue_on_unknown_cv_access_packet) {
-  auto cv_addr{RandomInterval<uint8_t>(0u, 255u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv_addr{random_interval<uint8_t>(0u, 255u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, _, A<std::function<void(uint8_t)>>()))

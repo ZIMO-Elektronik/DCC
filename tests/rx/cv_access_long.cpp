@@ -5,9 +5,9 @@ TEST_F(RxTest, cv_access_long_verify_bit_service_mode) {
   EnterServiceMode();
 
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{static_cast<bool>(RandomInterval(0u, 1u))};
-  auto pos{RandomInterval(0u, 7u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto bit{static_cast<bool>(random_interval(0u, 1u))};
+  auto pos{random_interval(0u, 7u)};
   auto packet{
     dcc::make_cv_access_long_verify_service_packet(cv_addr, bit, pos)};
 
@@ -18,9 +18,9 @@ TEST_F(RxTest, cv_access_long_verify_bit_service_mode) {
 }
 
 TEST_F(RxTest, cv_access_long_verify_bit_operations_mode) {
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{static_cast<bool>(RandomInterval(0u, 1u))};
-  auto pos{RandomInterval(0u, 7u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto bit{static_cast<bool>(random_interval(0u, 1u))};
+  auto pos{random_interval(0u, 7u)};
   auto packet{
     dcc::make_cv_access_long_verify_packet(_addrs.primary, cv_addr, bit, pos)};
 
@@ -29,18 +29,18 @@ TEST_F(RxTest, cv_access_long_verify_bit_operations_mode) {
 }
 
 TEST_F(RxTest, cv_access_long_verify_byte_operations_mode) {
-  auto cv_addr{RandomInterval(0u, smath::pow(2u, 10u) - 1u)};
+  auto cv_addr{random_interval(0u, smath::pow(2u, 10u) - 1u)};
   auto packet{make_cv_access_long_verify_packet(_addrs.primary, cv_addr)};
 
   EXPECT_CALL(_mock, readCv(cv_addr, _, A<std::function<void(uint8_t)>>()))
-    .WillOnce(InvokeArgument<2uz>(RandomInterval<uint8_t>(0u, 255u)));
+    .WillOnce(InvokeArgument<2uz>(random_interval<uint8_t>(0u, 255u)));
   ReceiveAndExecute(packet);
 }
 
 TEST_F(RxTest, cv_access_long_verify_byte_service_mode) {
   EnterServiceMode();
 
-  auto cv_addr{RandomInterval(0u, smath::pow(2u, 10u) - 1u)};
+  auto cv_addr{random_interval(0u, smath::pow(2u, 10u) - 1u)};
   auto packet{dcc::make_cv_access_long_verify_service_packet(cv_addr, 42u)};
 
   // 5 or more identical packets
@@ -53,9 +53,9 @@ TEST_F(RxTest, cv_access_long_write_bit_service_mode) {
   EnterServiceMode();
 
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{static_cast<bool>(RandomInterval(0u, 1u))};
-  auto pos{RandomInterval(0u, 7u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto bit{static_cast<bool>(random_interval(0u, 1u))};
+  auto pos{random_interval(0u, 7u)};
   auto packet{dcc::make_cv_access_long_write_service_packet(cv_addr, bit, pos)};
 
   // 5 or more identical packets
@@ -66,9 +66,9 @@ TEST_F(RxTest, cv_access_long_write_bit_service_mode) {
 
 TEST_F(RxTest, cv_access_long_write_bit_operations_mode) {
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto bit{static_cast<bool>(RandomInterval(0u, 1u))};
-  auto pos{RandomInterval(0u, 7u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto bit{static_cast<bool>(random_interval(0u, 1u))};
+  auto pos{random_interval(0u, 7u)};
   auto packet{
     make_cv_access_long_write_packet(_addrs.primary, cv_addr, bit, pos)};
 
@@ -80,8 +80,8 @@ TEST_F(RxTest, cv_access_long_write_bit_operations_mode) {
 
 TEST_F(RxTest, cv_access_long_write_byte_operations_mode) {
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
     .WillOnce(InvokeArgument<2uz>(byte));
@@ -92,8 +92,8 @@ TEST_F(RxTest, cv_access_long_write_byte_operations_mode) {
 TEST_F(
   RxTest,
   cv_access_long_write_byte_operations_mode_requires_two_identical_not_back_to_back_packets) {
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
   auto packet{make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
@@ -110,8 +110,8 @@ TEST_F(
 TEST_F(
   RxTest,
   cv_access_long_write_byte_operations_mode_interrupted_by_packet_to_same_address) {
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
   auto packet{make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte)};
 
   EXPECT_CALL(_mock, writeCv(cv_addr, byte, A<std::function<void(uint8_t)>>()))
@@ -129,8 +129,8 @@ TEST_F(RxTest, cv_access_long_write_byte_service_mode) {
   EnterServiceMode();
 
   // Don't write any CV which might trigger config (e.g. 1, 28, ...)!
-  auto cv_addr{RandomInterval(30u, smath::pow(2u, 10u) - 1u)};
-  auto byte{RandomInterval<uint8_t>(0u, 255u)};
+  auto cv_addr{random_interval(30u, smath::pow(2u, 10u) - 1u)};
+  auto byte{random_interval<uint8_t>(0u, 255u)};
   auto packet{dcc::make_cv_access_long_write_service_packet(cv_addr, byte)};
 
   // 5 or more identical packets

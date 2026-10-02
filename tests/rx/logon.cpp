@@ -17,7 +17,7 @@ TEST_F(RxTest, logon_with_unknown_cid_basic_loco) {
 
   // Enable
   Receive(make_logon_enable_packet(
-    dcc::LogonGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+    dcc::LogonGroup::Now, _cid + 1u, random_interval<uint8_t>(0u, 255u)));
   BiDi();
 
   // Select
@@ -41,7 +41,7 @@ TEST_F(RxTest, logon_with_unknown_cid_extended_loco) {
 
   // Enable
   Receive(make_logon_enable_packet(
-    dcc::LogonGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+    dcc::LogonGroup::Now, _cid + 1u, random_interval<uint8_t>(0u, 255u)));
   BiDi();
 
   // Select
@@ -134,7 +134,7 @@ TEST_F(RxTest, permanent_assign_to_basic_address) {
 
   // Enable
   Receive(make_logon_enable_packet(
-    dcc::LogonGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+    dcc::LogonGroup::Now, _cid + 1u, random_interval<uint8_t>(0u, 255u)));
   BiDi();
 
   // Select
@@ -164,7 +164,7 @@ TEST_F(RxTest, permanent_assign_to_extended_address) {
 
   // Enable
   Receive(make_logon_enable_packet(
-    dcc::LogonGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+    dcc::LogonGroup::Now, _cid + 1u, random_interval<uint8_t>(0u, 255u)));
   BiDi();
 
   // Select
@@ -194,5 +194,5 @@ TEST_F(RxTest, transmitting_decoder_unique_more_than_3_times_triggers_error) {
   EXPECT_CALL(_mock, error());
   for (auto i{0uz}; i <= 3uz; ++i)
     ReceiveAndExecute(make_logon_enable_packet(
-      dcc::LogonGroup::Now, _cid + 1u, RandomInterval<uint8_t>(0u, 255u)));
+      dcc::LogonGroup::Now, _cid + 1u, random_interval<uint8_t>(0u, 255u)));
 }

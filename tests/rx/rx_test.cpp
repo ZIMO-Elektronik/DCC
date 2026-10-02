@@ -124,7 +124,7 @@ void RxTest::Logon() {
 
 // Tinker with the length of a valid packet
 dcc::Packet RxTest::TinkerWithPacketLength(dcc::Packet packet) const {
-  packet.back() = RandomInterval<uint8_t>(0u, 255u);
+  packet.back() = random_interval<uint8_t>(0u, 255u);
   packet.push_back(dcc::exor({cbegin(packet), cend(packet)}));
   return packet;
 }
