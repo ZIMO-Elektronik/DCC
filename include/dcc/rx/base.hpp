@@ -969,7 +969,7 @@ private:
     self._deques.logon.clear();
 
     if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
-        self._logon_assigned || !std::ranges::equal(did, self._ids.decoder))
+        !std::ranges::equal(did, self._ids.decoder))
       return true;
 
     switch (bytes[6uz]) {
@@ -1049,15 +1049,15 @@ private:
 
     self._deques.logon.clear();
 
+    if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
+        !std::ranges::equal(did, self._ids.decoder))
+      return true;
+
     // In thread mode check for assignment
     if (!handler_mode) {
       self.logonStore();
       return true;
     }
-
-    if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
-        !std::ranges::equal(did, self._ids.decoder))
-      return true;
 
     auto const addr{decode_logon_address(cbegin(bytes) + 6)};
 
