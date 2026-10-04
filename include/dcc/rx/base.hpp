@@ -1350,18 +1350,13 @@ private:
       }
 
       // Block done
-      if (block_count == block_size + 1uz) {
-        // Data done
+      if (block_count == 1uz + block_size + 1uz) {
         if (data_count == data_space_size) {
-          // Special last block case
-          if (block_size == 31uz) block_size = 0uz;
-          // Done
-          else break;
+          // Special continuation block (header only)
+          if (block_size == 31uz) datagram[datagram_count++] = ztl::mask<5u>;
+          break;
         }
-        // Next block
-        else
-          block_size = std::min<size_t>(31uz, data_space_size - data_count);
-
+        block_size = std::min<size_t>(31uz, data_space_size - data_count);
         block_count = 0uz;
       }
     }

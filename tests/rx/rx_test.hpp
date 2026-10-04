@@ -42,7 +42,7 @@ struct RxTest : ::testing::Test {
     .logon = {.value = 1000u, .type = dcc::Address::ExtendedLoco}};
 
   // CVs
-  std::array<uint8_t, smath::pow(2uz, 16uz)> _cvs{};
+  std::array<uint8_t, smath::pow(2uz, 18uz)> _cvs{};
 
   // IDs for logon
   uint32_t _did{0xAABBCCDDu};

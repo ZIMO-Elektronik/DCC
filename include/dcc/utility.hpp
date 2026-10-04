@@ -1571,6 +1571,32 @@ constexpr auto make_logon_select_packet(uint16_t manufacturer_id,
   return packet;
 }
 
+/// Make GET_DATA_START packet
+///
+/// \return GET_DATA_START packet
+consteval auto make_get_data_start_packet() {
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({254u, Address::AutomaticLogon}, first)};
+  *last++ = 0b0000'0000u;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make GET_DATA_CONT packet
+///
+/// \return GET_DATA_CONT packet
+consteval auto make_get_data_cont_packet() {
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({254u, Address::AutomaticLogon}, first)};
+  *last++ = 0b0000'0001u;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
 /// Logon binding behavior (RCN-218)
 enum struct LogonBindingBehavior : uint8_t {
   Reserved = 0b00u | 0b01u,

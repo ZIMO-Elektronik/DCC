@@ -32,6 +32,12 @@ RxTest::RxTest() {
     static_cast<uint8_t>(0b1100'0000u | _addrs.logon >> 8u);
   _cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz] =
     static_cast<uint8_t>(_addrs.logon >> 0u);
+
+  // iota data spaces beginning with their data space number
+  for (uint8_t i{0u}; i < 8u; ++i) {
+    auto const cv_addr{2uz * smath::pow(256uz, 2uz) + i * 256uz};
+    std::iota(&_cvs[cv_addr], &_cvs[cv_addr + 256uz], i);
+  }
 }
 
 RxTest::~RxTest() {}
