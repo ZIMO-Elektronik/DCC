@@ -129,7 +129,9 @@ void RxTest::Logon() {
 }
 
 // Read data space
-void RxTest::ReadDataSpace(uint8_t data_space) {
+void RxTest::ReadDataSpace(uint8_t data_space,
+                           uint32_t cv_addr,
+                           uint8_t cv_count) {
   static constexpr std::array data_space_sizes{
     31uz,                      // Extended capabilities
     32uz,                      // SpaceInfo
@@ -139,6 +141,7 @@ void RxTest::ReadDataSpace(uint8_t data_space) {
     63uz + 63uz,               // Long name
     41uz + 41uz + 21uz + 21uz, // Product information
     16uz + 16uz + 92uz};       // Vehicle-specific information
+  assert(cv_count <= data_space_sizes[3uz]);
 
   Logon();
 
@@ -154,22 +157,32 @@ void RxTest::ReadDataSpace(uint8_t data_space) {
                                                       dcc::bidi::acks[0uz],
                                                       dcc::bidi::acks[0uz],
                                                       dcc::bidi::acks[0uz]})));
-  Receive(dcc::make_logon_select_packet(
-    DCC_MANUFACTURER_ID, _did, 0b1111'1110u, data_space));
-  BiDi();
+  auto packet{data_space == 3u
+                ? dcc::make_logon_select_packet(DCC_MANUFACTURER_ID,
+                                                _did,
+                                                0b1111'1110u,
+                                                data_space,
+                                                cv_addr,
+                                                cv_count)
+                : dcc::make_logon_select_packet(
+                    DCC_MANUFACTURER_ID, _did, 0b1111'1110u, data_space)};
+  Receive(packet)->BiDi();
 
   // Read CVs from data space
-  std::span cvs{&_cvs[2uz * smath::pow(256uz, 2uz) + data_space * 256uz],
-                data_space_sizes[data_space]};
+  auto data_space_size{data_space == 3u ? cv_count
+                                        : data_space_sizes[data_space]};
+  std::span cvs{
+    &_cvs[data_space == 3u ? cv_addr
+                           : 2uz * smath::pow(256uz, 2uz) + data_space * 256uz],
+    data_space_size};
   auto i{0uz};
   EXPECT_CALL(_mock, readCv(_))
-    .Times(static_cast<int>(data_space_sizes[data_space]))
+    .Times(static_cast<int>(data_space_size))
     .WillRepeatedly([&] { return cvs[i++]; });
   LeaveCutout()->Execute();
 
-  // Make get_data datagrams
+  // Make get_data datagrams and query them
   auto get_data{make_get_data_datagrams(cvs, data_space)};
-
   for (i = 0uz; i < size(get_data); ++i) {
     EXPECT_CALL(
       _mock,
@@ -177,8 +190,8 @@ void RxTest::ReadDataSpace(uint8_t data_space) {
     EXPECT_CALL(
       _mock,
       transmitBiDi(DatagramMatcher(std::span{cbegin(get_data[i]) + 2, 6uz})));
-    auto packet{!i ? dcc::make_get_data_start_packet()
-                   : dcc::make_get_data_cont_packet()};
+    packet =
+      !i ? dcc::make_get_data_start_packet() : dcc::make_get_data_cont_packet();
     Receive(packet)->BiDi();
   }
 }

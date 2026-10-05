@@ -196,3 +196,19 @@ TEST_F(RxTest, transmitting_decoder_unique_more_than_3_times_triggers_error) {
     ReceiveAndExecute(make_logon_enable_packet(
       dcc::LogonGroup::Now, _cid + 1u, random_interval<uint8_t>(0u, 255u)));
 }
+
+TEST_F(RxTest, read_data_space_0) { ReadDataSpace(0u); }
+
+TEST_F(RxTest, read_data_space_1) { ReadDataSpace(1u); }
+
+TEST_F(RxTest, read_data_space_2) { ReadDataSpace(2u); }
+
+TEST_F(RxTest, read_data_space_3) { ReadDataSpace(3u, 266u, 26u); }
+
+TEST_F(RxTest, read_data_space_4) { ReadDataSpace(4u); }
+
+TEST_F(RxTest, read_data_space_5) { ReadDataSpace(5u); }
+
+TEST_F(RxTest, read_data_space_6) { ReadDataSpace(6u); }
+
+TEST_F(RxTest, read_data_space_7) { ReadDataSpace(7u); }
