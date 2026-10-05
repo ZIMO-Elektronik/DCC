@@ -1321,7 +1321,7 @@ private:
       if (!block_count) {
         byte =
           static_cast<uint8_t>((data_count ? ztl::mask<5u> : 0u) | block_size);
-        crc = crc8(byte ^ data_space); // Data space als Init
+        crc = crc8(byte ^ data_space); // Data space index is initial value
       }
       // Data
       else if (block_count <= block_size) {
