@@ -128,6 +128,61 @@ void RxTest::Logon() {
     dcc::make_logon_enable_packet(dcc::LogonGroup::Now, _cid, _sid));
 }
 
+// Read data space
+void RxTest::ReadDataSpace(uint8_t data_space) {
+  static constexpr std::array data_space_sizes{
+    31uz,                      // Extended capabilities
+    32uz,                      // SpaceInfo
+    28uz,                      // ShortGUI
+    31uz,                      // CV-Read
+    256uz,                     // Icons
+    63uz + 63uz,               // Long name
+    41uz + 41uz + 21uz + 21uz, // Product information
+    16uz + 16uz + 92uz};       // Vehicle-specific information
+
+  Logon();
+
+  // Confirm LOGON_SELECT via 8x ACK
+  InSequence s;
+  EXPECT_CALL(_mock,
+              transmitBiDi(DatagramMatcher(
+                std::array{dcc::bidi::acks[0uz], dcc::bidi::acks[0uz]})));
+  EXPECT_CALL(_mock,
+              transmitBiDi(DatagramMatcher(std::array{dcc::bidi::acks[0uz],
+                                                      dcc::bidi::acks[0uz],
+                                                      dcc::bidi::acks[0uz],
+                                                      dcc::bidi::acks[0uz],
+                                                      dcc::bidi::acks[0uz],
+                                                      dcc::bidi::acks[0uz]})));
+  Receive(dcc::make_logon_select_packet(
+    DCC_MANUFACTURER_ID, _did, 0b1111'1110u, data_space));
+  BiDi();
+
+  // Read CVs from data space
+  std::span cvs{&_cvs[2uz * smath::pow(256uz, 2uz) + data_space * 256uz],
+                data_space_sizes[data_space]};
+  auto i{0uz};
+  EXPECT_CALL(_mock, readCv(_))
+    .Times(static_cast<int>(data_space_sizes[data_space]))
+    .WillRepeatedly([&] { return cvs[i++]; });
+  LeaveCutout()->Execute();
+
+  // Make get_data datagrams
+  auto get_data{make_get_data_datagrams(cvs, data_space)};
+
+  for (i = 0uz; i < size(get_data); ++i) {
+    EXPECT_CALL(
+      _mock,
+      transmitBiDi(DatagramMatcher(std::span{cbegin(get_data[i]), 2uz})));
+    EXPECT_CALL(
+      _mock,
+      transmitBiDi(DatagramMatcher(std::span{cbegin(get_data[i]) + 2, 6uz})));
+    auto packet{!i ? dcc::make_get_data_start_packet()
+                   : dcc::make_get_data_cont_packet()};
+    Receive(packet)->BiDi();
+  }
+}
+
 // Tinker with the length of a valid packet
 dcc::Packet RxTest::TinkerWithPacketLength(dcc::Packet packet) const {
   packet.back() = random_interval<uint8_t>(0u, 255u);

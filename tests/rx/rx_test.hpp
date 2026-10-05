@@ -28,6 +28,7 @@ struct RxTest : ::testing::Test {
   // Helpers
   void EnterServiceMode();
   void Logon();
+  void ReadDataSpace(uint8_t data_space);
   dcc::Packet TinkerWithPacketLength(dcc::Packet packet) const;
 
   static inline dcc::Packet _last_packet{};
