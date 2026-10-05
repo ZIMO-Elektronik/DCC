@@ -4,6 +4,7 @@ using namespace dcc::bidi;
 
 namespace {
 
+/*
 std::vector<Datagram<datagram_size<Bits::_48>>>
 make_get_data_datagrams(std::span<uint8_t const> bytes) {
   std::vector<Datagram<datagram_size<Bits::_48>>> retval;
@@ -15,6 +16,7 @@ make_get_data_datagrams(std::span<uint8_t const> bytes) {
 
   return retval;
 }
+*/
 
 } // namespace
 
@@ -23,34 +25,28 @@ TEST_F(RxTest, read_data_space_0) {
 
   // Confirm via 8x ACK
   InSequence s;
-  std::array ack{acks[0uz],
-                 acks[0uz],
-                 acks[0uz],
-                 acks[0uz],
-                 acks[0uz],
-                 acks[0uz],
-                 acks[0uz],
-                 acks[0uz]};
   EXPECT_CALL(_mock,
-              transmitBiDi(DatagramMatcher(std::span{cbegin(ack), 2uz})));
-  EXPECT_CALL(_mock,
-              transmitBiDi(DatagramMatcher(std::span{cbegin(ack) + 2, 6uz})));
+              transmitBiDi(DatagramMatcher(std::array{acks[0uz], acks[0uz]})));
+  EXPECT_CALL(
+    _mock,
+    transmitBiDi(DatagramMatcher(std::array{
+      acks[0uz], acks[0uz], acks[0uz], acks[0uz], acks[0uz], acks[0uz]})));
   Receive(
     dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did, 0b1111'1110u, 0u));
   BiDi();
 
   // Read 31 CVs from data space 0
-  auto const cv_addr{2uz * smath::pow(256uz, 2uz) + 0uz * 256uz};
-  auto i{cv_addr};
+  std::span cvs{&_cvs[2uz * smath::pow(256uz, 2uz) + 0uz * 256uz], 256uz};
+  auto i{0uz};
   EXPECT_CALL(_mock, readCv(_)).Times(31).WillRepeatedly([&] {
-    return _cvs[i++];
+    return cvs[i++];
   });
   LeaveCutout()->Execute();
 
   // Transform raw bytes to datagrams
   std::vector<uint8_t> bytes;
   bytes.emplace_back(31u);
-  std::copy_n(&_cvs[cv_addr], 31uz, std::back_inserter(bytes));
+  std::copy_n(cbegin(cvs), 31uz, std::back_inserter(bytes));
   bytes.emplace_back(dcc::crc8(bytes));
   bytes.emplace_back(0x20u); // Special continuation block (header only)
   bytes.resize((size(bytes) + 5uz) / 6uz * 6uz, 0u);
