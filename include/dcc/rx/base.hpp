@@ -1337,14 +1337,7 @@ private:
 
       // Datagram done
       if (datagram_count == size(datagram)) {
-        self._deques.logon.push_back(
-          bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
-            static_cast<uint64_t>(datagram[0uz]) << 40u |
-            static_cast<uint64_t>(datagram[1uz]) << 32u |
-            static_cast<uint32_t>(datagram[2uz]) << 24u |
-            static_cast<uint32_t>(datagram[3uz]) << 16u |
-            static_cast<uint32_t>(datagram[4uz]) << 8u |
-            static_cast<uint32_t>(datagram[5uz]) << 0u)));
+        self._deques.logon.push_back(bidi::make_get_data_datagram(datagram));
         datagram_count = 0uz;
         datagram = {};
       }
@@ -1363,14 +1356,7 @@ private:
 
     // Residual
     if (datagram_count)
-      self._deques.logon.push_back(
-        bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
-          static_cast<uint64_t>(datagram[0uz]) << 40u |
-          static_cast<uint64_t>(datagram[1uz]) << 32u |
-          static_cast<uint32_t>(datagram[2uz]) << 24u |
-          static_cast<uint32_t>(datagram[3uz]) << 16u |
-          static_cast<uint32_t>(datagram[4uz]) << 8u |
-          static_cast<uint32_t>(datagram[5uz]) << 0u)));
+      self._deques.logon.push_back(bidi::make_get_data_datagram(datagram));
   }
 
   /// Register mode

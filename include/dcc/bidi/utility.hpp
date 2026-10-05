@@ -252,4 +252,17 @@ make_app_decoder_unique_datagram(uint16_t mid,
       static_cast<uint32_t>(did[2uz]) << 8u | static_cast<uint32_t>(did[3uz])));
 }
 
+/// Make get_data datagram
+///
+/// \return get_data datagram
+constexpr auto make_get_data_datagram(std::span<uint8_t const, 6uz> bytes) {
+  return encode_datagram(
+    make_datagram<Bits::_48>(static_cast<uint64_t>(bytes[0uz]) << 40u |
+                             static_cast<uint64_t>(bytes[1uz]) << 32u |
+                             static_cast<uint32_t>(bytes[2uz]) << 24u |
+                             static_cast<uint32_t>(bytes[3uz]) << 16u |
+                             static_cast<uint32_t>(bytes[4uz]) << 8u |
+                             static_cast<uint32_t>(bytes[5uz]) << 0u));
+}
+
 } // namespace dcc::bidi
