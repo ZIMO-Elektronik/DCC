@@ -33,6 +33,12 @@ RxTest::RxTest() {
   _cvs[DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1uz] =
     static_cast<uint8_t>(_addrs.logon >> 0u);
 
+  // Extended capabilities
+  _cvs[131073uz] = 0b0110'0000u;
+  _cvs[131074uz] = 0b1111'1111u;
+  _cvs[131075uz] = 0b0101'1110u;
+  _cvs[131076uz] = 0b1101'1000u;
+
   // iota data spaces beginning with their data space number
   for (uint8_t i{0u}; i < 8u; ++i) {
     auto const cv_addr{2uz * smath::pow(256uz, 2uz) + i * 256uz};

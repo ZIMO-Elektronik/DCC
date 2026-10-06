@@ -103,8 +103,10 @@ struct Base {
       self.readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u),
       self.readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u)};
     self._addrs.logon = decode_address(logon_addr_cvs);
-    self._datagrams.short_info = {};
-    self._datagrams.decoder_state = {};
+    self._datagrams.short_info = bidi::make_short_info_datagram(
+      self._addrs.primary, 63u, self.readCv(131073u), self.readCv(131074u));
+    self._datagrams.decoder_state = bidi::make_app_decoder_state_datagram(
+      0xFFu, 0u, self.readCv(131075u), self.readCv(131076u));
 
     // Initialization time point
     self._tps.init = std::chrono::system_clock::now();
@@ -978,21 +980,7 @@ private:
       // ShortInfo
       case 0b1111'1111u:
         self._logon_selected = true;
-        std::array<uint8_t, 5uz> short_info;
-        encode_logon_address(self._addrs.primary, begin(short_info));
-        short_info[0uz] = static_cast<uint8_t>(
-          ztl::mask<7u> | short_info[0uz]); // Special format
-        short_info[2uz] = 63u;              // Highest function
-        short_info[3uz] = ztl::mask<6u>;    // XPOM
-        short_info[4uz] = 0u;
-        self._deques.logon.push_back(
-          bidi::encode_datagram(bidi::make_datagram<bidi::Bits::_48>(
-            static_cast<uint64_t>(short_info[0uz]) << 40u |
-            static_cast<uint64_t>(short_info[1uz]) << 32u |
-            static_cast<uint32_t>(short_info[2uz]) << 24u |
-            static_cast<uint32_t>(short_info[3uz]) << 16u |
-            static_cast<uint32_t>(short_info[4uz]) << 8u |
-            static_cast<uint32_t>(crc8(short_info)) << 0u)));
+        self._deques.logon.push_back(self._datagrams.short_info);
         return true;
 
       // Read block
@@ -1084,18 +1072,7 @@ private:
     if (auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
         bb == LogonBindingBehavior::Permanent && addr)
       self._addrs.primary = addr;
-    self._deques.logon.push_back(bidi::make_app_decoder_state_datagram(
-      0xFFu,           // Change flags
-      0u,              // Change count
-      ztl::mask<7u,    // app:dyn ID7:27
-                6u,    // app:dyn ID7:26
-                4u,    // app:dyn ID7:7
-                3u>,   // app:dyn ID7:0-1
-      ztl::mask<6u,    // Special operating modes
-                4u,    // CV access short
-                3u,    // SDF
-                2u,    // Binary state control long
-                1u>)); // Binary state control short
+    self._deques.logon.push_back(self._datagrams.decoder_state);
 
     // Keep packet for storing assignment
     return false;
