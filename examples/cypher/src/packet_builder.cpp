@@ -80,6 +80,13 @@ namespace automatic_logon {
 
 // clang-format off
 void automatic_logon();
+  void get_data_start(dcc::Address addr);
+  void get_data_cont(dcc::Address addr);
+  void set_data(dcc::Address addr);
+  void set_data_end(dcc::Address addr);
+  void select(dcc::Address addr);
+  void logon_assign(dcc::Address addr);
+  void logon_enable(dcc::Address addr);
 // clang-format on
 
 } // namespace automatic_logon
@@ -1314,7 +1321,68 @@ void nop_for_basic_and_extended_accessory(dcc::Address addr) {
 
 namespace automatic_logon {
 
-void automatic_logon() { ImGui::TextUnformatted("\\todo"); }
+void automatic_logon() {
+  ImGui::SeparatorText("Instruction");
+  static constexpr std::array instrs{"",
+                                     "GET_DATA_START",
+                                     "GET_DATA_CONT",
+                                     "SET_DATA",
+                                     "SET_DATA_END",
+                                     "SELECT",
+                                     "LOGON_ASSIGN",
+                                     "LOGON_ENABLE"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+  if (static constexpr dcc::Address addr{.value = 254u,
+                                         .type = dcc::Address::AutomaticLogon};
+      !strcmp(instrs[static_cast<size_t>(i)], "GET_DATA_START"))
+    get_data_start(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "GET_DATA_CONT"))
+    get_data_cont(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "SET_DATA")) set_data(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "SET_DATA_END"))
+    set_data_end(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "SELECT")) select(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "LOGON_ASSIGN"))
+    logon_assign(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "LOGON_ENABLE"))
+    logon_enable(addr);
+}
+
+// GET_DATA_START
+void get_data_start(dcc::Address addr) {
+  ImGui::SeparatorText("Parameters");
+  ImGui::Text("None");
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_get_data_start_packet()});
+}
+
+// GET_DATA_CONT
+void get_data_cont(dcc::Address addr) {
+  ImGui::SeparatorText("Parameters");
+  ImGui::Text("None");
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_get_data_cont_packet()});
+}
+
+// SET_DATA
+void set_data(dcc::Address) {}
+
+// SET_DATA_END
+void set_data_end(dcc::Address) {}
+
+// SELECT
+void select(dcc::Address) {}
+
+// LOGON_ASSIGN
+void logon_assign(dcc::Address) {}
+
+// LOGON_ENABLE
+void logon_enable(dcc::Address) {}
 
 } // namespace automatic_logon
 
@@ -1399,7 +1467,7 @@ void packet_builder() {
                                       "Basic Accessory",
                                       "Extended Accessory",
                                       "Extended Loco",
-                                      // "Automatic Logon",
+                                      "Automatic Logon",
                                       "Idle",
                                       "Service",
                                       "User Defined"};

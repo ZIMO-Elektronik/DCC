@@ -24,46 +24,57 @@ void eval(State::Packet& packet);
   void preamble(State::Packet& packet);
   void address(State::Packet& packet);
   void instruction(State::Packet& packet);
-    void unknown(State::Packet& packet, std::span<uint8_t const> bytes);
-    void decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
-      void decoder_control_digital_decoder_reset(State::Packet& packet, std::span<uint8_t const> bytes);
-      void decoder_control_hard_reset(State::Packet& packet, std::span<uint8_t const> bytes);
-      void decoder_control_factory_test(State::Packet& packet, std::span<uint8_t const> bytes);
-      void decoder_control_set_advanced_addressing(State::Packet& packet, std::span<uint8_t const> bytes);
-      void decoder_control_decoder_acknowledgement_request(State::Packet& packet, std::span<uint8_t const> bytes);
-    void consist_control(State::Packet& packet, std::span<uint8_t const> bytes);
-      void consist_control_set_consist_address(State::Packet& packet, std::span<uint8_t const> bytes);
-    void advanced_operations(State::Packet& packet, std::span<uint8_t const> bytes);
-      void advanced_operations_speed_direction_and_functions(State::Packet& packet, std::span<uint8_t const> bytes);
-      void advanced_operations_analog_function_group(State::Packet& packet, std::span<uint8_t const> bytes);
-      void advanced_operations_special_operating_modes(State::Packet& packet, std::span<uint8_t const> bytes);
-      void advanced_operations_128_speed_step_control(State::Packet& packet, std::span<uint8_t const> bytes);
-    void speed_and_direction(State::Packet& packet, std::span<uint8_t const> bytes);
-    void function_group(State::Packet& packet, std::span<uint8_t const> bytes);
-      void function_group_f0_f4(State::Packet& packet, std::span<uint8_t const> bytes);
-      void function_group_f9_f12(State::Packet& packet, std::span<uint8_t const> bytes);
-      void function_group_f5_f8(State::Packet& packet, std::span<uint8_t const> bytes);
-    void feature_expansion(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_binary_state_control_long_form(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_time_and_date(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_system_time(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_command_station_feature_identification(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_f29_f36(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_f37_f44(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_f45_f52(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_f53_f60(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_f61_f68(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_binary_state_control_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_f13_f20(State::Packet& packet, std::span<uint8_t const> bytes);
-      void feature_expansion_f21_f28(State::Packet& packet, std::span<uint8_t const> bytes);
-    void cv_access(State::Packet& packet, std::span<uint8_t const> bytes);
-      void cv_access_long_form(State::Packet& packet, std::span<uint8_t const> bytes);
-      void cv_access_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
-      void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes);
-    void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const> bytes);
-    void basic_accessory_decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
-    void extended_accessory_decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
-    void nop_for_basic_and_extended_accessory(State::Packet& packet, std::span<uint8_t const> bytes);
+    void loco(State::Packet& packet, std::span<uint8_t const> bytes);
+      void decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
+        void decoder_control_digital_decoder_reset(State::Packet& packet, std::span<uint8_t const> bytes);
+        void decoder_control_hard_reset(State::Packet& packet, std::span<uint8_t const> bytes);
+        void decoder_control_factory_test(State::Packet& packet, std::span<uint8_t const> bytes);
+        void decoder_control_set_advanced_addressing(State::Packet& packet, std::span<uint8_t const> bytes);
+        void decoder_control_decoder_acknowledgement_request(State::Packet& packet, std::span<uint8_t const> bytes);
+      void consist_control(State::Packet& packet, std::span<uint8_t const> bytes);
+        void consist_control_set_consist_address(State::Packet& packet, std::span<uint8_t const> bytes);
+      void advanced_operations(State::Packet& packet, std::span<uint8_t const> bytes);
+        void advanced_operations_speed_direction_and_functions(State::Packet& packet, std::span<uint8_t const> bytes);
+        void advanced_operations_analog_function_group(State::Packet& packet, std::span<uint8_t const> bytes);
+        void advanced_operations_special_operating_modes(State::Packet& packet, std::span<uint8_t const> bytes);
+        void advanced_operations_128_speed_step_control(State::Packet& packet, std::span<uint8_t const> bytes);
+      void speed_and_direction(State::Packet& packet, std::span<uint8_t const> bytes);
+      void function_group(State::Packet& packet, std::span<uint8_t const> bytes);
+        void function_group_f0_f4(State::Packet& packet, std::span<uint8_t const> bytes);
+        void function_group_f9_f12(State::Packet& packet, std::span<uint8_t const> bytes);
+        void function_group_f5_f8(State::Packet& packet, std::span<uint8_t const> bytes);
+      void feature_expansion(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_binary_state_control_long_form(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_time_and_date(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_system_time(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_command_station_feature_identification(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_f29_f36(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_f37_f44(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_f45_f52(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_f53_f60(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_f61_f68(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_binary_state_control_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_f13_f20(State::Packet& packet, std::span<uint8_t const> bytes);
+        void feature_expansion_f21_f28(State::Packet& packet, std::span<uint8_t const> bytes);
+      void cv_access(State::Packet& packet, std::span<uint8_t const> bytes);
+        void cv_access_long_form(State::Packet& packet, std::span<uint8_t const> bytes);
+        void cv_access_short_form(State::Packet& packet, std::span<uint8_t const> bytes);
+        void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes);
+    void accessory(State::Packet& packet, std::span<uint8_t const> bytes);
+      void basic_accessory_decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
+      void extended_accessory_decoder_control(State::Packet& packet, std::span<uint8_t const> bytes);
+      void nop_for_basic_and_extended_accessory(State::Packet& packet, std::span<uint8_t const> bytes);
+    void automatic_logon(State::Packet& packet, std::span<uint8_t const> bytes);
+      void get_data_start(State::Packet& packet, std::span<uint8_t const> bytes);
+      void get_data_cont(State::Packet& packet, std::span<uint8_t const> bytes);
+      void set_data(State::Packet& packet, std::span<uint8_t const> bytes);
+      void set_data_end(State::Packet& packet, std::span<uint8_t const> bytes);
+      void select(State::Packet& packet, std::span<uint8_t const> bytes);
+      void logon_assign(State::Packet& packet, std::span<uint8_t const> bytes);
+      void logon_enable(State::Packet& packet, std::span<uint8_t const> bytes);
+    void idle(State::Packet& packet, std::span<uint8_t const> bytes);
+      void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const> bytes);
+  void unknown(State::Packet& packet, std::span<uint8_t const> bytes);
   void checksum(State::Packet& packet);
   void highlights(State::Packet& packet);
   void tags(State::Packet& packet);
@@ -194,40 +205,33 @@ void instruction(State::Packet& packet) {
   } else if (packet.addr.type == dcc::Address::Broadcast ||
              packet.addr.type == dcc::Address::BasicLoco ||
              packet.addr.type == dcc::Address::ExtendedLoco)
-    switch (dcc::decode_instruction(bytes)) {
-      case dcc::Instruction::UnknownService: return unknown(packet, bytes);
-      case dcc::Instruction::DecoderControl:
-        return decoder_control(packet, bytes);
-      case dcc::Instruction::ConsistControl:
-        return consist_control(packet, bytes);
-      case dcc::Instruction::AdvancedOperations:
-        return advanced_operations(packet, bytes);
-      case dcc::Instruction::SpeedDirection:
-        return speed_and_direction(packet, bytes);
-      case dcc::Instruction::FunctionGroup:
-        return function_group(packet, bytes);
-      case dcc::Instruction::FeatureExpansion:
-        return feature_expansion(packet, bytes);
-      case dcc::Instruction::CvAccess: return cv_access(packet, bytes);
-      case dcc::Instruction::Logon: break;
-    }
-  else if (packet.addr.type == dcc::Address::BasicAccessory)
-    packet.bytes[1uz] & ztl::mask<7u>
-      ? basic_accessory_decoder_control(packet, bytes)
-      : nop_for_basic_and_extended_accessory(packet, bytes);
-  else if (packet.addr.type == dcc::Address::ExtendedAccessory)
-    packet.bytes[1uz] & ztl::mask<3u>
-      ? nop_for_basic_and_extended_accessory(packet, bytes)
-      : extended_accessory_decoder_control(packet, bytes);
-  else if (packet.addr.type == dcc::Address::Idle)
-    digital_decoder_idle(packet, bytes);
+    return loco(packet, bytes);
+  else if (packet.addr.type == dcc::Address::BasicAccessory ||
+           packet.addr.type == dcc::Address::ExtendedAccessory)
+    return accessory(packet, bytes);
+  else if (packet.addr.type == dcc::Address::AutomaticLogon)
+    return automatic_logon(packet, bytes);
+  else if (packet.addr.type == dcc::Address::Idle) idle(packet, bytes);
 }
 
-// Annotate unknown
-void unknown(State::Packet& packet, std::span<uint8_t const> bytes) {
-  packet.desc_strs.push_back("Unknown");
-  for (auto i{0uz}; i < size(bytes) - 1uz; ++i)
-    packet.pattern_str += " 0 ????????";
+// Loco
+void loco(State::Packet& packet, std::span<uint8_t const> bytes) {
+  switch (dcc::decode_instruction(bytes)) {
+    case dcc::Instruction::UnknownService: return unknown(packet, bytes);
+    case dcc::Instruction::DecoderControl:
+      return decoder_control(packet, bytes);
+    case dcc::Instruction::ConsistControl:
+      return consist_control(packet, bytes);
+    case dcc::Instruction::AdvancedOperations:
+      return advanced_operations(packet, bytes);
+    case dcc::Instruction::SpeedDirection:
+      return speed_and_direction(packet, bytes);
+    case dcc::Instruction::FunctionGroup: return function_group(packet, bytes);
+    case dcc::Instruction::FeatureExpansion:
+      return feature_expansion(packet, bytes);
+    case dcc::Instruction::CvAccess: return cv_access(packet, bytes);
+    case dcc::Instruction::Logon: break;
+  }
 }
 
 // Decoder control
@@ -861,10 +865,16 @@ void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {
   }
 }
 
-// Digital decoder idle
-void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const>) {
-  packet.desc_strs.push_back("Digital Decoder Idle");
-  packet.pattern_str += " 0 00000000";
+// Accessory
+void accessory(State::Packet& packet, std::span<uint8_t const> bytes) {
+  if (packet.addr.type == dcc::Address::BasicAccessory)
+    packet.bytes[1uz] & ztl::mask<7u>
+      ? basic_accessory_decoder_control(packet, bytes)
+      : nop_for_basic_and_extended_accessory(packet, bytes);
+  else if (packet.addr.type == dcc::Address::ExtendedAccessory)
+    packet.bytes[1uz] & ztl::mask<3u>
+      ? nop_for_basic_and_extended_accessory(packet, bytes)
+      : extended_accessory_decoder_control(packet, bytes);
 }
 
 // Basic accessory decoder control
@@ -895,6 +905,48 @@ void extended_accessory_decoder_control(State::Packet& packet,
 void nop_for_basic_and_extended_accessory(State::Packet& packet,
                                           std::span<uint8_t const>) {
   packet.desc_strs.push_back("NOP for Basic and Extended Accessory Decoder");
+}
+
+// Automatic logon
+void automatic_logon(State::Packet& packet, std::span<uint8_t const> bytes) {}
+
+// GET_DATA_START
+void get_data_start(State::Packet& packet, std::span<uint8_t const> bytes) {}
+
+// GET_DATA_CONT
+void get_data_cont(State::Packet& packet, std::span<uint8_t const> bytes) {}
+
+// SET_DATA
+void set_data(State::Packet& packet, std::span<uint8_t const> bytes) {}
+
+// SET_DATA_END
+void set_data_end(State::Packet& packet, std::span<uint8_t const> bytes) {}
+
+// SELECT
+void select(State::Packet& packet, std::span<uint8_t const> bytes) {}
+
+// LOGON_ASSIGN
+void logon_assign(State::Packet& packet, std::span<uint8_t const> bytes) {}
+
+// LOGON_ENABLE
+void logon_enable(State::Packet& packet, std::span<uint8_t const> bytes) {}
+
+// Idle
+void idle(State::Packet& packet, std::span<uint8_t const> bytes) {
+  return digital_decoder_idle(packet, bytes);
+}
+
+// Digital decoder idle
+void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const>) {
+  packet.desc_strs.push_back("Digital Decoder Idle");
+  packet.pattern_str += " 0 00000000";
+}
+
+// Annotate unknown
+void unknown(State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.push_back("Unknown");
+  for (auto i{0uz}; i < size(bytes) - 1uz; ++i)
+    packet.pattern_str += " 0 ????????";
 }
 
 // Annotate checksum
