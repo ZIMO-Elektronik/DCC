@@ -58,7 +58,6 @@ The DCC protocol is defined by various standards published by the [National Mode
 - Writing an address to CV1 automatically clears CV29:5. Strictly speaking, this is not a deviation from the standard, as [RCN-225](https://normen.railcommunity.de/RCN-225.pdf) explicitly permits this behavior.
 - **All** CV access short form commands require **two identical** programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](https://normen.railcommunity.de/RCN-214.pdf) (chapter 3) and [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.7.2).
 - [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) specific
-  - The 4-byte unique ID of a decoder (DID) must be available. By default this library uses CV265-268 in the BiDi CV page (CV31=0 and CV32=255). To change the address of these CVs use the CMake option `DCC_RX_LOGON_DID_CV_ADDRESS`.
   - During logon, the decoder must be able to store 2 bytes central ID (CID), 1 byte session ID (SID), and 2 bytes logon address. By default this library uses CV273-277 in the BiDi CV page (CV31=0 and CV32=255). To change the addresses of these CVs use the CMake options `DCC_RX_LOGON_CID_CV_ADDRESS`, `DCC_RX_LOGON_SID_CV_ADDRESS`, and `DCC_RX_LOGON_ADDRESS_CV_ADDRESS`.
 
 > [!NOTE]  

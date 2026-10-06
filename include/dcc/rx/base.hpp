@@ -88,21 +88,23 @@ struct Base {
     // little-endian format; however, we read it into the array in big-endian
     // format to make it easier to compare with the bytes from a DCC packet
     // later on.
-    self._ids.decoder = {self.readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 3u),
-                         self.readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 2u),
-                         self.readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 1u),
-                         self.readCv(DCC_RX_LOGON_DID_CV_ADDRESS + 0u)};
+    self._ids.decoder = {self.readCv(65288u + 3u),
+                         self.readCv(65288u + 2u),
+                         self.readCv(65288u + 1u),
+                         self.readCv(65288u + 0u)};
     self._ids.cs.front() = static_cast<decltype(_ids.cs)::value_type>(
       static_cast<uint32_t>(self.readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 0u))
         << 8u |
       self.readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 1u));
     self._ids.session.front() = self.readCv(DCC_RX_LOGON_SID_CV_ADDRESS);
 
-    // Logon address
+    // Logon address and datagrams
     std::array const logon_addr_cvs{
       self.readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u),
       self.readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u)};
     self._addrs.logon = decode_address(logon_addr_cvs);
+    self._datagrams.short_info = {};
+    self._datagrams.decoder_state = {};
 
     // Initialization time point
     self._tps.init = std::chrono::system_clock::now();
@@ -1743,6 +1745,12 @@ private:
     Packet last{};    ///< Last executed packet
     Packet pom{};     ///< Last executed POM packet
   } _packets{};
+
+  // Datagrams
+  struct {
+    bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>> short_info{};
+    bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>> decoder_state{};
+  } _datagrams{};
 
   // Backoffs
   struct {

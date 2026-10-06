@@ -12,6 +12,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <ztl/bits.hpp>
 #include "../address.hpp"
 #include "../crc8.hpp"
 #include "app/adr_high.hpp"
@@ -252,9 +253,33 @@ make_app_decoder_unique_datagram(uint16_t mid,
       static_cast<uint32_t>(did[2uz]) << 8u | static_cast<uint32_t>(did[3uz])));
 }
 
-/// Make get_data datagram
+/// Make ShortInfo datagram
 ///
-/// \return get_data datagram
+/// \param  addr      Address
+/// \param  byte2     Highest function assignment, aspect or output pairs
+/// \param  cv131073  Extended capabilities byte 0
+/// \param  cv131074  Extended capabilities byte 1
+/// \return ShortInfo datagram
+constexpr auto make_short_info_datagram(Address addr,
+                                        uint8_t byte2,
+                                        uint8_t cv131073,
+                                        uint8_t cv131074) {
+  std::array<uint8_t, 5uz> short_info{0u, 0u, byte2, cv131073, cv131074};
+  encode_logon_address(addr, begin(short_info));
+  short_info[0uz] =
+    static_cast<uint8_t>(ztl::mask<7u> | (short_info[0uz] & 0x3Fu));
+  return encode_datagram(
+    make_datagram<Bits::_48>(static_cast<uint64_t>(short_info[0uz]) << 40u |
+                             static_cast<uint64_t>(short_info[1uz]) << 32u |
+                             static_cast<uint32_t>(short_info[2uz]) << 24u |
+                             static_cast<uint32_t>(short_info[3uz]) << 16u |
+                             static_cast<uint32_t>(short_info[4uz]) << 8u |
+                             static_cast<uint32_t>(crc8(short_info)) << 0u));
+}
+
+/// Make GET_DATA datagram
+///
+/// \return GET_DATA datagram
 constexpr auto make_get_data_datagram(std::span<uint8_t const, 6uz> bytes) {
   return encode_datagram(
     make_datagram<Bits::_48>(static_cast<uint64_t>(bytes[0uz]) << 40u |

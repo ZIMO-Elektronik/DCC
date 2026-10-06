@@ -5,6 +5,7 @@
 - Revert CV access packets are answered with 2x ACKs as long as busy ([#114](https://github.com/ZIMO-Elektronik/DCC/issues/114))
 - Bugfix CV bit write in operations mode answered with POM ID0 datagram ([#172](https://github.com/ZIMO-Elektronik/DCC/issues/172))
 - Bugfix `DCCypher` swaps 0 and 1 in the command station feature identification packet ([#182](https://github.com/ZIMO-Elektronik/DCC/issues/182))
+- Remove `DCC_RX_LOGON_DID_CV_ADDRESS` in favor of manufacturer unique number (MUN) from [BiDi CV page]((https://normen.railcommunity.de/RCN-217.pdf))
 
 ## 0.49.0
 - Use manufacturer unique number (MUN) from [BiDi CV page]((https://normen.railcommunity.de/RCN-217.pdf)) as [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) DID ([#56](https://github.com/ZIMO-Elektronik/DCC/issues/56))
