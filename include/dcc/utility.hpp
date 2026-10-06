@@ -1546,8 +1546,9 @@ constexpr auto make_logon_select_packet(uint16_t manufacturer_id,
                                         uint8_t data_space = 0u,
                                         uint32_t cv_addr = 0u,
                                         uint8_t cv_count = 0u) {
-  assert((subcommand == 0b1111'1111u || subcommand == 0b1111'1110u) &&
-         data_space < 8u);
+  assert(subcommand == 0b1111'1111u || subcommand == 0b1111'1110u);
+  assert(data_space < 8u);
+  assert(cv_addr < smath::pow(2u, 24u));
   Packet packet{};
   auto first{begin(packet)};
   auto last{encode_address({254u, Address::AutomaticLogon}, first)};

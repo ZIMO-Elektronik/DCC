@@ -63,10 +63,10 @@ MATCHER_P(DatagramMatcher, datagram, "") {
     .WillOnce(Return(_cvs[15uz - 1uz]))                                        \
     .WillOnce(Return(_cvs[16uz - 1uz]))                                        \
     .WillOnce(Return(_cvs[28uz - 1uz]))                                        \
-    .WillOnce(Return(_cvs[65288uz + 3uz]))                                     \
-    .WillOnce(Return(_cvs[65288uz + 2uz]))                                     \
-    .WillOnce(Return(_cvs[65288uz + 1uz]))                                     \
-    .WillOnce(Return(_cvs[65288uz + 0uz]))                                     \
+    .WillOnce(Return(_cvs[65292uz - 1uz]))                                     \
+    .WillOnce(Return(_cvs[65291uz - 1uz]))                                     \
+    .WillOnce(Return(_cvs[65290uz - 1uz]))                                     \
+    .WillOnce(Return(_cvs[65289uz - 1uz]))                                     \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz]))                 \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 1uz]))                 \
     .WillOnce(Return(_cvs[DCC_RX_LOGON_SID_CV_ADDRESS]))                       \

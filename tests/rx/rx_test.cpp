@@ -15,10 +15,10 @@ RxTest::RxTest() {
   _cvs[28uz - 1uz] = 0b1000'0011u; // RailCom
 
   // Decoder ID (little endian)
-  _cvs[65288uz + 0uz] = static_cast<uint8_t>(_did >> 0u);
-  _cvs[65288uz + 1uz] = static_cast<uint8_t>(_did >> 8u);
-  _cvs[65288uz + 2uz] = static_cast<uint8_t>(_did >> 16u);
-  _cvs[65288uz + 3uz] = static_cast<uint8_t>(_did >> 24u);
+  _cvs[65289uz - 1uz] = static_cast<uint8_t>(_did >> 0u);
+  _cvs[65290uz - 1uz] = static_cast<uint8_t>(_did >> 8u);
+  _cvs[65291uz - 1uz] = static_cast<uint8_t>(_did >> 16u);
+  _cvs[65292uz - 1uz] = static_cast<uint8_t>(_did >> 24u);
 
   // CID
   _cvs[DCC_RX_LOGON_CID_CV_ADDRESS + 0uz] = static_cast<uint8_t>(_cid >> 8u);

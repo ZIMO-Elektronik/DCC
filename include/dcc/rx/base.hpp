@@ -88,10 +88,10 @@ struct Base {
     // little-endian format; however, we read it into the array in big-endian
     // format to make it easier to compare with the bytes from a DCC packet
     // later on.
-    self._ids.decoder = {self.readCv(65288u + 3u),
-                         self.readCv(65288u + 2u),
-                         self.readCv(65288u + 1u),
-                         self.readCv(65288u + 0u)};
+    self._ids.decoder = {self.readCv(65292u - 1u),
+                         self.readCv(65291u - 1u),
+                         self.readCv(65290u - 1u),
+                         self.readCv(65289u - 1u)};
     self._ids.cs.front() = static_cast<decltype(_ids.cs)::value_type>(
       static_cast<uint32_t>(self.readCv(DCC_RX_LOGON_CID_CV_ADDRESS + 0u))
         << 8u |
@@ -103,10 +103,13 @@ struct Base {
       self.readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 0u),
       self.readCv(DCC_RX_LOGON_ADDRESS_CV_ADDRESS + 1u)};
     self._addrs.logon = decode_address(logon_addr_cvs);
-    self._datagrams.short_info = bidi::make_short_info_datagram(
-      self._addrs.primary, 63u, self.readCv(131073u), self.readCv(131074u));
+    self._datagrams.short_info =
+      bidi::make_short_info_datagram(self._addrs.primary,
+                                     63u,
+                                     self.readCv(131073u - 1u),
+                                     self.readCv(131074u - 1u));
     self._datagrams.decoder_state = bidi::make_app_decoder_state_datagram(
-      0xFFu, 0u, self.readCv(131075u), self.readCv(131076u));
+      0xFFu, 0u, self.readCv(131075u - 1u), self.readCv(131076u - 1u));
 
     // Initialization time point
     self._tps.init = std::chrono::system_clock::now();
@@ -975,22 +978,22 @@ private:
     if (auto const did{bytes.subspan<2uz, sizeof(uint32_t)>()};
         !std::ranges::equal(did, self._ids.decoder))
       return true;
+    else self._logon_selected = true;
 
     switch (bytes[6uz]) {
       // ShortInfo
       case 0b1111'1111u:
-        self._logon_selected = true;
         self._deques.logon.push_back(self._datagrams.short_info);
         return true;
 
       // Read block
       case 0b1111'1110u:
-        // In thread mode
+        // In thread mode read data space
         if (!handler_mode) {
           self.dataSpaceRead(bytes);
           return true;
         }
-        // ...
+        // ... in handler mode just acknowledge
         else if (bytes[7uz] < 8uz) {
           self._deques.logon.push_back({bidi::acks[0uz],
                                         bidi::acks[0uz],

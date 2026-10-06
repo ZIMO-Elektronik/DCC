@@ -222,20 +222,20 @@ constexpr auto make_app_decoder_state_datagram(uint8_t change_flags,
                                                uint16_t change_count,
                                                uint8_t cv131075,
                                                uint8_t cv131076) {
-  std::array const data{
-    static_cast<uint8_t>(app::DecoderState::id << 4u | change_flags >> 4u), //
-    static_cast<uint8_t>((change_flags & 0x0Fu) |
-                         static_cast<uint32_t>(change_count >> 8u)), //
-    static_cast<uint8_t>(change_count),                              //
-    cv131075,                                                        //
-    cv131076};                                                       //
+  std::array const decoder_state{
+    static_cast<uint8_t>(app::DecoderState::id << 4u | change_flags >> 4u),
+    static_cast<uint8_t>(static_cast<uint32_t>(change_flags) << 4u |
+                         static_cast<uint32_t>(change_count) >> 8u),
+    static_cast<uint8_t>(change_count),
+    cv131075,
+    cv131076};
   return encode_datagram(
-    make_datagram<Bits::_48>(static_cast<uint64_t>(data[0uz]) << 40uz | //
-                             static_cast<uint64_t>(data[1uz]) << 32uz | //
-                             static_cast<uint32_t>(data[2uz]) << 24uz | //
-                             static_cast<uint32_t>(data[3uz]) << 16uz | //
-                             static_cast<uint32_t>(data[4uz]) << 8uz |  //
-                             crc8(data)));                              //
+    make_datagram<Bits::_48>(static_cast<uint64_t>(decoder_state[0uz]) << 40u |
+                             static_cast<uint64_t>(decoder_state[1uz]) << 32u |
+                             static_cast<uint32_t>(decoder_state[2uz]) << 24u |
+                             static_cast<uint32_t>(decoder_state[3uz]) << 16u |
+                             static_cast<uint32_t>(decoder_state[4uz]) << 8u |
+                             static_cast<uint32_t>(crc8(decoder_state)) << 0u));
 }
 
 /// Make app:decoder_unique datagram
