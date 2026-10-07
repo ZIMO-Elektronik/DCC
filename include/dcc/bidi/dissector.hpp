@@ -69,7 +69,7 @@ struct Dissector : std::ranges::view_interface<Dissector> {
                                   app::Test      // ID12
                                   >;             // ID13
 
-  using size_type = ztl::smallest_unsigned_t<bundled_channels_size>;
+  using size_type = ztl::smallest_unsigned_t<combined_channels_size>;
   using difference_type = std::make_signed_t<size_type>;
   using reference = value_type;
   using pointer = value_type;
@@ -231,7 +231,7 @@ struct Dissector : std::ranges::view_interface<Dissector> {
   }
 
   constexpr bool operator==(std::default_sentinel_t) const {
-    return _i >= bundled_channels_size || !_encoded[_i] || std::empty(next());
+    return _i >= combined_channels_size || !_encoded[_i] || std::empty(next());
   }
 
   constexpr Dissector& begin() { return *this; }

@@ -39,6 +39,37 @@ void loco(State::Datagram& datagram);
 
 } // namespace loco
 
+namespace accessory {
+
+// clang-format off
+void accessory(State::Datagram& datagram);
+  void channel1(State::Datagram& datagram);
+    void app_srq(State::Datagram& datagram);
+  void channel2(State::Datagram& datagram);
+    void app_pom(State::Datagram& datagram);
+    void app_stat4(State::Datagram& datagram);
+    void app_stat1(State::Datagram& datagram);
+    void app_time(State::Datagram& datagram);
+    void app_error(State::Datagram& datagram);
+    void app_dyn(State::Datagram& datagram);
+    void app_xpom(State::Datagram& datagram);
+    void app_test(State::Datagram& datagram);
+    void app_block(State::Datagram& datagram);
+// clang-format on
+
+} // namespace accessory
+
+namespace automatic_logon {
+
+// clang-format off
+void automatic_logon(State::Datagram& datagram);
+  void combined_channels(State::Datagram& datagram);
+    void app_decoder_state(State::Datagram& datagram);
+    void app_decoder_unique(State::Datagram& datagram);
+// clang-format on
+
+} // namespace automatic_logon
+
 namespace broadcast {
 
 // Broadcast
@@ -520,22 +551,6 @@ void app_block(State::Datagram&) {
 
 namespace accessory {
 
-// clang-format off
-void accessory(State::Datagram& datagram);
-  void channel1(State::Datagram& datagram);
-    void app_srq(State::Datagram& datagram);
-  void channel2(State::Datagram& datagram);
-    void app_pom(State::Datagram& datagram);
-    void app_stat4(State::Datagram& datagram);
-    void app_stat1(State::Datagram& datagram);
-    void app_time(State::Datagram& datagram);
-    void app_error(State::Datagram& datagram);
-    void app_dyn(State::Datagram& datagram);
-    void app_xpom(State::Datagram& datagram);
-    void app_test(State::Datagram& datagram);
-    void app_block(State::Datagram& datagram);
-// clang-format on
-
 // Accessory
 void accessory(State::Datagram& datagram) {
   datagram.addr = {.value = 12u,
@@ -730,10 +745,50 @@ void app_block(State::Datagram&) {
 
 namespace automatic_logon {
 
+// Automatic logon
 void automatic_logon(State::Datagram& datagram) {
   datagram.addr = {.value = 254u,
                    .type = dcc::Address::AutomaticLogon}; // Default
-  ImGui::TextUnformatted("\\todo");
+  combined_channels(datagram);
+  if (std::ranges::all_of(datagram.bytes, [](auto b) { return !b; })) return;
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Datagrams")) {
+    state.datagrams.push_back(datagram);
+  }
+}
+
+// Automatic logon combined_channels
+void combined_channels(State::Datagram& datagram) {
+  ImGui::SeparatorText("Combined Channels");
+  static constexpr std::array apps{
+    "", "app:decoder_state", "app:decoder_unique"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(apps), ssize(apps));
+  if (!strcmp(apps[static_cast<size_t>(i)], "app:decoder_state"))
+    app_decoder_state(datagram);
+  else if (!strcmp(apps[static_cast<size_t>(i)], "app:decoder_unique"))
+    app_decoder_unique(datagram);
+}
+
+// Automatic logon app:decoder_state
+void app_decoder_state(State::Datagram&) {}
+
+// Automatic logon app:decoder_unique
+void app_decoder_unique(State::Datagram& datagram) {
+  ImGui::SeparatorText("Parameters");
+  static uint16_t manufacturer_id{};
+  ImGui::InputScalar("Manufacturer ID", ImGuiDataType_U16, &manufacturer_id);
+  manufacturer_id =
+    std::clamp<uint16_t>(manufacturer_id, 0u, smath::pow(2u, 12u) - 1u);
+  static uint32_t did{};
+  ImGui::InputScalar("Unique ID", ImGuiDataType_U32, &did);
+  std::ranges::copy(make_app_decoder_unique_datagram(
+                      manufacturer_id,
+                      std::array{static_cast<uint8_t>(did >> 24u),
+                                 static_cast<uint8_t>(did >> 16u),
+                                 static_cast<uint8_t>(did >> 8u),
+                                 static_cast<uint8_t>(did >> 0u)}),
+                    begin(datagram.bytes));
 }
 
 } // namespace automatic_logon
@@ -749,12 +804,7 @@ void datagram_builder() {
                    ImGuiWindowFlags_AlwaysAutoResize)) {
     ImGui::SeparatorText("Type");
     static constexpr std::array types{
-      "",
-      "Broadcast",
-      "Loco",
-      "Accessory",
-      // "Automatic Logon"
-    };
+      "", "Broadcast", "Loco", "Accessory", "Automatic Logon"};
     static int i{};
     ImGui::Combo(UNIQUE_LABEL(), &i, data(types), ssize(types));
     if (State::Datagram datagram{};

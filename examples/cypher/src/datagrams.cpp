@@ -76,7 +76,7 @@ void eval(State::Datagram& datagram) {
   static constexpr auto scale{0.5};
   datagram.plots.t_b.push_back(0.0);
   datagram.plots.b.push_back(1.0 * scale);
-  for (auto i{0uz}; i < bundled_channels_size; ++i) {
+  for (auto i{0uz}; i < combined_channels_size; ++i) {
     auto offset{i < 2uz ? tts1 : tts2 - channel1_size * 10u * 4u};
     offset = offset + static_cast<double>(i * 10u * 4u);
 
@@ -516,7 +516,7 @@ void highlights(State::Datagram& datagram) {
   // Caret index
   size_t c{};
 
-  for (auto i{0uz}; i < bundled_channels_size; ++i) {
+  for (auto i{0uz}; i < combined_channels_size; ++i) {
     auto const b{datagram.bytes[i]};
     if (!b) continue;
 
