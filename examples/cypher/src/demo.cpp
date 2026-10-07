@@ -7,7 +7,7 @@ namespace {
 
 using namespace dcc;
 using namespace dcc::bidi;
-/*
+
 // Add loco packets
 void add_loco_packets() {
   // Decoder Control
@@ -367,7 +367,7 @@ void add_service_packets() {
        static_cast<bool>(random_interval(0, 1)),
        random_interval<uint8_t>(0u, 7u))});
 }
-*/
+
 // Add automatic logon packets
 void add_automatic_logon_packets() {
   // GET_DATA_START
@@ -408,8 +408,16 @@ void add_automatic_logon_packets() {
        random_interval<uint32_t>(),
        0b1111'1110u,
        3u,
-       266u,
-       26u)});
+       random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u),
+       random_interval<uint8_t>(1u, 31u))});
+
+  // LOGON_ENABLE
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_enable_packet(
+       static_cast<dcc::LogonGroup>(random_interval<uint8_t>(0u, 3u)),
+       random_interval<uint16_t>(),
+       random_interval<uint8_t>())});
 }
 
 // Add ACK/NAK datagrams
@@ -744,9 +752,9 @@ void add_accessory_datagrams() {
 void demo() {
   state.packets.clear();
   state.datagrams.clear();
-  // add_loco_packets();
-  // add_accessory_packets();
-  // add_service_packets();
+  add_loco_packets();
+  add_accessory_packets();
+  add_service_packets();
   add_automatic_logon_packets();
   add_ack_nak_datagrams();
   add_loco_datagrams();

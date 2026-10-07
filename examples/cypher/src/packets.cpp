@@ -984,18 +984,65 @@ void set_data_end(State::Packet& packet, std::span<uint8_t const> bytes) {
 }
 
 // SELECT
-void select(State::Packet& packet, std::span<uint8_t const>) {
+void select(State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - SELECT";
+  packet.desc_strs.back() += std::format(
+    "\n- Manufacturer ID={}", (bytes[0uz] & 0x0Fu) << 8u | bytes[1uz]);
+  packet.desc_strs.back() +=
+    std::format("\n- Unique ID={}",
+                static_cast<uint32_t>(bytes[2uz]) << 24u |
+                  static_cast<uint32_t>(bytes[3uz]) << 16u |
+                  static_cast<uint32_t>(bytes[4uz]) << 8u |
+                  static_cast<uint32_t>(bytes[5uz]) << 0u);
+  packet.pattern_str += " 0 1101HHHH 0 HHHHHHHH 0 UUUUUUUU 0 UUUUUUUU 0 "
+                        "UUUUUUUU 0 UUUUUUUU 0 BBBBBBBB";
+  switch (bytes[6uz]) {
+    default: break;
+    case 0b1111'1111u: packet.desc_strs.back() += "\n- Read ShortInfo"; break;
+    case 0b1111'1110u:
+      packet.desc_strs.back() += std::format("\n- Read Block={}", bytes[7uz]);
+      packet.pattern_str += " 0 NNNNNNNN";
+      if (bytes[7uz] == 3u) {
+        auto const cv_addr{static_cast<uint32_t>(bytes[8uz]) << 16u |
+                           static_cast<uint32_t>(bytes[9uz]) << 8u |
+                           static_cast<uint32_t>(bytes[10uz]) << 0u};
+        packet.desc_strs.back() +=
+          std::format("\n- CV31={} CV32={} CV={} (CV={}) #={}",
+                      bytes[8uz],
+                      bytes[9uz],
+                      bytes[10uz] + 1u,
+                      cv_addr + 1u,
+                      bytes[11uz]);
+        packet.pattern_str += " 0 VVVVVVVV 0 VVVVVVVV 0 VVVVVVVV 0 AAAAAAAA";
+      }
+      break;
+    case 0b1111'1100u:
+      packet.desc_strs.back() += std::format("\n- Write Block={}", bytes[7uz]);
+      break;
+  }
+  packet.pattern_str += " 0 CCCCCCCC";
 }
 
 // LOGON_ASSIGN
-void logon_assign(State::Packet&, std::span<uint8_t const>) {
-  asm volatile("nop");
+void logon_assign(State::Packet& packet, std::span<uint8_t const>) {
+  packet.desc_strs.back() += " - LOGON_ASSIGN";
 }
 
 // LOGON_ENABLE
-void logon_enable(State::Packet&, std::span<uint8_t const>) {
-  asm volatile("nop");
+void logon_enable(State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - LOGON_ENABLE";
+  auto const gg{static_cast<dcc::LogonGroup>(bytes[0uz] & 0b11u)};
+  packet.desc_strs.back() += std::format("\n- Group={}",
+                                         gg == dcc::LogonGroup::All    ? "ALL"
+                                         : gg == dcc::LogonGroup::Loco ? "LOCO"
+                                         : gg == dcc::LogonGroup::Acc  ? "ACC"
+                                                                       : "NOW");
+  packet.desc_strs.back() +=
+    std::format("\n- Central ID={}",
+                static_cast<uint32_t>(bytes[1uz]) << 8u |
+                  static_cast<uint32_t>(bytes[2uz]) << 0u);
+  packet.desc_strs.back() += std::format("\n- Session ID={}", bytes[3uz]);
+  packet.pattern_str += " 0 111111GG 0 ZZZZZZZZ 0 ZZZZZZZZ 0 SSSSSSSS";
 }
 
 // Idle

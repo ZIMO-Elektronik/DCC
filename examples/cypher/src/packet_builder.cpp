@@ -85,9 +85,6 @@ void automatic_logon();
   void set_data(dcc::Address addr);
   void set_data_end(dcc::Address addr);
   void select(dcc::Address addr);
-    void select_short_info(dcc::Address addr);
-    void select_read_block(dcc::Address addr);
-    void select_write_block(dcc::Address addr);
   void logon_assign(dcc::Address addr);
   void logon_enable(dcc::Address addr);
 // clang-format on
@@ -1432,16 +1429,7 @@ void select(dcc::Address addr) {
     "", "Read ShortInfo", "Read Block", "Write Block"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
-  if (!strcmp(instrs[static_cast<size_t>(i)], "Read ShortInfo"))
-    return select_short_info(addr);
-  else if (!strcmp(instrs[static_cast<size_t>(i)], "Read Block"))
-    return select_read_block(addr);
-  else if (!strcmp(instrs[static_cast<size_t>(i)], "Write Block"))
-    return select_write_block(addr);
-}
-
-// SELECT Read ShortInfo
-void select_short_info(dcc::Address addr) {
+  if (!strcmp(instrs[static_cast<size_t>(i)], "")) return;
   ImGui::SeparatorText("Parameters");
   static uint16_t manufacturer_id{};
   ImGui::InputScalar("Manufacturer ID", ImGuiDataType_U16, &manufacturer_id);
@@ -1449,18 +1437,33 @@ void select_short_info(dcc::Address addr) {
     std::clamp<uint16_t>(manufacturer_id, 0u, smath::pow(2u, 12u) - 1u);
   static uint32_t did{};
   ImGui::InputScalar("Unique ID", ImGuiDataType_U32, &did);
-  ImGui::SeparatorText("Done");
-  if (ImGui::Button("Push to Packets"))
-    state.packets.push_back(
-      {.addr = addr,
-       .bytes = dcc::make_select_packet(manufacturer_id, did, 0b1111'1111u)});
+  if (!strcmp(instrs[static_cast<size_t>(i)], "Read ShortInfo")) {
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_select_packet(manufacturer_id, did, 0b1111'1111u)});
+  } else if (!strcmp(instrs[static_cast<size_t>(i)], "Read Block")) {
+    static uint8_t data_space{};
+    ImGui::InputScalar("Data Space", ImGuiDataType_U8, &data_space);
+    data_space = std::clamp<uint8_t>(data_space, 0u, 7u);
+    static uint32_t cv_addr{};
+    static uint8_t cv_count{};
+    if (data_space == 3u) {
+      ImGui::InputScalar("CV Address", ImGuiDataType_U32, &cv_addr);
+      cv_addr = std::clamp<uint32_t>(cv_addr, 0u, smath::pow(2u, 24u) - 1u);
+      ImGui::InputScalar("CV Count", ImGuiDataType_U8, &cv_count);
+    }
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_select_packet(
+           manufacturer_id, did, 0b1111'1110u, data_space, cv_addr, cv_count)});
+  } else if (!strcmp(instrs[static_cast<size_t>(i)], "Write Block")) {
+    ImGui::Text("TODO");
+  }
 }
-
-// SELECT Read Block
-void select_read_block(dcc::Address) { ImGui::SeparatorText("Parameters"); }
-
-// SELECT Write Block
-void select_write_block(dcc::Address) { ImGui::SeparatorText("Parameters"); }
 
 // LOGON_ASSIGN
 void logon_assign(dcc::Address) {
@@ -1468,14 +1471,34 @@ void logon_assign(dcc::Address) {
   ImGui::SeparatorText("Sub Instruction");
   ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
   ImGui::EndDisabled();
+  ImGui::SeparatorText("Parameters");
+  static uint16_t manufacturer_id{};
+  ImGui::InputScalar("Manufacturer ID", ImGuiDataType_U16, &manufacturer_id);
+  manufacturer_id =
+    std::clamp<uint16_t>(manufacturer_id, 0u, smath::pow(2u, 12u) - 1u);
+  static uint32_t did{};
+  ImGui::InputScalar("Unique ID", ImGuiDataType_U32, &did);
 }
 
 // LOGON_ENABLE
-void logon_enable(dcc::Address) {
+void logon_enable(dcc::Address addr) {
   ImGui::BeginDisabled();
   ImGui::SeparatorText("Sub Instruction");
   ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
   ImGui::EndDisabled();
+  ImGui::SeparatorText("Parameters");
+  static constexpr std::array logon_group{"ALL", "LOCO", "ACC", "NOW"};
+  static int gg{};
+  ImGui::Combo(UNIQUE_LABEL(), &gg, data(logon_group), ssize(logon_group));
+  static uint16_t cid{};
+  ImGui::InputScalar("Central ID", ImGuiDataType_U16, &cid);
+  static uint8_t sid{};
+  ImGui::InputScalar("Session ID", ImGuiDataType_U8, &sid);
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back({.addr = addr,
+                             .bytes = dcc::make_logon_enable_packet(
+                               static_cast<dcc::LogonGroup>(gg), cid, sid)});
 }
 
 } // namespace automatic_logon
