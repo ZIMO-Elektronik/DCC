@@ -21,7 +21,7 @@ TEST_F(RxTest, logon_with_unknown_cid_basic_loco) {
   BiDi();
 
   // Select
-  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
+  Receive(dcc::make_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
   // Assign address 42, execute to store
@@ -45,7 +45,7 @@ TEST_F(RxTest, logon_with_unknown_cid_extended_loco) {
   BiDi();
 
   // Select
-  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
+  Receive(dcc::make_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
   // Assign address 1001, execute to store
@@ -87,7 +87,7 @@ TEST_F(RxTest, force_new_logon_with_known_cid_and_sid_plus_2) {
   BiDi();
 
   // Select
-  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
+  Receive(dcc::make_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
   // Assign address 1001, execute to store
@@ -101,7 +101,7 @@ TEST_F(RxTest, force_new_logon_with_known_cid_and_sid_plus_2) {
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 }
 
-// LOGON_SELECT disables LOGON_ENABLE (and ID15 datagram)
+// SELECT disables LOGON_ENABLE (and ID15 datagram)
 TEST_F(
   RxTest,
   no_id15_datagram_after_logon_select_as_long_as_cid_and_sid_stay_the_same) {
@@ -117,7 +117,7 @@ TEST_F(
   BiDi();
 
   // Select, expect ID13
-  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
+  Receive(dcc::make_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
   // Enable (again)
@@ -138,7 +138,7 @@ TEST_F(RxTest, permanent_assign_to_basic_address) {
   BiDi();
 
   // Select
-  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
+  Receive(dcc::make_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
   // Assign address 42, execute to store
@@ -168,7 +168,7 @@ TEST_F(RxTest, permanent_assign_to_extended_address) {
   BiDi();
 
   // Select
-  Receive(dcc::make_logon_select_packet(DCC_MANUFACTURER_ID, _did));
+  Receive(dcc::make_select_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
   // Assign address 1042, execute to store

@@ -151,7 +151,7 @@ void RxTest::ReadDataSpace(uint8_t data_space,
 
   Logon();
 
-  // Confirm LOGON_SELECT via 8x ACK
+  // Confirm SELECT via 8x ACK
   InSequence s;
   EXPECT_CALL(_mock,
               transmitBiDi(DatagramMatcher(
@@ -164,13 +164,13 @@ void RxTest::ReadDataSpace(uint8_t data_space,
                                                       dcc::bidi::acks[0uz],
                                                       dcc::bidi::acks[0uz]})));
   auto packet{data_space == 3u
-                ? dcc::make_logon_select_packet(DCC_MANUFACTURER_ID,
-                                                _did,
-                                                0b1111'1110u,
-                                                data_space,
-                                                cv_addr,
-                                                cv_count)
-                : dcc::make_logon_select_packet(
+                ? dcc::make_select_packet(DCC_MANUFACTURER_ID,
+                                          _did,
+                                          0b1111'1110u,
+                                          data_space,
+                                          cv_addr,
+                                          cv_count)
+                : dcc::make_select_packet(
                     DCC_MANUFACTURER_ID, _did, 0b1111'1110u, data_space)};
   Receive(packet)->BiDi();
 

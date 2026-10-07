@@ -145,7 +145,7 @@
 - Rename `Long` to `ExtendedLoco` address
 
 ## 0.39.0
-- Bugfix disable LOGON_ENABLE after LOGON_SELECT ([#38](https://github.com/ZIMO-Elektronik/DCC/issues/38))
+- Bugfix disable LOGON_ENABLE after SELECT ([#38](https://github.com/ZIMO-Elektronik/DCC/issues/38))
 
 ## 0.38.1
 - Remove `zimo_id`
@@ -287,7 +287,7 @@
 ## 0.21.0
 - Mainline [RCN-218](https://normen.railcommunity.de/RCN-218.pdf)
 - LOGON_ENABLE does not have CRC
-- LOGON_SELECT uses 6/8 encoding
+- SELECT uses 6/8 encoding
 
 ## 0.20.1
 - Add proprietary CV20

@@ -1591,74 +1591,6 @@ constexpr auto make_accessory_nop_packet(Address addr) {
   return packet;
 }
 
-/// Logon group (RCN-218)
-enum struct LogonGroup : uint8_t {
-  All = 0b00u,
-  Loco = 0b01u,
-  Acc = 0b10u,
-  Now = 0b11u
-};
-
-/// Make LOGON_ENABLE packet
-///
-/// \param  gg          Logon group
-/// \param  cid         Command station ID
-/// \param  session_id  Session ID
-/// \return LOGON_ENABLE packet
-constexpr auto
-make_logon_enable_packet(LogonGroup gg, uint16_t cid, uint8_t session_id) {
-  Packet packet{};
-  auto first{begin(packet)};
-  auto last{encode_address({254u, Address::AutomaticLogon}, first)};
-  *last++ = static_cast<uint8_t>(0b1111'1100u | std::to_underlying(gg));
-  last = uint16_2data(cid, last);
-  *last++ = session_id;
-  *last = exor({first, last});
-  packet.resize(static_cast<Packet::size_type>(++last - first));
-  return packet;
-}
-
-/// Make LOGON_SELECT packet
-///
-/// \param  manufacturer_id Manufacturer ID
-/// \param  did             Unique ID
-/// \param  subcommand      Subcommand
-/// \param  data_space      Number of data space
-/// \param  cv_addr         CV address
-/// \param  cv_count        Number of CVs requested
-/// \return LOGON_SELECT packet
-constexpr auto make_logon_select_packet(uint16_t manufacturer_id,
-                                        uint32_t did,
-                                        uint8_t subcommand = 0b1111'1111u,
-                                        uint8_t data_space = 0u,
-                                        uint32_t cv_addr = 0u,
-                                        uint8_t cv_count = 0u) {
-  assert(subcommand == 0b1111'1111u || subcommand == 0b1111'1110u);
-  assert(data_space < 8u);
-  assert(cv_addr < smath::pow(2u, 24u));
-  Packet packet{};
-  auto first{begin(packet)};
-  auto last{encode_address({254u, Address::AutomaticLogon}, first)};
-  *last++ = static_cast<uint8_t>(0b1101'0000u | (manufacturer_id >> 8u));
-  *last++ = static_cast<uint8_t>(manufacturer_id);
-  last = uint32_2data(did, last);
-  *last++ = subcommand;
-  switch (subcommand) {
-    // ShortInfo
-    case 0b1111'1111u: break;
-    // Read block
-    case 0b1111'1110u:
-      *last++ = data_space;
-      if (data_space == 3u) last = uint32_2data(cv_addr << 8u | cv_count, last);
-      break;
-  }
-  *last = crc8({first, last});
-  ++last;
-  *last = exor({first, last});
-  packet.resize(static_cast<Packet::size_type>(++last - first));
-  return packet;
-}
-
 /// Make GET_DATA_START packet
 ///
 /// \return GET_DATA_START packet
@@ -1680,6 +1612,90 @@ consteval auto make_get_data_cont_packet() {
   auto first{begin(packet)};
   auto last{encode_address({254u, Address::AutomaticLogon}, first)};
   *last++ = 0b0000'0001u;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make SET_DATA packet
+///
+/// \param  bytes Bytes
+/// \return SET_DATA packet
+constexpr auto make_set_data_packet(std::span<uint8_t const> bytes) {
+  assert(size(bytes) <= 11uz);
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({254u, Address::AutomaticLogon}, first)};
+  *last++ = 0b0000'0010u;
+  last = std::copy(cbegin(bytes), cend(bytes), last);
+  // Packet contains more than 6 bytes in total
+  if (size(bytes) > 3uz) {
+    *last = crc8({first, last});
+    ++last;
+  }
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make SET_DATA_END packet
+///
+/// \return SET_DATA_END packet
+consteval auto make_set_data_end_packet() {
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({254u, Address::AutomaticLogon}, first)};
+  *last++ = 0b0000'0011u;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Logon group (RCN-218)
+enum struct LogonGroup : uint8_t {
+  All = 0b00u,
+  Loco = 0b01u,
+  Acc = 0b10u,
+  Now = 0b11u
+};
+
+/// Make SELECT packet
+///
+/// \param  manufacturer_id Manufacturer ID
+/// \param  did             Unique ID
+/// \param  subcommand      Subcommand
+/// \param  data_space      Number of data space
+/// \param  cv_addr         CV address
+/// \param  cv_count        Number of CVs requested
+/// \return SELECT packet
+constexpr auto make_select_packet(uint16_t manufacturer_id,
+                                  uint32_t did,
+                                  uint8_t subcommand = 0b1111'1111u,
+                                  uint8_t data_space = 0u,
+                                  uint32_t cv_addr = 0u,
+                                  uint8_t cv_count = 0u) {
+  assert(manufacturer_id < smath::pow(2u, 12u));
+  assert(subcommand == 0b1111'1111u || subcommand == 0b1111'1110u);
+  assert(data_space < 8u);
+  assert(cv_addr < smath::pow(2u, 24u));
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({254u, Address::AutomaticLogon}, first)};
+  *last++ = static_cast<uint8_t>(0b1101'0000u | (manufacturer_id >> 8u));
+  *last++ = static_cast<uint8_t>(manufacturer_id);
+  last = uint32_2data(did, last);
+  *last++ = subcommand;
+  switch (subcommand) {
+    // ShortInfo
+    case 0b1111'1111u: break;
+    // Read block
+    case 0b1111'1110u:
+      *last++ = data_space;
+      if (data_space == 3u) last = uint32_2data(cv_addr << 8u | cv_count, last);
+      break;
+  }
+  *last = crc8({first, last});
+  ++last;
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;
@@ -1720,6 +1736,25 @@ constexpr auto make_logon_assign_packet(
     static_cast<uint8_t>(std::to_underlying(bb) << 6u | *(last - 2));
   *last = crc8({first, last});
   ++last;
+  *last = exor({first, last});
+  packet.resize(static_cast<Packet::size_type>(++last - first));
+  return packet;
+}
+
+/// Make LOGON_ENABLE packet
+///
+/// \param  gg          Logon group
+/// \param  cid         Command station ID
+/// \param  session_id  Session ID
+/// \return LOGON_ENABLE packet
+constexpr auto
+make_logon_enable_packet(LogonGroup gg, uint16_t cid, uint8_t session_id) {
+  Packet packet{};
+  auto first{begin(packet)};
+  auto last{encode_address({254u, Address::AutomaticLogon}, first)};
+  *last++ = static_cast<uint8_t>(0b1111'1100u | std::to_underlying(gg));
+  last = uint16_2data(cid, last);
+  *last++ = session_id;
   *last = exor({first, last});
   packet.resize(static_cast<Packet::size_type>(++last - first));
   return packet;

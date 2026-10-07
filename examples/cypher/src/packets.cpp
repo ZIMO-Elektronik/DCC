@@ -966,15 +966,27 @@ void get_data_cont(State::Packet& packet, std::span<uint8_t const> bytes) {
 }
 
 // SET_DATA
-void set_data(State::Packet&, std::span<uint8_t const>) { asm volatile("nop"); }
+void set_data(State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - SET_DATA";
+  auto const contains_crc{size(bytes) > 6uz - 1uz};
+  packet.desc_strs.back() += std::format(
+    "\n- Bytes={::02X}",
+    std::span{cbegin(bytes) + 1, cend(bytes) - (contains_crc ? 2 : 1)});
+  for (auto i{0uz}; i < size(bytes) - (contains_crc ? 2uz : 1uz); ++i)
+    packet.pattern_str += " 0 DDDDDDDD";
+  if (contains_crc) packet.pattern_str += " 0 CCCCCCCC";
+}
 
 // SET_DATA_END
-void set_data_end(State::Packet&, std::span<uint8_t const>) {
-  asm volatile("nop");
+void set_data_end(State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - SET_DATA_END";
+  packet.pattern_str += std::format(" 0 {:08b}", bytes[0uz]);
 }
 
 // SELECT
-void select(State::Packet&, std::span<uint8_t const>) { asm volatile("nop"); }
+void select(State::Packet& packet, std::span<uint8_t const>) {
+  packet.desc_strs.back() += " - SELECT";
+}
 
 // LOGON_ASSIGN
 void logon_assign(State::Packet&, std::span<uint8_t const>) {

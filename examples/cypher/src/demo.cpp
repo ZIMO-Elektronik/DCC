@@ -7,7 +7,7 @@ namespace {
 
 using namespace dcc;
 using namespace dcc::bidi;
-
+/*
 // Add loco packets
 void add_loco_packets() {
   // Decoder Control
@@ -367,7 +367,7 @@ void add_service_packets() {
        static_cast<bool>(random_interval(0, 1)),
        random_interval<uint8_t>(0u, 7u))});
 }
-
+*/
 // Add automatic logon packets
 void add_automatic_logon_packets() {
   // GET_DATA_START
@@ -377,6 +377,39 @@ void add_automatic_logon_packets() {
 
   // GET_DATA_CONT
   state.packets.push_back({.addr = addr, .bytes = make_get_data_cont_packet()});
+
+  // SET_DATA
+  std::vector<uint8_t> bytes(random_interval<size_t>(1uz, 11uz));
+  std::ranges::for_each(bytes,
+                        [](uint8_t& b) { b = random_interval<uint8_t>(); });
+  state.packets.push_back({.addr = addr, .bytes = make_set_data_packet(bytes)});
+
+  // SET_DATA_END
+  state.packets.push_back({.addr = addr, .bytes = make_set_data_end_packet()});
+
+  // SELECT
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_select_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       0b1111'1111u)});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_select_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       0b1111'1110u,
+       1u)});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_select_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       0b1111'1110u,
+       3u,
+       266u,
+       26u)});
 }
 
 // Add ACK/NAK datagrams
@@ -711,9 +744,9 @@ void add_accessory_datagrams() {
 void demo() {
   state.packets.clear();
   state.datagrams.clear();
-  add_loco_packets();
-  add_accessory_packets();
-  add_service_packets();
+  // add_loco_packets();
+  // add_accessory_packets();
+  // add_service_packets();
   add_automatic_logon_packets();
   add_ack_nak_datagrams();
   add_loco_datagrams();

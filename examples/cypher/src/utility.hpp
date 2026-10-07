@@ -39,6 +39,13 @@ using FLOAT16 = float;
      : std::string("##" __FILE__ TOSTRING(__LINE__)))                          \
     .c_str()
 
+// Get address of an unused static int
+#define INDEX()                                                                \
+  [] {                                                                         \
+    static int i{};                                                            \
+    return &i;                                                                 \
+  }()
+
 // Labels for 128 speed step control
 inline constexpr std::array speed_labels{
   "EStop", "Stop", "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8",
