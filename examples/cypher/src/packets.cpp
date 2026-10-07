@@ -997,7 +997,6 @@ void select(State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.pattern_str += " 0 1101HHHH 0 HHHHHHHH 0 UUUUUUUU 0 UUUUUUUU 0 "
                         "UUUUUUUU 0 UUUUUUUU 0 BBBBBBBB";
   switch (bytes[6uz]) {
-    default: break;
     case 0b1111'1111u: packet.desc_strs.back() += "\n- Read ShortInfo"; break;
     case 0b1111'1110u:
       packet.desc_strs.back() += std::format("\n- Read Block={}", bytes[7uz]);
@@ -1019,13 +1018,46 @@ void select(State::Packet& packet, std::span<uint8_t const> bytes) {
     case 0b1111'1100u:
       packet.desc_strs.back() += std::format("\n- Write Block={}", bytes[7uz]);
       break;
+    default: break;
   }
   packet.pattern_str += " 0 CCCCCCCC";
 }
 
 // LOGON_ASSIGN
-void logon_assign(State::Packet& packet, std::span<uint8_t const>) {
+void logon_assign(State::Packet& packet, std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - LOGON_ASSIGN";
+  packet.desc_strs.back() += std::format(
+    "\n- Manufacturer ID={}", (bytes[0uz] & 0x0Fu) << 8u | bytes[1uz]);
+  packet.desc_strs.back() +=
+    std::format("\n- Unique ID={}",
+                static_cast<uint32_t>(bytes[2uz]) << 24u |
+                  static_cast<uint32_t>(bytes[3uz]) << 16u |
+                  static_cast<uint32_t>(bytes[4uz]) << 8u |
+                  static_cast<uint32_t>(bytes[5uz]) << 0u);
+  auto const bb{bytes[6uz] >> 6u};
+  packet.desc_strs.back() += std::format("\n- Binding={}",
+                                         bb == 0b10u  ? "Permanent"
+                                         : bb == 0b11 ? "Temporary"
+                                                      : "Reserved");
+  auto const addr{dcc::decode_logon_address(cbegin(bytes) + 6)};
+  switch (addr.type) {
+    case dcc::Address::ExtendedLoco:
+      packet.desc_strs.back() += std::format("Extended Loco={}", addr.value);
+      break;
+    case dcc::Address::ExtendedAccessory:
+      packet.desc_strs.back() +=
+        std::format("Extended Accessory={}", addr.value);
+      break;
+    case dcc::Address::BasicAccessory:
+      packet.desc_strs.back() += std::format("Basic Accessory={}", addr.value);
+      break;
+    case dcc::Address::BasicLoco:
+      packet.desc_strs.back() += std::format("Basic Loco={}", addr.value);
+      break;
+    default: break;
+  }
+  packet.pattern_str += " 0 1110HHHH 0 HHHHHHHH 0 UUUUUUUU 0 UUUUUUUU 0 "
+                        "UUUUUUUU 0 UUUUUUUU 0 BBAAAAAA 0 AAAAAAAA 0 CCCCCCCC";
 }
 
 // LOGON_ENABLE

@@ -1271,7 +1271,9 @@ private:
       16uz + 16uz + 92uz};       // Vehicle-specific information
 
     uint8_t const data_space{bytes[7uz]};
-    assert(data_space < 8u && (data_space != 3u || size(bytes) == 12uz));
+    assert(data_space < 8u &&
+           (data_space != 3u ||
+            size(bytes) == 12uz + sizeof(_checksum) + sizeof(_checksum)));
     uint32_t const cv_addr{data_space == 3u
                              ? static_cast<uint32_t>(bytes[8uz]) << 16u |
                                  static_cast<uint32_t>(bytes[9uz]) << 8u |

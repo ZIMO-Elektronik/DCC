@@ -411,11 +411,49 @@ void add_automatic_logon_packets() {
        random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u),
        random_interval<uint8_t>(1u, 31u))});
 
+  // LOGON_ASSIGN
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_assign_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       random_extended_loco_address(),
+       static_cast<LogonBindingBehavior>(random_interval(
+         std::to_underlying(LogonBindingBehavior::Permanent),
+         std::to_underlying(LogonBindingBehavior::Temporary))))});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_assign_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       random_extended_accessory_address(),
+       static_cast<LogonBindingBehavior>(random_interval(
+         std::to_underlying(LogonBindingBehavior::Permanent),
+         std::to_underlying(LogonBindingBehavior::Temporary))))});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_assign_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       random_basic_accessory_address(),
+       static_cast<LogonBindingBehavior>(random_interval(
+         std::to_underlying(LogonBindingBehavior::Permanent),
+         std::to_underlying(LogonBindingBehavior::Temporary))))});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_assign_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       random_basic_loco_address(),
+       static_cast<LogonBindingBehavior>(random_interval(
+         std::to_underlying(LogonBindingBehavior::Permanent),
+         std::to_underlying(LogonBindingBehavior::Temporary))))});
+
   // LOGON_ENABLE
   state.packets.push_back(
     {.addr = addr,
      .bytes = make_logon_enable_packet(
-       static_cast<dcc::LogonGroup>(random_interval<uint8_t>(0u, 3u)),
+       static_cast<LogonGroup>(random_interval<uint8_t>(0u, 3u)),
        random_interval<uint16_t>(),
        random_interval<uint8_t>())});
 }
@@ -425,19 +463,19 @@ void add_ack_nak_datagrams() {
   // ACK
   {
     State::Datagram datagram{.addr = random_loco_address()};
-    datagram.bytes[channel1_size] = dcc::bidi::acks[0uz];
+    datagram.bytes[channel1_size] = acks[0uz];
     state.datagrams.push_back(datagram);
   }
   {
     State::Datagram datagram{.addr = random_loco_address()};
-    datagram.bytes[channel1_size] = dcc::bidi::acks[1uz];
+    datagram.bytes[channel1_size] = acks[1uz];
     state.datagrams.push_back(datagram);
   }
 
   // NAK
   {
     State::Datagram datagram{.addr = random_loco_address()};
-    datagram.bytes[channel1_size] = dcc::bidi::nak;
+    datagram.bytes[channel1_size] = nak;
     state.datagrams.push_back(datagram);
   }
 }

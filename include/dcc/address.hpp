@@ -229,15 +229,21 @@ template<std::output_iterator<uint8_t> OutputIt>
 constexpr OutputIt encode_logon_address(Address addr, OutputIt first) {
   switch (addr.type) {
     case Address::ExtendedLoco:
+      assert(addr >= 1u && addr <= 10239u);
       *first++ = static_cast<uint8_t>(addr >> 8u);
       break;
     case Address::ExtendedAccessory:
+      assert(addr <= 2047u);
       *first++ = 0b0010'1000u | static_cast<uint8_t>(addr >> 8u);
       break;
     case Address::BasicAccessory:
+      assert(addr <= 2047u);
       *first++ = 0b0011'0000u | static_cast<uint8_t>(addr >> 8u);
       break;
-    case Address::BasicLoco: *first++ = 0b0011'1000u; break;
+    case Address::BasicLoco:
+      assert(addr >= 1u && addr <= 127u);
+      *first++ = 0b0011'1000u;
+      break;
     default: assert(false); break;
   }
   *first++ = static_cast<uint8_t>(addr);

@@ -1466,7 +1466,7 @@ void select(dcc::Address addr) {
 }
 
 // LOGON_ASSIGN
-void logon_assign(dcc::Address) {
+void logon_assign(dcc::Address addr) {
   ImGui::BeginDisabled();
   ImGui::SeparatorText("Sub Instruction");
   ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
@@ -1478,6 +1478,37 @@ void logon_assign(dcc::Address) {
     std::clamp<uint16_t>(manufacturer_id, 0u, smath::pow(2u, 12u) - 1u);
   static uint32_t did{};
   ImGui::InputScalar("Unique ID", ImGuiDataType_U32, &did);
+  static constexpr std::array addr_type{
+    "Extended Loco", "Extended Accessory", "Basic Accessory", "Basic Loco"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(addr_type), ssize(addr_type));
+  static dcc::Address assign_addr{};
+  ImGui::InputScalar("Address", ImGuiDataType_U16, &assign_addr.value);
+  if (!strcmp(addr_type[static_cast<size_t>(i)], "Extended Loco")) {
+    assign_addr.value = std::clamp<uint16_t>(assign_addr.value, 1u, 10239u);
+    assign_addr.type = dcc::Address::ExtendedLoco;
+  } else if (!strcmp(addr_type[static_cast<size_t>(i)], "Extended Accessory")) {
+    assign_addr.value = std::clamp<uint16_t>(assign_addr.value, 0u, 2047u);
+    assign_addr.type = dcc::Address::ExtendedAccessory;
+  } else if (!strcmp(addr_type[static_cast<size_t>(i)], "Basic Accessory")) {
+    assign_addr.value = std::clamp<uint16_t>(assign_addr.value, 0u, 2047u);
+    assign_addr.type = dcc::Address::BasicAccessory;
+  } else if (!strcmp(addr_type[static_cast<size_t>(i)], "Basic Loco")) {
+    assign_addr.value = std::clamp<uint16_t>(assign_addr.value, 1u, 127u);
+    assign_addr.type = dcc::Address::BasicLoco;
+  }
+  static bool permanent{};
+  ImGui::Checkbox("Permanent", &permanent);
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_logon_assign_packet(
+         manufacturer_id,
+         did,
+         assign_addr,
+         permanent ? dcc::LogonBindingBehavior::Permanent
+                   : dcc::LogonBindingBehavior::Temporary)});
 }
 
 // LOGON_ENABLE
