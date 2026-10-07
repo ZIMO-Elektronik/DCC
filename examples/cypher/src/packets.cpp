@@ -74,7 +74,6 @@ void eval(State::Packet& packet);
       void logon_enable(State::Packet& packet, std::span<uint8_t const> bytes);
     void idle(State::Packet& packet, std::span<uint8_t const> bytes);
       void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const> bytes);
-  void unknown(State::Packet& packet, std::span<uint8_t const> bytes);
   void checksum(State::Packet& packet);
   void highlights(State::Packet& packet);
   void tags(State::Packet& packet);
@@ -217,7 +216,7 @@ void instruction(State::Packet& packet) {
 // Loco
 void loco(State::Packet& packet, std::span<uint8_t const> bytes) {
   switch (dcc::decode_instruction(bytes)) {
-    case dcc::Instruction::UnknownService: return unknown(packet, bytes);
+    case dcc::Instruction::UnknownService: break;
     case dcc::Instruction::DecoderControl:
       return decoder_control(packet, bytes);
     case dcc::Instruction::ConsistControl:
@@ -908,28 +907,84 @@ void nop_for_basic_and_extended_accessory(State::Packet& packet,
 }
 
 // Automatic logon
-void automatic_logon(State::Packet& packet, std::span<uint8_t const> bytes) {}
+void automatic_logon(State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.push_back("Logon");
+  switch (bytes[0uz]) {
+    case 0b0000'0000u: return get_data_start(packet, bytes);
+    case 0b0000'0001u: return get_data_cont(packet, bytes);
+    case 0b0000'0010u: return set_data(packet, bytes);
+    case 0b0000'0011u: return set_data_end(packet, bytes);
+    case 0b1101'0000u: [[fallthrough]];
+    case 0b1101'0001u: [[fallthrough]];
+    case 0b1101'0010u: [[fallthrough]];
+    case 0b1101'0011u: [[fallthrough]];
+    case 0b1101'0100u: [[fallthrough]];
+    case 0b1101'0101u: [[fallthrough]];
+    case 0b1101'0110u: [[fallthrough]];
+    case 0b1101'0111u: [[fallthrough]];
+    case 0b1101'1000u: [[fallthrough]];
+    case 0b1101'1001u: [[fallthrough]];
+    case 0b1101'1010u: [[fallthrough]];
+    case 0b1101'1011u: [[fallthrough]];
+    case 0b1101'1100u: [[fallthrough]];
+    case 0b1101'1101u: [[fallthrough]];
+    case 0b1101'1110u: [[fallthrough]];
+    case 0b1101'1111u: return select(packet, bytes);
+    case 0b1110'0000u: [[fallthrough]];
+    case 0b1110'0001u: [[fallthrough]];
+    case 0b1110'0010u: [[fallthrough]];
+    case 0b1110'0011u: [[fallthrough]];
+    case 0b1110'0100u: [[fallthrough]];
+    case 0b1110'0101u: [[fallthrough]];
+    case 0b1110'0110u: [[fallthrough]];
+    case 0b1110'0111u: [[fallthrough]];
+    case 0b1110'1000u: [[fallthrough]];
+    case 0b1110'1001u: [[fallthrough]];
+    case 0b1110'1010u: [[fallthrough]];
+    case 0b1110'1011u: [[fallthrough]];
+    case 0b1110'1100u: [[fallthrough]];
+    case 0b1110'1101u: [[fallthrough]];
+    case 0b1110'1110u: [[fallthrough]];
+    case 0b1110'1111u: return logon_assign(packet, bytes);
+    case 0b1111'1100u: [[fallthrough]];
+    case 0b1111'1101u: [[fallthrough]];
+    case 0b1111'1110u: [[fallthrough]];
+    case 0b1111'1111u: return logon_enable(packet, bytes);
+  }
+}
 
 // GET_DATA_START
-void get_data_start(State::Packet& packet, std::span<uint8_t const> bytes) {}
+void get_data_start(State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - GET_DATA_START";
+  packet.pattern_str += std::format(" 0 {:08b}", bytes[0uz]);
+}
 
 // GET_DATA_CONT
-void get_data_cont(State::Packet& packet, std::span<uint8_t const> bytes) {}
+void get_data_cont(State::Packet& packet, std::span<uint8_t const> bytes) {
+  packet.desc_strs.back() += " - GET_DATA_CONT";
+  packet.pattern_str += std::format(" 0 {:08b}", bytes[0uz]);
+}
 
 // SET_DATA
-void set_data(State::Packet& packet, std::span<uint8_t const> bytes) {}
+void set_data(State::Packet&, std::span<uint8_t const>) { asm volatile("nop"); }
 
 // SET_DATA_END
-void set_data_end(State::Packet& packet, std::span<uint8_t const> bytes) {}
+void set_data_end(State::Packet&, std::span<uint8_t const>) {
+  asm volatile("nop");
+}
 
 // SELECT
-void select(State::Packet& packet, std::span<uint8_t const> bytes) {}
+void select(State::Packet&, std::span<uint8_t const>) { asm volatile("nop"); }
 
 // LOGON_ASSIGN
-void logon_assign(State::Packet& packet, std::span<uint8_t const> bytes) {}
+void logon_assign(State::Packet&, std::span<uint8_t const>) {
+  asm volatile("nop");
+}
 
 // LOGON_ENABLE
-void logon_enable(State::Packet& packet, std::span<uint8_t const> bytes) {}
+void logon_enable(State::Packet&, std::span<uint8_t const>) {
+  asm volatile("nop");
+}
 
 // Idle
 void idle(State::Packet& packet, std::span<uint8_t const> bytes) {
@@ -940,13 +995,6 @@ void idle(State::Packet& packet, std::span<uint8_t const> bytes) {
 void digital_decoder_idle(State::Packet& packet, std::span<uint8_t const>) {
   packet.desc_strs.push_back("Digital Decoder Idle");
   packet.pattern_str += " 0 00000000";
-}
-
-// Annotate unknown
-void unknown(State::Packet& packet, std::span<uint8_t const> bytes) {
-  packet.desc_strs.push_back("Unknown");
-  for (auto i{0uz}; i < size(bytes) - 1uz; ++i)
-    packet.pattern_str += " 0 ????????";
 }
 
 // Annotate checksum

@@ -368,6 +368,17 @@ void add_service_packets() {
        random_interval<uint8_t>(0u, 7u))});
 }
 
+// Add automatic logon packets
+void add_automatic_logon_packets() {
+  // GET_DATA_START
+  dcc::Address const addr{.value = 254u, .type = dcc::Address::AutomaticLogon};
+  state.packets.push_back(
+    {.addr = addr, .bytes = make_get_data_start_packet()});
+
+  // GET_DATA_CONT
+  state.packets.push_back({.addr = addr, .bytes = make_get_data_cont_packet()});
+}
+
 // Add ACK/NAK datagrams
 void add_ack_nak_datagrams() {
   // ACK
@@ -703,6 +714,7 @@ void demo() {
   add_loco_packets();
   add_accessory_packets();
   add_service_packets();
+  add_automatic_logon_packets();
   add_ack_nak_datagrams();
   add_loco_datagrams();
   add_accessory_datagrams();
