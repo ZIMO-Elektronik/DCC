@@ -16,6 +16,11 @@ namespace dcc::bidi::app {
 
 struct DecoderState {
   static constexpr uint8_t id{13u};
+  uint8_t change_flags{};
+  uint16_t change_count{};
+  uint8_t cv131075{};
+  uint8_t cv131076{};
+  constexpr bool operator==(DecoderState const&) const = default;
 };
 
 } // namespace dcc::bidi::app

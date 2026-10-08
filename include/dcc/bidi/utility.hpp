@@ -243,14 +243,9 @@ constexpr auto make_app_decoder_state_datagram(uint8_t change_flags,
 /// \param  mid Manufacturer ID
 /// \param  did Decoder ID
 /// \return app:decoder_unique datagram
-constexpr auto
-make_app_decoder_unique_datagram(uint16_t mid,
-                                 std::span<uint8_t const, 4uz> did) {
+constexpr auto make_app_decoder_unique_datagram(uint16_t mid, uint32_t did) {
   return encode_datagram(make_datagram<Bits::_48>(
-    app::DecoderUnique::id,
-    static_cast<uint64_t>(mid) << 32u | static_cast<uint32_t>(did[0uz]) << 24u |
-      static_cast<uint32_t>(did[1uz]) << 16u |
-      static_cast<uint32_t>(did[2uz]) << 8u | static_cast<uint32_t>(did[3uz])));
+    app::DecoderUnique::id, static_cast<uint64_t>(mid) << 32u | did));
 }
 
 /// Make ShortInfo datagram

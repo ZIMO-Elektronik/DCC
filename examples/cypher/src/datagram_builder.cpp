@@ -771,7 +771,44 @@ void combined_channels(State::Datagram& datagram) {
 }
 
 // Automatic logon app:decoder_state
-void app_decoder_state(State::Datagram&) {}
+void app_decoder_state(State::Datagram& datagram) {
+  ImGui::SeparatorText("Parameters");
+  static std::array<bool, CHAR_BIT> change_flags{};
+  ImGui::Checkbox("CID Changed", &change_flags[0uz]);
+  ImGui::Checkbox("FW Changed", &change_flags[1uz]);
+  ImGui::Checkbox("Driving/Switching Behavior Changed", &change_flags[2uz]);
+  ImGui::Checkbox("Mapping Changed", &change_flags[3uz]);
+  ImGui::Checkbox("GUI Changed", &change_flags[4uz]);
+  ImGui::Checkbox("Consist Changed", &change_flags[5uz]);
+  ImGui::Checkbox("Address/ShortGUI Changed", &change_flags[7uz]);
+  static uint16_t change_count{};
+  ImGui::InputScalar("Change Count", ImGuiDataType_U16, &change_count);
+  change_count =
+    std::clamp<uint16_t>(change_count, 0u, smath::pow(2u, 12u) - 1u);
+  static std::array<bool, CHAR_BIT> cv131075{};
+  ImGui::Checkbox("Dynamic CH1", &cv131075[0uz]);
+  ImGui::Checkbox("Info1 (ID3)", &cv131075[1uz]);
+  ImGui::Checkbox("Location Service (ID3)", &cv131075[2uz]);
+  ImGui::Checkbox("Speed (ID7:0-1)", &cv131075[3uz]);
+  ImGui::Checkbox("QoS (ID7:7)", &cv131075[4uz]);
+  ImGui::Checkbox("Status and Error Messages (ID7:21)", &cv131075[5uz]);
+  ImGui::Checkbox("Temperature (ID7:26)", &cv131075[6uz]);
+  ImGui::Checkbox("Direction Status Byte (ID7:27)", &cv131075[7uz]);
+  static std::array<bool, CHAR_BIT> cv131076{};
+  ImGui::Checkbox("CV-Auto (ID12)", &cv131076[0uz]);
+  ImGui::Checkbox("Binary State Short", &cv131076[1uz]);
+  ImGui::Checkbox("Binary State Long", &cv131076[2uz]);
+  ImGui::Checkbox("Speed, Direction and Functions", &cv131076[3uz]);
+  ImGui::Checkbox("CV Access Short", &cv131076[4uz]);
+  ImGui::Checkbox("Special Operating Modes", &cv131076[6uz]);
+  ImGui::Checkbox("Multiple Instructions Single Packet", &cv131076[7uz]);
+  std::ranges::copy(
+    make_app_decoder_state_datagram(pack_bits<uint8_t>(change_flags),
+                                    change_count,
+                                    pack_bits<uint8_t>(cv131075),
+                                    pack_bits<uint8_t>(cv131076)),
+    begin(datagram.bytes));
+}
 
 // Automatic logon app:decoder_unique
 void app_decoder_unique(State::Datagram& datagram) {
@@ -782,12 +819,7 @@ void app_decoder_unique(State::Datagram& datagram) {
     std::clamp<uint16_t>(manufacturer_id, 0u, smath::pow(2u, 12u) - 1u);
   static uint32_t did{};
   ImGui::InputScalar("Unique ID", ImGuiDataType_U32, &did);
-  std::ranges::copy(make_app_decoder_unique_datagram(
-                      manufacturer_id,
-                      std::array{static_cast<uint8_t>(did >> 24u),
-                                 static_cast<uint8_t>(did >> 16u),
-                                 static_cast<uint8_t>(did >> 8u),
-                                 static_cast<uint8_t>(did >> 0u)}),
+  std::ranges::copy(make_app_decoder_unique_datagram(manufacturer_id, did),
                     begin(datagram.bytes));
 }
 

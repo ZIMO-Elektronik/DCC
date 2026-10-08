@@ -952,7 +952,11 @@ private:
 
     if (self._backoffs.logon) return true;
     self._deques.logon.push_back(bidi::make_app_decoder_unique_datagram(
-      DCC_MANUFACTURER_ID, self._ids.decoder));
+      DCC_MANUFACTURER_ID,
+      static_cast<uint32_t>(self._ids.decoder[0uz]) << 24u |
+        static_cast<uint32_t>(self._ids.decoder[1uz]) << 16u |
+        static_cast<uint32_t>(self._ids.decoder[2uz]) << 8u |
+        static_cast<uint32_t>(self._ids.decoder[3uz]) << 0u));
 
     // Return false after 3 app:decoder_unique datagrams. This keeps the packet
     // in the deque to be picked up and executed in thread mode.

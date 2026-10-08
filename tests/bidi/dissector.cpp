@@ -138,6 +138,43 @@ TEST(Dissector, channel_2) {
   EXPECT_EQ(expected, result);
 }
 
+TEST(Dissector, combined_channels) {
+  {
+    dcc::Packet packet{0xFEu,
+                       0xE0u,
+                       0x91u,
+                       0x6Fu,
+                       0xFFu,
+                       0x0Eu,
+                       0x08u,
+                       0xF8u,
+                       0x2Au,
+                       0x80u,
+                       0x4Bu};
+    Datagram<> datagram{0x2Eu, 0x33u, 0xACu, 0xACu, 0x69u, 0xD4u, 0x4Eu, 0x39u};
+    Dissector dissector{datagram, packet};
+    std::vector<Dissector::value_type> expected{
+      app::DecoderState{.change_flags = 0xFFu,
+                        .change_count = 0u,
+                        .cv131075 = 0b0101'1110u,
+                        .cv131076 = 0b1101'1000u}};
+    std::vector<Dissector::value_type> result{};
+    std::ranges::copy(dissector, back_inserter(result));
+    EXPECT_EQ(expected, result);
+  }
+
+  {
+    dcc::Packet packet{0xFEu, 0xFFu, 0xD0u, 0x0Fu, 0x55u, 0x8Bu};
+    Datagram<> datagram{0x2Du, 0x95u, 0xA6u, 0xCAu, 0x33u, 0xC6u, 0x36u, 0x99u};
+    Dissector dissector{datagram, packet};
+    std::vector<Dissector::value_type> expected{
+      app::DecoderUnique{.mid = 145u, .did = 0x6FFF'0E08u}};
+    std::vector<Dissector::value_type> result{};
+    std::ranges::copy(dissector, back_inserter(result));
+    EXPECT_EQ(expected, result);
+  }
+}
+
 TEST(Dissector, unknown_id) {
   dcc::Packet packet{0x03u, 0x3Fu, 0x80u, 0xBCu};
   Datagram<> datagram{0x2Du, 0xCAu, 0x59u, 0x96u, 0x66u, 0x5Au, 0xACu, 0xACu};
