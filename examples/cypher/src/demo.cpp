@@ -784,6 +784,35 @@ void add_accessory_datagrams() {
   }
 }
 
+// Add automatic logon datagrams
+void add_automatic_logon_datagrams() {
+  // app:decoder_state
+  {
+    State::Datagram datagram{
+      .addr =
+        dcc::Address{.value = 254u, .type = dcc::Address::AutomaticLogon}};
+    std::ranges::copy(make_app_decoder_state_datagram(
+                        random_interval<uint8_t>(),
+                        random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+                        random_interval<uint8_t>(),
+                        random_interval<uint8_t>()),
+                      begin(datagram.bytes));
+    state.datagrams.push_back(datagram);
+  }
+
+  // app:decoder_unique
+  {
+    State::Datagram datagram{
+      .addr =
+        dcc::Address{.value = 254u, .type = dcc::Address::AutomaticLogon}};
+    std::ranges::copy(make_app_decoder_unique_datagram(
+                        random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+                        random_interval<uint32_t>()),
+                      begin(datagram.bytes));
+    state.datagrams.push_back(datagram);
+  }
+}
+
 } // namespace
 
 // Add demo packets and datagrams
@@ -797,4 +826,5 @@ void demo() {
   add_ack_nak_datagrams();
   add_loco_datagrams();
   add_accessory_datagrams();
+  add_automatic_logon_datagrams();
 }

@@ -26,6 +26,7 @@
 #include "app/dyn.hpp"
 #include "app/error.hpp"
 #include "app/ext.hpp"
+#include "app/get_data.hpp"
 #include "app/info.hpp"
 #include "app/info1.hpp"
 #include "app/pom.hpp"
@@ -71,6 +72,7 @@ struct Dissector : std::ranges::view_interface<Dissector> {
                                   app::Test,           // ID12
                                   /*app::Block,*/      // ID13
                                                        //
+                                  app::GetData,        //
                                   app::DecoderState,   // ID13
                                   app::DecoderUnique>; // ID15
 
@@ -82,8 +84,8 @@ struct Dissector : std::ranges::view_interface<Dissector> {
 
   constexpr Dissector() = default;
 
-  constexpr Dissector(Datagram<> encoded, Address addr)
-    : _encoded{encoded}, _addr{addr} {
+  constexpr Dissector(Datagram<> encoded, Packet packet)
+    : _encoded{encoded}, _addr{decode_address(packet)} {
     // Validate channel 1 (popcount must be 4)
     if (std::span<uint8_t, channel1_size> ch1{std::begin(_encoded),
                                               std::begin(_encoded) + 2};
@@ -110,9 +112,6 @@ struct Dissector : std::ranges::view_interface<Dissector> {
 
     _decoded = decode_datagram(_encoded);
   }
-
-  constexpr Dissector(Datagram<> encoded, Packet packet)
-    : Dissector{encoded, decode_address(packet)} {}
 
   constexpr Dissector& operator++() {
     auto const byte_count{std::size(next())};

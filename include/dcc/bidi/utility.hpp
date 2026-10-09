@@ -15,6 +15,7 @@
 #include <ztl/bits.hpp>
 #include "../address.hpp"
 #include "../crc8.hpp"
+#include "acks.hpp"
 #include "app/adr_high.hpp"
 #include "app/adr_low.hpp"
 #include "app/adr_short.hpp"
@@ -25,6 +26,8 @@
 #include "app/dyn.hpp"
 #include "app/error.hpp"
 #include "app/ext.hpp"
+#include "app/get_data.hpp"
+#include "app/info.hpp"
 #include "app/info1.hpp"
 #include "app/pom.hpp"
 #include "app/search.hpp"
@@ -211,43 +214,6 @@ constexpr auto make_app_error_datagram(app::Error::Code code) {
     make_datagram<Bits::_12>(app::Error::id, std::to_underlying(code)));
 }
 
-/// Make app:decoder_state datagram
-///
-/// \param  change_flags  Change flags
-/// \param  change_count  Change count
-/// \param  cv131075      Extended capabilities byte 2
-/// \param  cv131076      Extended capabilities byte 3
-/// \return app:decoder_state datagram
-constexpr auto make_app_decoder_state_datagram(uint8_t change_flags,
-                                               uint16_t change_count,
-                                               uint8_t cv131075,
-                                               uint8_t cv131076) {
-  std::array const decoder_state{
-    static_cast<uint8_t>(app::DecoderState::id << 4u | change_flags >> 4u),
-    static_cast<uint8_t>(static_cast<uint32_t>(change_flags) << 4u |
-                         static_cast<uint32_t>(change_count) >> 8u),
-    static_cast<uint8_t>(change_count),
-    cv131075,
-    cv131076};
-  return encode_datagram(
-    make_datagram<Bits::_48>(static_cast<uint64_t>(decoder_state[0uz]) << 40u |
-                             static_cast<uint64_t>(decoder_state[1uz]) << 32u |
-                             static_cast<uint32_t>(decoder_state[2uz]) << 24u |
-                             static_cast<uint32_t>(decoder_state[3uz]) << 16u |
-                             static_cast<uint32_t>(decoder_state[4uz]) << 8u |
-                             static_cast<uint32_t>(crc8(decoder_state)) << 0u));
-}
-
-/// Make app:decoder_unique datagram
-///
-/// \param  mid Manufacturer ID
-/// \param  did Decoder ID
-/// \return app:decoder_unique datagram
-constexpr auto make_app_decoder_unique_datagram(uint16_t mid, uint32_t did) {
-  return encode_datagram(make_datagram<Bits::_48>(
-    app::DecoderUnique::id, static_cast<uint64_t>(mid) << 32u | did));
-}
-
 /// Make ShortInfo datagram
 ///
 /// \param  addr      Address
@@ -283,6 +249,45 @@ constexpr auto make_get_data_datagram(std::span<uint8_t const, 6uz> bytes) {
                              static_cast<uint32_t>(bytes[3uz]) << 16u |
                              static_cast<uint32_t>(bytes[4uz]) << 8u |
                              static_cast<uint32_t>(bytes[5uz]) << 0u));
+}
+
+/// Make app:decoder_state datagram
+///
+/// \param  change_flags  Change flags
+/// \param  change_count  Change count
+/// \param  cv131075      Extended capabilities byte 2
+/// \param  cv131076      Extended capabilities byte 3
+/// \return app:decoder_state datagram
+constexpr auto make_app_decoder_state_datagram(uint8_t change_flags,
+                                               uint16_t change_count,
+                                               uint8_t cv131075,
+                                               uint8_t cv131076) {
+  assert(change_count < smath::pow(2u, 12u));
+  std::array const decoder_state{
+    static_cast<uint8_t>(app::DecoderState::id << 4u | change_flags >> 4u),
+    static_cast<uint8_t>(static_cast<uint32_t>(change_flags) << 4u |
+                         static_cast<uint32_t>(change_count) >> 8u),
+    static_cast<uint8_t>(change_count),
+    cv131075,
+    cv131076};
+  return encode_datagram(
+    make_datagram<Bits::_48>(static_cast<uint64_t>(decoder_state[0uz]) << 40u |
+                             static_cast<uint64_t>(decoder_state[1uz]) << 32u |
+                             static_cast<uint32_t>(decoder_state[2uz]) << 24u |
+                             static_cast<uint32_t>(decoder_state[3uz]) << 16u |
+                             static_cast<uint32_t>(decoder_state[4uz]) << 8u |
+                             static_cast<uint32_t>(crc8(decoder_state)) << 0u));
+}
+
+/// Make app:decoder_unique datagram
+///
+/// \param  mid Manufacturer ID
+/// \param  did Decoder ID
+/// \return app:decoder_unique datagram
+constexpr auto make_app_decoder_unique_datagram(uint16_t mid, uint32_t did) {
+  assert(mid < smath::pow(2u, 12u));
+  return encode_datagram(make_datagram<Bits::_48>(
+    app::DecoderUnique::id, static_cast<uint64_t>(mid) << 32u | did));
 }
 
 } // namespace dcc::bidi

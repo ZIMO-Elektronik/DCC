@@ -540,46 +540,46 @@ void feature_expansion_command_station_feature_identification(
                               static_cast<uint32_t>(bytes[3uz]) << 0u)};
       packet.desc_strs.back() += "\n- Loco Features";
       packet.desc_strs.back() += std::format(
-        "\n- Basic Addresses 100-127 as Extended={}",
+        "\n  - Basic Addresses 100-127 as Extended={}",
         static_cast<bool>(feats &
                           dcc::LocoFeatures::BasicAddresses100_127AsExtended)
           ? 1
           : 0);
       packet.desc_strs.back() +=
-        std::format("\n- Extended Addresses 10000-10239={}",
+        std::format("\n  - Extended Addresses 10000-10239={}",
                     static_cast<bool>(
                       feats & dcc::LocoFeatures::ExtendedAddresses10000_10239)
                       ? 1
                       : 0);
       packet.desc_strs.back() += std::format(
-        "\n- 128 Speed Steps={}",
+        "\n  - 128 Speed Steps={}",
         static_cast<bool>(feats & dcc::LocoFeatures::SpeedSteps128) ? 1 : 0);
       packet.desc_strs.back() +=
-        std::format("\n- Speed, Direction and Functions={}",
+        std::format("\n  - Speed, Direction and Functions={}",
                     static_cast<bool>(feats & dcc::LocoFeatures::SDF) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- POM Write={}",
+        "\n  - POM Write={}",
         static_cast<bool>(feats & dcc::LocoFeatures::PomWrite) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- XPOM Write={}",
+        "\n  - XPOM Write={}",
         static_cast<bool>(feats & dcc::LocoFeatures::XpomWrite) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- F13-F28={}",
+        "\n  - F13-F28={}",
         static_cast<bool>(feats & dcc::LocoFeatures::F13_F28) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- F29-F68={}",
+        "\n  - F29-F68={}",
         static_cast<bool>(feats & dcc::LocoFeatures::F29_F68) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- Binary State Short={}",
+        "\n  - Binary State Short={}",
         static_cast<bool>(feats & dcc::LocoFeatures::BinaryStateShort) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- Binary State Long={}",
+        "\n  - Binary State Long={}",
         static_cast<bool>(feats & dcc::LocoFeatures::BinaryStateLong) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- Analog Function={}",
+        "\n  - Analog Function={}",
         static_cast<bool>(feats & dcc::LocoFeatures::AnalogFunction) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- Special Operating Modes={}",
+        "\n  - Special Operating Modes={}",
         static_cast<bool>(feats & dcc::LocoFeatures::SpecialOperatingModes)
           ? 1
           : 0);
@@ -591,36 +591,36 @@ void feature_expansion_command_station_feature_identification(
                               static_cast<uint32_t>(bytes[3uz]) << 0u)};
       packet.desc_strs.back() += "\n- Accessory and Broadcast Features";
       packet.desc_strs.back() += std::format(
-        "\n- Addresses Offset by 4={}",
+        "\n  - Addresses Offset by 4={}",
         static_cast<bool>(feats &
                           dcc::AccessoryBroadcastFeatures::AddressesOffsetBy4)
           ? 1
           : 0);
       packet.desc_strs.back() += std::format(
-        "\n- Extended={}",
+        "\n  - Extended={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::Extended)
           ? 1
           : 0);
       packet.desc_strs.back() += std::format(
-        "\n- POM Write={}",
+        "\n  - POM Write={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::PomWrite)
           ? 1
           : 0);
       packet.desc_strs.back() += std::format(
-        "\n- Time={}",
+        "\n  - Time={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::Time) ? 1
                                                                          : 0);
       packet.desc_strs.back() += std::format(
-        "\n- Date={}",
+        "\n  - Date={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::Date) ? 1
                                                                          : 0);
       packet.desc_strs.back() += std::format(
-        "\n- Time Scale={}",
+        "\n  - Time Scale={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::TimeScale)
           ? 1
           : 0);
       packet.desc_strs.back() += std::format(
-        "\n- System Time={}",
+        "\n  - System Time={}",
         static_cast<bool>(feats & dcc::AccessoryBroadcastFeatures::SystemTime)
           ? 1
           : 0);
@@ -632,43 +632,43 @@ void feature_expansion_command_station_feature_identification(
                               static_cast<uint32_t>(bytes[3uz]) << 0u)};
       packet.desc_strs.back() += "\n- RailCom Features";
       packet.desc_strs.back() += std::format(
-        "\n- RailCom={}",
+        "\n  - RailCom={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::RailCom) ? 1 : 0);
       packet.desc_strs.back() +=
-        std::format("\n- DCC-A={}",
+        std::format("\n  - DCC-A={}",
                     static_cast<bool>(feats & dcc::BiDiFeatures::DccA) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- NOP for Accessories={}",
+        "\n  - NOP for Accessories={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::NopForAccessories) ? 1
                                                                         : 0);
       packet.desc_strs.back() += std::format(
-        "\n- POM Read={}",
+        "\n  - POM Read={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::PomRead) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- XPOM Read={}",
+        "\n  - XPOM Read={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::XpomRead) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- app:cv_auto POM Read={}",
+        "\n  - app:cv_auto POM Read={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::PomID12) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- app:adr_short={}",
+        "\n  - app:adr_short={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::AdrsID4) ? 1 : 0);
       packet.desc_strs.back() += std::format(
-        "\n- app:dyn Container Levels={}",
+        "\n  - app:dyn Container Levels={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::AppDynContainerLevels)
           ? 1
           : 0);
       packet.desc_strs.back() += std::format(
-        "\n- app:dyn Operating Parameters={}",
+        "\n  - app:dyn Operating Parameters={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::AppDynOperatingParams)
           ? 1
           : 0);
       packet.desc_strs.back() += std::format(
-        "\n- app:dyn Track Voltage={}",
+        "\n  - app:dyn Track Voltage={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::AppDynTrackVoltage) ? 1
                                                                          : 0);
       packet.desc_strs.back() += std::format(
-        "\n- RailCom+={}",
+        "\n  - RailCom+={}",
         static_cast<bool>(feats & dcc::BiDiFeatures::RailComPlus) ? 1 : 0);
       break;
     }
@@ -762,7 +762,7 @@ void cv_access_long_form(State::Packet& packet,
       packet.desc_strs.back() +=
         kk == 0b01u ? "\n- Verify Byte" : "\n- Write Byte";
       packet.desc_strs.back() +=
-        std::format("\n- CV{}={}", cv_addr + 1u, bytes[2uz]);
+        std::format("\n  - CV{}={}", cv_addr + 1u, bytes[2uz]);
       packet.pattern_str += packet.addr.type == dcc::Address::UnknownService
                               ? " 0 0111KKVV 0 VVVVVVVV 0 DDDDDDDD"
                               : " 0 1110KKVV 0 VVVVVVVV 0 DDDDDDDD";
@@ -773,7 +773,7 @@ void cv_access_long_form(State::Packet& packet,
       packet.desc_strs.back() +=
         bytes[2uz] & ztl::mask<4u> ? "\n- Write Bit" : "\n- Verify Bit";
       packet.desc_strs.back() +=
-        std::format("\n- CV{}:{}={}", cv_addr + 1u, pos, bit ? 1 : 0);
+        std::format("\n  - CV{}:{}={}", cv_addr + 1u, pos, bit ? 1 : 0);
       packet.pattern_str += packet.addr.type == dcc::Address::UnknownService
                               ? " 0 1110KKVV 0 VVVVVVVV 0 111KDBBB"
                               : " 0 0111KKVV 0 VVVVVVVV 0 111KDBBB";
@@ -789,30 +789,30 @@ void cv_access_short_form(State::Packet& packet,
   switch (kkkk) {
     case 0b0010u:
       packet.desc_strs.back() += "\n- Write Byte";
-      packet.desc_strs.back() += std::format("\n- CV23={}", bytes[1uz]);
+      packet.desc_strs.back() += std::format("\n  - CV23={}", bytes[1uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD";
       break;
     case 0b0011u:
       packet.desc_strs.back() += "\n- Write Byte";
-      packet.desc_strs.back() += std::format("\n- CV24={}", bytes[1uz]);
+      packet.desc_strs.back() += std::format("\n  - CV24={}", bytes[1uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD";
       break;
     case 0b0100u:
       packet.desc_strs.back() += "\n- Write Bytes";
-      packet.desc_strs.back() += std::format("\n- CV17={}", bytes[1uz]);
-      packet.desc_strs.back() += std::format("\n- CV18={}", bytes[2uz]);
+      packet.desc_strs.back() += std::format("\n  - CV17={}", bytes[1uz]);
+      packet.desc_strs.back() += std::format("\n  - CV18={}", bytes[2uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD 0 DDDDDDDD";
       break;
     case 0b0101u:
       packet.desc_strs.back() += "\n- Write Bytes";
-      packet.desc_strs.back() += std::format("\n- CV31={}", bytes[1uz]);
-      packet.desc_strs.back() += std::format("\n- CV32={}", bytes[2uz]);
+      packet.desc_strs.back() += std::format("\n  - CV31={}", bytes[1uz]);
+      packet.desc_strs.back() += std::format("\n  - CV32={}", bytes[2uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD 0 DDDDDDDD";
       break;
     case 0b0110u:
       packet.desc_strs.back() += "\n- Write Bytes";
-      packet.desc_strs.back() += std::format("\n- CV19={}", bytes[1uz]);
-      packet.desc_strs.back() += std::format("\n- CV20={}", bytes[2uz]);
+      packet.desc_strs.back() += std::format("\n  - CV19={}", bytes[1uz]);
+      packet.desc_strs.back() += std::format("\n  - CV20={}", bytes[2uz]);
       packet.pattern_str += " 0 1111KKKK 0 DDDDDDDD 0 DDDDDDDD";
       break;
   }
@@ -834,14 +834,14 @@ void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {
       packet.desc_strs.back() += std::format("\n- Verify Bytes @ {}", page_str);
       for (auto i{1uz}; i <= 4uz; ++i)
         packet.desc_strs.back() +=
-          std::format("\n- CV{} (CV{})", bytes[3uz] + i, cv_addr + i);
+          std::format("\n  - CV{} (CV{})", bytes[3uz] + i, cv_addr + i);
       packet.pattern_str += " 0 1110KKSS 0 VVVVVVVV 0 VVVVVVVV 0 VVVVVVVV";
       break;
     case 0b11u:
       packet.desc_strs.back() += std::format("\n- Write Bytes @ {}", page_str);
       packet.pattern_str += " 0 1110KKSS 0 VVVVVVVV 0 VVVVVVVV 0 VVVVVVVV";
       for (auto i{4uz}; i < size(bytes) - 1uz; ++i) {
-        packet.desc_strs.back() += std::format("\n- CV{0}={1} (CV{2}={1})",
+        packet.desc_strs.back() += std::format("\n  - CV{0}={1} (CV{2}={1})",
                                                bytes[3uz] + 1u + i - 4u,
                                                bytes[i],
                                                cv_addr + 1u + i - 4u);
@@ -853,7 +853,7 @@ void cv_access_xpom(State::Packet& packet, std::span<uint8_t const> bytes) {
       auto const bit{bytes[4uz] & ztl::mask<3u>};
       packet.desc_strs.back() += std::format("\n- Write Bit @ {}", page_str);
       packet.desc_strs.back() +=
-        std::format("\n- CV{0}:{1}={2} (CV{3}:{1}={2})",
+        std::format("\n  - CV{0}:{1}={2} (CV{3}:{1}={2})",
                     bytes[3uz] + 1u,
                     pos,
                     bit ? 1 : 0,
@@ -1006,7 +1006,7 @@ void select(State::Packet& packet, std::span<uint8_t const> bytes) {
                            static_cast<uint32_t>(bytes[9uz]) << 8u |
                            static_cast<uint32_t>(bytes[10uz]) << 0u};
         packet.desc_strs.back() +=
-          std::format("\n- CV31={} CV32={} CV={} (CV={}) #={}",
+          std::format("\n  - CV31={} CV32={} CV={} (CV={}) #={}",
                       bytes[8uz],
                       bytes[9uz],
                       bytes[10uz] + 1u,
@@ -1042,17 +1042,19 @@ void logon_assign(State::Packet& packet, std::span<uint8_t const> bytes) {
   auto const addr{dcc::decode_logon_address(cbegin(bytes) + 6)};
   switch (addr.type) {
     case dcc::Address::ExtendedLoco:
-      packet.desc_strs.back() += std::format("Extended Loco={}", addr.value);
+      packet.desc_strs.back() +=
+        std::format("\n- Extended Loco={}", addr.value);
       break;
     case dcc::Address::ExtendedAccessory:
       packet.desc_strs.back() +=
-        std::format("Extended Accessory={}", addr.value);
+        std::format("\n- Extended Accessory={}", addr.value);
       break;
     case dcc::Address::BasicAccessory:
-      packet.desc_strs.back() += std::format("Basic Accessory={}", addr.value);
+      packet.desc_strs.back() +=
+        std::format("\n- Basic Accessory={}", addr.value);
       break;
     case dcc::Address::BasicLoco:
-      packet.desc_strs.back() += std::format("Basic Loco={}", addr.value);
+      packet.desc_strs.back() += std::format("\n- Basic Loco={}", addr.value);
       break;
     default: break;
   }

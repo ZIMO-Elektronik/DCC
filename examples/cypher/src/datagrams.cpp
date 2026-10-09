@@ -118,8 +118,24 @@ void eval(State::Datagram& datagram) {
 
 // Annotate datagram
 void dissector(State::Datagram& datagram) {
-  datagram.desc_strs.push_back(
-    is_mob_address(datagram.addr) ? "Loco (MOB)" : "Accessory (STAT)");
+  switch (datagram.addr.type) {
+    case dcc::Address::UnknownService: break;
+    case dcc::Address::Broadcast: [[fallthrough]];
+    case dcc::Address::BasicLoco: [[fallthrough]];
+    case dcc::Address::ExtendedLoco:
+      datagram.desc_strs.push_back("Loco (MOB)");
+      break;
+    case dcc::Address::BasicAccessory: [[fallthrough]];
+    case dcc::Address::ExtendedAccessory:
+      datagram.desc_strs.push_back("Accessory (STAT)");
+      break;
+    case dcc::Address::Reserved: break;
+    case dcc::Address::DataTransfer: break;
+    case dcc::Address::AutomaticLogon:
+      datagram.desc_strs.push_back("Logon");
+      break;
+    case dcc::Address::Idle: break;
+  }
   Dissector dissector{datagram.bytes, datagram.addr};
   for (auto it{begin(dissector)}; it != end(dissector); ++it) {
     auto const& dg{*it};
@@ -496,6 +512,82 @@ void dissector(State::Datagram& datagram) {
     } else if ([[maybe_unused]] auto const test{get_if<app::Test>(&dg)}) {
       datagram.desc_strs.push_back("app:test");
       datagram.desc_strs.push_back("\\todo");
+    } else if ([[maybe_unused]] auto const decoder_state{
+                 get_if<app::DecoderState>(&dg)}) {
+      datagram.desc_strs.push_back("app:decoder_state");
+      datagram.desc_strs.back() += "\n- Change Flags";
+      datagram.desc_strs.back() += std::format(
+        "\n  - CID={}", decoder_state->change_flags & ztl::mask<0u> ? 1 : 0);
+      datagram.desc_strs.back() += std::format(
+        "\n  - FW={}", decoder_state->change_flags & ztl::mask<1u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Driving/Switching Behavior={}",
+                    decoder_state->change_flags & ztl::mask<2u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Mapping={}",
+                    decoder_state->change_flags & ztl::mask<3u> ? 1 : 0);
+      datagram.desc_strs.back() += std::format(
+        "\n  - GUI={}", decoder_state->change_flags & ztl::mask<4u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Consist={}",
+                    decoder_state->change_flags & ztl::mask<5u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Address/ShortGUI={}",
+                    decoder_state->change_flags & ztl::mask<7u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n- Change Count={}", decoder_state->change_count);
+      datagram.desc_strs.back() += "\n- Decoder Features";
+      datagram.desc_strs.back() +=
+        std::format("\n  - Dynamic CH1={}",
+                    decoder_state->cv131075 & ztl::mask<0u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Info1 (ID3)={}",
+                    decoder_state->cv131075 & ztl::mask<1u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Location Service (ID3)={}",
+                    decoder_state->cv131075 & ztl::mask<2u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Speed (ID7:0-1)={}",
+                    decoder_state->cv131075 & ztl::mask<3u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - QoS (ID7:7)={}",
+                    decoder_state->cv131075 & ztl::mask<4u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Status and Error Messages (ID7:21)={}",
+                    decoder_state->cv131075 & ztl::mask<5u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Temperature (ID7:26)={}",
+                    decoder_state->cv131075 & ztl::mask<6u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Direction Status Byte (ID7:27)={}",
+                    decoder_state->cv131075 & ztl::mask<7u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - CV-Auto (ID12)={}",
+                    decoder_state->cv131076 & ztl::mask<0u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Binary State Short={}",
+                    decoder_state->cv131076 & ztl::mask<1u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Binary State Long={}",
+                    decoder_state->cv131076 & ztl::mask<2u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Speed, Direction and Functions={}",
+                    decoder_state->cv131076 & ztl::mask<3u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - CV Access Short={}",
+                    decoder_state->cv131076 & ztl::mask<4u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Special Operating Modes={}",
+                    decoder_state->cv131076 & ztl::mask<6u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Multiple Instructions Single Packet={}",
+                    decoder_state->cv131076 & ztl::mask<7u> ? 1 : 0);
+    } else if (auto const decoder_unique{get_if<app::DecoderUnique>(&dg)}) {
+      datagram.desc_strs.push_back("app:decoder_unique");
+      datagram.desc_strs.back() +=
+        std::format("\n- Manufacturer ID={}", decoder_unique->mid);
+      datagram.desc_strs.back() +=
+        std::format("\n- Unique ID={}", decoder_unique->did);
     }
   }
 }
