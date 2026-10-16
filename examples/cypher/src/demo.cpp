@@ -842,6 +842,20 @@ void add_accessory_datagrams() {
 
 // Add automatic logon datagrams
 void add_automatic_logon_datagrams() {
+  // app:get_data
+  {
+    State::Datagram datagram{.packet = make_get_data_start_packet()};
+    std::ranges::copy(
+      make_app_get_data_datagram(std::array{random_interval<uint8_t>(),
+                                            random_interval<uint8_t>(),
+                                            random_interval<uint8_t>(),
+                                            random_interval<uint8_t>(),
+                                            random_interval<uint8_t>(),
+                                            random_interval<uint8_t>()}),
+      begin(datagram.bytes));
+    state.datagrams.push_back(datagram);
+  }
+
   // app:decoder_state
   {
     State::Datagram datagram{
