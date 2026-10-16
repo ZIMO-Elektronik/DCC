@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <implot.h>
 #include <implot_internal.h>
+#include <format>
 #include "state.hpp"
 #include "utility.hpp"
 
@@ -76,7 +77,7 @@ void eval(State::Datagram& datagram) {
   static constexpr auto scale{0.5};
   datagram.plots.t_b.push_back(0.0);
   datagram.plots.b.push_back(1.0 * scale);
-  for (auto i{0uz}; i < bundled_channels_size; ++i) {
+  for (auto i{0uz}; i < combined_channels_size; ++i) {
     auto offset{i < 2uz ? tts1 : tts2 - channel1_size * 10u * 4u};
     offset = offset + static_cast<double>(i * 10u * 4u);
 
@@ -118,9 +119,26 @@ void eval(State::Datagram& datagram) {
 
 // Annotate datagram
 void dissector(State::Datagram& datagram) {
-  datagram.desc_strs.push_back(
-    is_mob_address(datagram.addr) ? "Loco (MOB)" : "Accessory (STAT)");
-  Dissector dissector{datagram.bytes, datagram.addr};
+  auto const addr{dcc::decode_address(datagram.packet)};
+  switch (addr.type) {
+    case dcc::Address::UnknownService: break;
+    case dcc::Address::Broadcast: [[fallthrough]];
+    case dcc::Address::BasicLoco: [[fallthrough]];
+    case dcc::Address::ExtendedLoco:
+      datagram.desc_strs.push_back("Loco (MOB)");
+      break;
+    case dcc::Address::BasicAccessory: [[fallthrough]];
+    case dcc::Address::ExtendedAccessory:
+      datagram.desc_strs.push_back("Accessory (STAT)");
+      break;
+    case dcc::Address::Reserved: break;
+    case dcc::Address::DataTransfer: break;
+    case dcc::Address::AutomaticLogon:
+      datagram.desc_strs.push_back("Logon");
+      break;
+    case dcc::Address::Idle: break;
+  }
+  Dissector dissector{datagram.packet, datagram.bytes};
   for (auto it{begin(dissector)}; it != end(dissector); ++it) {
     auto const& dg{*it};
     if ([[maybe_unused]] auto const ack{get_if<Ack>(&dg)}) {
@@ -151,6 +169,9 @@ void dissector(State::Datagram& datagram) {
       datagram.desc_strs.back() +=
         std::format("\n- Addressing Request={}",
                     info1->d & app::Info1::AddressingRequest ? 1 : 0);
+    } else if (auto const adrs{get_if<app::AdrShort>(&dg)}) {
+      datagram.desc_strs.push_back("app:adrs");
+      datagram.desc_strs.back() += std::format("\n- Address={} ", adrs->d);
     } else if (auto const ext{get_if<app::Ext>(&dg)}) {
       datagram.desc_strs.push_back("app:ext");
       datagram.desc_strs.back() +=
@@ -168,10 +189,10 @@ void dissector(State::Datagram& datagram) {
       datagram.desc_strs.push_back("app:dyn");
       datagram.desc_strs.back() += std::format("\n- D={}", dyn->d);
       datagram.desc_strs.back() += std::format("\n- X={}", dyn->x);
-      datagram.desc_strs.back() += std::format(
-        " ({})",
-        is_mob_address(datagram.addr) ? mob_app_dyn_labels[dyn->x + 1u]
-                                      : stat_app_dyn_labels[dyn->x + 1u]);
+      datagram.desc_strs.back() +=
+        std::format(" ({})",
+                    is_mob_address(addr) ? mob_app_dyn_labels[dyn->x + 1u]
+                                         : stat_app_dyn_labels[dyn->x + 1u]);
       switch (dyn->x) {
         // Speed
         case 0u: [[fallthrough]];
@@ -235,11 +256,10 @@ void dissector(State::Datagram& datagram) {
               datagram.desc_strs.push_back("app:dyn");
               datagram.desc_strs.back() += std::format("\n- D={}", dyn_2->d);
               datagram.desc_strs.back() += std::format("\n- X={}", dyn_2->x);
-              datagram.desc_strs.back() +=
-                std::format(" ({})",
-                            is_mob_address(datagram.addr)
-                              ? mob_app_dyn_labels[dyn_2->x + 1u]
-                              : stat_app_dyn_labels[dyn_2->x + 1u]);
+              datagram.desc_strs.back() += std::format(
+                " ({})",
+                is_mob_address(addr) ? mob_app_dyn_labels[dyn_2->x + 1u]
+                                     : stat_app_dyn_labels[dyn_2->x + 1u]);
               datagram.desc_strs.back() +=
                 std::format("\n- Position={}", (dyn_2->d << 8u) | dyn->d);
             }
@@ -260,7 +280,7 @@ void dissector(State::Datagram& datagram) {
           // Pre-defined
           else {
             // MOB
-            if (is_mob_address(datagram.addr)) switch (dyn->d) {
+            if (is_mob_address(addr)) switch (dyn->d) {
                 case 128u: [[fallthrough]];
                 case 129u: [[fallthrough]];
                 case 130u:
@@ -410,7 +430,7 @@ void dissector(State::Datagram& datagram) {
     } else if (auto const stat1{get_if<app::Stat1>(&dg)}) {
       datagram.desc_strs.push_back("app:stat1");
       // Basic accessory
-      if (datagram.addr.type == dcc::Address::BasicAccessory) {
+      if (addr.type == dcc::Address::BasicAccessory) {
         datagram.desc_strs.back() += "\n- Basic Accessory";
         datagram.desc_strs.back() +=
           std::format("\n- Initial State Matches Last Received={}",
@@ -422,7 +442,7 @@ void dissector(State::Datagram& datagram) {
           std::format("\n- Aspect={}", stat1->d & 0b1'1111);
       }
       // Extended accessory
-      else if (datagram.addr.type == dcc::Address::ExtendedAccessory) {
+      else if (addr.type == dcc::Address::ExtendedAccessory) {
         datagram.desc_strs.back() += "\n- Extended Accessory";
         datagram.desc_strs.back() +=
           std::format("\n- Initial State Matches Last Received={}",
@@ -496,6 +516,86 @@ void dissector(State::Datagram& datagram) {
     } else if ([[maybe_unused]] auto const test{get_if<app::Test>(&dg)}) {
       datagram.desc_strs.push_back("app:test");
       datagram.desc_strs.push_back("\\todo");
+    } else if (auto const get_data{get_if<app::GetData>(&dg)}) {
+      datagram.desc_strs.push_back("app:get_data");
+      datagram.desc_strs.back() +=
+        std::format("\n- Bytes={::02X}", get_data->d);
+    } else if ([[maybe_unused]] auto const decoder_state{
+                 get_if<app::DecoderState>(&dg)}) {
+      datagram.desc_strs.push_back("app:decoder_state");
+      datagram.desc_strs.back() += "\n- Change Flags";
+      datagram.desc_strs.back() += std::format(
+        "\n  - CID={}", decoder_state->change_flags & ztl::mask<0u> ? 1 : 0);
+      datagram.desc_strs.back() += std::format(
+        "\n  - FW={}", decoder_state->change_flags & ztl::mask<1u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Driving/Switching Behavior={}",
+                    decoder_state->change_flags & ztl::mask<2u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Mapping={}",
+                    decoder_state->change_flags & ztl::mask<3u> ? 1 : 0);
+      datagram.desc_strs.back() += std::format(
+        "\n  - GUI={}", decoder_state->change_flags & ztl::mask<4u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Consist={}",
+                    decoder_state->change_flags & ztl::mask<5u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Address/ShortGUI={}",
+                    decoder_state->change_flags & ztl::mask<7u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n- Change Count={}", decoder_state->change_count);
+      datagram.desc_strs.back() += "\n- Decoder Features";
+      datagram.desc_strs.back() +=
+        std::format("\n  - Dynamic CH1={}",
+                    decoder_state->cv131075 & ztl::mask<0u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Info1 (ID3)={}",
+                    decoder_state->cv131075 & ztl::mask<1u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Location Service (ID3)={}",
+                    decoder_state->cv131075 & ztl::mask<2u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Speed (ID7:0-1)={}",
+                    decoder_state->cv131075 & ztl::mask<3u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - QoS (ID7:7)={}",
+                    decoder_state->cv131075 & ztl::mask<4u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Status and Error Messages (ID7:21)={}",
+                    decoder_state->cv131075 & ztl::mask<5u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Temperature (ID7:26)={}",
+                    decoder_state->cv131075 & ztl::mask<6u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Direction Status Byte (ID7:27)={}",
+                    decoder_state->cv131075 & ztl::mask<7u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - CV-Auto (ID12)={}",
+                    decoder_state->cv131076 & ztl::mask<0u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Binary State Short={}",
+                    decoder_state->cv131076 & ztl::mask<1u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Binary State Long={}",
+                    decoder_state->cv131076 & ztl::mask<2u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Speed, Direction and Functions={}",
+                    decoder_state->cv131076 & ztl::mask<3u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - CV Access Short={}",
+                    decoder_state->cv131076 & ztl::mask<4u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Special Operating Modes={}",
+                    decoder_state->cv131076 & ztl::mask<6u> ? 1 : 0);
+      datagram.desc_strs.back() +=
+        std::format("\n  - Multiple Instructions Single Packet={}",
+                    decoder_state->cv131076 & ztl::mask<7u> ? 1 : 0);
+    } else if (auto const decoder_unique{get_if<app::DecoderUnique>(&dg)}) {
+      datagram.desc_strs.push_back("app:decoder_unique");
+      datagram.desc_strs.back() +=
+        std::format("\n- Manufacturer ID={}", decoder_unique->mid);
+      datagram.desc_strs.back() +=
+        std::format("\n- Unique ID={}", decoder_unique->did);
     }
   }
 }
@@ -516,7 +616,7 @@ void highlights(State::Datagram& datagram) {
   // Caret index
   size_t c{};
 
-  for (auto i{0uz}; i < bundled_channels_size; ++i) {
+  for (auto i{0uz}; i < combined_channels_size; ++i) {
     auto const b{datagram.bytes[i]};
     if (!b) continue;
 

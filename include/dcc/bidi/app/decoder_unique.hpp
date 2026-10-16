@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include <array>
 #include <cstdint>
 
 namespace dcc::bidi::app {
@@ -18,7 +17,8 @@ namespace dcc::bidi::app {
 struct DecoderUnique {
   static constexpr uint8_t id{15u};
   uint16_t mid{};
-  std::array<uint8_t, 4uz> did{};
+  uint32_t did{};
+  constexpr bool operator==(DecoderUnique const&) const = default;
 };
 
 } // namespace dcc::bidi::app

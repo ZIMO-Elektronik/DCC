@@ -21,9 +21,12 @@
 #include "app/adr_short.hpp"
 #include "app/block.hpp"
 #include "app/cv_auto.hpp"
+#include "app/decoder_state.hpp"
+#include "app/decoder_unique.hpp"
 #include "app/dyn.hpp"
 #include "app/error.hpp"
 #include "app/ext.hpp"
+#include "app/get_data.hpp"
 #include "app/info.hpp"
 #include "app/info1.hpp"
 #include "app/pom.hpp"
@@ -42,34 +45,38 @@ namespace dcc::bidi {
 
 /// Dissect datagrams
 struct Dissector : std::ranges::view_interface<Dissector> {
-  using value_type = std::variant<Ack,           // ACK
-                                  Nak,           // NAK
-                                                 //
-                                  app::Pom,      // ID0
-                                  app::AdrHigh,  // ID1
-                                  app::AdrLow,   // ID2
-                                  app::Info1,    // ID3
-                                  app::Ext,      // ID3
-                                  app::AdrShort, // ID4
-                                  app::Info,     // ID4
-                                  app::Dyn,      // ID7
-                                  app::Xpom,     // ID8-11
-                                  app::CvAuto,   // ID12
-                                  app::Block,    // ID13
-                                  app::Search,   // ID14
-                                                 //
-                                  app::Srq,      //
-                                                 // ID0
-                                  app::Stat4,    // ID3
-                                  app::Stat1,    // ID4
-                                  app::Time,     // ID5
-                                  app::Error,    // ID6
-                                                 // ID7
-                                                 // ID8-11
-                                  app::Test      // ID12
-                                  >;             // ID13
+  using value_type = std::variant<Ack,                 // ACK
+                                  Nak,                 // NAK
+                                                       //
+                                  app::Pom,            // ID0
+                                  app::AdrHigh,        // ID1
+                                  app::AdrLow,         // ID2
+                                  app::Info1,          // ID3
+                                  app::Ext,            // ID3
+                                  app::AdrShort,       // ID4
+                                  app::Info,           // ID4
+                                  app::Dyn,            // ID7
+                                  app::Xpom,           // ID8-11
+                                  app::CvAuto,         // ID12
+                                  app::Block,          // ID13
+                                  app::Search,         // ID14
+                                                       //
+                                  app::Srq,            //
+                                  /*app::Pom,*/        // ID0
+                                  app::Stat4,          // ID3
+                                  app::Stat1,          // ID4
+                                  app::Time,           // ID5
+                                  app::Error,          // ID6
+                                  /*app::Dyn,*/        // ID7
+                                  /*app::Xpom,*/       // ID8-11
+                                  app::Test,           // ID12
+                                  /*app::Block,*/      // ID13
+                                                       //
+                                  app::GetData,        //
+                                  app::DecoderState,   // ID13
+                                  app::DecoderUnique>; // ID15
 
-  using size_type = ztl::smallest_unsigned_t<bundled_channels_size>;
+  using size_type = ztl::smallest_unsigned_t<combined_channels_size>;
   using difference_type = std::make_signed_t<size_type>;
   using reference = value_type;
   using pointer = value_type;
@@ -77,35 +84,52 @@ struct Dissector : std::ranges::view_interface<Dissector> {
 
   constexpr Dissector() = default;
 
-  constexpr Dissector(Datagram<> encoded, Address addr)
-    : _encoded{encoded}, _addr{addr} {
-    // Validate channel 1 (popcount must be 4)
-    if (std::span<uint8_t, channel1_size> ch1{std::begin(_encoded),
-                                              std::begin(_encoded) + 2};
-        std::ranges::any_of(
-          ch1, [](uint8_t b) { return std::popcount(b) != CHAR_BIT / 2; })) {
-      std::ranges::fill(ch1, 0u);
-      _i = 2u; // Skip channel 1
-    }
+  constexpr Dissector(Packet packet, Datagram<> encoded)
+    : _encoded{encoded}, _addr{decode_address(packet)} {
+    // Separate channels
+    if (_addr.type != Address::AutomaticLogon) {
+      // Validate channel 1 (popcount must be 4)
+      if (std::span<uint8_t, channel1_size> ch1{std::begin(_encoded),
+                                                std::begin(_encoded) + 2};
+          std::ranges::any_of(
+            ch1, [](uint8_t b) { return std::popcount(b) != CHAR_BIT / 2; })) {
+        // Skip channel 1
+        std::ranges::fill(ch1, 0u);
+        _i = 2u;
+      }
 
-    // Validate channel 2 (popcount must be 4 or byte zero)
-    if (std::span<uint8_t, channel2_size> ch2{std::begin(_encoded) + 2,
-                                              std::end(_encoded)};
-        std::ranges::any_of(ch2, [](uint8_t b) {
-          return std::popcount(b) != CHAR_BIT / 2 && b;
-        })) {
-      std::ranges::fill(ch2, 0u);
-      if (_i == 2u) {
-        _i = std::numeric_limits<size_type>::max(); // Skip channel 1 and 2
+      // Validate channel 2 (popcount must be 4 or byte zero)
+      if (std::span<uint8_t, channel2_size> ch2{std::begin(_encoded) + 2,
+                                                std::end(_encoded)};
+          std::ranges::any_of(ch2, [](uint8_t b) {
+            return std::popcount(b) != CHAR_BIT / 2 && b;
+          })) {
+        std::ranges::fill(ch2, 0u);
+        // Skip channel 1 and 2
+        if (_i == 2u) {
+          _i = std::numeric_limits<size_type>::max();
+          return;
+        }
+      }
+    }
+    // Combined channels
+    else {
+      // Validate combined channels (popcount must be 4)
+      if (std::span<uint8_t, combined_channels_size> chs{std::begin(_encoded),
+                                                         std::end(_encoded)};
+          std::ranges::any_of(
+            chs, [](uint8_t b) { return std::popcount(b) != CHAR_BIT / 2; })) {
+        std::ranges::fill(chs, 0u);
+        _i = std::numeric_limits<size_type>::max();
         return;
       }
+
+      // Automatic logon datagrams might come without ID
+      _expect_id = packet[1uz] >= 0b1110'0000u;
     }
 
     _decoded = decode_datagram(_encoded);
   }
-
-  constexpr Dissector(Datagram<> encoded, Packet packet)
-    : Dissector{encoded, decode_address(packet)} {}
 
   constexpr Dissector& operator++() {
     auto const byte_count{std::size(next())};
@@ -132,8 +156,8 @@ struct Dissector : std::ranges::view_interface<Dissector> {
 
     auto const bit_count{byte_count * 6uz - 4uz};
     auto const id{static_cast<uint8_t>(dg[0uz] >> 2u)};
-    auto const data{make_data(dg)};
-    auto const d{data & ((1ull << bit_count) - 1ull)};
+    auto const d_with_id{make_data(dg)};
+    auto const d{d_with_id & ((1ull << bit_count) - 1ull)};
 
     switch (_addr.type) {
       case Address::Broadcast:
@@ -198,7 +222,7 @@ struct Dissector : std::ranges::view_interface<Dissector> {
       case Address::ExtendedAccessory:
         // Channel 1
         if (_i < 2uz)
-          return app::Srq{.d = static_cast<decltype(app::Srq::d)>(data)};
+          return app::Srq{.d = static_cast<decltype(app::Srq::d)>(d_with_id)};
         // Channel 2
         else switch (id) {
             case app::Pom::id: return app::Pom{.d = static_cast<uint8_t>(d)};
@@ -226,12 +250,35 @@ struct Dissector : std::ranges::view_interface<Dissector> {
             default: return {};
           }
 
+      case Address::AutomaticLogon:
+        // Combined channels
+        if (_i) return {};
+        else if (_expect_id) switch (id) {
+            case app::DecoderState::id:
+              return app::DecoderState{
+                .change_flags = static_cast<uint8_t>(d >> 36u),
+                .change_count = static_cast<uint16_t>((d >> 24u) & 0x0FFFu),
+                .cv131075 = static_cast<uint8_t>(d >> 16u),
+                .cv131076 = static_cast<uint8_t>(d >> 8u)};
+            case app::DecoderUnique::id:
+              return app::DecoderUnique{.mid = static_cast<uint16_t>(d >> 32u),
+                                        .did = static_cast<uint32_t>(d)};
+            default: return {};
+          }
+        else
+          return app::GetData{.d = {static_cast<uint8_t>(d_with_id >> 40u),
+                                    static_cast<uint8_t>(d_with_id >> 32u),
+                                    static_cast<uint8_t>(d_with_id >> 24u),
+                                    static_cast<uint8_t>(d_with_id >> 16u),
+                                    static_cast<uint8_t>(d_with_id >> 8u),
+                                    static_cast<uint8_t>(d_with_id >> 0u)}};
+
       default: return {};
     }
   }
 
   constexpr bool operator==(std::default_sentinel_t) const {
-    return _i >= bundled_channels_size || !_encoded[_i] || std::empty(next());
+    return _i >= combined_channels_size || !_encoded[_i] || std::empty(next());
   }
 
   constexpr Dissector& begin() { return *this; }
@@ -326,6 +373,11 @@ private:
             default: return {};
           }
 
+      case Address::AutomaticLogon:
+        // Combined channels
+        if (!_i) return _decoded;
+        else return {};
+
       default: return {};
     }
   }
@@ -334,6 +386,7 @@ private:
   Datagram<> _decoded{};
   Address _addr{};
   size_type _i{};
+  bool _expect_id{true};
 };
 
 constexpr auto begin(Dissector& c) -> decltype(c.begin()) { return c.begin(); }
