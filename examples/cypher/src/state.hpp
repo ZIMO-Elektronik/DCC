@@ -47,7 +47,7 @@ struct State {
 
   // DCC datagram with address and meta data for plots
   struct Datagram {
-    dcc::Address addr{};
+    dcc::Packet packet{};
     dcc::bidi::Datagram<> bytes{};
     std::vector<std::string> desc_strs{};
     std::string pattern_str{};

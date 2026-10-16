@@ -229,16 +229,23 @@ template<std::output_iterator<uint8_t> OutputIt>
 constexpr OutputIt encode_logon_address(Address addr, OutputIt first) {
   switch (addr.type) {
     case Address::ExtendedLoco:
-      *first++ = static_cast<uint8_t>(addr >> 8u);
+      *first++ =
+        addr >= 1u && addr <= 10239u ? static_cast<uint8_t>(addr >> 8u) : 0x3Fu;
       break;
     case Address::ExtendedAccessory:
-      *first++ = 0b0010'1000u | static_cast<uint8_t>(addr >> 8u);
+      *first++ = addr <= 2047u
+                   ? (0b0010'1000u | static_cast<uint8_t>(addr >> 8u))
+                   : 0x3Fu;
       break;
     case Address::BasicAccessory:
-      *first++ = 0b0011'0000u | static_cast<uint8_t>(addr >> 8u);
+      *first++ = addr <= 2047u
+                   ? (0b0011'0000u | static_cast<uint8_t>(addr >> 8u))
+                   : 0x3Fu;
       break;
-    case Address::BasicLoco: *first++ = 0b0011'1000u; break;
-    default: assert(false); break;
+    case Address::BasicLoco:
+      *first++ = addr >= 1u && addr <= 127u ? 0b0011'1000u : 0x3Fu;
+      break;
+    default: *first++ = 0x3Fu; break;
   }
   *first++ = static_cast<uint8_t>(addr);
   return first;

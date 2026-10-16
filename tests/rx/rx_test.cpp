@@ -151,7 +151,7 @@ void RxTest::ReadDataSpace(uint8_t data_space,
 
   Logon();
 
-  // Confirm LOGON_SELECT via 8x ACK
+  // Confirm SELECT via 8x ACK
   InSequence s;
   EXPECT_CALL(_mock,
               transmitBiDi(DatagramMatcher(
@@ -163,15 +163,8 @@ void RxTest::ReadDataSpace(uint8_t data_space,
                                                       dcc::bidi::acks[0uz],
                                                       dcc::bidi::acks[0uz],
                                                       dcc::bidi::acks[0uz]})));
-  auto packet{data_space == 3u
-                ? dcc::make_logon_select_packet(DCC_MANUFACTURER_ID,
-                                                _did,
-                                                0b1111'1110u,
-                                                data_space,
-                                                cv_addr,
-                                                cv_count)
-                : dcc::make_logon_select_packet(
-                    DCC_MANUFACTURER_ID, _did, 0b1111'1110u, data_space)};
+  auto packet{dcc::make_select_read_block_packet(
+    DCC_MANUFACTURER_ID, _did, data_space, cv_addr, cv_count)};
   Receive(packet)->BiDi();
 
   // Read CVs from data space
@@ -188,14 +181,14 @@ void RxTest::ReadDataSpace(uint8_t data_space,
   LeaveCutout()->Execute();
 
   // Make get_data datagrams and query them
-  auto get_data{make_get_data_datagrams(cvs, data_space)};
-  for (i = 0uz; i < size(get_data); ++i) {
+  auto get_datas{make_app_get_data_datagrams(cvs, data_space)};
+  for (i = 0uz; i < size(get_datas); ++i) {
     EXPECT_CALL(
       _mock,
-      transmitBiDi(DatagramMatcher(std::span{cbegin(get_data[i]), 2uz})));
+      transmitBiDi(DatagramMatcher(std::span{cbegin(get_datas[i]), 2uz})));
     EXPECT_CALL(
       _mock,
-      transmitBiDi(DatagramMatcher(std::span{cbegin(get_data[i]) + 2, 6uz})));
+      transmitBiDi(DatagramMatcher(std::span{cbegin(get_datas[i]) + 2, 6uz})));
     packet =
       !i ? dcc::make_get_data_start_packet() : dcc::make_get_data_cont_packet();
     Receive(packet)->BiDi();

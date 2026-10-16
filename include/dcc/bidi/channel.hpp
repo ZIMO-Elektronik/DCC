@@ -20,7 +20,7 @@ using Channel1 = std::array<uint8_t, channel1_size>;
 inline constexpr auto channel2_size{datagram_size<Bits::_36>};
 using Channel2 = std::array<uint8_t, channel2_size>;
 
-inline constexpr auto bundled_channels_size{channel1_size + channel2_size};
-using BundledChannels = std::array<uint8_t, bundled_channels_size>;
+inline constexpr auto combined_channels_size{channel1_size + channel2_size};
+using CombinedChannels = std::array<uint8_t, combined_channels_size>;
 
 } // namespace dcc::bidi

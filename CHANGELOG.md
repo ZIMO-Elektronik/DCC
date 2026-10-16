@@ -7,6 +7,7 @@
 - Bugfix CV bit write in operations mode answered with POM ID0 datagram ([#172](https://github.com/ZIMO-Elektronik/DCC/issues/172))
 - Bugfix `DCCypher` swaps 0 and 1 in the command station feature identification packet ([#182](https://github.com/ZIMO-Elektronik/DCC/issues/182))
 - Remove `DCC_RX_LOGON_DID_CV_ADDRESS` in favor of manufacturer unique number (MUN) from [BiDi CV page](https://normen.railcommunity.de/RCN-217.pdf)
+- Remove `bidi::Dissector(Datagram<> encoded, Address addr)` constructor, as the address is no longer sufficient to uniquely identify an RCN-218 datagram ([#188](https://github.com/ZIMO-Elektronik/DCC/issues/188))
 
 ## 0.49.0
 - Use manufacturer unique number (MUN) from [BiDi CV page]((https://normen.railcommunity.de/RCN-217.pdf)) as [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) DID ([#56](https://github.com/ZIMO-Elektronik/DCC/issues/56))
@@ -145,7 +146,7 @@
 - Rename `Long` to `ExtendedLoco` address
 
 ## 0.39.0
-- Bugfix disable LOGON_ENABLE after LOGON_SELECT ([#38](https://github.com/ZIMO-Elektronik/DCC/issues/38))
+- Bugfix disable LOGON_ENABLE after SELECT ([#38](https://github.com/ZIMO-Elektronik/DCC/issues/38))
 
 ## 0.38.1
 - Remove `zimo_id`
@@ -287,7 +288,7 @@
 ## 0.21.0
 - Mainline [RCN-218](https://normen.railcommunity.de/RCN-218.pdf)
 - LOGON_ENABLE does not have CRC
-- LOGON_SELECT uses 6/8 encoding
+- SELECT uses 6/8 encoding
 
 ## 0.20.1
 - Add proprietary CV20

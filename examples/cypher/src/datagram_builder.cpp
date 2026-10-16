@@ -39,11 +39,43 @@ void loco(State::Datagram& datagram);
 
 } // namespace loco
 
+namespace accessory {
+
+// clang-format off
+void accessory(State::Datagram& datagram);
+  void channel1(State::Datagram& datagram);
+    void app_srq(State::Datagram& datagram);
+  void channel2(State::Datagram& datagram);
+    void app_pom(State::Datagram& datagram);
+    void app_stat4(State::Datagram& datagram);
+    void app_stat1(State::Datagram& datagram);
+    void app_time(State::Datagram& datagram);
+    void app_error(State::Datagram& datagram);
+    void app_dyn(State::Datagram& datagram);
+    void app_xpom(State::Datagram& datagram);
+    void app_test(State::Datagram& datagram);
+    void app_block(State::Datagram& datagram);
+// clang-format on
+
+} // namespace accessory
+
+namespace automatic_logon {
+
+// clang-format off
+void automatic_logon(State::Datagram& datagram);
+  void combined_channels(State::Datagram& datagram);
+    void app_get_data(State::Datagram& datagram);
+    void app_decoder_state(State::Datagram& datagram);
+    void app_decoder_unique(State::Datagram& datagram);
+// clang-format on
+
+} // namespace automatic_logon
+
 namespace broadcast {
 
 // Broadcast
 void broadcast(State::Datagram& datagram) {
-  datagram.addr = {.value = 0u, .type = dcc::Address::Broadcast}; // Default
+  datagram.packet = dcc::make_system_time_packet(0u);
   channel2(datagram);
   if (std::ranges::all_of(datagram.bytes, [](auto b) { return !b; })) return;
   ImGui::SeparatorText("Done");
@@ -88,7 +120,7 @@ namespace loco {
 
 // Loco
 void loco(State::Datagram& datagram) {
-  datagram.addr = {.value = 3u, .type = dcc::Address::BasicLoco}; // Default
+  datagram.packet = dcc::make_speed_and_direction_packet(3u, 0u);
   channel1(datagram);
   channel2(datagram);
   if (std::ranges::all_of(datagram.bytes, [](auto b) { return !b; })) return;
@@ -520,26 +552,9 @@ void app_block(State::Datagram&) {
 
 namespace accessory {
 
-// clang-format off
-void accessory(State::Datagram& datagram);
-  void channel1(State::Datagram& datagram);
-    void app_srq(State::Datagram& datagram);
-  void channel2(State::Datagram& datagram);
-    void app_pom(State::Datagram& datagram);
-    void app_stat4(State::Datagram& datagram);
-    void app_stat1(State::Datagram& datagram);
-    void app_time(State::Datagram& datagram);
-    void app_error(State::Datagram& datagram);
-    void app_dyn(State::Datagram& datagram);
-    void app_xpom(State::Datagram& datagram);
-    void app_test(State::Datagram& datagram);
-    void app_block(State::Datagram& datagram);
-// clang-format on
-
 // Accessory
 void accessory(State::Datagram& datagram) {
-  datagram.addr = {.value = 12u,
-                   .type = dcc::Address::BasicAccessory}; // Default
+  datagram.packet = dcc::make_basic_accessory_packet(12u, false, true);
   channel1(datagram);
   channel2(datagram);
   if (std::ranges::all_of(datagram.bytes, [](auto b) { return !b; })) return;
@@ -562,13 +577,12 @@ void app_srq(State::Datagram& datagram) {
   static constexpr std::array types{"Basic Accessory", "Extended Accessory"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(types), ssize(types));
-  static dcc::Address::value_type addr{datagram.addr};
+  static dcc::Address::value_type addr{dcc::decode_address(datagram.packet)};
   ImGui::InputScalar("Address", ImGuiDataType_U16, &addr);
   addr = std::clamp<dcc::Address::value_type>(addr, 0u, 2047u);
-  datagram.addr = {.value = addr,
-                   .type = i ? dcc::Address::ExtendedAccessory
-                             : dcc::Address::BasicAccessory};
-  std::ranges::copy(make_app_srq_datagram(datagram.addr),
+  datagram.packet = i ? dcc::make_extended_accessory_packet(addr, 0u)
+                      : dcc::make_basic_accessory_packet(addr, true, false);
+  std::ranges::copy(make_app_srq_datagram(dcc::decode_address(datagram.packet)),
                     begin(datagram.bytes));
 }
 
@@ -632,8 +646,9 @@ void app_stat1(State::Datagram& datagram) {
   static constexpr std::array types{"Basic Accessory", "Extended Accessory"};
   static int i{};
   ImGui::Combo(UNIQUE_LABEL(), &i, data(types), ssize(types));
-  datagram.addr.type =
-    i ? dcc::Address::ExtendedAccessory : dcc::Address::BasicAccessory;
+  static dcc::Address::value_type addr{dcc::decode_address(datagram.packet)};
+  datagram.packet = i ? dcc::make_extended_accessory_packet(addr, 0u)
+                      : dcc::make_basic_accessory_packet(addr, true, false);
   static bool bit6{};
   ImGui::Checkbox("Initial State Matches Last Received", &bit6);
   static bool bit5{};
@@ -730,10 +745,93 @@ void app_block(State::Datagram&) {
 
 namespace automatic_logon {
 
+// Automatic logon
 void automatic_logon(State::Datagram& datagram) {
-  datagram.addr = {.value = 254u,
-                   .type = dcc::Address::AutomaticLogon}; // Default
-  ImGui::TextUnformatted("\\todo");
+  combined_channels(datagram);
+  if (std::ranges::all_of(datagram.bytes, [](auto b) { return !b; })) return;
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Datagrams")) {
+    state.datagrams.push_back(datagram);
+  }
+}
+
+// Automatic logon combined_channels
+void combined_channels(State::Datagram& datagram) {
+  ImGui::SeparatorText("Combined Channels");
+  static constexpr std::array apps{
+    "", "app:get_data", "app:decoder_state", "app:decoder_unique"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(apps), ssize(apps));
+  if (!strcmp(apps[static_cast<size_t>(i)], "app:get_data"))
+    app_get_data(datagram);
+  else if (!strcmp(apps[static_cast<size_t>(i)], "app:decoder_state"))
+    app_decoder_state(datagram);
+  else if (!strcmp(apps[static_cast<size_t>(i)], "app:decoder_unique"))
+    app_decoder_unique(datagram);
+}
+
+// Automatic logon app:get_data
+void app_get_data(State::Datagram& datagram) {
+  datagram.packet = dcc::make_get_data_start_packet();
+  static std::array<uint8_t, 6uz> bytes{};
+  ImGui::InputScalarN("Bytes", ImGuiDataType_U8, data(bytes), size(bytes));
+  std::ranges::copy(make_app_get_data_datagram(bytes), begin(datagram.bytes));
+}
+
+// Automatic logon app:decoder_state
+void app_decoder_state(State::Datagram& datagram) {
+  datagram.packet = dcc::make_logon_assign_packet(
+    145u, 0u, {.value = 3u, .type = dcc::Address::BasicLoco});
+  ImGui::SeparatorText("Parameters");
+  static std::array<bool, CHAR_BIT> change_flags{};
+  ImGui::Checkbox("CID Changed", &change_flags[0uz]);
+  ImGui::Checkbox("FW Changed", &change_flags[1uz]);
+  ImGui::Checkbox("Driving/Switching Behavior Changed", &change_flags[2uz]);
+  ImGui::Checkbox("Mapping Changed", &change_flags[3uz]);
+  ImGui::Checkbox("GUI Changed", &change_flags[4uz]);
+  ImGui::Checkbox("Consist Changed", &change_flags[5uz]);
+  ImGui::Checkbox("Address/ShortGUI Changed", &change_flags[7uz]);
+  static uint16_t change_count{};
+  ImGui::InputScalar("Change Count", ImGuiDataType_U16, &change_count);
+  change_count =
+    std::clamp<uint16_t>(change_count, 0u, smath::pow(2u, 12u) - 1u);
+  static std::array<bool, CHAR_BIT> cv131075{};
+  ImGui::Checkbox("Dynamic CH1", &cv131075[0uz]);
+  ImGui::Checkbox("Info1 (ID3)", &cv131075[1uz]);
+  ImGui::Checkbox("Location Service (ID3)", &cv131075[2uz]);
+  ImGui::Checkbox("Speed (ID7:0-1)", &cv131075[3uz]);
+  ImGui::Checkbox("QoS (ID7:7)", &cv131075[4uz]);
+  ImGui::Checkbox("Status and Error Messages (ID7:21)", &cv131075[5uz]);
+  ImGui::Checkbox("Temperature (ID7:26)", &cv131075[6uz]);
+  ImGui::Checkbox("Direction Status Byte (ID7:27)", &cv131075[7uz]);
+  static std::array<bool, CHAR_BIT> cv131076{};
+  ImGui::Checkbox("CV-Auto (ID12)", &cv131076[0uz]);
+  ImGui::Checkbox("Binary State Short", &cv131076[1uz]);
+  ImGui::Checkbox("Binary State Long", &cv131076[2uz]);
+  ImGui::Checkbox("Speed, Direction and Functions", &cv131076[3uz]);
+  ImGui::Checkbox("CV Access Short", &cv131076[4uz]);
+  ImGui::Checkbox("Special Operating Modes", &cv131076[6uz]);
+  ImGui::Checkbox("Multiple Instructions Single Packet", &cv131076[7uz]);
+  std::ranges::copy(
+    make_app_decoder_state_datagram(pack_bits<uint8_t>(change_flags),
+                                    change_count,
+                                    pack_bits<uint8_t>(cv131075),
+                                    pack_bits<uint8_t>(cv131076)),
+    begin(datagram.bytes));
+}
+
+// Automatic logon app:decoder_unique
+void app_decoder_unique(State::Datagram& datagram) {
+  datagram.packet = make_logon_enable_packet(dcc::LogonGroup::Now, 0u, 0u);
+  ImGui::SeparatorText("Parameters");
+  static uint16_t manufacturer_id{};
+  ImGui::InputScalar("Manufacturer ID", ImGuiDataType_U16, &manufacturer_id);
+  manufacturer_id =
+    std::clamp<uint16_t>(manufacturer_id, 0u, smath::pow(2u, 12u) - 1u);
+  static uint32_t did{};
+  ImGui::InputScalar("Unique ID", ImGuiDataType_U32, &did);
+  std::ranges::copy(make_app_decoder_unique_datagram(manufacturer_id, did),
+                    begin(datagram.bytes));
 }
 
 } // namespace automatic_logon
@@ -749,12 +847,7 @@ void datagram_builder() {
                    ImGuiWindowFlags_AlwaysAutoResize)) {
     ImGui::SeparatorText("Type");
     static constexpr std::array types{
-      "",
-      "Broadcast",
-      "Loco",
-      "Accessory",
-      // "Automatic Logon"
-    };
+      "", "Broadcast", "Loco", "Accessory", "Automatic Logon"};
     static int i{};
     ImGui::Combo(UNIQUE_LABEL(), &i, data(types), ssize(types));
     if (State::Datagram datagram{};

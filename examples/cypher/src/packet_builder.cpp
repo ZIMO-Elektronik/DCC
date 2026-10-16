@@ -80,6 +80,13 @@ namespace automatic_logon {
 
 // clang-format off
 void automatic_logon();
+  void get_data_start(dcc::Address addr);
+  void get_data_cont(dcc::Address addr);
+  void set_data(dcc::Address addr);
+  void set_data_end(dcc::Address addr);
+  void select(dcc::Address addr);
+  void logon_assign(dcc::Address addr);
+  void logon_enable(dcc::Address addr);
 // clang-format on
 
 } // namespace automatic_logon
@@ -133,8 +140,7 @@ void decoder_control_digital_decoder_reset(dcc::Address addr) {
 void speed_and_direction(dcc::Address addr) {
   ImGui::BeginDisabled();
   ImGui::SeparatorText("Sub Instruction");
-  static int i{};
-  ImGui::Combo(UNIQUE_LABEL(), &i, "", 1);
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
   ImGui::EndDisabled();
   ImGui::SeparatorText("Parameters");
   static uint8_t rggggg{ztl::mask<5u, 4u>};
@@ -229,7 +235,7 @@ void feature_expansion_time_and_date(dcc::Address addr) {
                         "%02u");
     date[0uz] = std::clamp<uint16_t>(date[0uz], 1u, 31u);
     date[1uz] = std::clamp<uint16_t>(date[1uz], 1u, 12u);
-    date[2uz] = std::clamp<uint16_t>(date[2uz], 0u, 4095u);
+    date[2uz] = std::clamp<uint16_t>(date[2uz], 0u, smath::pow(2u, 12u) - 1u);
     ImGui::SeparatorText("Done");
     if (ImGui::Button("Push to Packets"))
       state.packets.push_back(
@@ -682,8 +688,7 @@ void advanced_operations_128_speed_step_control(dcc::Address addr) {
 void speed_and_direction(dcc::Address addr) {
   ImGui::BeginDisabled();
   ImGui::SeparatorText("Sub Instruction");
-  static int i{};
-  ImGui::Combo(UNIQUE_LABEL(), &i, "", 1);
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
   ImGui::EndDisabled();
   ImGui::SeparatorText("Parameters");
   static uint8_t rggggg{ztl::mask<5u>};
@@ -1253,6 +1258,10 @@ void accessory(dcc::Address addr) {
 
 // Basic accessory decoder control
 void basic_accessory_decoder_control(dcc::Address addr) {
+  ImGui::BeginDisabled();
+  ImGui::SeparatorText("Sub Instruction");
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
+  ImGui::EndDisabled();
   ImGui::SeparatorText("Parameters");
   static bool r{};
   ImGui::Checkbox("Output", &r);
@@ -1266,40 +1275,26 @@ void basic_accessory_decoder_control(dcc::Address addr) {
 
 // Extended accessory decoder control
 void extended_accessory_decoder_control(dcc::Address addr) {
+  ImGui::BeginDisabled();
+  ImGui::SeparatorText("Sub Instruction");
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
+  ImGui::EndDisabled();
   ImGui::SeparatorText("Parameters");
-  static constexpr std::array types{"", "Aspect", "Switching Time"};
-  static int i{};
-  ImGui::Combo(UNIQUE_LABEL(), &i, data(types), ssize(types));
-  if (!strcmp(types[static_cast<size_t>(i)], "Aspect")) {
-    static uint8_t dddddddd{};
-    ImGui::InputScalar(UNIQUE_LABEL(), ImGuiDataType_U8, &dddddddd);
-    ImGui::SeparatorText("Done");
-    if (ImGui::Button("Push to Packets"))
-      state.packets.push_back(
-        {.addr = addr,
-         .bytes = dcc::make_extended_accessory_packet(addr, dddddddd)});
-  } else if (!strcmp(types[static_cast<size_t>(i)], "Switching Time")) {
-    static bool r{};
-    ImGui::Checkbox("Output", &r);
-    static constexpr uint8_t min{0u};
-    static constexpr uint8_t max{127u};
-    static uint8_t zzzzzzz{};
-    ImGui::SliderScalar("[s]",
-                        ImGuiDataType_U8,
-                        &zzzzzzz,
-                        &min,
-                        &max,
-                        switch_on_time_labels[zzzzzzz]);
-    ImGui::SeparatorText("Done");
-    if (ImGui::Button("Push to Packets"))
-      state.packets.push_back(
-        {.addr = addr,
-         .bytes = dcc::make_extended_accessory_packet(addr, r, zzzzzzz)});
-  }
+  static uint8_t dddddddd{};
+  ImGui::InputScalar("Aspect", ImGuiDataType_U8, &dddddddd);
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_extended_accessory_packet(addr, dddddddd)});
 }
 
 // Basic or extended accessory NOP
 void nop_for_basic_and_extended_accessory(dcc::Address addr) {
+  ImGui::BeginDisabled();
+  ImGui::SeparatorText("Sub Instruction");
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
+  ImGui::EndDisabled();
   ImGui::SeparatorText("Parameters");
   ImGui::Text("None");
   ImGui::SeparatorText("Done");
@@ -1314,7 +1309,216 @@ void nop_for_basic_and_extended_accessory(dcc::Address addr) {
 
 namespace automatic_logon {
 
-void automatic_logon() { ImGui::TextUnformatted("\\todo"); }
+void automatic_logon() {
+  ImGui::SeparatorText("Instruction");
+  static constexpr std::array instrs{"",
+                                     "GET_DATA_START",
+                                     "GET_DATA_CONT",
+                                     "SET_DATA",
+                                     "SET_DATA_END",
+                                     "SELECT",
+                                     "LOGON_ASSIGN",
+                                     "LOGON_ENABLE"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+  if (static constexpr dcc::Address addr{.value = 254u,
+                                         .type = dcc::Address::AutomaticLogon};
+      !strcmp(instrs[static_cast<size_t>(i)], "GET_DATA_START"))
+    get_data_start(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "GET_DATA_CONT"))
+    get_data_cont(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "SET_DATA")) set_data(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "SET_DATA_END"))
+    set_data_end(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "SELECT")) select(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "LOGON_ASSIGN"))
+    logon_assign(addr);
+  else if (!strcmp(instrs[static_cast<size_t>(i)], "LOGON_ENABLE"))
+    logon_enable(addr);
+}
+
+// GET_DATA_START
+void get_data_start(dcc::Address addr) {
+  ImGui::BeginDisabled();
+  ImGui::SeparatorText("Sub Instruction");
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
+  ImGui::EndDisabled();
+  ImGui::SeparatorText("Parameters");
+  ImGui::Text("None");
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_get_data_start_packet()});
+}
+
+// GET_DATA_CONT
+void get_data_cont(dcc::Address addr) {
+  ImGui::BeginDisabled();
+  ImGui::SeparatorText("Sub Instruction");
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
+  ImGui::EndDisabled();
+  ImGui::SeparatorText("Parameters");
+  ImGui::Text("None");
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_get_data_cont_packet()});
+}
+
+// SET_DATA
+void set_data(dcc::Address addr) {
+  ImGui::BeginDisabled();
+  ImGui::SeparatorText("Sub Instruction");
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
+  ImGui::EndDisabled();
+  ImGui::SeparatorText("Parameters");
+  static ztl::inplace_vector<uint8_t, 11uz> bytes{0u};
+  if (ImGui::Button("-") && size(bytes) > 1uz) bytes.pop_back();
+  ImGui::SameLine();
+  if (ImGui::Button("+") && size(bytes) < bytes.max_size()) bytes.push_back(0u);
+  ImGui::SameLine();
+  ImGui::Text("Length");
+  ImGui::InputScalarN("Bytes", ImGuiDataType_U8, data(bytes), size(bytes));
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_set_data_packet({cbegin(bytes), cend(bytes)})});
+}
+
+// SET_DATA_END
+void set_data_end(dcc::Address addr) {
+  ImGui::BeginDisabled();
+  ImGui::SeparatorText("Sub Instruction");
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
+  ImGui::EndDisabled();
+  ImGui::SeparatorText("Parameters");
+  ImGui::Text("None");
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.addr = addr, .bytes = dcc::make_set_data_end_packet()});
+}
+
+// SELECT
+void select(dcc::Address addr) {
+  ImGui::SeparatorText("Sub Instruction");
+  static constexpr std::array instrs{
+    "", "Read ShortInfo", "Read Block", "Write Block"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(instrs), ssize(instrs));
+  if (!strcmp(instrs[static_cast<size_t>(i)], "")) return;
+  ImGui::SeparatorText("Parameters");
+  static uint16_t manufacturer_id{};
+  ImGui::InputScalar("Manufacturer ID", ImGuiDataType_U16, &manufacturer_id);
+  manufacturer_id =
+    std::clamp<uint16_t>(manufacturer_id, 0u, smath::pow(2u, 12u) - 1u);
+  static uint32_t did{};
+  ImGui::InputScalar("Unique ID", ImGuiDataType_U32, &did);
+  if (!strcmp(instrs[static_cast<size_t>(i)], "Read ShortInfo")) {
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back({.addr = addr,
+                               .bytes = dcc::make_select_read_shortinfo_packet(
+                                 manufacturer_id, did)});
+  } else if (!strcmp(instrs[static_cast<size_t>(i)], "Read Block")) {
+    static uint8_t data_space{};
+    ImGui::InputScalar("Data Space", ImGuiDataType_U8, &data_space);
+    data_space = std::clamp<uint8_t>(data_space, 0u, 7u);
+    static uint32_t cv_addr{};
+    static uint8_t cv_count{};
+    if (data_space == 3u) {
+      ImGui::InputScalar("CV Address", ImGuiDataType_U32, &cv_addr);
+      cv_addr = std::clamp<uint32_t>(cv_addr, 0u, smath::pow(2u, 24u) - 1u);
+      ImGui::InputScalar("CV Count", ImGuiDataType_U8, &cv_count);
+    }
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_select_read_block_packet(
+           manufacturer_id, did, data_space, cv_addr, cv_count)});
+  } else if (!strcmp(instrs[static_cast<size_t>(i)], "Write Block")) {
+    static uint8_t data_space{};
+    ImGui::InputScalar("Data Space", ImGuiDataType_U8, &data_space);
+    data_space = std::clamp<uint8_t>(data_space, 0u, 7u);
+    static uint16_t data_space_size{};
+    ImGui::InputScalar("Size", ImGuiDataType_U16, &data_space_size);
+    ImGui::SeparatorText("Done");
+    if (ImGui::Button("Push to Packets"))
+      state.packets.push_back(
+        {.addr = addr,
+         .bytes = dcc::make_select_write_block_packet(
+           manufacturer_id, did, data_space, data_space_size)});
+  }
+}
+
+// LOGON_ASSIGN
+void logon_assign(dcc::Address addr) {
+  ImGui::BeginDisabled();
+  ImGui::SeparatorText("Sub Instruction");
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
+  ImGui::EndDisabled();
+  ImGui::SeparatorText("Parameters");
+  static uint16_t manufacturer_id{};
+  ImGui::InputScalar("Manufacturer ID", ImGuiDataType_U16, &manufacturer_id);
+  manufacturer_id =
+    std::clamp<uint16_t>(manufacturer_id, 0u, smath::pow(2u, 12u) - 1u);
+  static uint32_t did{};
+  ImGui::InputScalar("Unique ID", ImGuiDataType_U32, &did);
+  static constexpr std::array addr_type{
+    "Extended Loco", "Extended Accessory", "Basic Accessory", "Basic Loco"};
+  static int i{};
+  ImGui::Combo(UNIQUE_LABEL(), &i, data(addr_type), ssize(addr_type));
+  static dcc::Address assign_addr{};
+  ImGui::InputScalar("Address", ImGuiDataType_U16, &assign_addr.value);
+  if (!strcmp(addr_type[static_cast<size_t>(i)], "Extended Loco")) {
+    assign_addr.value = std::clamp<uint16_t>(assign_addr.value, 1u, 10239u);
+    assign_addr.type = dcc::Address::ExtendedLoco;
+  } else if (!strcmp(addr_type[static_cast<size_t>(i)], "Extended Accessory")) {
+    assign_addr.value = std::clamp<uint16_t>(assign_addr.value, 0u, 2047u);
+    assign_addr.type = dcc::Address::ExtendedAccessory;
+  } else if (!strcmp(addr_type[static_cast<size_t>(i)], "Basic Accessory")) {
+    assign_addr.value = std::clamp<uint16_t>(assign_addr.value, 0u, 2047u);
+    assign_addr.type = dcc::Address::BasicAccessory;
+  } else if (!strcmp(addr_type[static_cast<size_t>(i)], "Basic Loco")) {
+    assign_addr.value = std::clamp<uint16_t>(assign_addr.value, 1u, 127u);
+    assign_addr.type = dcc::Address::BasicLoco;
+  }
+  static bool permanent{};
+  ImGui::Checkbox("Permanent", &permanent);
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back(
+      {.addr = addr,
+       .bytes = dcc::make_logon_assign_packet(
+         manufacturer_id,
+         did,
+         assign_addr,
+         permanent ? dcc::LogonBindingBehavior::Permanent
+                   : dcc::LogonBindingBehavior::Temporary)});
+}
+
+// LOGON_ENABLE
+void logon_enable(dcc::Address addr) {
+  ImGui::BeginDisabled();
+  ImGui::SeparatorText("Sub Instruction");
+  ImGui::Combo(UNIQUE_LABEL(), INDEX(), "", 1);
+  ImGui::EndDisabled();
+  ImGui::SeparatorText("Parameters");
+  static constexpr std::array logon_group{"ALL", "LOCO", "ACC", "NOW"};
+  static int gg{};
+  ImGui::Combo(UNIQUE_LABEL(), &gg, data(logon_group), ssize(logon_group));
+  static uint16_t cid{};
+  ImGui::InputScalar("Central ID", ImGuiDataType_U16, &cid);
+  static uint8_t sid{};
+  ImGui::InputScalar("Session ID", ImGuiDataType_U8, &sid);
+  ImGui::SeparatorText("Done");
+  if (ImGui::Button("Push to Packets"))
+    state.packets.push_back({.addr = addr,
+                             .bytes = dcc::make_logon_enable_packet(
+                               static_cast<dcc::LogonGroup>(gg), cid, sid)});
+}
 
 } // namespace automatic_logon
 
@@ -1399,7 +1603,7 @@ void packet_builder() {
                                       "Basic Accessory",
                                       "Extended Accessory",
                                       "Extended Loco",
-                                      // "Automatic Logon",
+                                      "Automatic Logon",
                                       "Idle",
                                       "Service",
                                       "User Defined"};

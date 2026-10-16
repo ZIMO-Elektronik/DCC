@@ -27,7 +27,7 @@ std::string get_query_param(std::string const& url, std::string const& param) {
   return end_pos == std::string::npos
            ? url.substr(start_pos + size(pattern))
            : url.substr(start_pos + size(pattern),
-                        end_pos - size(pattern) - 1uz);
+                        end_pos - start_pos - size(pattern));
 }
 
 // Split string to vector of strings
@@ -72,11 +72,16 @@ State::Packet str2packet(std::string const& str) {
 State::Datagram str2datagram(std::string const& str) {
   dcc::bidi::Datagram<> bytes;
   size_t count{};
-  for (auto i{6uz}; i < size(str) - 1uz; i += 2uz) {
+  for (auto i{0uz}; i < size(bytes) * 2uz; i += 2uz) {
     std::string const hex{str[i], str[i + 1uz]};
     bytes[count++] = static_cast<uint8_t>(std::stoi(hex, nullptr, 16));
   }
-  return {.addr = str2addr(str), .bytes = bytes};
+  dcc::Packet packet{};
+  for (auto i{size(bytes) * 2uz + 1uz}; i < size(str) - 1uz; i += 2uz) {
+    std::string const hex{str[i], str[i + 1uz]};
+    packet.push_back(static_cast<uint8_t>(std::stoi(hex, nullptr, 16)));
+  }
+  return {.packet = packet, .bytes = bytes};
 }
 
 // Convert address to string
@@ -140,8 +145,9 @@ std::string to_query() {
     retval += "?datagrams=";
     for (auto datagram : state.datagrams) {
       if (!datagram.show) continue;
-      retval += addr2str(datagram.addr);
       for (auto b : datagram.bytes) retval += std::format("{:02X}", b);
+      retval += '-';
+      for (auto b : datagram.packet) retval += std::format("{:02X}", b);
       retval += '_';
     }
     retval.pop_back();

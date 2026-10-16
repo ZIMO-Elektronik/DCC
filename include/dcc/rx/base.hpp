@@ -952,7 +952,11 @@ private:
 
     if (self._backoffs.logon) return true;
     self._deques.logon.push_back(bidi::make_app_decoder_unique_datagram(
-      DCC_MANUFACTURER_ID, self._ids.decoder));
+      DCC_MANUFACTURER_ID,
+      static_cast<uint32_t>(self._ids.decoder[0uz]) << 24u |
+        static_cast<uint32_t>(self._ids.decoder[1uz]) << 16u |
+        static_cast<uint32_t>(self._ids.decoder[2uz]) << 8u |
+        static_cast<uint32_t>(self._ids.decoder[3uz]) << 0u));
 
     // Return false after 3 app:decoder_unique datagrams. This keeps the packet
     // in the deque to be picked up and executed in thread mode.
@@ -1271,7 +1275,9 @@ private:
       16uz + 16uz + 92uz};       // Vehicle-specific information
 
     uint8_t const data_space{bytes[7uz]};
-    assert(data_space < 8u);
+    assert(data_space < 8u &&
+           (data_space != 3u ||
+            size(bytes) == 12uz + sizeof(_checksum) + sizeof(_checksum)));
     uint32_t const cv_addr{data_space == 3u
                              ? static_cast<uint32_t>(bytes[8uz]) << 16u |
                                  static_cast<uint32_t>(bytes[9uz]) << 8u |
@@ -1319,7 +1325,8 @@ private:
 
       // Datagram done
       if (datagram_count == size(datagram)) {
-        self._deques.logon.push_back(bidi::make_get_data_datagram(datagram));
+        self._deques.logon.push_back(
+          bidi::make_app_get_data_datagram(datagram));
         datagram_count = 0uz;
         datagram = {};
       }
@@ -1338,7 +1345,7 @@ private:
 
     // Residual
     if (datagram_count)
-      self._deques.logon.push_back(bidi::make_get_data_datagram(datagram));
+      self._deques.logon.push_back(bidi::make_app_get_data_datagram(datagram));
   }
 
   /// Register mode

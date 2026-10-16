@@ -368,24 +368,121 @@ void add_service_packets() {
        random_interval<uint8_t>(0u, 7u))});
 }
 
+// Add automatic logon packets
+void add_automatic_logon_packets() {
+  // GET_DATA_START
+  dcc::Address const addr{.value = 254u, .type = dcc::Address::AutomaticLogon};
+  state.packets.push_back(
+    {.addr = addr, .bytes = make_get_data_start_packet()});
+
+  // GET_DATA_CONT
+  state.packets.push_back({.addr = addr, .bytes = make_get_data_cont_packet()});
+
+  // SET_DATA
+  std::vector<uint8_t> bytes(random_interval<size_t>(1uz, 11uz));
+  std::ranges::for_each(bytes,
+                        [](uint8_t& b) { b = random_interval<uint8_t>(); });
+  state.packets.push_back({.addr = addr, .bytes = make_set_data_packet(bytes)});
+
+  // SET_DATA_END
+  state.packets.push_back({.addr = addr, .bytes = make_set_data_end_packet()});
+
+  // SELECT
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_select_read_shortinfo_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>())});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_select_read_block_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       1u)});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_select_read_block_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       3u,
+       random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u),
+       random_interval<uint8_t>(1u, 31u))});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_select_write_block_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       1u,
+       random_interval<uint16_t>())});
+
+  // LOGON_ASSIGN
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_assign_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       random_extended_loco_address(),
+       static_cast<LogonBindingBehavior>(random_interval(
+         std::to_underlying(LogonBindingBehavior::Permanent),
+         std::to_underlying(LogonBindingBehavior::Temporary))))});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_assign_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       random_extended_accessory_address(),
+       static_cast<LogonBindingBehavior>(random_interval(
+         std::to_underlying(LogonBindingBehavior::Permanent),
+         std::to_underlying(LogonBindingBehavior::Temporary))))});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_assign_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       random_basic_accessory_address(),
+       static_cast<LogonBindingBehavior>(random_interval(
+         std::to_underlying(LogonBindingBehavior::Permanent),
+         std::to_underlying(LogonBindingBehavior::Temporary))))});
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_assign_packet(
+       random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+       random_interval<uint32_t>(),
+       random_basic_loco_address(),
+       static_cast<LogonBindingBehavior>(random_interval(
+         std::to_underlying(LogonBindingBehavior::Permanent),
+         std::to_underlying(LogonBindingBehavior::Temporary))))});
+
+  // LOGON_ENABLE
+  state.packets.push_back(
+    {.addr = addr,
+     .bytes = make_logon_enable_packet(
+       static_cast<LogonGroup>(random_interval<uint8_t>(0u, 3u)),
+       random_interval<uint16_t>(),
+       random_interval<uint8_t>())});
+}
+
 // Add ACK/NAK datagrams
 void add_ack_nak_datagrams() {
   // ACK
   {
-    State::Datagram datagram{.addr = random_loco_address()};
-    datagram.bytes[channel1_size] = dcc::bidi::acks[0uz];
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
+    datagram.bytes[channel1_size] = acks[0uz];
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_loco_address()};
-    datagram.bytes[channel1_size] = dcc::bidi::acks[1uz];
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
+    datagram.bytes[channel1_size] = acks[1uz];
     state.datagrams.push_back(datagram);
   }
 
   // NAK
   {
-    State::Datagram datagram{.addr = random_loco_address()};
-    datagram.bytes[channel1_size] = dcc::bidi::nak;
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
+    datagram.bytes[channel1_size] = nak;
     state.datagrams.push_back(datagram);
   }
 }
@@ -394,71 +491,97 @@ void add_ack_nak_datagrams() {
 void add_loco_datagrams() {
   // app:pom
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(make_app_pom_datagram(random_interval<uint8_t>()),
-                      begin(datagram.bytes));
+                      begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
   }
 
   // app:adr_high
   {
-    State::Datagram datagram{.addr = random_basic_loco_address()};
-    std::ranges::copy(make_app_adr_high_datagram(datagram.addr, 0u),
+    auto const addr{random_basic_loco_address()};
+    State::Datagram datagram{.packet =
+                               make_speed_and_direction_packet(addr, 0u)};
+    std::ranges::copy(make_app_adr_high_datagram(addr, 0u),
                       begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_basic_loco_address()};
-    std::ranges::copy(make_app_adr_high_datagram(datagram.addr, 1u),
+    auto const addr{random_basic_loco_address()};
+    State::Datagram datagram{.packet =
+                               make_speed_and_direction_packet(addr, 0u)};
+    std::ranges::copy(make_app_adr_high_datagram(addr, 1u),
                       begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_extended_loco_address()};
-    std::ranges::copy(make_app_adr_high_datagram(datagram.addr, 0u),
+    auto const addr{random_extended_loco_address()};
+    State::Datagram datagram{.packet =
+                               make_speed_and_direction_packet(addr, 0u)};
+    std::ranges::copy(make_app_adr_high_datagram(addr, 0u),
                       begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
 
   // app:adr_low
   {
-    State::Datagram datagram{.addr = random_basic_loco_address()};
-    std::ranges::copy(make_app_adr_low_datagram(datagram.addr, 0u),
+    auto const addr{random_basic_loco_address()};
+    State::Datagram datagram{.packet =
+                               make_speed_and_direction_packet(addr, 0u)};
+    std::ranges::copy(make_app_adr_low_datagram(addr, 0u),
                       begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_basic_loco_address()};
-    std::ranges::copy(make_app_adr_low_datagram(datagram.addr, 1u),
+    auto const addr{random_basic_loco_address()};
+    State::Datagram datagram{.packet =
+                               make_speed_and_direction_packet(addr, 0u)};
+    std::ranges::copy(make_app_adr_low_datagram(addr, 1u),
                       begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_extended_loco_address()};
-    std::ranges::copy(make_app_adr_low_datagram(datagram.addr, 0u),
+    auto const addr{random_extended_loco_address()};
+    State::Datagram datagram{.packet =
+                               make_speed_and_direction_packet(addr, 0u)};
+    std::ranges::copy(make_app_adr_low_datagram(addr, 0u),
                       begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
 
   // app:info1
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(make_app_info1_datagram({static_cast<app::Info1::Flags>(
                         random_interval<uint8_t>())}),
                       begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
 
+  // app:adrs
+  {
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
+    std::ranges::copy(
+      make_app_adr_short_datagram(random_interval<uint8_t>(1u, 255u)),
+      begin(datagram.bytes));
+    state.datagrams.push_back(datagram);
+  }
+
   // app:ext
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(
       make_app_ext_datagram({.t = app::Ext::AddressOnly, .p = 2000u}),
       begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(
       make_app_ext_datagram({.t = app::Ext::FillingStation, .p = 100u}),
       begin(datagram.bytes) + channel1_size);
@@ -467,7 +590,8 @@ void add_loco_datagrams() {
 
   // app:adr_short
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(make_app_adr_short_datagram(random_interval<uint8_t>()),
                       begin(datagram.bytes));
     state.datagrams.push_back(datagram);
@@ -476,14 +600,16 @@ void add_loco_datagrams() {
   // app:dyn
   // Speed2
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(make_app_dyn_datagram(random_interval<uint8_t>(), 1u),
                       begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
   }
   // QoS
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(
       make_app_dyn_datagram(random_interval<uint8_t>(0u, 100u), 7u),
       begin(datagram.bytes) + channel1_size);
@@ -491,13 +617,15 @@ void add_loco_datagrams() {
   }
   // Position (app:ext)
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(make_app_dyn_datagram(random_interval<uint8_t>(), 20u),
                       begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     auto const first{make_app_dyn_datagram(random_interval<uint8_t>(), 20u)};
     std::ranges::copy(first, begin(datagram.bytes) + channel1_size);
     auto const second{
@@ -508,21 +636,24 @@ void add_loco_datagrams() {
   }
   // Status and alarm messages
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(
       make_app_dyn_datagram(random_interval<uint8_t>(128u, 130u), 21u),
       begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(make_app_dyn_datagram(0b1100'0110u, 21u),
                       begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
   }
   // Temperature
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(make_app_dyn_datagram(random_interval<uint8_t>(), 26u),
                       begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
@@ -530,7 +661,8 @@ void add_loco_datagrams() {
 
   // app:xpom
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::array<uint8_t, 4uz> bytes{};
     std::ranges::for_each(
       bytes, [](uint8_t& byte) { byte = random_interval<uint8_t>(); });
@@ -539,7 +671,8 @@ void add_loco_datagrams() {
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::array<uint8_t, 4uz> bytes{};
     std::ranges::for_each(
       bytes, [](uint8_t& byte) { byte = random_interval<uint8_t>(); });
@@ -548,7 +681,8 @@ void add_loco_datagrams() {
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::array<uint8_t, 4uz> bytes{};
     std::ranges::for_each(
       bytes, [](uint8_t& byte) { byte = random_interval<uint8_t>(); });
@@ -557,7 +691,8 @@ void add_loco_datagrams() {
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::array<uint8_t, 4uz> bytes{};
     std::ranges::for_each(
       bytes, [](uint8_t& byte) { byte = random_interval<uint8_t>(); });
@@ -568,7 +703,8 @@ void add_loco_datagrams() {
 
   // app:cv_auto
   {
-    State::Datagram datagram{.addr = random_loco_address()};
+    State::Datagram datagram{
+      .packet = make_speed_and_direction_packet(random_loco_address(), 0u)};
     std::ranges::copy(make_app_cv_auto_datagram(
                         random_interval<uint32_t>(0u, smath::pow(2u, 24u) - 1u),
                         random_interval<uint8_t>()),
@@ -578,7 +714,7 @@ void add_loco_datagrams() {
 
   // app:search
   {
-    State::Datagram datagram{.addr = {.type = Address::Broadcast}};
+    State::Datagram datagram{.packet = make_system_time_packet(0u)};
     std::ranges::copy(
       make_app_search_datagram(
         random_basic_loco_address(), 0u, random_interval<uint8_t>(0u, 30u)),
@@ -586,7 +722,7 @@ void add_loco_datagrams() {
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = {.type = Address::Broadcast}};
+    State::Datagram datagram{.packet = make_system_time_packet(0u)};
     std::ranges::copy(
       make_app_search_datagram(
         random_basic_loco_address(), 1u, random_interval<uint8_t>(0u, 30u)),
@@ -594,7 +730,7 @@ void add_loco_datagrams() {
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = {.type = Address::Broadcast}};
+    State::Datagram datagram{.packet = make_system_time_packet(0u)};
     std::ranges::copy(
       make_app_search_datagram(
         random_extended_loco_address(), 0u, random_interval<uint8_t>(0u, 30u)),
@@ -607,21 +743,24 @@ void add_loco_datagrams() {
 void add_accessory_datagrams() {
   // app:srq
   {
-    State::Datagram datagram{.addr = random_basic_accessory_address()};
-    std::ranges::copy(make_app_srq_datagram(datagram.addr),
-                      begin(datagram.bytes));
+    auto const addr{random_basic_accessory_address()};
+    State::Datagram datagram{.packet =
+                               make_basic_accessory_packet(addr, true, false)};
+    std::ranges::copy(make_app_srq_datagram(addr), begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_extended_accessory_address()};
-    std::ranges::copy(make_app_srq_datagram(datagram.addr),
-                      begin(datagram.bytes));
+    auto const addr{random_extended_accessory_address()};
+    State::Datagram datagram{.packet =
+                               make_extended_accessory_packet(addr, 0u)};
+    std::ranges::copy(make_app_srq_datagram(addr), begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
 
   // app:stat4
   {
-    State::Datagram datagram{.addr = random_basic_accessory_address()};
+    State::Datagram datagram{.packet = make_basic_accessory_packet(
+                               random_basic_accessory_address(), true, false)};
     std::ranges::copy(make_app_stat4_datagram(0b10011010u),
                       begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
@@ -629,14 +768,16 @@ void add_accessory_datagrams() {
 
   // app:stat1
   {
-    State::Datagram datagram{.addr = random_basic_accessory_address()};
+    State::Datagram datagram{.packet = make_basic_accessory_packet(
+                               random_basic_accessory_address(), true, false)};
     std::ranges::copy(
       make_app_stat1_datagram(random_interval<uint8_t>(0u, 0b0111'1111u)),
       begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_extended_accessory_address()};
+    State::Datagram datagram{.packet = make_extended_accessory_packet(
+                               random_extended_accessory_address(), 0u)};
     std::ranges::copy(
       make_app_stat1_datagram(random_interval<uint8_t>(0u, 0b0111'1111u)),
       begin(datagram.bytes) + channel1_size);
@@ -646,7 +787,8 @@ void add_accessory_datagrams() {
     auto const bit6{static_cast<bool>(random_interval(0, 1))};
     auto const bit5{static_cast<bool>(random_interval(0, 1))};
     auto const aspect{random_interval<uint8_t>(0b0011'1111u, 0b0111'1111u)};
-    State::Datagram datagram{.addr = random_extended_accessory_address()};
+    State::Datagram datagram{.packet = make_extended_accessory_packet(
+                               random_extended_accessory_address(), 0u)};
     auto const first{make_app_stat1_datagram(static_cast<uint8_t>(
       static_cast<uint32_t>(bit6) << 6u | static_cast<uint32_t>(bit5) << 5u |
       (aspect & 0b1'1111u)))};
@@ -659,7 +801,8 @@ void add_accessory_datagrams() {
 
   // app:time
   {
-    State::Datagram datagram{.addr = random_basic_accessory_address()};
+    State::Datagram datagram{.packet = make_basic_accessory_packet(
+                               random_basic_accessory_address(), true, false)};
     std::ranges::copy(
       make_app_time_datagram(static_cast<bool>(random_interval(0, 1)),
                              random_interval<uint8_t>(0u, 127u)),
@@ -669,13 +812,15 @@ void add_accessory_datagrams() {
 
   // app:error
   {
-    State::Datagram datagram{.addr = random_basic_accessory_address()};
+    State::Datagram datagram{.packet = make_basic_accessory_packet(
+                               random_basic_accessory_address(), true, false)};
     std::ranges::copy(make_app_error_datagram(app::Error::InvalidCommand),
                       begin(datagram.bytes) + channel1_size);
     state.datagrams.push_back(datagram);
   }
   {
-    State::Datagram datagram{.addr = random_basic_accessory_address()};
+    State::Datagram datagram{.packet = make_basic_accessory_packet(
+                               random_basic_accessory_address(), true, false)};
     std::ranges::copy(
       make_app_error_datagram(static_cast<app::Error::Code>(
         app::Error::AdditionalErrors | app::Error::ManualOperation)),
@@ -686,10 +831,47 @@ void add_accessory_datagrams() {
   // app:dyn
   // Status and alarm messages
   {
-    State::Datagram datagram{.addr = random_basic_accessory_address()};
+    State::Datagram datagram{.packet = make_basic_accessory_packet(
+                               random_basic_accessory_address(), true, false)};
     std::ranges::copy(
       make_app_dyn_datagram(random_interval<uint8_t>(128u, 136u), 21u),
       begin(datagram.bytes) + channel1_size);
+    state.datagrams.push_back(datagram);
+  }
+}
+
+// Add automatic logon datagrams
+void add_automatic_logon_datagrams() {
+  // app:decoder_state
+  {
+    State::Datagram datagram{
+      .packet = make_logon_assign_packet(
+        random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+        random_interval<uint32_t>(),
+        random_extended_loco_address(),
+        static_cast<LogonBindingBehavior>(random_interval(
+          std::to_underlying(LogonBindingBehavior::Permanent),
+          std::to_underlying(LogonBindingBehavior::Temporary))))};
+    std::ranges::copy(make_app_decoder_state_datagram(
+                        random_interval<uint8_t>(),
+                        random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+                        random_interval<uint8_t>(),
+                        random_interval<uint8_t>()),
+                      begin(datagram.bytes));
+    state.datagrams.push_back(datagram);
+  }
+
+  // app:decoder_unique
+  {
+    State::Datagram datagram{
+      .packet = make_logon_enable_packet(
+        static_cast<LogonGroup>(random_interval<uint8_t>(0u, 3u)),
+        random_interval<uint16_t>(),
+        random_interval<uint8_t>())};
+    std::ranges::copy(make_app_decoder_unique_datagram(
+                        random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
+                        random_interval<uint32_t>()),
+                      begin(datagram.bytes));
     state.datagrams.push_back(datagram);
   }
 }
@@ -703,7 +885,9 @@ void demo() {
   add_loco_packets();
   add_accessory_packets();
   add_service_packets();
+  add_automatic_logon_packets();
   add_ack_nak_datagrams();
   add_loco_datagrams();
   add_accessory_datagrams();
+  add_automatic_logon_datagrams();
 }

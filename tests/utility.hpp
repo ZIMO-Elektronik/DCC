@@ -35,8 +35,8 @@ constexpr T random_interval(T min = std::numeric_limits<T>::min(),
 }
 
 // Make vector of get_data datagrams from CVs and data space index
-constexpr auto make_get_data_datagrams(std::span<uint8_t const> cvs,
-                                       uint8_t data_space) {
+constexpr auto make_app_get_data_datagrams(std::span<uint8_t const> cvs,
+                                           uint8_t data_space) {
   std::vector<uint8_t> bytes;
   uint8_t crc;
 
@@ -69,7 +69,7 @@ constexpr auto make_get_data_datagrams(std::span<uint8_t const> cvs,
     dcc::bidi::Datagram<dcc::bidi::datagram_size<dcc::bidi::Bits::_48>>>
     retval;
   for (auto chunk : bytes | std::views::chunk(6))
-    retval.push_back(dcc::bidi::make_get_data_datagram(
+    retval.push_back(dcc::bidi::make_app_get_data_datagram(
       std::span<uint8_t, 6uz>{cbegin(chunk), cend(chunk)}));
 
   return retval;
