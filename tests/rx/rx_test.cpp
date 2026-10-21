@@ -3,6 +3,8 @@
 #include <cassert>
 #include "../utility.hpp"
 
+using namespace std::chrono_literals;
+
 RxTest::RxTest() {
   _last_packet = {}; // Clear static packet
 
@@ -46,7 +48,7 @@ RxTest::RxTest() {
   }
 }
 
-RxTest::~RxTest() {}
+RxTest::~RxTest() { reset_system_clock_offset(); }
 
 void RxTest::SetUp() {
   // Extended address
@@ -66,6 +68,9 @@ void RxTest::SetUp() {
       _mock.init();
     });
   }
+
+  // By default advance system clock to skip DCC-A window
+  add_system_clock_offset(1s);
 }
 
 RxTest* RxTest::Receive(dcc::Packet const& packet, dcc::tx::Config cfg) {

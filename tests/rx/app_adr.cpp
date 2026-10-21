@@ -2,14 +2,14 @@
 
 using namespace dcc::bidi;
 
-TEST_F(RxTest, app_adr_alternate_primary_address) {
+TEST_F(RxTest, app_adr_alternate_basic_primary_address) {
   // Make datagram
   auto adr_high{make_app_adr_high_datagram(_addrs.primary)};
   auto adr_low{make_app_adr_low_datagram(_addrs.primary)};
 
-  // Send whatever packet to get last received address to match primary
+  // Send whatever packet to get last received address to match basic loco
   auto packet{make_f0_f4_packet(_addrs.primary, 10u)};
-  Receive(packet);
+  ReceiveAndExecuteTwice(packet);
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
@@ -21,16 +21,16 @@ TEST_F(RxTest, app_adr_alternate_primary_address) {
   }
 }
 
-TEST_F(RxTest, app_adr_alternate_logon_address) {
+TEST_F(RxTest, app_adr_alternate_extended_logon_address) {
   Logon();
 
   // Make datagram
   auto adr_high{make_app_adr_high_datagram(_addrs.logon)};
   auto adr_low{make_app_adr_low_datagram(_addrs.logon)};
 
-  // Send whatever packet to get last received address to match primary
+  // Send whatever packet to get last received address to match extended loco
   auto packet{make_f0_f4_packet(_addrs.primary, 10u)};
-  Receive(packet);
+  ReceiveAndExecuteTwice(packet);
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
@@ -46,7 +46,7 @@ TEST_F(RxTest, app_adr_disabled_with_cv28_0) {
   _cvs[28uz - 1uz] = static_cast<uint8_t>(_cvs[28uz - 1uz] & 0b1111'11110u);
   SetUp();
 
-  // Send whatever packet to get last received address to match primary
+  // Send whatever packet to get last received address to match basic loco
   Receive(make_f0_f4_packet(_addrs.primary, 10u));
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
@@ -54,7 +54,7 @@ TEST_F(RxTest, app_adr_disabled_with_cv28_0) {
   _mock.biDiChannel1();
 }
 
-TEST_F(RxTest, app_adr_alternate_consist_address) {
+TEST_F(RxTest, app_adr_alternate_basic_consist_address) {
   _cvs[19uz - 1uz] = static_cast<uint8_t>(_addrs.consist);
   SetUp();
 
@@ -62,9 +62,9 @@ TEST_F(RxTest, app_adr_alternate_consist_address) {
   auto adr_high{make_app_adr_high_datagram(_addrs.consist, _cvs[19uz - 1uz])};
   auto adr_low{make_app_adr_low_datagram(_addrs.consist, _cvs[19uz - 1uz])};
 
-  // Send whatever packet to get last received address to match primary
+  // Send whatever packet to get last received address to match basic loco
   auto packet{make_f0_f4_packet(_addrs.consist, 10u)};
-  Receive(packet);
+  ReceiveAndExecuteTwice(packet);
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
@@ -76,7 +76,7 @@ TEST_F(RxTest, app_adr_alternate_consist_address) {
   }
 }
 
-TEST_F(RxTest, app_adr_alternate_long_consist_address) {
+TEST_F(RxTest, app_adr_alternate_extended_consist_address) {
   _cvs[19uz - 1uz] = 83u;
   _cvs[20uz - 1uz] = 12u;
   _addrs.consist = dcc::Address{.value = static_cast<dcc::Address::value_type>(
@@ -89,9 +89,9 @@ TEST_F(RxTest, app_adr_alternate_long_consist_address) {
   auto adr_high{make_app_adr_high_datagram(_addrs.consist, _cvs[19uz - 1uz])};
   auto adr_low{make_app_adr_low_datagram(_addrs.consist, _cvs[19uz - 1uz])};
 
-  // Send whatever packet to get last received address to match primary
+  // Send whatever packet to get last received address to match extended loco
   auto packet{make_f0_f4_packet(_addrs.consist, 10u)};
-  Receive(packet);
+  ReceiveAndExecuteTwice(packet);
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {
@@ -108,9 +108,9 @@ TEST_F(RxTest, app_adr_broadcast) {
   auto adr_high{make_app_adr_high_datagram(_addrs.primary)};
   auto adr_low{make_app_adr_low_datagram(_addrs.primary)};
 
-  // Broadcast
+  // Send whatever packet to get last received address to match broadcast
   auto packet{dcc::make_speed_and_direction_packet(0u, 0u)};
-  Receive(packet);
+  ReceiveAndExecuteTwice(packet);
 
   InSequence s;
   for (auto i{0uz}; i < 10uz; ++i) {

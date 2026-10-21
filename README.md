@@ -107,7 +107,17 @@ The DCC protocol is defined by various standards published by the [National Mode
     - CV access
       - Long form :ballot_box_with_check:
       - Short form :ballot_box_with_check:
-      - XPOM :negative_squared_cross_mark:
+      - XPOM :ballot_box_with_check:
+    - DCC-A
+      - LOGON_ENABLE :ballot_box_with_check:
+      - SELECT
+        - Read ShortInfo :ballot_box_with_check:
+        - Read Block :ballot_box_with_check:
+        - Write Block :negative_squared_cross_mark:
+        - Set decoder internal status :negative_squared_cross_mark:
+      - GET_DATA_* :ballot_box_with_check:
+      - SET_DATA_* :negative_squared_cross_mark:
+      - LOGON_ASSIGN :ballot_box_with_check:
   - Accessory decoders
     - Currently not supported :negative_squared_cross_mark:
   - Idle
@@ -276,9 +286,6 @@ private:
 
   // Transmit BiDi
   void transmitBiDi(std::span<uint8_t const> bytes);
-
-  // Error
-  void error();
 
   // Read CV
   uint8_t readCv(uint32_t cv_addr, uint8_t byte = 0u);

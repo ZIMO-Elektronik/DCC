@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <boost/preprocessor.hpp>
+#include <chrono>
 #include <concepts>
 #include <dcc/dcc.hpp>
 #include <random>
@@ -73,4 +74,13 @@ constexpr auto make_app_get_data_datagrams(std::span<uint8_t const> cvs,
       std::span<uint8_t, 6uz>{cbegin(chunk), cend(chunk)}));
 
   return retval;
+}
+
+void add_system_clock_offset(std::chrono::nanoseconds offset);
+void reset_system_clock_offset();
+
+template<typename Rep, typename Period>
+void add_system_clock_offset(std::chrono::duration<Rep, Period> offset) {
+  add_system_clock_offset(
+    std::chrono::duration_cast<std::chrono::nanoseconds>(offset));
 }
