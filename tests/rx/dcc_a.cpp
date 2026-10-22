@@ -190,11 +190,71 @@ TEST_F(RxTest, permanent_assign_to_extended_address) {
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 }
 
-TEST_F(RxTest, transmitting_decoder_unique_more_than_3_times_triggers_error) {
-  EXPECT_CALL(_mock, error());
-  for (auto i{0uz}; i <= 3uz; ++i)
-    ReceiveAndExecute(make_logon_enable_packet(
-      dcc::LogonGroup::Now, _cid + 1u, random_interval<uint8_t>(0u, 255u)));
+TEST_F(
+  RxTest,
+  transmitting_decoder_unique_more_than_3_times_toggles_F0_to_indicate_error) {
+  auto packet{make_logon_enable_packet(
+    dcc::LogonGroup::Now, _cid + 1u, random_interval<uint8_t>(0u, 255u))};
+  for (auto i{3uz}; i-- > 0uz;) ReceiveAndExecute(packet);
+
+  InSequence s;
+  EXPECT_CALL(_mock, function(_addrs.primary.value, ztl::mask<0u>, 1u));
+  EXPECT_CALL(_mock, function(_addrs.primary.value, ztl::mask<0u>, 0u));
+  EXPECT_CALL(_mock, function(_addrs.primary.value, ztl::mask<0u>, 1u));
+  EXPECT_CALL(_mock, function(_addrs.primary.value, ztl::mask<0u>, 0u));
+  EXPECT_CALL(_mock, function(_addrs.primary.value, ztl::mask<0u>, 0u));
+  EXPECT_CALL(_mock, function(_addrs.primary.value, ztl::mask<0u>, 0u));
+  EXPECT_CALL(_mock, function(_addrs.primary.value, ztl::mask<0u>, 0u));
+  EXPECT_CALL(_mock, function(_addrs.primary.value, ztl::mask<0u>, 0u));
+  for (auto i{8uz}; i-- > 0uz;) ReceiveAndExecute(packet);
+}
+
+// LOGON_ASSIGN requires LOGON_ENABLE
+TEST_F(RxTest, no_logon_without_enable) {
+  InSequence s;
+  EXPECT_CALL(
+    _mock,
+    transmitBiDi(DatagramMatcher(std::array{dcc::bidi::nak, dcc::bidi::nak})));
+  EXPECT_CALL(_mock,
+              transmitBiDi(DatagramMatcher(std::array{dcc::bidi::nak,
+                                                      dcc::bidi::nak,
+                                                      dcc::bidi::nak,
+                                                      dcc::bidi::nak,
+                                                      dcc::bidi::nak,
+                                                      dcc::bidi::nak})));
+  Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
+  BiDi();
+
+  // Execute commands to address 1000
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false)).Times(0);
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _)).Times(0);
+  ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
+}
+
+// Wait for DCC-A window to elapse before executing packets to primary address
+TEST_F(RxTest, dont_execute_packets_to_primary_address_within_dcca_window) {
+  // Undo offset from SetUp()
+  reset_system_clock_offset();
+
+  EXPECT_CALL(_mock, function(_addrs.primary.value, _, _)).Times(0);
+  ReceiveAndExecute(make_f0_f4_packet(
+    _addrs.primary, random_interval<uint8_t>(0b0'0000u, 0b1'1111u)));
+}
+
+// Wait for DCC-A window to elapse before transmitting datagrams
+TEST_F(RxTest, dont_transmit_datagrams_on_primary_address_within_dcca_window) {
+  // Undo offset from SetUp()
+  reset_system_clock_offset();
+
+  ReceiveAndExecute(
+    make_f0_f4_packet(_addrs.primary,
+                      random_interval<uint8_t>(0b0'0000u, 0b1'1111u)))
+    ->EnterCutout();
+
+  for (auto i{0uz}; i < 8uz; ++i) {
+    BiDi();
+    EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
+  }
 }
 
 TEST_F(RxTest, read_data_space_0) { ReadDataSpace(0u); }

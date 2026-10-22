@@ -8,9 +8,8 @@ on:
 
 jobs:
   arm-none-eabi-gcc:
-    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/arm-none-eabi-gcc.yml@v0.3.3
+    uses: ZIMO-Elektronik/.github-workflows/.github/workflows/arm-none-eabi-gcc.yml@v0.4.0
     with:
-      release: 15.3.Rel1
       arch: -mcpu=cortex-m7
       target: DCCStm32Decoder DCCStm32CommandStation
 
