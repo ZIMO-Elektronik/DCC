@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.50.1
+- Bugfix ESP-IDF for Linux requires `driver` component
+
 ## 0.50.0
 - Add [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) `GET_DATA_*` support ([#18](https://github.com/ZIMO-Elektronik/DCC/issues/18))
 - Add POM ID0 datagrams from [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) 4.3.2 ([#20](https://github.com/ZIMO-Elektronik/DCC/issues/20))
