@@ -27,13 +27,13 @@
 #define STLINK_TX_GPIO_Port GPIOD
 
 // Track pins
-#define TRACK_N_PIN LL_GPIO_PIN_5
 #define TRACK_P_PIN LL_GPIO_PIN_6
+#define TRACK_N_PIN LL_GPIO_PIN_5
 #define TRACK_GPIO_Port GPIOE
-#define TRACK_N_BS_Pos GPIO_BSRR_BS5_Pos
-#define TRACK_N_BR_Pos GPIO_BSRR_BR5_Pos
-#define TRACK_P_BS_Pos GPIO_BSRR_BS6_Pos
 #define TRACK_P_BR_Pos GPIO_BSRR_BR6_Pos
+#define TRACK_P_BS_Pos GPIO_BSRR_BS6_Pos
+#define TRACK_N_BR_Pos GPIO_BSRR_BR5_Pos
+#define TRACK_N_BS_Pos GPIO_BSRR_BS5_Pos
 
 static uint8_t* __sbrk_heap_end = NULL;
 
@@ -72,10 +72,7 @@ int _getpid() { return 1; }
 
 int _kill(int, int) { return -1; }
 
-void _exit(int) {
-  for (;;)
-    ;
-}
+void _exit(int) { for (;;); }
 
 int _close(int) { return -1; }
 
@@ -89,8 +86,7 @@ int _read(int, char*, int) { return -1; }
 
 int _write(int, char* ptr, int len) {
   for (int i = 0; i < len; ++i) {
-    while (!LL_USART_IsActiveFlag_TXE_TXFNF(USART3))
-      ;
+    while (!LL_USART_IsActiveFlag_TXE_TXFNF(USART3));
     LL_USART_TransmitData8(USART3, ptr[i]);
   }
   return len;
@@ -329,8 +325,8 @@ void bsp_command_station_irq(uint32_t arr) {
 }
 
 void bsp_write_track(bool N, bool P) {
-  TRACK_GPIO_Port->BSRR = !N << TRACK_N_BR_Pos | !P << TRACK_P_BR_Pos |
-                          N << TRACK_N_BS_Pos | P << TRACK_P_BS_Pos;
+  TRACK_GPIO_Port->BSRR = !P << TRACK_P_BR_Pos | !N << TRACK_N_BR_Pos |
+                          P << TRACK_P_BS_Pos | N << TRACK_N_BS_Pos;
 }
 
 void bsp_write_green_led(bool on) {

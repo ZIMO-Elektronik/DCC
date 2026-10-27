@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.50.2
+- More fine-grained concepts for transmitter (e.g. `BiDi` or `TrackOutputs`) ([#177](https://github.com/ZIMO-Elektronik/DCC/issues/177))
 - Bugfix don't forward logon as primary address ([#124](https://github.com/ZIMO-Elektronik/DCC/issues/124))
 
 ## 0.50.1
@@ -37,7 +38,7 @@
 - [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) compliance ([#161](https://github.com/ZIMO-Elektronik/DCC/issues/161))
   - 4th transmission of `app:decoder_unique` invokes `error()`
   - Unsupported SELECT queries are answered with 8x NAK
-- More fine-grained concepts (e.g. `BiDi` or `Operable`)
+- More fine-grained concepts for receiver (e.g. `BiDi` or `Operable`)
 - Remove high-current BiDi support (must be implemented by the user)
 - Bugfix `bidi::Dissector` invalidates valid channel 2 data ([#163](https://github.com/ZIMO-Elektronik/DCC/issues/163))
 - Bugfix `esp_linux_helper.h` is deprecated ([#165](https://github.com/ZIMO-Elektronik/DCC/issues/165))

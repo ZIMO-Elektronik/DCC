@@ -52,7 +52,7 @@ struct Base {
       _idle_packet.packet = bytes2timings(packet, _cfg);
     _first = begin(_idle_packet.packet);
     _last = cend(_idle_packet.packet);
-    _idle = true;
+    _idle = _polarity = true;
   }
 
   /// Transmit packet
@@ -84,9 +84,7 @@ struct Base {
     if (self._first != self._last) return self.packetTiming();
 
     // Packet end
-    if constexpr (requires {
-                    { self.packetEnd() } -> std::same_as<void>;
-                  })
+    if constexpr (PacketEnd<decltype(self)>)
       if (self._bidi_state == Pre) self.packetEnd();
 
     // BiDi timings
@@ -132,10 +130,10 @@ private:
   /// Packet timing
   ///
   /// \return Next timings from current packet
-  Timings::value_type packetTiming() {
-    toggleTrackOutputs();
-    auto const retval{*_first};
-    ++_first;
+  Timings::value_type packetTiming(this auto&& self) {
+    self.toggleTrackOutputs();
+    auto const retval{*self._first};
+    ++self._first;
     return retval;
   }
 
@@ -155,40 +153,28 @@ private:
       // Cutout start
       case Start:
         self.toggleTrackOutputs();
-        if constexpr (requires {
-                        { self.biDiStart() } -> std::same_as<void>;
-                      })
-          self.biDiStart();
+        if constexpr (BiDi<decltype(self)>) self.biDiStart();
         retval = static_cast<Timings::value_type>(bidi::Timing::TTS1 -
                                                   bidi::Timing::TCS);
         break;
 
       // Channel 1 start
       case Channel1:
-        if constexpr (requires {
-                        { self.biDiChannel1() } -> std::same_as<void>;
-                      })
-          self.biDiChannel1();
+        if constexpr (BiDi<decltype(self)>) self.biDiChannel1();
         retval = static_cast<Timings::value_type>(bidi::Timing::TTS2 -
                                                   bidi::Timing::TTS1);
         break;
 
       // Channel 2 start
       case Channel2:
-        if constexpr (requires {
-                        { self.biDiChannel2() } -> std::same_as<void>;
-                      })
-          self.biDiChannel2();
+        if constexpr (BiDi<decltype(self)>) self.biDiChannel2();
         retval = static_cast<Timings::value_type>(bidi::Timing::TTC2 -
                                                   bidi::Timing::TTS2);
         break;
 
       // Cutout end
       case End:
-        if constexpr (requires {
-                        { self.biDiEnd() } -> std::same_as<void>;
-                      })
-          self.biDiEnd();
+        if constexpr (BiDi<decltype(self)>) self.biDiEnd();
         retval = static_cast<Timings::value_type>(bidi::Timing::TCE -
                                                   bidi::Timing::TTC2);
         break;
@@ -213,10 +199,8 @@ private:
 
   /// Toggle track outputs
   void toggleTrackOutputs(this auto&& self) {
-    if constexpr (requires(bool N, bool P) {
-                    { self.trackOutputs(N, P) } -> std::same_as<void>;
-                  }) {
-      // By default the phase is "positive", so P > N for the first half bit.
+    if constexpr (TrackOutputs<decltype(self)>) {
+      // By default phase is "positive", so P > N for first half bit
       self.trackOutputs(self._polarity, !self._polarity);
       self._polarity = !self._polarity;
     }
@@ -247,8 +231,8 @@ private:
     End = 4u
   } _bidi_state; ///< Count BiDi timings
 
-  bool _polarity{}; ///< Track polarity
-  bool _idle{true}; ///< Idle flag
+  bool _idle{true};     ///< Idle flag
+  bool _polarity{true}; ///< Track polarity
 };
 
 } // namespace dcc::tx

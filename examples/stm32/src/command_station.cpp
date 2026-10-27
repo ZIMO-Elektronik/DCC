@@ -2,7 +2,7 @@
 #include <cstdio>
 #include "bsp.h"
 
-void CommandStation::trackOutputs(bool N, bool P) { bsp_write_track(N, P); }
+void CommandStation::trackOutputs(bool P, bool N) { bsp_write_track(P, N); }
 
 CommandStation command_station;
 
