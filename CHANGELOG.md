@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.50.2
+- Bugfix don't forward logon as primary address ([#124](https://github.com/ZIMO-Elektronik/DCC/issues/124))
+
 ## 0.50.1
 - Bugfix ESP-IDF for Linux requires `driver` component
 
