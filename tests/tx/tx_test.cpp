@@ -9,9 +9,7 @@ void TxTest::SetUp() {
   _timings_mock.init(_cfg);
 
   auto packet{dcc::make_idle_packet()};
-
   auto timings{dcc::tx::packet2timings(packet, _cfg)};
-
   auto bits{(_cfg.num_preamble +                  // Preamble
              std::size(packet) * (1uz + CHAR_BIT) // Start + data
              + 1uz) *                             // End

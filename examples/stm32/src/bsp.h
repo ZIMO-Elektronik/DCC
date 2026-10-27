@@ -22,7 +22,7 @@ uint32_t bsp_decoder_irq(void);
 void bsp_command_station_irq(uint32_t arr);
 
 // Set track outputs
-void bsp_write_track(bool N, bool P);
+void bsp_write_track(bool P, bool N);
 
 // Write LEDs
 void bsp_write_green_led(bool on);

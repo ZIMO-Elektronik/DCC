@@ -10,18 +10,13 @@
 
 #pragma once
 
-#include <concepts>
+#include "bidi.hpp"
+#include "packet_end.hpp"
+#include "track_outputs.hpp"
 
 namespace dcc::tx {
 
 template<typename T>
-concept CommandStation = requires(T t, bool N, bool P) {
-  { t.trackOutputs(N, P) } -> std::same_as<void>;
-  { t.packetEnd() } -> std::same_as<void>;
-  { t.biDiStart() } -> std::same_as<void>;
-  { t.biDiChannel1() } -> std::same_as<void>;
-  { t.biDiChannel2() } -> std::same_as<void>;
-  { t.biDiEnd() } -> std::same_as<void>;
-};
+concept CommandStation = PacketEnd<T> && BiDi<T> && TrackOutputs<T>;
 
 } // namespace dcc::tx

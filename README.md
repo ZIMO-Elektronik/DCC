@@ -241,7 +241,7 @@ cmake --build build --target DCCStm32Decoder DCCStm32CommandStation
 
 This example builds two firmwares, one for the decoder (`DCCStm32Decoder.hex`) and one for the command station (`DCCStm32CommandStation.hex`). Both files must be flashed onto a development board each (e.g. with the [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html)).
 
-Since this example simulates real transmission over a track, it is also **necessary to connect** the two **PE5** pins (P track) and the two **PE6** pins (N track) with each other. The command station uses the pins as outputs to send a DCC signal, the decoder uses the pins as inputs to receive the same signal again. The development board with command station firmware can be recognized by the permanently lit red LED.
+Since this example simulates real transmission over a track, it is also **necessary to connect** the two **PE6** pins (P track) and the two **PE5** pins (N track) with each other. The command station uses the pins as outputs to send a DCC signal, the decoder uses the pins as inputs to receive the same signal again. The development board with command station firmware can be recognized by the permanently lit red LED.
 
 During ongoing operation, the following steps are repeated in an endless loop:
 1.  Accelerate loco "3" to speed step 42 in forward direction
@@ -364,9 +364,6 @@ struct CommandStation : dcc::tx::PacketsBase {
   friend dcc::tx::PacketsBase; // Only necessary if methods called from base are private
 
 private:
-  // Write track outputs
-  void trackOutputs(bool N, bool P);
-
   // Packet end
   void packetEnd();
 
@@ -381,6 +378,9 @@ private:
 
   // BiDi end
   void biDiEnd();
+
+  // Write track outputs
+  void trackOutputs(bool P, bool N);
 };
 ```
 

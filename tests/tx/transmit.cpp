@@ -17,7 +17,7 @@ TEST_F(TxTest, consecutive_idle_packets) {
                   _timings_mock.transmit());
 }
 
-TEST_F(TxTest, consecutive_packets_without_cutout) {
+TEST_F(TxTest, consecutive_packets_without_bidi) {
   _cfg.flags.bidi = false;
   SetUp();
 
@@ -37,7 +37,7 @@ TEST_F(TxTest, consecutive_packets_without_cutout) {
                   _timings_mock.transmit());
 }
 
-TEST_F(TxTest, consecutive_packets_with_cutout) {
+TEST_F(TxTest, consecutive_packets_with_bidi) {
   {
     auto packet{dcc::make_f9_f12_packet(3u, 0b0000'1100u)};
     EXPECT_ALL_TRUE(_packet_mock.packet(packet), _timings_mock.packet(packet));

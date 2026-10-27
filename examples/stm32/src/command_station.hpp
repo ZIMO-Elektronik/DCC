@@ -7,5 +7,5 @@ struct CommandStation : dcc::tx::PacketsBase {
 
 private:
   // Write track outputs
-  void trackOutputs(bool N, bool P);
+  void trackOutputs(bool P, bool N);
 };
