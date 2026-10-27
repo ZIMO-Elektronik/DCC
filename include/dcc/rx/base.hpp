@@ -385,20 +385,16 @@ private:
   bool executeOperationsAddressed(this Decoder auto&& self,
                                   Address addr,
                                   std::span<uint8_t const> bytes) {
-    // Address is broadcast
-    if (!addr)
-      ;
-    //
-    else if (!self._dcca_window_elapsed) return true;
-    // Logon disabled, address is primary or consist
-    else if (self._logon_state == Disabled &&
-             (addr == self._addrs.primary || addr == self._addrs.consist))
-      ;
-    // Logon assigned, address is logon but pretend it's primary from here on
-    else if (self._logon_state == Assigned && addr == self._addrs.logon)
-      addr = self._addrs.primary;
-    // Address is not of interest
-    else return true;
+    // Address check
+    // - Broadcast address passes through
+    // - Non-broadcast addresses ignored while DCC-A window hasn't elapsed
+    // - Afterward only relevant addresses pass through
+    if (addr &&
+        (!self._dcca_window_elapsed ||
+         !((self._logon_state == Disabled &&
+            (addr == self._addrs.primary || addr == self._addrs.consist)) ||
+           (self._logon_state == Assigned && addr == self._addrs.logon))))
+      return true;
 
     // Count own equal packets (required for CV access)
     self.countOwnEqualPackets();

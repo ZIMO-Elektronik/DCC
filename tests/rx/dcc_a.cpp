@@ -6,8 +6,8 @@ TEST_F(RxTest, skip_logon_with_known_cid) {
   Logon();
 
   // Execute commands to logon address
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 }
 
@@ -29,9 +29,9 @@ TEST_F(RxTest, logon_with_unknown_cid_basic_loco) {
   Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
   BiDi()->LeaveCutout()->Execute();
 
-  // Execute commands to address 42
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
+  // Execute commands to logon address
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 }
 
@@ -53,9 +53,9 @@ TEST_F(RxTest, logon_with_unknown_cid_extended_loco) {
   Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
   BiDi()->LeaveCutout()->Execute();
 
-  // Execute commands to address 1001
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
+  // Execute commands to logon address
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 }
 
@@ -64,10 +64,10 @@ TEST_F(RxTest, no_logon_with_known_cid_and_unknown_sid) {
   // Enable
   Receive(dcc::make_logon_enable_packet(dcc::LogonGroup::Now, _cid, _sid + 1u));
 
-  // Execute commands to logon address
+  // Don't execute commands to logon address
   EXPECT_CALL(_mock, writeCv(_, _)).Times(0);
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, false)).Times(0);
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, _)).Times(0);
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false)).Times(0);
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _)).Times(0);
   ReceiveAndExecute(make_128_speed_step_control_packet(_addrs.logon, 0u));
 }
 
@@ -76,8 +76,8 @@ TEST_F(RxTest, force_new_logon_with_known_cid_and_sid_plus_2) {
   Logon();
 
   // Execute commands to logon address
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(3 * 2);
@@ -95,9 +95,9 @@ TEST_F(RxTest, force_new_logon_with_known_cid_and_sid_plus_2) {
   Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
   BiDi()->LeaveCutout()->Execute();
 
-  // Execute commands to address 1001
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, false));
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, _));
+  // Execute commands to logon address
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 }
 
@@ -153,7 +153,7 @@ TEST_F(RxTest, permanent_assign_to_basic_address) {
                                    dcc::LogonBindingBehavior::Permanent));
   BiDi()->LeaveCutout()->Execute();
 
-  // Execute commands to address 42
+  // Execute commands to logon address
   EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
   EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
@@ -184,7 +184,7 @@ TEST_F(RxTest, permanent_assign_to_extended_address) {
                                    dcc::LogonBindingBehavior::Permanent));
   BiDi()->LeaveCutout()->Execute();
 
-  // Execute commands to address 1042
+  // Execute commands to logon address
   EXPECT_CALL(_mock, direction(_addrs.logon.value, false));
   EXPECT_CALL(_mock, speed(_addrs.logon.value, _));
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
@@ -225,7 +225,7 @@ TEST_F(RxTest, no_logon_without_enable) {
   Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID, _did, _addrs.logon));
   BiDi();
 
-  // Execute commands to address 1000
+  // Don't execute commands to logon address
   EXPECT_CALL(_mock, direction(_addrs.logon.value, false)).Times(0);
   EXPECT_CALL(_mock, speed(_addrs.logon.value, _)).Times(0);
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
@@ -236,6 +236,7 @@ TEST_F(RxTest, dont_execute_packets_to_primary_address_within_dcca_window) {
   // Undo offset from SetUp()
   reset_system_clock_offset();
 
+  // Don't execute commands to primary address
   EXPECT_CALL(_mock, function(_addrs.primary.value, _, _)).Times(0);
   ReceiveAndExecute(make_f0_f4_packet(
     _addrs.primary, random_interval<uint8_t>(0b0'0000u, 0b1'1111u)));
