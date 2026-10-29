@@ -70,7 +70,7 @@ The DCC protocol is defined by various standards published by the [National Mode
 
 ### Receiver
 - Configures itself based on its CV values
-- Supports user-defined BiDi datagrams
+- Supports user-defined BiDi dynamic variables
 - Supported instructions
   - Loco decoders ("Multi-Function")
     - Decoder control
@@ -350,10 +350,13 @@ If the command station supports BiDi, each frame consists of a packet and a subs
 
 This distinction is important because the receiver prevents both
 - commands from being executed during a cutout and
-- datagrams from being sent during a command.
+- datagrams from being sent during a command
 
 > [!IMPORTANT]  
 > That means the methods `execute`, `biDiChannel1` and `biDiChannel2` can only be called in their respective phase. If called outside of the phase, they return immediately.
+
+#### BiDi
+TODO
 
 ### Transmitter
 As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::Base` (or one of its aliases). There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.

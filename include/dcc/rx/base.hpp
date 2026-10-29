@@ -22,6 +22,7 @@
 #include "../bidi/direction_status_byte.hpp"
 #include "../bidi/kmh.hpp"
 #include "../bidi/nak.hpp"
+#include "../bidi/qos.hpp"
 #include "../bidi/temperature.hpp"
 #include "../bidi/track_voltage.hpp"
 #include "../bidi/utility.hpp"
@@ -233,23 +234,24 @@ struct Base {
   /// \return Addresses
   Addresses const& addresses() const { return _addrs; }
 
-  /// Add dyn (ID7) datagrams to deque
+  /// Quality of service
   ///
-  /// \tparam Dyns... Types of dyn datagrams
-  /// \param  dyns... Datagrams
-  template<std::derived_from<bidi::app::Dyn>... Dyns>
-  void datagram(Dyns&&... dyns) {
-    // Block full and release empty deque to avoid getting the same datagrams
-    // send over and over again...
-    if (full(_deques.dyn)) _block_dyn_deque = true;
-    else if (empty(_deques.dyn)) {
-      _block_dyn_deque = false;
-      dyn(_qos, 7u);
-    }
+  /// \return Quality of service
+  bidi::QoS qos() const { return bidi::QoS{_qos}; }
 
-    // Only allow pushing datagrams if not blocked
-    if (!_block_dyn_deque) (dyn(dyns.d, dyns.x), ...);
+  /// Add app:dyn (ID7) dynamic variable to deque
+  ///
+  /// \param  dv    Dynamic variable
+  /// \retval true  Dynamic variable added to deque
+  /// \retval false Dynamic variable not added to deque
+  bool appDyn(bidi::app::Dyn const& dv) {
+    return !packetEnd() && dyn(dv.d, dv.x);
   }
+
+  /// Get app:dyn deque size
+  ///
+  /// \return app:dyn deque size
+  auto appDynSize() const { return size(_deques.dyn); }
 
   /// Start channel1 (12 bit payload)
   void biDiChannel1(this Decoder auto&& self) {
@@ -1526,14 +1528,17 @@ private:
     }
   }
 
-  /// Add app:dyn datagrams
+  /// Add app:dyn dynamic variable
   ///
-  /// \param  d DV (dynamic CV)
-  /// \param  x Subindex
-  void dyn(uint8_t d, uint8_t x) {
+  /// \param  d     Dynamic variable data
+  /// \param  x     Subindex
+  /// \retval true  Dynamic variable added to deque
+  /// \retval false Dynamic variable not added to deque
+  bool dyn(uint8_t d, uint8_t x) {
     if (full(_deques.dyn) || !_ch2_data_enabled || !_dcca_window_elapsed)
-      return;
+      return false;
     _deques.dyn.push_back(bidi::make_app_dyn_datagram(d, x));
+    return true;
   }
 
   /// Handle app:adr_low and app:adr_high datagrams
@@ -1702,11 +1707,12 @@ private:
   // Deques
   struct {
     ztl::inplace_deque<Packet, DCC_RX_DEQUE_SIZE> packet{};
-    ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>>,
-                       DCC_RX_LOGON_DEQUE_SIZE>
-      logon{};
+    ztl::inplace_deque<
+      bidi::Datagram<bidi::datagram_size<bidi::Bits::_48>>,
+      (256uz + ((256uz + 31uz - 1uz) / 31uz) * 2uz + 6uz - 1uz) / 6uz>
+      logon{}; // https://github.com/ZIMO-Elektronik/DCC/issues/18
     ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_18>>,
-                       DCC_RX_BIDI_DEQUE_SIZE>
+                       DCC_RX_BIDI_APP_DYN_DEQUE_SIZE>
       dyn{};
     ztl::inplace_deque<bidi::Datagram<bidi::datagram_size<bidi::Bits::_36>>,
                        1uz>
@@ -1777,7 +1783,6 @@ private:
   bool _cvs_locked : 1 {};
   bool _f0_exception : 1 {};
   bool _man : 1 {};
-  bool _block_dyn_deque : 1 {};
 };
 
 } // namespace dcc::rx

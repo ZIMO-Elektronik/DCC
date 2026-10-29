@@ -114,6 +114,8 @@ constexpr auto make_app_info_datagram() {}
 
 /// Make app:dyn datagram
 ///
+/// \param  d Dynamic variable data
+/// \param  x Subindex
 /// \return app:dyn datagram
 constexpr auto make_app_dyn_datagram(uint8_t d, uint8_t x) {
   assert(x < smath::pow(2u, 6u));
