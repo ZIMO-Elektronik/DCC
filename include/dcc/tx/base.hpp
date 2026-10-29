@@ -116,7 +116,7 @@ struct Base {
   /// Get deque capacity
   ///
   /// \return Deque capacity
-  constexpr auto capacity() const { return DCC_TX_DEQUE_SIZE; }
+  consteval auto capacity() const { return _deque.capacity(); }
 
   /// Get address of last transmission
   ///

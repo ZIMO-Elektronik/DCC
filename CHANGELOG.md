@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.51.0
+- Refactor `app:dyn` deque design ([#195](https://github.com/ZIMO-Elektronik/DCC/issues/195))
+
 ## 0.50.2
 - More fine-grained concepts for transmitter (e.g. `BiDi` or `TrackOutputs`) ([#177](https://github.com/ZIMO-Elektronik/DCC/issues/177))
 - Bugfix don't forward logon as primary address ([#124](https://github.com/ZIMO-Elektronik/DCC/issues/124))

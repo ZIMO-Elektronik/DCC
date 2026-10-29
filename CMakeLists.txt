@@ -67,14 +67,9 @@ set(DCC_RX_MAX_BIT_0_TIMING
 set(DCC_RX_DEQUE_SIZE
     31u
     CACHE STRING "Size of the receiver deque of decoder")
-set(DCC_RX_BIDI_DEQUE_SIZE
-    7u
-    CACHE STRING "Size of the sender deque of decoder")
-math(EXPR DCC_RX_LOGON_DEQUE_SIZE
-     "(256 + ((256 + 31 - 1) / 31) * 2 + 6 - 1) / 6")
-set(DCC_RX_LOGON_DEQUE_SIZE
-    ${DCC_RX_LOGON_DEQUE_SIZE}
-    CACHE STRING "Size of the logon deque of decoder")
+set(DCC_RX_BIDI_APP_DYN_DEQUE_SIZE
+    2u
+    CACHE STRING "Size of the receiver BiDi app:dyn deque of decoder")
 set(DCC_TX_MIN_PREAMBLE_BITS
     17u
     CACHE STRING "Minimum number of preamble bits of command station")
@@ -122,8 +117,7 @@ target_compile_definitions(
             DCC_RX_MIN_BIT_0_TIMING=${DCC_RX_MIN_BIT_0_TIMING}
             DCC_RX_MAX_BIT_0_TIMING=${DCC_RX_MAX_BIT_0_TIMING}
             DCC_RX_DEQUE_SIZE=${DCC_RX_DEQUE_SIZE}
-            DCC_RX_BIDI_DEQUE_SIZE=${DCC_RX_BIDI_DEQUE_SIZE}
-            DCC_RX_LOGON_DEQUE_SIZE=${DCC_RX_LOGON_DEQUE_SIZE}
+            DCC_RX_BIDI_APP_DYN_DEQUE_SIZE=${DCC_RX_BIDI_APP_DYN_DEQUE_SIZE}
             DCC_TX_MIN_PREAMBLE_BITS=${DCC_TX_MIN_PREAMBLE_BITS}
             DCC_TX_MAX_PREAMBLE_BITS=${DCC_TX_MAX_PREAMBLE_BITS}
             DCC_TX_MIN_BIT_1_TIMING=${DCC_TX_MIN_BIT_1_TIMING}
