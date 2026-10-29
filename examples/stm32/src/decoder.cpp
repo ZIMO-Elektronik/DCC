@@ -26,6 +26,8 @@ void Decoder::function(uint16_t addr, uint32_t mask, uint32_t state) {
   }
 }
 
+void Decoder::binaryState(uint16_t addr, uint16_t bin_addr, bool state) {}
+
 void Decoder::serviceModeHook(bool service_mode) {}
 
 void Decoder::serviceAck() {}

@@ -621,20 +621,22 @@ private:
                                std::span<uint8_t const> bytes) {
     switch (bytes[0uz]) {
       // Binary state control instruction long form (3 bytes)
-      case 0b1100'0000u:
-        if (size(bytes) != 3uz + sizeof(_checksum)) return true;
-        self.binaryState(addr,
-                         (static_cast<uint32_t>(bytes[2uz]) << 7u) |
-                           (bytes[1uz] & 0b0111'1111u),
-                         bytes[1uz] & ztl::mask<7u>);
-        break;
-
+      case 0b1100'0000u: [[fallthrough]];
       // Binary state control instruction short form (2 bytes)
-      case 0b1101'1101u:
-        if (size(bytes) != 2uz + sizeof(_checksum)) return true;
-        self.binaryState(
-          addr, (bytes[1uz] & 0b0111'1111u), bytes[1uz] & ztl::mask<7u>);
+      case 0b1101'1101u: {
+        if (size(bytes) != 3uz + sizeof(_checksum) &&
+            size(bytes) != 2uz + sizeof(_checksum))
+          return true;
+        auto const bin_addr{
+          static_cast<uint16_t>((size(bytes) == 3uz + sizeof(_checksum)
+                                   ? (static_cast<uint32_t>(bytes[2uz]) << 7u)
+                                   : 0u) |
+                                (bytes[1uz] & 0b0111'1111u))};
+        auto const state{static_cast<bool>(bytes[1uz] & ztl::mask<7u>)};
+        if (bin_addr == 2u && !state) self.trackSearch();
+        self.binaryState(addr, bin_addr, state);
         break;
+      }
 
       // Time (4 bytes)
       case 0b1100'0001u:
@@ -1382,21 +1384,6 @@ private:
   /// Time
   void time(std::span<uint8_t const>) const {
     /// \todo
-  }
-
-  /// Execute binary state
-  ///
-  /// \param  addr  Address
-  /// \param  xf    Number of binary state
-  /// \param  state Binary state
-  void binaryState(Address, uint32_t xf, bool state) {
-    switch (xf) {
-      case 2u:
-        if (!state) trackSearch();
-        break;
-      case 4u: break;
-      case 5u: break;
-    }
   }
 
   /// Set direction and speed

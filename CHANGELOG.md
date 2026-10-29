@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.51.0
+- Add binary state support ([#81](https://github.com/ZIMO-Elektronik/DCC/issues/81))
 - Refactor `app:dyn` deque design ([#195](https://github.com/ZIMO-Elektronik/DCC/issues/195))
 
 ## 0.50.2
