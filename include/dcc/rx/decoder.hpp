@@ -11,6 +11,7 @@
 #pragma once
 
 #include "bidi.hpp"
+#include "binary_state.hpp"
 #include "operable.hpp"
 #include "readable.hpp"
 #include "serviceable.hpp"
@@ -19,7 +20,7 @@
 namespace dcc::rx {
 
 template<typename T>
-concept Decoder =
-  Operable<T> && Serviceable<T> && BiDi<T> && Readable<T> && Writable<T>;
+concept Decoder = Operable<T> && Serviceable<T> && BiDi<T> && Readable<T> &&
+                  Writable<T> && BinaryState<T>;
 
 } // namespace dcc::rx

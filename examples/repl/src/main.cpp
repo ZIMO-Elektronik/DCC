@@ -74,8 +74,8 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   // Set direction and speed
   root->Insert("direction_speed",
                [&](std::ostream&, bool dir, uint8_t speed) {
-                 auto const packet{dcc::make_128_speed_step_control_packet(
-                   addr, dir << 7u | speed)};
+                 auto const packet{
+                   make_128_speed_step_control_packet(addr, dir << 7u | speed)};
                  fifo->push_back(packet);
                },
                "Set direction and speed",
@@ -84,7 +84,7 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   // Set F4-F0
   root->Insert("f4-f0",
                [&](std::ostream&, uint8_t state) {
-                 auto const packet{dcc::make_f0_f4_packet(addr, state)};
+                 auto const packet{make_f0_f4_packet(addr, state)};
                  fifo->push_back(packet);
                },
                "Functions F4-F0",
@@ -93,7 +93,17 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   // Set F8-F5
   root->Insert("f8-f5",
                [&](std::ostream&, uint8_t state) {
-                 auto const packet{dcc::make_f5_f8_packet(addr, state)};
+                 auto const packet{make_f5_f8_packet(addr, state)};
+                 fifo->push_back(packet);
+               },
+               "Functions F8-F5",
+               {"State [0b00000-0b11111]"});
+
+  // Set binary state
+  root->Insert("binary_state",
+               [&](std::ostream&, uint16_t bin_addr, bool state) {
+                 auto const packet{
+                   make_binary_state_long_packet(addr, bin_addr, state)};
                  fifo->push_back(packet);
                },
                "Functions F8-F5",
@@ -103,7 +113,7 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   root->Insert("read_cv_byte",
                [&](std::ostream&, uint32_t cv_addr) {
                  auto const packet{
-                   dcc::make_cv_access_long_verify_packet(addr, cv_addr)};
+                   make_cv_access_long_verify_packet(addr, cv_addr)};
                  fifo->push_back(packet);
                },
                "Read CV byte",
@@ -113,7 +123,7 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   root->Insert("write_cv_byte",
                [&](std::ostream&, uint32_t cv_addr, uint8_t byte) {
                  auto const packet{
-                   dcc::make_cv_access_long_write_packet(addr, cv_addr, byte)};
+                   make_cv_access_long_write_packet(addr, cv_addr, byte)};
                  fifo->push_back(packet);
                  fifo->push_back(packet);
                },
@@ -123,8 +133,8 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   // Read CV bit
   root->Insert("read_cv_bit",
                [&](std::ostream&, uint32_t cv_addr, bool bit, uint8_t pos) {
-                 auto const packet{dcc::make_cv_access_long_verify_packet(
-                   addr, cv_addr, bit, pos)};
+                 auto const packet{
+                   make_cv_access_long_verify_packet(addr, cv_addr, bit, pos)};
                  fifo->push_back(packet);
                },
                "Read CV bit",
@@ -133,8 +143,8 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
   // Write CV bit
   root->Insert("write_cv_bit",
                [&](std::ostream&, uint32_t cv_addr, bool bit, uint8_t pos) {
-                 auto const packet{dcc::make_cv_access_long_write_packet(
-                   addr, cv_addr, bit, pos)};
+                 auto const packet{
+                   make_cv_access_long_write_packet(addr, cv_addr, bit, pos)};
                  fifo->push_back(packet);
                  fifo->push_back(packet);
                },

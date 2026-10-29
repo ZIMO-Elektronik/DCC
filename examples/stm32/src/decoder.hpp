@@ -15,6 +15,9 @@ private:
   // Set function inputs
   void function(uint16_t addr, uint32_t mask, uint32_t state);
 
+  // Set binary state
+  void binaryState(uint16_t addr, uint16_t bin_addr, bool state);
+
   // Enter or exit service mode
   void serviceModeHook(bool service_mode);
 
