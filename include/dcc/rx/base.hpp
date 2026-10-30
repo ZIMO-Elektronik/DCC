@@ -526,7 +526,8 @@ private:
 
       // Analog function group
       case 0b0011'1101u:
-        /// \todo
+        if (size(bytes) != 3uz + sizeof(_checksum)) return true;
+        self.analogFunction(addr, bytes[1uz], bytes[2uz]);
         break;
     }
 

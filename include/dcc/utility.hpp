@@ -299,8 +299,8 @@ constexpr auto make_speed_direction_and_functions_packet(
 /// Make advanced operations - analog function group packet
 ///
 /// \param  addr      Address
-/// \param  ssssssss  Channel
-/// \param  dddddddd  Value
+/// \param  ssssssss  Output
+/// \param  dddddddd  Data
 /// \return Advanced operations - analog function group packet
 constexpr auto make_analog_function_group_packet(Address addr,
                                                  uint8_t ssssssss,

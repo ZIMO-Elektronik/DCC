@@ -106,8 +106,18 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
                    make_binary_state_long_packet(addr, bin_addr, state)};
                  fifo->push_back(packet);
                },
-               "Functions F8-F5",
-               {"State [0b00000-0b11111]"});
+               "Binary State",
+               {"Binary state address [0-32767]", "State [0-1]"});
+
+  // Set analog function
+  root->Insert("analog_function",
+               [&](std::ostream&, uint8_t channel, uint8_t state) {
+                 auto const packet{
+                   make_analog_function_group_packet(addr, channel, state)};
+                 fifo->push_back(packet);
+               },
+               "Analog Function",
+               {"Channel [0-255]", "Value [0-255]"});
 
   // Read CV byte
   root->Insert("read_cv_byte",

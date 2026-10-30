@@ -1,13 +1,13 @@
 #include "../utility.hpp"
 #include "rx_test.hpp"
 
-TEST_F(RxTest, function_group_f4_f0) {
+TEST_F(RxTest, function_group_f0_f4) {
   auto state{random_interval<uint8_t>(0b0'0000u, 0b1'1111u)};
   EXPECT_CALL(_mock, function(_addrs.primary.value, 0b11111u, state));
   ReceiveAndExecute(make_f0_f4_packet(_addrs.primary, state));
 }
 
-TEST_F(RxTest, function_group_f4_f0_wrong_packet_length) {
+TEST_F(RxTest, function_group_f0_f4_wrong_packet_length) {
   auto state{random_interval<uint8_t>(0b0'0000u, 0b1'1111u)};
   EXPECT_CALL(_mock, function(_addrs.primary.value, 0b11111u, state)).Times(0);
   ReceiveAndExecute(
@@ -15,14 +15,14 @@ TEST_F(RxTest, function_group_f4_f0_wrong_packet_length) {
 }
 
 // Ignore F0 if CV29:2 is 0
-TEST_F(RxTest, function_group_f4_f0_exception) {
+TEST_F(RxTest, function_group_f0_f4_exception) {
   _cvs[29uz - 1uz] = 0b1000u;
   SetUp();
   EXPECT_CALL(_mock, function(_addrs.primary.value, 0b11110u, 0b1u));
   ReceiveAndExecute(make_f0_f4_packet(_addrs.primary, 0b1u));
 }
 
-TEST_F(RxTest, function_group_f8_f5) {
+TEST_F(RxTest, function_group_f5_f8) {
   auto state{random_interval<uint8_t>(0x0u, 0xFu)};
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,
@@ -31,7 +31,7 @@ TEST_F(RxTest, function_group_f8_f5) {
   ReceiveAndExecute(make_f5_f8_packet(_addrs.primary, state));
 }
 
-TEST_F(RxTest, function_group_f12_f9) {
+TEST_F(RxTest, function_group_f9_f12) {
   auto state{random_interval<uint8_t>(0x0u, 0xFu)};
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,

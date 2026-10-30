@@ -1,7 +1,7 @@
+#include "../utility.hpp"
 #include "rx_test.hpp"
 
-// Speed, direction and functions F7-F0
-TEST_F(RxTest, speed_direction_and_functions_f7_f0) {
+TEST_F(RxTest, speed_direction_and_functions_f0_f7) {
   EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward));
   EXPECT_CALL(_mock,
               speed(_addrs.primary.value, dcc::scale_speed<126>(10 - 1)));
@@ -10,8 +10,7 @@ TEST_F(RxTest, speed_direction_and_functions_f7_f0) {
     _addrs.primary, dcc::Forward << 7u | 10u, 0b0000'1010u));
 }
 
-// Speed, direction and functions F23-F0
-TEST_F(RxTest, speed_direction_and_functions_f23_f0) {
+TEST_F(RxTest, speed_direction_and_functions_f0_f23) {
   EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward));
   EXPECT_CALL(_mock,
               speed(_addrs.primary.value, dcc::scale_speed<126>(10 - 1)));
@@ -22,26 +21,12 @@ TEST_F(RxTest, speed_direction_and_functions_f23_f0) {
     _addrs.primary, dcc::Forward << 7u | 10u, 1u, 2u, 3u));
 }
 
-// 126 speed steps command forward
-TEST_F(RxTest, _126_speed_steps) {
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward));
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<126>(81)));
-  ReceiveAndExecute(make_128_speed_step_control_packet(
-    _addrs.primary, dcc::Forward << 7u | 0b0101'0010u));
-
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Backward));
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<126>(23)));
-  ReceiveAndExecute(make_128_speed_step_control_packet(
-    _addrs.primary, dcc::Backward << 7u | 0b0001'1000u));
-}
-
-// 126 speed steps command forward
-TEST_F(RxTest, _126_speed_steps_fwd_wrong_packet_length) {
-  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward)).Times(0);
-  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<126>(10 - 1)))
-    .Times(0);
-  ReceiveAndExecute(TinkerWithPacketLength(make_128_speed_step_control_packet(
-    _addrs.primary, dcc::Forward << 7u | 10u)));
+TEST_F(RxTest, analog_function_group) {
+  auto channel{random_interval<uint8_t>()};
+  auto value{random_interval<uint8_t>()};
+  EXPECT_CALL(_mock, analogFunction(_addrs.primary.value, channel, value));
+  ReceiveAndExecute(
+    make_analog_function_group_packet(_addrs.primary, channel, value));
 }
 
 TEST_F(RxTest, special_operating_modes) {
@@ -74,4 +59,24 @@ TEST_F(RxTest, special_operating_modes_west) {
     eastWestDirection(_addrs.primary.value, std::optional<int32_t>{dcc::West}));
   ReceiveAndExecute(make_special_operating_modes_packet(
     _addrs.primary, dcc::Consist::NotPart, false, true, false, false));
+}
+
+TEST_F(RxTest, _126_speed_steps) {
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<126>(81)));
+  ReceiveAndExecute(make_128_speed_step_control_packet(
+    _addrs.primary, dcc::Forward << 7u | 0b0101'0010u));
+
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Backward));
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<126>(23)));
+  ReceiveAndExecute(make_128_speed_step_control_packet(
+    _addrs.primary, dcc::Backward << 7u | 0b0001'1000u));
+}
+
+TEST_F(RxTest, _126_speed_steps_fwd_wrong_packet_length) {
+  EXPECT_CALL(_mock, direction(_addrs.primary.value, dcc::Forward)).Times(0);
+  EXPECT_CALL(_mock, speed(_addrs.primary.value, dcc::scale_speed<126>(10 - 1)))
+    .Times(0);
+  ReceiveAndExecute(TinkerWithPacketLength(make_128_speed_step_control_packet(
+    _addrs.primary, dcc::Forward << 7u | 10u)));
 }

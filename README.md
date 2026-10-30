@@ -83,7 +83,7 @@ The DCC protocol is defined by various standards published by the [National Mode
       - Set consist address :ballot_box_with_check:
     - Advanced operations
       - Speed, direction and functions :ballot_box_with_check:
-      - Analog function group :negative_squared_cross_mark:
+      - Analog function group :ballot_box_with_check:
       - Special operating modes :ballot_box_with_check:
       - 128 speed step control :ballot_box_with_check:
     - Speed and direction :ballot_box_with_check:
@@ -92,7 +92,7 @@ The DCC protocol is defined by various standards published by the [National Mode
       - F9-F12 :ballot_box_with_check:
       - F5-F8 :ballot_box_with_check:
     - Feature expansion
-      - Binary state control long form :negative_squared_cross_mark:
+      - Binary state control long form :ballot_box_with_check:
       - Time and date :negative_squared_cross_mark:
       - System time :negative_squared_cross_mark:
       - Command station feature identification :negative_squared_cross_mark:
@@ -101,7 +101,7 @@ The DCC protocol is defined by various standards published by the [National Mode
       - F45-F52 :negative_squared_cross_mark:
       - F53-F60 :negative_squared_cross_mark:
       - F61-F68 :negative_squared_cross_mark:
-      - Binary state control short form :negative_squared_cross_mark:
+      - Binary state control short form :ballot_box_with_check:
       - F13-F20 :ballot_box_with_check:
       - F21-F28 :ballot_box_with_check:
     - CV access
@@ -277,6 +277,12 @@ private:
 
   // Set function inputs
   void function(uint16_t addr, uint32_t mask, uint32_t state);
+
+  // Set binary state
+  void binaryState(uint16_t addr, uint16_t bin_addr, bool state);
+
+  // Set analog function
+  void analogFunction(uint16_t addr, uint8_t channel, uint8_t value);
 
   // Enter or exit service mode
   void serviceModeHook(bool service_mode);

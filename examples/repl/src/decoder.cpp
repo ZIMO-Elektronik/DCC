@@ -38,6 +38,11 @@ void Decoder::binaryState(uint16_t addr, uint16_t bin_addr, bool state) {
                    << state << PROMPTENDL;
 }
 
+void Decoder::analogFunction(uint16_t addr, uint8_t channel, uint8_t value) {
+  cli::Cli::cout() << "Address " << addr << ": analog function " << channel
+                   << "=" << value << PROMPTENDL;
+}
+
 void Decoder::serviceModeHook(bool) {}
 
 void Decoder::serviceAck() {}
