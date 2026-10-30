@@ -624,9 +624,9 @@ void advanced_operations_speed_direction_and_functions(dcc::Address addr) {
 void advanced_operations_analog_function_group(dcc::Address addr) {
   ImGui::SeparatorText("Parameters");
   static int ssssssss{};
-  ImGui::Combo("Channel", &ssssssss, data(analog_labels), ssize(analog_labels));
+  ImGui::Combo("Output", &ssssssss, data(analog_labels), ssize(analog_labels));
   static uint8_t dddddddd{};
-  ImGui::InputScalar("Value", ImGuiDataType_U8, &dddddddd);
+  ImGui::InputScalar("Data", ImGuiDataType_U8, &dddddddd);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
     state.packets.push_back(

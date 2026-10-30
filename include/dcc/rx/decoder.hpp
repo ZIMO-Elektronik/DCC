@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "analog_function.hpp"
 #include "bidi.hpp"
 #include "binary_state.hpp"
 #include "operable.hpp"
@@ -21,6 +22,6 @@ namespace dcc::rx {
 
 template<typename T>
 concept Decoder = Operable<T> && Serviceable<T> && BiDi<T> && Readable<T> &&
-                  Writable<T> && BinaryState<T>;
+                  Writable<T> && BinaryState<T> && AnalogFunction<T>;
 
 } // namespace dcc::rx

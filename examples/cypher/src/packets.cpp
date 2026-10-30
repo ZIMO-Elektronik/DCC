@@ -350,8 +350,8 @@ void advanced_operations_analog_function_group(State::Packet& packet,
                                                std::span<uint8_t const> bytes) {
   packet.desc_strs.back() += " - Analog Function Group";
   packet.desc_strs.back() +=
-    std::format("\n- Channel={}", analog_labels[bytes[1uz]]);
-  packet.desc_strs.back() += std::format("\n- Value={}", bytes[2uz]);
+    std::format("\n- Output={}", analog_labels[bytes[1uz]]);
+  packet.desc_strs.back() += std::format("\n- Data={}", bytes[2uz]);
   packet.pattern_str += " 0 00111101 0 SSSSSSSS 0 DDDDDDDD";
 }
 

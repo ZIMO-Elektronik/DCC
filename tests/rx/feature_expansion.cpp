@@ -17,7 +17,7 @@ TEST_F(RxTest, feature_expansion_binary_state_control_short_form) {
     dcc::make_binary_state_short_packet(_addrs.primary, bin_addr, state));
 }
 
-TEST_F(RxTest, feature_expansion_f20_f13) {
+TEST_F(RxTest, feature_expansion_f13_f20) {
   auto state{random_interval<uint8_t>(0x00u, 0xFFu)};
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,
@@ -26,7 +26,7 @@ TEST_F(RxTest, feature_expansion_f20_f13) {
   ReceiveAndExecute(make_f13_f20_packet(_addrs.primary, state));
 }
 
-TEST_F(RxTest, feature_expansion_f20_f13_wrong_packet_length) {
+TEST_F(RxTest, feature_expansion_f13_f20_wrong_packet_length) {
   auto state{random_interval<uint8_t>(0x00u, 0xFFu)};
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,
@@ -37,7 +37,7 @@ TEST_F(RxTest, feature_expansion_f20_f13_wrong_packet_length) {
     TinkerWithPacketLength(make_f13_f20_packet(_addrs.primary, state)));
 }
 
-TEST_F(RxTest, feature_expansion_f28_f21) {
+TEST_F(RxTest, feature_expansion_f21_f28) {
   auto state{random_interval<uint8_t>(0x00u, 0xFFu)};
   EXPECT_CALL(_mock,
               function(_addrs.primary.value,
