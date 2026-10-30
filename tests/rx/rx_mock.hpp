@@ -8,6 +8,7 @@ struct RxMock : dcc::rx::Base {
   MOCK_METHOD(void, direction, (uint16_t, int32_t), ());
   MOCK_METHOD(void, speed, (uint16_t, int32_t), ());
   MOCK_METHOD(void, function, (uint16_t, uint32_t, uint32_t), ());
+  MOCK_METHOD(void, binaryState, (uint16_t, uint16_t, bool), ());
   MOCK_METHOD(void, serviceModeHook, (bool), ());
   MOCK_METHOD(void, serviceAck, (), ());
   MOCK_METHOD(void, transmitBiDi, (std::span<uint8_t const>), ());

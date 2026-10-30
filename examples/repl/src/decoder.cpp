@@ -33,6 +33,11 @@ void Decoder::function(uint16_t addr, uint32_t mask, uint32_t state) {
   cli::Cli::cout() << PROMPTENDL;
 }
 
+void Decoder::binaryState(uint16_t addr, uint16_t bin_addr, bool state) {
+  cli::Cli::cout() << "Address " << addr << ": binary state " << bin_addr << "="
+                   << state << PROMPTENDL;
+}
+
 void Decoder::serviceModeHook(bool) {}
 
 void Decoder::serviceAck() {}
