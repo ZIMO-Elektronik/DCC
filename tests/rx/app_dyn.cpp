@@ -18,7 +18,7 @@ TEST_F(RxTest, app_dyn) {
   std::ranges::copy(first, std::back_inserter(datagram));
   std::ranges::copy(second, std::back_inserter(datagram));
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, dont_transmit_following_foreign_address) {
@@ -30,5 +30,5 @@ TEST_F(RxTest, dont_transmit_following_foreign_address) {
     _mock.appDyn(DirectionStatusByte{static_cast<uint8_t>(i)});
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }

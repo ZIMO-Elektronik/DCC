@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.51.1
+- Bugfix transmit implicit ACK if there are no datagrams for channel 2 ([#45](https://github.com/ZIMO-Elektronik/DCC/issues/45))
 - Bugfix `GET_DATA_*` datagrams always contain CRC ([#200](https://github.com/ZIMO-Elektronik/DCC/issues/200))
 
 ## 0.51.0

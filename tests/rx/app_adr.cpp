@@ -15,9 +15,9 @@ TEST_F(RxTest, app_adr_alternate_basic_primary_address) {
   for (auto i{0uz}; i < 10uz; ++i) {
     LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
-    _mock.biDiChannel1();
+    BiDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
-    _mock.biDiChannel1();
+    BiDiChannel1();
   }
 }
 
@@ -36,9 +36,9 @@ TEST_F(RxTest, app_adr_alternate_extended_logon_address) {
   for (auto i{0uz}; i < 10uz; ++i) {
     LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
-    _mock.biDiChannel1();
+    BiDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
-    _mock.biDiChannel1();
+    BiDiChannel1();
   }
 }
 
@@ -51,7 +51,7 @@ TEST_F(RxTest, app_adr_disabled_with_cv28_0) {
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
   Execute();
-  _mock.biDiChannel1();
+  BiDiChannel1();
 }
 
 TEST_F(RxTest, app_adr_alternate_basic_consist_address) {
@@ -70,9 +70,9 @@ TEST_F(RxTest, app_adr_alternate_basic_consist_address) {
   for (auto i{0uz}; i < 10uz; ++i) {
     LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
-    _mock.biDiChannel1();
+    BiDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
-    _mock.biDiChannel1();
+    BiDiChannel1();
   }
 }
 
@@ -97,9 +97,9 @@ TEST_F(RxTest, app_adr_alternate_extended_consist_address) {
   for (auto i{0uz}; i < 10uz; ++i) {
     LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
-    _mock.biDiChannel1();
+    BiDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
-    _mock.biDiChannel1();
+    BiDiChannel1();
   }
 }
 
@@ -116,8 +116,8 @@ TEST_F(RxTest, app_adr_broadcast) {
   for (auto i{0uz}; i < 10uz; ++i) {
     LeaveCutout()->Execute()->EnterCutout();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(0);
-    _mock.biDiChannel1();
+    BiDiChannel1();
     EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(0);
-    _mock.biDiChannel1();
+    BiDiChannel1();
   }
 }

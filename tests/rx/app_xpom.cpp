@@ -19,7 +19,7 @@ TEST_F(RxTest, app_xpom) {
 
   auto datagram{make_app_xpom_datagram(ss, cv_values)};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 // https://github.com/ZIMO-Elektronik/DCC/issues/170
@@ -45,5 +45,5 @@ TEST_F(RxTest, app_xpom_has_higher_priority_than_app_pom) {
 
   auto datagram{make_app_xpom_datagram(ss, cv_values)};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }

@@ -278,15 +278,13 @@ struct Base {
               (self._instr != Instruction::CvAccess ||
                self._packets.current == self._packets.pom))))
           !empty(self._deques.xpom) ? self.appXpom() : self.appPom();
-        // Logon or primary
+        // Logon, primary or consist
         else if (self._addrs.received == (self._logon_state == Assigned
                                             ? self._addrs.logon
-                                            : self._addrs.primary))
-          self.appDyn();
-        // Consist
-        else if (self._addrs.received == self._addrs.consist &&
-                 self._ch2_consist_enabled)
-          self.appDyn();
+                                            : self._addrs.primary) ||
+                 (self._addrs.received == self._addrs.consist &&
+                  self._ch2_consist_enabled))
+          !empty(self._deques.dyn) ? self.appDyn() : self.ack();
         break;
       case Address::AutomaticLogon: self.appLogon(2u); break;
       default: break;
@@ -1608,6 +1606,15 @@ private:
       self.transmitBiDi({cbegin(self._ch2), size(self._ch2)});
       self._deques.logon.pop_front();
     }
+  }
+
+  /// Handle acknowledge
+  ///
+  /// This will implicitly get called if no other datagrams are queued for
+  /// channel 2.
+  void ack(this Decoder auto&& self) {
+    if (!self._ch2_data_enabled || !self._dcca_window_elapsed) return;
+    self.transmitBiDi({&bidi::acks[0uz].value(), sizeof(bidi::Ack)});
   }
 
   /// Logon store
