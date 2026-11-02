@@ -111,9 +111,9 @@ void repl_task(FiFo<dcc::Packet>* fifo) {
 
   // Set analog function
   root->Insert("analog_function",
-               [&](std::ostream&, uint8_t channel, uint8_t state) {
+               [&](std::ostream&, uint8_t output, uint8_t value) {
                  auto const packet{
-                   make_analog_function_group_packet(addr, channel, state)};
+                   make_analog_function_group_packet(addr, output, value)};
                  fifo->push_back(packet);
                },
                "Analog Function",

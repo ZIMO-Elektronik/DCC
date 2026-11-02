@@ -49,15 +49,15 @@ The DCC protocol is defined by various standards published by the [National Mode
 | [S-9.2.1 DCC Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf)                                       | [RCN-213 DCC-Protokoll Betriebsbefehle für Zubehördecoder](https://normen.railcommunity.de/RCN-213.pdf)                |
 | [S-9.2.1 DCC Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf)                                       | [RCN-214 DCC-Protokoll Konfigurationsbefehle](https://normen.railcommunity.de/RCN-214.pdf)                             |
 | [S-9.2.3 Service Mode For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/S-9.2.3_2012_07.pdf)                                  | [RCN-216 DCC-Protokoll Programmierumgebung](https://normen.railcommunity.de/RCN-216.pdf)                               |
-| [S-9.3.2 Communications Standard for Digital Command Control Basic Decoder Transmission](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/S-9.3.2_2012_12_10.pdf)     | [RCN-217 RailCom DCC-Rückmeldeprotokoll](https://normen.railcommunity.de/RCN-217.pdf)                                  |
+| [S-9.3.2 Bi-Directional Communication](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.3.2_bi-directional_communication.pdf)                                     | [RCN-217 RailCom DCC-Rückmeldeprotokoll](https://normen.railcommunity.de/RCN-217.pdf)                                  |
 | [S-9.2.1.1 Advanced Extended Packet Formats](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1.1_advanced_extended_packet_formats.pdf)                         | [RCN-218 DCC-Protokoll DCC-A – Automatische Anmeldung](https://normen.railcommunity.de/RCN-218.pdf)                    |
 | [S-9.2.2 Configuration Variables For Digital Command Control, All Scales](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.2_decoder_cvs_2012.07.pdf)           | [RCN-225 DCC-Protokoll Konfigurationsvariablen](https://normen.railcommunity.de/RCN-225.pdf)                           |
 
 ## Deviations from the Standard
-- The consist control command requires **two identical** programming packets to program CV19 although this is not required by either [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) (chapter 2.4.1) or [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.1.4).
-- Writing an address to CV1 automatically clears CV29:5. Strictly speaking, this is not a deviation from the standard, as [RCN-225](https://normen.railcommunity.de/RCN-225.pdf) explicitly permits this behavior.
-- **All** CV access short form commands require **two identical** programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](https://normen.railcommunity.de/RCN-214.pdf) (chapter 3) and [S-9.2.1](https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf) (chapter 2.3.7.2).
-- [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) specific
+- The consist control command requires **two identical** programming packets to program CV19 although this is not required by either [RCN-212](#protocol) (chapter 2.4.1) or [S-9.2.1](#protocol) (chapter 2.3.1.4).
+- Writing an address to CV1 automatically clears CV29:5. Strictly speaking, this is not a deviation from the standard, as [RCN-225](#protocol) explicitly permits this behavior.
+- **All** CV access short form commands require **two identical** programming packets, although CV23 and 24 are theoretically excluded by [RCN-214](#protocol) (chapter 3) and [S-9.2.1](#protocol) (chapter 2.3.7.2).
+- [RCN-218](#protocol) specific
   - During logon, the decoder must be able to store 2 bytes central ID (CID), 1 byte session ID (SID), and 2 bytes logon address. By default this library uses CV273-277 in the BiDi CV page (CV31=0 and CV32=255). To change the addresses of these CVs use the CMake options `DCC_RX_LOGON_CID_CV_ADDRESS`, `DCC_RX_LOGON_SID_CV_ADDRESS`, and `DCC_RX_LOGON_ADDRESS_CV_ADDRESS`.
 
 > [!NOTE]  
@@ -282,7 +282,7 @@ private:
   void binaryState(uint16_t addr, uint16_t bin_addr, bool state);
 
   // Set analog function
-  void analogFunction(uint16_t addr, uint8_t channel, uint8_t value);
+  void analogFunction(uint16_t addr, uint8_t output, uint8_t value);
 
   // Enter or exit service mode
   void serviceModeHook(bool service_mode);
@@ -323,7 +323,7 @@ Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enou
     }
     ```
 
-3. In order to keep the time in handler mode (interrupt context) as short as possible, received packets (with the exception of [RCN-218](https://normen.railcommunity.de/RCN-218.pdf) ones) are **not executed immediately**. For received packets to be executed, the `execute` method must be called **periodically**. This could either be done either inside a super-loop or, as in the snippet below, in an RTOS task.
+3. In order to keep the time in handler mode (interrupt context) as short as possible, received packets (with the exception of [RCN-218](#protocol) ones) are **not executed immediately**. For received packets to be executed, the `execute` method must be called **periodically**. This could either be done either inside a super-loop or, as in the snippet below, in an RTOS task.
     ```cpp
     // RTOS task
     void task(void*) {
@@ -335,7 +335,7 @@ Implementing the [Decoder](include/dcc/rx/decoder.hpp) concept alone is not enou
     ```
 
 #### Optional
-There are various optional methods that can be implemented if required. One example is asynchronous CV methods that contain a callback as the last parameter. These methods allow to return immediately and execute the callback at a later point in time. Another addition is the east-west direction according to [RCN-212](https://normen.railcommunity.de/RCN-212.pdf) special operating modes instruction.
+There are various optional methods that can be implemented if required. One example is asynchronous CV methods that contain a callback as the last parameter. These methods allow to return immediately and execute the callback at a later point in time. Another addition is the east-west direction according to [RCN-212](#protocol) special operating modes instruction.
 ```cpp
 // Read CV asynchronously
 void readCv(uint32_t cv_addr, uint8_t byte, std::function<void(uint8_t)> cb);
@@ -362,7 +362,16 @@ This distinction is important because the receiver prevents both
 > That means the methods `execute`, `biDiChannel1` and `biDiChannel2` can only be called in their respective phase. If called outside of the phase, they return immediately.
 
 #### BiDi
-TODO
+Most BiDi transmissions are managed by the base class itself. The only exception to this are the so-called `app:dyn` datagrams with ID7 (see chapter 5.5 of [RCN-217](#protocol) and 6.5 of [S-9.3.2](#protocol)). These datagrams contain dynamic variables, such as speed in km/h or mph, and must therefore be provided by the user. The `appDyn()` method can be used to place a datagram into the `app:dyn` queue.
+```cpp
+decoder.appDyn(dcc::bidi::Kmh{42});
+```
+
+> [!TIP]
+> The quality of service (QoS) message is also an ID7 datagram. A getter is available.
+> ```cpp
+> decoder.appDyn(decoder.qos());
+> ```
 
 ### Transmitter
 As before for the receiver, for the transmitter (command station) we need to derive from a class, this time from `dcc::tx::Base` (or one of its aliases). There is another concept, this time called [CommandStation](include/dcc/tx/command_station.hpp), but its implementation is not mandatory. On the contrary, all methods are optional.
@@ -476,7 +485,7 @@ ESP_ERROR_CHECK(rmt_new_dcc_encoder(&encoder_config, &encoder));
 The following members of `dcc_encoder_config_t` may require some explanation.
 
 #### BiDi Bit Duration
-`bidibit_duration` may be set to values between 57-61 to enable the generation of BiDi cutout bits prior to the next preamble. These four cutout bits would be sent in the background if the cutout was not active. The following graphic from [RCN-217](https://normen.railcommunity.de/RCN-217.pdf) visualizes these bits with a dashed line.
+`bidibit_duration` may be set to values between 57-61 to enable the generation of BiDi cutout bits prior to the next preamble. These four cutout bits would be sent in the background if the cutout was not active. The following graphic from [RCN-217](#protocol) visualizes these bits with a dashed line.
 ![BiDi cutout](https://github.com/ZIMO-Elektronik/DCC/raw/master/data/images/bidibit_duration.png)
 
 #### End Bit Duration

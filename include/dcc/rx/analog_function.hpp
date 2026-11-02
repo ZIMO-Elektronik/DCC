@@ -18,8 +18,8 @@ namespace dcc::rx {
 
 template<typename T>
 concept AnalogFunction =
-  requires(T t, Address::value_type addr, uint8_t channel, uint8_t value) {
-    { t.analogFunction(addr, channel, value) } -> std::same_as<void>;
+  requires(T t, Address::value_type addr, uint8_t output, uint8_t value) {
+    { t.analogFunction(addr, output, value) } -> std::same_as<void>;
   };
 
 } // namespace dcc::rx

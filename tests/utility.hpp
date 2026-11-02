@@ -60,8 +60,16 @@ constexpr auto make_app_get_data_datagrams(std::span<uint8_t const> cvs,
       bytes.emplace_back(crc);
   }
 
-  // Special continuation block (header only)
-  if (!empty(cvs) && !(size(cvs) % 31uz)) bytes.emplace_back(ztl::mask<5u>);
+  // Header & CRC only for special starting block
+  if (empty(cvs)) {
+    bytes.emplace_back(0u);
+    bytes.emplace_back(dcc::crc8(0u ^ data_space));
+  }
+  // ... or continuation block
+  else if (!(size(cvs) % 31uz)) {
+    bytes.emplace_back(ztl::mask<5u>);
+    bytes.emplace_back(dcc::crc8(ztl::mask<5u> ^ data_space));
+  }
 
   // Resize to multiple of 6 (cutout size)
   bytes.resize((size(bytes) + 5uz) / 6uz * 6uz, 0u);

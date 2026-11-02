@@ -444,6 +444,13 @@ private:
   /// \retval true
   bool executeDecoderControl(std::span<uint8_t const>) const {
     /// \todo
+    /*
+    switch (bytes[0uz]) {
+      // Set advanced addressing
+      case 0b0000'1010u: break;
+      case 0b0000'1011u: break;
+    }
+    */
     return true;
   }
 
@@ -1270,7 +1277,7 @@ private:
       31uz,                      // Extended capabilities
       32uz,                      // SpaceInfo
       28uz,                      // ShortGUI
-      31uz,                      // CV-Read
+      255uz,                     // CV-Read
       256uz,                     // Icons
       63uz + 63uz,               // Long name
       41uz + 41uz + 21uz + 21uz, // Product information
@@ -1288,9 +1295,7 @@ private:
 
     // Data space size and count
     size_t const data_space_size{
-      data_space == 3u
-        ? std::min<size_t>(bytes[11uz], data_space_sizes[data_space])
-        : data_space_sizes[data_space]};
+      data_space == 3u ? bytes[11uz] : data_space_sizes[data_space]};
     size_t data_count{};
 
     // Block size and count
@@ -1304,7 +1309,7 @@ private:
     // CRC
     uint8_t crc;
 
-    for (;;) {
+    while (data_space_size) {
       uint8_t byte;
 
       // Header
@@ -1335,14 +1340,23 @@ private:
 
       // Block done
       if (block_count == 1uz + block_size + 1uz) {
-        if (data_count == data_space_size) {
-          // Special continuation block (header only)
-          if (block_size == 31uz) datagram[datagram_count++] = ztl::mask<5u>;
-          break;
-        }
+        if (data_count == data_space_size) break;
         block_size = std::min<size_t>(31uz, data_space_size - data_count);
         block_count = 0uz;
       }
+    }
+
+    // Header & CRC only for special starting block
+    if (!block_size) {
+      assert(!datagram_count);
+      datagram[datagram_count++] = 0u;
+      datagram[datagram_count++] = crc8(0u ^ data_space);
+    }
+    // ... or continuation block
+    else if (block_size == 31uz) {
+      assert(datagram_count <= size(datagram) - 2uz);
+      datagram[datagram_count++] = ztl::mask<5u>;
+      datagram[datagram_count++] = crc8(ztl::mask<5u> ^ data_space);
     }
 
     // Residual
