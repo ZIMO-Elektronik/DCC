@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.51.1
+- Bugfix `GET_DATA_*` datagrams always contain CRC ([#200](https://github.com/ZIMO-Elektronik/DCC/issues/200))
+
 ## 0.51.0
 - Add binary state support ([#81](https://github.com/ZIMO-Elektronik/DCC/issues/81))
 - Add analog function support ([#196](https://github.com/ZIMO-Elektronik/DCC/issues/196))

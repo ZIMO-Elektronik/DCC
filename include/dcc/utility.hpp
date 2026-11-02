@@ -1698,7 +1698,6 @@ constexpr auto make_select_read_block_packet(uint16_t manufacturer_id,
                                              uint32_t cv_addr = 0u,
                                              uint8_t cv_count = 0u) {
   assert(manufacturer_id < smath::pow(2u, 12u));
-  assert(data_space < 8u);
   assert(cv_addr < smath::pow(2u, 24u));
   Packet packet{};
   auto first{begin(packet)};

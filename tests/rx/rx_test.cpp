@@ -147,7 +147,7 @@ void RxTest::ReadDataSpace(uint8_t data_space,
     31uz,                      // Extended capabilities
     32uz,                      // SpaceInfo
     28uz,                      // ShortGUI
-    31uz,                      // CV-Read
+    255uz,                     // CV-Read
     256uz,                     // Icons
     63uz + 63uz,               // Long name
     41uz + 41uz + 21uz + 21uz, // Product information

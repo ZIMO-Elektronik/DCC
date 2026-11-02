@@ -19,7 +19,7 @@ private:
   void binaryState(uint16_t addr, uint16_t bin_addr, bool state);
 
   // Set analog function
-  void analogFunction(uint16_t addr, uint8_t channel, uint8_t value);
+  void analogFunction(uint16_t addr, uint8_t output, uint8_t value);
 
   // Enter or exit service mode
   void serviceModeHook(bool service_mode);

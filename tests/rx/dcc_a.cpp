@@ -264,7 +264,11 @@ TEST_F(RxTest, read_data_space_1) { ReadDataSpace(1u); }
 
 TEST_F(RxTest, read_data_space_2) { ReadDataSpace(2u); }
 
-TEST_F(RxTest, read_data_space_3) { ReadDataSpace(3u, 266u, 26u); }
+TEST_F(RxTest, read_data_space_3) {
+  ReadDataSpace(3u, 266u, random_interval<uint8_t>(1u, 255u));
+}
+
+TEST_F(RxTest, read_data_space_3_with_zero_cvs) { ReadDataSpace(3u, 266u, 0u); }
 
 TEST_F(RxTest, read_data_space_4) { ReadDataSpace(4u); }
 
@@ -273,3 +277,23 @@ TEST_F(RxTest, read_data_space_5) { ReadDataSpace(5u); }
 TEST_F(RxTest, read_data_space_6) { ReadDataSpace(6u); }
 
 TEST_F(RxTest, read_data_space_7) { ReadDataSpace(7u); }
+
+TEST_F(RxTest, unsupported_data_space) {
+  Logon();
+
+  // NAK unsupported data space
+  InSequence s;
+  EXPECT_CALL(
+    _mock,
+    transmitBiDi(DatagramMatcher(std::array{dcc::bidi::nak, dcc::bidi::nak})));
+  EXPECT_CALL(_mock,
+              transmitBiDi(DatagramMatcher(std::array{dcc::bidi::nak,
+                                                      dcc::bidi::nak,
+                                                      dcc::bidi::nak,
+                                                      dcc::bidi::nak,
+                                                      dcc::bidi::nak,
+                                                      dcc::bidi::nak})));
+  auto packet{
+    dcc::make_select_read_block_packet(DCC_MANUFACTURER_ID, _did, 9u)};
+  Receive(packet)->BiDi();
+}
