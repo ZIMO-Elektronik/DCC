@@ -14,7 +14,7 @@ TEST_F(RxTest, app_pom) {
 
   auto datagram{make_app_pom_datagram(byte)};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 // https://github.com/ZIMO-Elektronik/DCC/issues/20
@@ -33,12 +33,12 @@ TEST_F(RxTest, app_pom_responds_to_address_that_sent_request) {
   auto datagram{make_app_pom_datagram(byte)};
   Receive(dcc::make_f0_f4_packet(_addrs.primary + 1u, 0u));
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 
   // Packet to the old address, expect POM
   Receive(packet);
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_pom_respond_to_cv_access_long_write_bit_operations_mode) {
@@ -62,7 +62,7 @@ TEST_F(RxTest, app_pom_respond_to_cv_access_long_write_bit_operations_mode) {
   auto datagram{make_app_pom_datagram(byte)};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   EnterCutout();
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_pom_respond_to_cv_access_short_cv17_18) {
@@ -96,7 +96,7 @@ TEST_F(RxTest, app_pom_respond_to_cv_access_short_cv17_18) {
                                               cv18_datagram[1uz]};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   EnterCutout();
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_pom_respond_to_cv_access_short_cv31_32) {
@@ -121,7 +121,7 @@ TEST_F(RxTest, app_pom_respond_to_cv_access_short_cv31_32) {
                                               cv32_datagram[1uz]};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
   EnterCutout();
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
@@ -137,7 +137,7 @@ TEST_F(RxTest, app_pom_disabled_with_cv28_1) {
   Receive(packet)->LeaveCutout()->Execute()->EnterCutout();
 
   EXPECT_CALL(_mock, transmitBiDi(_)).Times(0);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_pom_responds_to_all_loco_packets) {
@@ -155,7 +155,7 @@ TEST_F(RxTest, app_pom_responds_to_all_loco_packets) {
 
   auto datagram{make_app_pom_datagram(byte)};
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 // https://github.com/ZIMO-Elektronik/DCC/issues/105
@@ -179,6 +179,6 @@ TEST_F(RxTest, app_pom_clear_internal_queue_on_unknown_cv_access_packet) {
   Receive(other_cv_packet)->LeaveCutout()->Execute()->EnterCutout();
 
   auto datagram{make_app_pom_datagram(byte)};
-  EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
-  _mock.biDiChannel2();
+  EXPECT_CALL(_mock, transmitBiDi(Not(DatagramMatcher(datagram))));
+  BiDiChannel2();
 }

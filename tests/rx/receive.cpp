@@ -76,3 +76,10 @@ TEST_F(RxTest, writing_cv1_clears_cv29_5) {
   ReceiveAndExecuteTwice(
     make_cv_access_long_write_packet(_addrs.primary, cv_addr, byte));
 }
+
+TEST_F(RxTest, bidi_channel2_must_always_at_least_transmit_ack) {
+  ReceiveAndExecute(make_f0_f4_packet(_addrs.primary, 10u))->EnterCutout();
+  EXPECT_CALL(_mock,
+              transmitBiDi(DatagramMatcher(std::array{dcc::bidi::acks[0uz]})));
+  BiDiChannel2();
+}

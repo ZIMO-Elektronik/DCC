@@ -18,7 +18,7 @@ TEST_F(RxTest, app_search_basic_address) {
   auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_search_extended_address) {
@@ -36,7 +36,7 @@ TEST_F(RxTest, app_search_extended_address) {
   auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_search_consist_address) {
@@ -52,7 +52,7 @@ TEST_F(RxTest, app_search_consist_address) {
   auto datagram{make_app_search_datagram(_addrs.consist, _cvs[19uz - 1uz], 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(
@@ -69,7 +69,7 @@ TEST_F(
   auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 
   std::this_thread::sleep_for(1s);
 
@@ -79,7 +79,7 @@ TEST_F(
       dcc::make_binary_state_short_packet(0u, 2u, false));
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_search_address_change_must_clear_deque) {
@@ -102,7 +102,7 @@ TEST_F(RxTest, app_search_address_change_must_clear_deque) {
   auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_search_not_answered_after_30s) {
@@ -123,7 +123,7 @@ TEST_F(RxTest, app_search_not_answered_after_30s) {
   auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(0);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
 
 TEST_F(RxTest, app_search_resets_after_at_least_1s_without_signal) {
@@ -147,5 +147,5 @@ TEST_F(RxTest, app_search_resets_after_at_least_1s_without_signal) {
   auto datagram{make_app_search_datagram(_addrs.primary, 0u, 0u)};
 
   EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(datagram))).Times(1);
-  _mock.biDiChannel2();
+  BiDiChannel2();
 }
