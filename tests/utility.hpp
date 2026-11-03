@@ -21,6 +21,15 @@
       EXPECT_EQ_MACRO, true, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))            \
   } while (0)
 
+void add_system_clock_offset(std::chrono::nanoseconds offset);
+void reset_system_clock_offset();
+
+template<typename Rep, typename Period>
+void add_system_clock_offset(std::chrono::duration<Rep, Period> offset) {
+  add_system_clock_offset(
+    std::chrono::duration_cast<std::chrono::nanoseconds>(offset));
+}
+
 template<typename T>
 requires(std::integral<T> || std::floating_point<T>)
 constexpr T random_interval(T min = std::numeric_limits<T>::min(),
@@ -35,60 +44,5 @@ constexpr T random_interval(T min = std::numeric_limits<T>::min(),
   }
 }
 
-// Make vector of get_data datagrams from CVs and data space index
-constexpr auto make_app_get_data_datagrams(std::span<uint8_t const> cvs,
-                                           uint8_t data_space) {
-  std::vector<uint8_t> bytes;
-  uint8_t crc;
-
-  // Bytes
-  for (auto i{0uz}; i < size(cvs); ++i) {
-    // Header: 0, 33, 66, 99, ...
-    if (!(i % 31uz)) {
-      auto const block_size{std::min<size_t>(31uz, size(cvs) - i)};
-      bytes.emplace_back(
-        static_cast<uint8_t>((i ? ztl::mask<5u> : 0u) | block_size));
-      crc = dcc::crc8(bytes.back() ^ data_space);
-    }
-
-    // Data
-    bytes.emplace_back(cvs[i]);
-    crc = dcc::crc8(bytes.back() ^ crc);
-
-    // CRC: 32, 65, 98, 131, ...
-    if (i % 31uz == std::min<size_t>(31uz, size(cvs) - (i / 31uz) * 31uz) - 1uz)
-      bytes.emplace_back(crc);
-  }
-
-  // Header & CRC only for special starting block
-  if (empty(cvs)) {
-    bytes.emplace_back(0u);
-    bytes.emplace_back(dcc::crc8(0u ^ data_space));
-  }
-  // ... or continuation block
-  else if (!(size(cvs) % 31uz)) {
-    bytes.emplace_back(ztl::mask<5u>);
-    bytes.emplace_back(dcc::crc8(ztl::mask<5u> ^ data_space));
-  }
-
-  // Resize to multiple of 6 (cutout size)
-  bytes.resize((size(bytes) + 5uz) / 6uz * 6uz, 0u);
-
-  std::vector<
-    dcc::bidi::Datagram<dcc::bidi::datagram_size<dcc::bidi::Bits::_48>>>
-    retval;
-  for (auto chunk : bytes | std::views::chunk(6))
-    retval.push_back(dcc::bidi::make_app_get_data_datagram(
-      std::span<uint8_t, 6uz>{cbegin(chunk), cend(chunk)}));
-
-  return retval;
-}
-
-void add_system_clock_offset(std::chrono::nanoseconds offset);
-void reset_system_clock_offset();
-
-template<typename Rep, typename Period>
-void add_system_clock_offset(std::chrono::duration<Rep, Period> offset) {
-  add_system_clock_offset(
-    std::chrono::duration_cast<std::chrono::nanoseconds>(offset));
-}
+std::vector<dcc::bidi::Datagram<dcc::bidi::datagram_size<dcc::bidi::Bits::_48>>>
+make_app_get_data_datagrams(std::span<uint8_t const> cvs, uint8_t data_space);

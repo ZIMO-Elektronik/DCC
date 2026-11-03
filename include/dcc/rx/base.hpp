@@ -1509,21 +1509,21 @@ private:
       _deques.adr.push_back(bidi::make_app_adr_high_datagram(_addrs.logon));
       _deques.adr.push_back(bidi::make_app_adr_low_datagram(_addrs.logon));
     }
-    // Active address is primary or consist
+    // Active address...
     else if (_logon_state == Disabled) {
+      // ... primary
       if (!_addrs.consist) {
         _deques.adr.push_back(bidi::make_app_adr_high_datagram(_addrs.primary));
         _deques.adr.push_back(bidi::make_app_adr_low_datagram(_addrs.primary));
-      } else if (_addrs.consist < 128u) {
+      }
+      // ... or consist
+      else {
         auto const cv19{static_cast<uint8_t>(
           (_addrs.consist.reversed ? 0x80u : 0u) | (_addrs.consist & 0x7Fu))};
         _deques.adr.push_back(
           bidi::make_app_adr_high_datagram(_addrs.consist, cv19));
         _deques.adr.push_back(
           bidi::make_app_adr_low_datagram(_addrs.consist, cv19));
-      } else {
-        _deques.adr.push_back(bidi::make_app_adr_high_datagram(_addrs.consist));
-        _deques.adr.push_back(bidi::make_app_adr_low_datagram(_addrs.consist));
       }
     }
   }

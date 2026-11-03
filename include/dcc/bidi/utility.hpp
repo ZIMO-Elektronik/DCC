@@ -53,14 +53,13 @@ constexpr auto make_app_pom_datagram(uint8_t byte) {
 /// \param  addr  Address
 /// \param  cv19  CV19
 /// \return app:adr_high datagram
-constexpr auto make_app_adr_high_datagram(Address::value_type addr,
-                                          uint8_t cv19 = 0u) {
-  if (addr < 128u)
-    return encode_datagram(make_datagram<Bits::_12>(
-      app::AdrHigh::id, cv19 ? 0b0110'0000u : 0b0000'0000u));
-  else
-    return encode_datagram(make_datagram<Bits::_12>(
-      app::AdrHigh::id, 0x80u | (addr & 0x3F00u) >> 8u));
+constexpr auto make_app_adr_high_datagram(Address addr, uint8_t cv19 = 0u) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  return encode_datagram(make_datagram<Bits::_12>(
+    app::AdrHigh::id,
+    static_cast<uint8_t>(addr.type == Address::BasicLoco
+                           ? (cv19 ? 0b0110'0000u : 0b0000'0000u)
+                           : 0x80u | (addr & 0x3F00u) >> 8u)));
 }
 
 /// Make app:adr_low datagram
@@ -68,14 +67,13 @@ constexpr auto make_app_adr_high_datagram(Address::value_type addr,
 /// \param  addr  Address
 /// \param  cv19  CV19
 /// \return app:adr_low datagram
-constexpr auto make_app_adr_low_datagram(Address::value_type addr,
-                                         uint8_t cv19 = 0u) {
-  if (addr < 128u)
-    return encode_datagram(make_datagram<Bits::_12>(
-      app::AdrLow::id, (cv19 & 0x80) | (addr & 0x7Fu)));
-  else
-    return encode_datagram(
-      make_datagram<Bits::_12>(app::AdrLow::id, static_cast<uint8_t>(addr)));
+constexpr auto make_app_adr_low_datagram(Address addr, uint8_t cv19 = 0u) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
+  return encode_datagram(make_datagram<Bits::_12>(
+    app::AdrLow::id,
+    static_cast<uint8_t>(addr.type == Address::BasicLoco
+                           ? (cv19 & 0x80u) | (addr & 0x7Fu)
+                           : addr)));
 }
 
 /// Make app:info1 datagram
@@ -91,7 +89,8 @@ constexpr auto make_app_info1_datagram(app::Info1 info1) {
 ///
 /// \param  addr  Address
 /// \return app:adr_short datagram
-constexpr auto make_app_adr_short_datagram(Address::value_type addr) {
+constexpr auto make_app_adr_short_datagram(Address addr) {
+  assert(addr.type == Address::BasicLoco || addr.type == Address::ExtendedLoco);
   assert(addr <= std::numeric_limits<uint8_t>::max());
   return encode_datagram(
     make_datagram<Bits::_12>(app::AdrShort::id, static_cast<uint8_t>(addr)));
@@ -155,8 +154,7 @@ constexpr auto make_app_block_datagram() {}
 /// \param  cv19  CV19
 /// \param  s     Time since rerailing in seconds
 /// \return app:search datagram
-constexpr auto
-make_app_search_datagram(Address::value_type addr, uint8_t cv19, uint8_t s) {
+constexpr auto make_app_search_datagram(Address addr, uint8_t cv19, uint8_t s) {
   Datagram<datagram_size<Bits::_36>> datagram{};
   auto const adr_high{make_app_adr_high_datagram(addr, cv19)};
   auto it{std::copy(cbegin(adr_high), cend(adr_high), begin(datagram))};

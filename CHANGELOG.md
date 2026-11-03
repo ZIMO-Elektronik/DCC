@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.51.2
+- Bugfix encoding of `app:adr_high` and `app:adr_low` does not depend the value of the address ([#204](https://github.com/ZIMO-Elektronik/DCC/issues/204))
+
 ## 0.51.1
 - Bugfix transmit implicit ACK if there are no datagrams for channel 2 ([#45](https://github.com/ZIMO-Elektronik/DCC/issues/45))
 - Bugfix `GET_DATA_*` datagrams always contain CRC ([#200](https://github.com/ZIMO-Elektronik/DCC/issues/200))
