@@ -389,11 +389,11 @@ private:
     // - Broadcast address passes through
     // - Non-broadcast addresses ignored while DCC-A window hasn't elapsed
     // - Afterward only relevant addresses pass through
-    if (addr &&
-        (!self._dcca_window_elapsed ||
-         !((self._logon_state == Disabled &&
-            (addr == self._addrs.primary || addr == self._addrs.consist)) ||
-           (self._logon_state == Assigned && addr == self._addrs.logon))))
+    if (!(addr.type == Address::Broadcast ||
+          (self._dcca_window_elapsed &&
+           ((self._logon_state == Disabled &&
+             (addr == self._addrs.primary || addr == self._addrs.consist)) ||
+            (self._logon_state == Assigned && addr == self._addrs.logon)))))
       return true;
 
     // Count own equal packets (required for CV access)

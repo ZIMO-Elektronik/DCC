@@ -83,3 +83,9 @@ TEST_F(RxTest, bidi_channel2_must_always_at_least_transmit_ack) {
               transmitBiDi(DatagramMatcher(std::array{dcc::bidi::acks[0uz]})));
   BiDiChannel2();
 }
+
+// https://github.com/ZIMO-Elektronik/DCC/issues/129
+TEST_F(RxTest, ignore_extended_loco_address_0) {
+  EXPECT_CALL(_mock, function(0u, _, _)).Times(0);
+  ReceiveAndExecute(dcc::Packet{0xC0u, 0x00u, 0x8Au, 0x4Au});
+}
