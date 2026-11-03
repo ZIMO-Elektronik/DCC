@@ -190,6 +190,33 @@ TEST_F(RxTest, permanent_assign_to_extended_address) {
   ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
 }
 
+// https://github.com/ZIMO-Elektronik/DCC/issues/206
+TEST_F(RxTest, no_assign_with_reserved_binding_behavior) {
+  EXPECT_CALL(_mock, transmitBiDi(_)).Times(3 * 2);
+
+  // Enable
+  Receive(make_logon_enable_packet(
+    dcc::LogonGroup::Now, _cid + 1u, random_interval<uint8_t>(0u, 255u)));
+  BiDi();
+
+  // Select
+  Receive(dcc::make_select_read_shortinfo_packet(DCC_MANUFACTURER_ID, _did));
+  BiDi();
+
+  // Assign with reserved binding behavior
+  Receive(
+    make_logon_assign_packet(DCC_MANUFACTURER_ID,
+                             _did,
+                             _addrs.logon,
+                             static_cast<dcc::LogonBindingBehavior>(0b00u)));
+  BiDi()->LeaveCutout()->Execute();
+
+  // Don't execute commands to logon address
+  EXPECT_CALL(_mock, direction(_addrs.logon.value, false)).Times(0);
+  EXPECT_CALL(_mock, speed(_addrs.logon.value, _)).Times(0);
+  ReceiveAndExecute(dcc::make_128_speed_step_control_packet(_addrs.logon, 0u));
+}
+
 TEST_F(
   RxTest,
   transmitting_decoder_unique_more_than_3_times_toggles_F0_to_indicate_error) {
