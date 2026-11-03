@@ -3,6 +3,7 @@
 ## 0.51.2
 - Bugfix ignore extended loco address 0 ([#129](https://github.com/ZIMO-Elektronik/DCC/issues/129))
 - Bugfix encoding of `app:adr_high` and `app:adr_low` does not depend the value of the address ([#204](https://github.com/ZIMO-Elektronik/DCC/issues/204))
+- Bugfix reject reserved assign modes ([#206](https://github.com/ZIMO-Elektronik/DCC/issues/206))
 
 ## 0.51.1
 - Bugfix transmit implicit ACK if there are no datagrams for channel 2 ([#45](https://github.com/ZIMO-Elektronik/DCC/issues/45))
