@@ -10,7 +10,7 @@ TEST_F(TxTest, track_outputs_first_halfbit_P_gt_N) {
 
 TEST_F(TxTest,
        track_outputs_polarity_does_not_change_across_packets_with_bidi) {
-  auto packet{dcc::make_f0_f4_packet(random_interval<uint8_t>(),
+  auto packet{dcc::make_f0_f4_packet(random_interval<uint8_t>(1u, 127u),
                                      random_interval<uint8_t>())};
   auto timings{dcc::tx::packet2timings(packet, _cfg)};
   auto bits{(_cfg.num_preamble +                  // Preamble

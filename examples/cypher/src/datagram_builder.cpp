@@ -24,7 +24,7 @@ void loco(State::Datagram& datagram);
   void channel1(State::Datagram& datagram);
     void app_adr_high(State::Datagram& datagram);
     void app_adr_low(State::Datagram& datagram);
-    void app_adr_info1(State::Datagram& datagram);
+    void app_info1(State::Datagram& datagram);
     void app_adr_short(State::Datagram& datagram);
   void channel2(State::Datagram& datagram);
     void app_pom(State::Datagram& datagram);
@@ -96,9 +96,18 @@ void channel2(State::Datagram& datagram) {
 // Broadcast app:search
 void app_search(State::Datagram& datagram) {
   ImGui::SeparatorText("Parameters");
-  static dcc::Address::value_type addr{3};
-  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr);
-  addr = std::clamp<dcc::Address::value_type>(addr, 1u, 10239u);
+  static dcc::Address addr{.value = 3u, .type = dcc::Address::BasicLoco};
+  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr.value);
+  static bool extended{};
+  ImGui::Checkbox("Extended Address", &extended);
+  if (extended)
+    addr = dcc::Address{
+      .value = std::clamp<dcc::Address::value_type>(addr.value, 1u, 10239u),
+      .type = dcc::Address::ExtendedLoco};
+  else
+    addr = dcc::Address{
+      .value = std::clamp<dcc::Address::value_type>(addr.value, 1u, 127u),
+      .type = dcc::Address::BasicLoco};
   static bool consist{};
   ImGui::Checkbox("Consist", &consist);
   static bool r{};
@@ -140,7 +149,7 @@ void channel1(State::Datagram& datagram) {
   else if (!strcmp(apps[static_cast<size_t>(i)], "app:adr_low"))
     app_adr_low(datagram);
   else if (!strcmp(apps[static_cast<size_t>(i)], "app:info1"))
-    app_adr_info1(datagram);
+    app_info1(datagram);
   else if (!strcmp(apps[static_cast<size_t>(i)], "app:adr_short"))
     app_adr_short(datagram);
 }
@@ -148,9 +157,18 @@ void channel1(State::Datagram& datagram) {
 // Loco app:adr_high
 void app_adr_high(State::Datagram& datagram) {
   ImGui::SeparatorText("Parameters");
-  static dcc::Address::value_type addr{3};
-  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr);
-  addr = std::clamp<dcc::Address::value_type>(addr, 1u, 10239u);
+  static dcc::Address addr{.value = 3u, .type = dcc::Address::BasicLoco};
+  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr.value);
+  static bool extended{};
+  ImGui::Checkbox("Extended Address", &extended);
+  if (extended)
+    addr = dcc::Address{
+      .value = std::clamp<dcc::Address::value_type>(addr.value, 1u, 10239u),
+      .type = dcc::Address::ExtendedLoco};
+  else
+    addr = dcc::Address{
+      .value = std::clamp<dcc::Address::value_type>(addr.value, 1u, 127u),
+      .type = dcc::Address::BasicLoco};
   static bool consist{};
   ImGui::Checkbox("Consist", &consist);
   std::ranges::copy(make_app_adr_high_datagram(addr, consist),
@@ -160,9 +178,18 @@ void app_adr_high(State::Datagram& datagram) {
 // Loco app:adr_low
 void app_adr_low(State::Datagram& datagram) {
   ImGui::SeparatorText("Parameters");
-  static dcc::Address::value_type addr{3};
-  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr);
-  addr = std::clamp<dcc::Address::value_type>(addr, 1u, 10239u);
+  static dcc::Address addr{.value = 3u, .type = dcc::Address::BasicLoco};
+  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr.value);
+  static bool extended{};
+  ImGui::Checkbox("Extended Address", &extended);
+  if (extended)
+    addr = dcc::Address{
+      .value = std::clamp<dcc::Address::value_type>(addr.value, 1u, 10239u),
+      .type = dcc::Address::ExtendedLoco};
+  else
+    addr = dcc::Address{
+      .value = std::clamp<dcc::Address::value_type>(addr.value, 1u, 127u),
+      .type = dcc::Address::BasicLoco};
   static bool consist{};
   ImGui::Checkbox("Consist", &consist);
   static bool r{};
@@ -172,8 +199,8 @@ void app_adr_low(State::Datagram& datagram) {
     begin(datagram.bytes));
 }
 
-// Loco app:adr_info1
-void app_adr_info1(State::Datagram& datagram) {
+// Loco app:info1
+void app_info1(State::Datagram& datagram) {
   ImGui::SeparatorText("Parameters");
   static std::array<bool, CHAR_BIT> f{};
   ImGui::Checkbox("Track Polarity", &f[0uz]);
@@ -189,11 +216,10 @@ void app_adr_info1(State::Datagram& datagram) {
 // Loco app:adr_short
 void app_adr_short(State::Datagram& datagram) {
   ImGui::SeparatorText("Parameters");
-  static dcc::Address::value_type addr{3};
-  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr);
-  addr = std::clamp<dcc::Address::value_type>(addr, 1u, 255u);
-  std::ranges::copy(make_app_adr_short_datagram(static_cast<uint8_t>(addr)),
-                    begin(datagram.bytes));
+  static dcc::Address addr{.value = 3u, .type = dcc::Address::BasicLoco};
+  ImGui::InputScalar("Address", ImGuiDataType_U16, &addr.value);
+  addr.value = std::clamp<dcc::Address::value_type>(addr.value, 1u, 255u);
+  std::ranges::copy(make_app_adr_short_datagram(addr), begin(datagram.bytes));
 }
 
 // Loco channel2

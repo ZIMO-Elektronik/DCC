@@ -21,6 +21,30 @@ TEST_F(RxTest, app_adr_alternate_basic_primary_address) {
   }
 }
 
+TEST_F(RxTest, app_adr_alternate_extended_primary_address) {
+  _addrs.primary.type = dcc::Address::ExtendedLoco;
+  encode_address(_addrs.primary, &_cvs[17uz - 1uz]);
+  _cvs[29uz - 1uz] = _cvs[29uz - 1uz] | ztl::mask<5u>;
+  SetUp();
+
+  // Make datagram
+  auto adr_high{make_app_adr_high_datagram(_addrs.primary)};
+  auto adr_low{make_app_adr_low_datagram(_addrs.primary)};
+
+  // Send whatever packet to get last received address to match basic loco
+  auto packet{make_f0_f4_packet(_addrs.primary, 10u)};
+  ReceiveAndExecuteTwice(packet);
+
+  InSequence s;
+  for (auto i{0uz}; i < 10uz; ++i) {
+    LeaveCutout()->Execute()->EnterCutout();
+    EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_high))).Times(1);
+    BiDiChannel1();
+    EXPECT_CALL(_mock, transmitBiDi(DatagramMatcher(adr_low))).Times(1);
+    BiDiChannel1();
+  }
+}
+
 TEST_F(RxTest, app_adr_alternate_extended_logon_address) {
   Logon();
 
