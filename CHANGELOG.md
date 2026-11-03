@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.51.2
+- Bugfix ignore extended loco address 0 ([#129](https://github.com/ZIMO-Elektronik/DCC/issues/129))
 - Bugfix encoding of `app:adr_high` and `app:adr_low` does not depend the value of the address ([#204](https://github.com/ZIMO-Elektronik/DCC/issues/204))
 
 ## 0.51.1
