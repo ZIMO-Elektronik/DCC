@@ -1489,14 +1489,13 @@ void logon_assign(dcc::Address addr) {
   ImGui::Checkbox("Permanent", &permanent);
   ImGui::SeparatorText("Done");
   if (ImGui::Button("Push to Packets"))
-    state.packets.push_back(
-      {.addr = addr,
-       .bytes = dcc::make_logon_assign_packet(
-         manufacturer_id,
-         did,
-         assign_addr,
-         permanent ? dcc::LogonBindingBehavior::Permanent
-                   : dcc::LogonBindingBehavior::Temporary)});
+    state.packets.push_back({.addr = addr,
+                             .bytes = dcc::make_logon_assign_packet(
+                               manufacturer_id,
+                               did,
+                               assign_addr,
+                               permanent ? dcc::LogonAssignMode::Permanent
+                                         : dcc::LogonAssignMode::Temporary)});
 }
 
 // LOGON_ENABLE
