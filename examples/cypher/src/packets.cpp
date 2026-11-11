@@ -1031,7 +1031,7 @@ void logon_assign(State::Packet& packet, std::span<uint8_t const> bytes) {
                   static_cast<uint32_t>(bytes[4uz]) << 8u |
                   static_cast<uint32_t>(bytes[5uz]) << 0u);
   auto const bb{bytes[6uz] >> 6u};
-  packet.desc_strs.back() += std::format("\n- Binding={}",
+  packet.desc_strs.back() += std::format("\n- Mode={}",
                                          bb == 0b10u  ? "Permanent"
                                          : bb == 0b11 ? "Temporary"
                                                       : "Reserved");

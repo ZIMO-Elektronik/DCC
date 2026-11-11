@@ -1062,22 +1062,21 @@ private:
       return true;
     }
 
-    auto const bb{static_cast<LogonBindingBehavior>(bytes[6uz] >> 6u)};
+    auto const bb{static_cast<LogonAssignMode>(bytes[6uz] >> 6u)};
     auto const addr{decode_logon_address(cbegin(bytes) + 6)};
 
+    // Ignore reserved assign modes
+    if (bb < LogonAssignMode::Permanent) return true;
     // Accept assign
-    if (self._logon_state >= Enabled &&
-        (bb == LogonBindingBehavior::Permanent ||
-         bb == LogonBindingBehavior::Temporary) &&
-        (addr.type == Address::BasicLoco ||
-         addr.type == Address::ExtendedLoco)) {
+    else if (self._logon_state >= Enabled &&
+             (addr.type == Address::BasicLoco ||
+              addr.type == Address::ExtendedLoco)) {
       self._logon_state = Assigned;
       self._addrs.consist = 0u;
       self._addrs.logon = addr;
 
       // ... and make it permanent
-      if (bb == LogonBindingBehavior::Permanent && addr)
-        self._addrs.primary = addr;
+      if (bb == LogonAssignMode::Permanent && addr) self._addrs.primary = addr;
       self._deques.logon.push_back(self._datagrams.decoder_state);
 
       // Keep packet for storing assignment

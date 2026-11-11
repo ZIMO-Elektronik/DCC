@@ -422,36 +422,36 @@ void add_automatic_logon_packets() {
        random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
        random_interval<uint32_t>(),
        random_extended_loco_address(),
-       static_cast<LogonBindingBehavior>(random_interval(
-         std::to_underlying(LogonBindingBehavior::Permanent),
-         std::to_underlying(LogonBindingBehavior::Temporary))))});
+       static_cast<LogonAssignMode>(
+         random_interval(std::to_underlying(LogonAssignMode::Permanent),
+                         std::to_underlying(LogonAssignMode::Temporary))))});
   state.packets.push_back(
     {.addr = addr,
      .bytes = make_logon_assign_packet(
        random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
        random_interval<uint32_t>(),
        random_extended_accessory_address(),
-       static_cast<LogonBindingBehavior>(random_interval(
-         std::to_underlying(LogonBindingBehavior::Permanent),
-         std::to_underlying(LogonBindingBehavior::Temporary))))});
+       static_cast<LogonAssignMode>(
+         random_interval(std::to_underlying(LogonAssignMode::Permanent),
+                         std::to_underlying(LogonAssignMode::Temporary))))});
   state.packets.push_back(
     {.addr = addr,
      .bytes = make_logon_assign_packet(
        random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
        random_interval<uint32_t>(),
        random_basic_accessory_address(),
-       static_cast<LogonBindingBehavior>(random_interval(
-         std::to_underlying(LogonBindingBehavior::Permanent),
-         std::to_underlying(LogonBindingBehavior::Temporary))))});
+       static_cast<LogonAssignMode>(
+         random_interval(std::to_underlying(LogonAssignMode::Permanent),
+                         std::to_underlying(LogonAssignMode::Temporary))))});
   state.packets.push_back(
     {.addr = addr,
      .bytes = make_logon_assign_packet(
        random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
        random_interval<uint32_t>(),
        random_basic_loco_address(),
-       static_cast<LogonBindingBehavior>(random_interval(
-         std::to_underlying(LogonBindingBehavior::Permanent),
-         std::to_underlying(LogonBindingBehavior::Temporary))))});
+       static_cast<LogonAssignMode>(
+         random_interval(std::to_underlying(LogonAssignMode::Permanent),
+                         std::to_underlying(LogonAssignMode::Temporary))))});
 
   // LOGON_ENABLE
   state.packets.push_back(
@@ -855,9 +855,9 @@ void add_automatic_logon_datagrams() {
         random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),
         random_interval<uint32_t>(),
         random_extended_loco_address(),
-        static_cast<LogonBindingBehavior>(random_interval(
-          std::to_underlying(LogonBindingBehavior::Permanent),
-          std::to_underlying(LogonBindingBehavior::Temporary))))};
+        static_cast<LogonAssignMode>(
+          random_interval(std::to_underlying(LogonAssignMode::Permanent),
+                          std::to_underlying(LogonAssignMode::Temporary))))};
     std::ranges::copy(make_app_decoder_state_datagram(
                         random_interval<uint8_t>(),
                         random_interval<uint16_t>(0u, smath::pow(2u, 12u) - 1u),

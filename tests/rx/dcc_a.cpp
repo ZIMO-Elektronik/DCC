@@ -147,10 +147,8 @@ TEST_F(RxTest, permanent_assign_to_basic_address) {
   EXPECT_CALL(_mock, writeCv(29u - 1u, false, 5u)).Times(1);
   EXPECT_CALL(_mock, writeCv(_, _)).Times(AtLeast(7));
   _addrs.logon = {.value = 42u, .type = dcc::Address::BasicLoco};
-  Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID,
-                                   _did,
-                                   _addrs.logon,
-                                   dcc::LogonBindingBehavior::Permanent));
+  Receive(make_logon_assign_packet(
+    DCC_MANUFACTURER_ID, _did, _addrs.logon, dcc::LogonAssignMode::Permanent));
   BiDi()->LeaveCutout()->Execute();
 
   // Execute commands to logon address
@@ -178,10 +176,8 @@ TEST_F(RxTest, permanent_assign_to_extended_address) {
   EXPECT_CALL(_mock, writeCv(29u - 1u, true, 5u)).Times(1);
   EXPECT_CALL(_mock, writeCv(_, _)).Times(AtLeast(7));
   _addrs.logon = {.value = 1042u, .type = dcc::Address::ExtendedLoco};
-  Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID,
-                                   _did,
-                                   _addrs.logon,
-                                   dcc::LogonBindingBehavior::Permanent));
+  Receive(make_logon_assign_packet(
+    DCC_MANUFACTURER_ID, _did, _addrs.logon, dcc::LogonAssignMode::Permanent));
   BiDi()->LeaveCutout()->Execute();
 
   // Execute commands to logon address
@@ -191,8 +187,8 @@ TEST_F(RxTest, permanent_assign_to_extended_address) {
 }
 
 // https://github.com/ZIMO-Elektronik/DCC/issues/206
-TEST_F(RxTest, no_assign_with_reserved_binding_behavior) {
-  EXPECT_CALL(_mock, transmitBiDi(_)).Times(3 * 2);
+TEST_F(RxTest, no_assign_with_reserved_assign_modes) {
+  EXPECT_CALL(_mock, transmitBiDi(_)).Times(2 * 2);
 
   // Enable
   Receive(make_logon_enable_packet(
@@ -203,12 +199,11 @@ TEST_F(RxTest, no_assign_with_reserved_binding_behavior) {
   Receive(dcc::make_select_read_shortinfo_packet(DCC_MANUFACTURER_ID, _did));
   BiDi();
 
-  // Assign with reserved binding behavior
-  Receive(
-    make_logon_assign_packet(DCC_MANUFACTURER_ID,
-                             _did,
-                             _addrs.logon,
-                             static_cast<dcc::LogonBindingBehavior>(0b00u)));
+  // Assign with reserved assign mode
+  Receive(make_logon_assign_packet(DCC_MANUFACTURER_ID,
+                                   _did,
+                                   _addrs.logon,
+                                   static_cast<dcc::LogonAssignMode>(0b00u)));
   BiDi()->LeaveCutout()->Execute();
 
   // Don't execute commands to logon address

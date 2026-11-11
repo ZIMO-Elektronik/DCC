@@ -1744,8 +1744,8 @@ constexpr auto make_select_write_block_packet(uint16_t manufacturer_id,
   return packet;
 }
 
-/// Logon binding behavior (RCN-218)
-enum struct LogonBindingBehavior : uint8_t {
+/// Logon assign mode (RCN-218)
+enum struct LogonAssignMode : uint8_t {
   Reserved = 0b00u | 0b01u,
   Permanent = 0b10u,
   Temporary = 0b11u,
@@ -1756,13 +1756,13 @@ enum struct LogonBindingBehavior : uint8_t {
 /// \param  manufacturer_id Manufacturer ID
 /// \param  did             Unique ID
 /// \param  addr            Address
-/// \param  bb              Logon binding behavior
+/// \param  bb              Logon assign mode
 /// \return LOGON_ASSIGN packet
-constexpr auto make_logon_assign_packet(
-  uint16_t manufacturer_id,
-  uint32_t did,
-  Address addr,
-  LogonBindingBehavior bb = LogonBindingBehavior::Temporary) {
+constexpr auto
+make_logon_assign_packet(uint16_t manufacturer_id,
+                         uint32_t did,
+                         Address addr,
+                         LogonAssignMode bb = LogonAssignMode::Temporary) {
   assert(manufacturer_id < smath::pow(2u, 12u));
   assert(addr.type == Address::BasicLoco ||        //
          addr.type == Address::ExtendedLoco ||     //
